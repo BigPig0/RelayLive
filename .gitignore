@@ -1,0 +1,8 @@
+*.opensdf
+*.sdf
+*.suo
+*.user
+/Build/Win32
+/Build/ipch
+/Build/Lib
+/Build/Temp
