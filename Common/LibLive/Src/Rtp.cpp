@@ -153,6 +153,7 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
     {
         auto it_begin = m_mapRtpList.begin();
         m_nDoneSeq = it_begin->first.seq;
+        DelRtpNode(it_begin->second);
         m_mapRtpList.erase(it_begin);
     }
     return 0;

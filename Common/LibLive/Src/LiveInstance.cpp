@@ -19,16 +19,19 @@ bool IlibLive::MakeFlvHeader(char** ppBuff, int* pLen)
 }
 
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-    *buf = uv_buf_init((char*)malloc(suggested_size), suggested_size);
+    *buf = uv_buf_init((char*)malloc(PACK_MAX_SIZE), PACK_MAX_SIZE);
 }
 
 static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags)
 {
-    Log::debug("after_read thread ID : %d", GetCurrentThreadId());
+    //Log::debug("after_read thread ID : %d", GetCurrentThreadId());
     if(nread < 0){
         Log::error("read error: %s",uv_strerror(nread));
         free(buf->base);
     }
+	if(nread == 0)
+		return;
+
     CLiveInstance* pLive = (CLiveInstance*)handle->data;
     pLive->RtpRecv(buf->base, nread);
 }
@@ -40,8 +43,7 @@ static void timer_cb(uv_timer_t* handle)
 }
 
 CLiveInstance::CLiveInstance(void)
-    : m_nCatchPacketNum(100)
-    , m_pRtpParser(nullptr)
+    : m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
     , m_pEsParser(nullptr)
@@ -101,6 +103,12 @@ CLiveInstance::~CLiveInstance(void)
     Sleep(2000);
 }
 
+void CLiveInstance::SetCatchPacketNum(int nPacketNum)
+{
+    CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
+    rtpAnalyzer->SetCatchFrameNum(nPacketNum);
+}
+
 void CLiveInstance::StartListen()
 {
     // 开启udp接收
@@ -122,6 +130,12 @@ void CLiveInstance::StartListen()
         Log::error("tcp bind err: %s",  uv_strerror(ret));
         return;
     }
+
+	int nRecvBuf = 10 * 1024 * 1024;       // 缓存区设置成10M，默认值太小会丢包
+	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
+	int nOverTime = 30*1000;  //
+	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
 
     m_uvRtpSocket.data = (void*)this;
     uv_udp_recv_start(&m_uvRtpSocket, echo_alloc, after_read);

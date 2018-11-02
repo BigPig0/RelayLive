@@ -187,7 +187,7 @@ namespace HttpWsServer
             }
         case LWS_CALLBACK_CLOSED_HTTP:
             {
-                if (!pss)
+                if (!pss || !pss->m_pWorker)
                     break;
                 pss->m_pWorker->DelConnect(pss);
             }

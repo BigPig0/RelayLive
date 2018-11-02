@@ -13,10 +13,10 @@ namespace HttpWsServer
     static CriticalSection           m_cs;
     static FLV_TAG_BUFF              m_flvHeader = {nullptr,0,callback_flv_header}; // flv头，对所有视频都是一样的
     
-    static string m_strRtpIP           = Settings::getValue("RtpClient","IP");            //< RTP服务IP
-    static int    m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);  //< RTP监听的起始端口，必须是偶数
-    static int    m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);    //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-    static int    m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
+    static string m_strRtpIP;            //< RTP服务IP
+    static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
+    static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
+    static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
     
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
@@ -28,6 +28,11 @@ namespace HttpWsServer
         MutexLock lock(&m_csRTP);
         if(!_do_port) {
             _do_port = true;
+			m_strRtpIP           = Settings::getValue("RtpClient","IP");                    //< RTP服务IP
+			m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
+			m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
+			m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
+
             Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
                 , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
             m_vecRtpPort.clear();
@@ -72,8 +77,9 @@ namespace HttpWsServer
 
     //////////////////////////////////////////////////////////////////////////
 
-    CLiveWorker::CLiveWorker(string strCode)
+    CLiveWorker::CLiveWorker(string strCode, int rtpPort)
         : m_strCode(strCode)
+		, m_nPort(rtpPort)
         , m_type(0)
         , m_pLive(nullptr)
     {
@@ -82,7 +88,6 @@ namespace HttpWsServer
         m_flvRing = lws_ring_create(sizeof(FLV_TAG_BUFF), 100, destroy_flvtag);
         m_h264Ring = lws_ring_create(sizeof(H264_NALU_BUFF), 100, destroy_h264nalu);
 
-        m_nPort = GetRtpPort();
         m_pLive = IlibLive::CreateObj();
         m_pLive->SetLocalAddr(m_strRtpIP, m_nPort);
         m_pLive->SetCatchPacketNum(m_nRtpCatchPacketNum);
@@ -152,13 +157,17 @@ namespace HttpWsServer
     void CLiveWorker::push_flv_frame(int tag_type, char* pBuff, int nLen)
     {
         flv_tag_type eType = (flv_tag_type)tag_type;
-        if (eType == callback_script_tag) {
-            m_pScriptTag.pBuff = pBuff;
+		if (eType == callback_script_tag) {
+			char* pSaveBuff = (char*)malloc(nLen);
+			memcpy(pSaveBuff, pBuff, nLen);
+            m_pScriptTag.pBuff = pSaveBuff;
             m_pScriptTag.nLen = nLen;
             m_pScriptTag.eType = callback_script_tag;
             Log::debug("send script tag ok");
-        } else if (eType == callback_video_spspps_tag) {
-            m_pDecodeConfig.pBuff = pBuff;
+		} else if (eType == callback_video_spspps_tag) {
+			char* pSaveBuff = (char*)malloc(nLen);
+			memcpy(pSaveBuff, pBuff, nLen);
+            m_pDecodeConfig.pBuff = pSaveBuff;
             m_pDecodeConfig.nLen = nLen;
             m_pDecodeConfig.eType = callback_video_spspps_tag;
             Log::debug("AVCDecoderConfigurationRecord ok");
@@ -173,8 +182,10 @@ namespace HttpWsServer
             if (!n)
                 return;
 
-            // 将数据保存在ring buff
-            FLV_TAG_BUFF newTag = {pBuff, nLen, eType};
+			// 将数据保存在ring buff
+			char* pSaveBuff = (char*)malloc(nLen);
+			memcpy(pSaveBuff, pBuff, nLen);
+            FLV_TAG_BUFF newTag = {pSaveBuff, nLen, eType};
             if (!lws_ring_insert(m_flvRing, &newTag, 1)) {
                 destroy_flvtag(&newTag);
                 Log::error("dropping!");
@@ -199,8 +210,10 @@ namespace HttpWsServer
         if (!n)
             return;
 
-        // 将数据保存在ring buff
-        H264_NALU_BUFF newTag = {pBuff, nLen, eType};
+		// 将数据保存在ring buff
+		char* pSaveBuff = (char*)malloc(nLen);
+		memcpy(pSaveBuff, pBuff, nLen);
+        H264_NALU_BUFF newTag = {pSaveBuff, nLen, eType};
         if (!lws_ring_insert(m_h264Ring, &newTag, 1)) {
             destroy_h264nalu(&newTag);
             Log::error("dropping!");
@@ -349,21 +362,24 @@ namespace HttpWsServer
     CLiveWorker* CreatLiveWorker(string strCode)
     {
         Log::debug("CreatFlvBuffer begin");
+		int rtpPort = GetRtpPort();
+		if(rtpPort < 0) {
+			Log::error("play failed %s, no rtp port",strCode.c_str());
+			return nullptr;
+		}
 
-        CLiveWorker* pNew = new CLiveWorker(strCode);
-        {
-            MutexLock lock(&m_cs);
-            m_workerMap.insert(make_pair(strCode, pNew));
-            Log::debug("new flv buffer ok");
-        }
+        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
-        if(!SipInstance::RealPlay(strCode))
+        if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
         {
-            DelLiveWorker(strCode);
+            delete pNew;
             Log::error("play failed %s",strCode.c_str());
             return nullptr;
         }
         Log::debug("RealPlay ok: %s",strCode.c_str());
+
+            MutexLock lock(&m_cs);
+            m_workerMap.insert(make_pair(strCode, pNew));
 
         return pNew;
     }

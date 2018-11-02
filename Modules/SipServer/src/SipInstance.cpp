@@ -43,14 +43,12 @@ bool SipInstance::rtsp_play(string devCode, string rtpIP, int rtpPort)
     return true;
 }
 
-bool SipInstance::RealPlay(string strDev)
+bool SipInstance::RealPlay(string strDev, string rtpIP, int rtpPort)
 {
     Log::debug("start SipInstance::RealPlay strDev:%s",strDev.c_str());
-    string strIP;
-    int nPort;
 
     // 创建会话邀请
-    if (!CSipCall::CreatSipCall(strDev, strIP, nPort))
+    if (!CSipCall::CreatSipCall(strDev, rtpIP, rtpPort))
     {
         Log::error("creat sip call failed");
         return false;

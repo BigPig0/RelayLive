@@ -40,7 +40,7 @@ namespace HttpWsServer
     class CLiveWorker : public IlibLiveCb
     {
     public:
-        CLiveWorker(string strCode);
+        CLiveWorker(string strCode, int rtpPort);
         ~CLiveWorker();
 
         /** 客户端连接 */

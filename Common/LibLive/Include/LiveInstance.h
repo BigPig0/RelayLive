@@ -44,10 +44,7 @@ public:
      * 设置缓存帧数量
      * @param[in] nPacketNum 帧缓存数量,数值越大延迟越大，但能应对更差的网络状况
      */
-    void SetCatchPacketNum(int nPacketNum)
-    {
-        m_nCatchPacketNum = nPacketNum;
-    }
+    void SetCatchPacketNum(int nPacketNum);
 
     /** 启动UDP端口监听 */
     void StartListen();
@@ -105,7 +102,6 @@ private:
     string      m_strRemoteIP;      // 远端IP
     int         m_nRemoteRTPPort;   // 远端RTP端口
     int         m_nRemoteRTCPPort;  // 远端RTCP端口
-    int         m_nCatchPacketNum;  // rtp包缓存数量
 
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器

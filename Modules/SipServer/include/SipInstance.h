@@ -24,7 +24,7 @@ public:
      * @param[in] strDev 设备编码
      * @return true:成功 false:失败
      */
-    static bool RealPlay(string strDev);
+    static bool RealPlay(string strDev, string rtpIP, int rtpPort);
 
     /**
      * 关闭一个实时播放

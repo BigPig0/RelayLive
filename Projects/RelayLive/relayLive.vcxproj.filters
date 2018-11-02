@@ -29,7 +29,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GB28181_Video_Control.cpp">
+    <ClCompile Include="relayLive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
