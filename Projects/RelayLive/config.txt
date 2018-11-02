@@ -1,0 +1,62 @@
+[SipSever]
+Code = 36030000042000000003
+;设备编码
+IP = 192.168.1.235
+;服务IP
+Port = 5060
+;服务端口
+RegAuthor = false
+;注册是否需要鉴权
+
+[PlatFormInfo]
+Code = 
+IP = 
+Port =
+
+[DataBase]
+Addr = 172.31.7.7/pxzhjt
+User = basic
+PassWord = 123
+
+
+[RtpClient]
+IP = 192.168.1.235
+;rtp服务IP
+BeginPort = 50000
+;rtp起始端口
+PortNum = 1000
+;rtp端口数量
+CatchPacketNum = 100
+;rtp包缓存数量
+
+[HttpServer]
+IP = 192.168.1.235
+;服务器IP，若为空表示本机所有IP
+Port = 81
+;服务器端口
+RootPath = D:\red5-server\webapps\oflaDemo
+;根目录
+TmpPath = C:\TmpPath
+;临时目录
+DefaultFile = index.html
+;默认文件名称
+DirVisible = yes
+;是否可以显示目录，yes表示可以，no或其他表示不能
+MaxConnect = 0
+;最大连接数,0表示不限制
+MaxConnectPerIP = 0
+;每个IP的最大连接数,0表示不限制
+MaxSpeed = 128
+;每个连接的最大限速(kb/s)，0表示不限制
+SessionTimeOut = 0
+;会话超时时间(ms), 0表示不限制
+KeepAliveTimeOut = 0
+;keep-alive超时时间(ms), 0表示不限制
+ReceiveTimeOut = 0
+;recv, connect, accept超时时间(ms), 0表示不限制
+SendTimeOut = 0
+;send超时时间(ms), 0表示不限制
+
+[RtmpServer]
+IP = 192.168.1.235
+Port = 5080

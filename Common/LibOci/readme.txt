@@ -1,0 +1,2 @@
+libOci模块是封装Oracle数据库连接的接口
+通过使用开源的ocilib来实现

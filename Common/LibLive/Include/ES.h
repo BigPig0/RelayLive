@@ -1,0 +1,30 @@
+/**
+ * 输入ES包
+ * 输出H264片(帧)
+ */
+#pragma once
+#include "LiveInstance.h"
+#include "H264.h"
+
+
+/**
+ * ES包解析类
+ */
+class CES : public IAnalyzer
+{
+public:
+    CES(CLiveInstance* pObj);
+    ~CES(void);
+
+    /**
+     * 插入一个PES包
+     * @param[in] pBuf PES帧
+     * @param[in] nLen PES帧长度
+     * @return 0成功 -1失败
+     */
+    int InputBuffer(char* pBuf, long nLen);
+
+private:
+    CLiveInstance*   m_pObj;                  // 回调处理对象
+};
+
