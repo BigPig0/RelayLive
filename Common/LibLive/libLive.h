@@ -1,12 +1,12 @@
 /**
- * 该文件是rtsp模块唯一对外导出的头文件
+ * 该文件是libLive模块唯一对外导出的头文件
  */
 #pragma once
 
-#ifdef RTSP_EXPORTS
-#define RTSP_API __declspec(dllexport)
+#ifdef LIBLIVE_EXPORTS
+#define LIBLIVE_API __declspec(dllexport)
 #else
-#define RTSP_API
+#define LIBLIVE_API
 #endif
 
 enum NalType;
@@ -51,7 +51,7 @@ struct IlibLiveCb
     IlibLiveCb():m_bFlv(false),m_bTs(false),m_bH264(false),m_bMp4(false){}
 };
 
-struct RTSP_API IlibLive
+struct LIBLIVE_API IlibLive
 {
     virtual ~IlibLive(){}
 

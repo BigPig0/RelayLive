@@ -123,6 +123,11 @@ namespace HttpWsServer
             pss->pss_next = m_pH264PssList;
             m_pH264PssList = pss;
             pss->tail = lws_ring_get_oldest_tail(m_pH264Ring);
+        } else if (pss->media_type == media_mp4) {
+            m_bMp4 = true;
+            pss->pss_next = m_pMP4PssList;
+            m_pMP4PssList = pss;
+            pss->tail = lws_ring_get_oldest_tail(m_pMP4Ring);
         } else {
             return false;
         }
@@ -137,6 +142,9 @@ namespace HttpWsServer
         } else if(pss->media_type == media_h264){
             lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pH264PssList);
             if (nullptr == m_pH264PssList) m_bH264 = false;
+        } else if(pss->media_type == media_mp4) {
+            lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pMP4PssList);
+            if (nullptr == m_pMP4PssList) m_bMp4 = false;
         }
 
         if(m_pFlvPssList == NULL && m_pH264PssList == NULL) {

@@ -240,17 +240,20 @@ void CLiveObj::ESParseCb(char* pBuff, long nLen, uint8_t nNalType)
 
 void CLiveObj::FlvCb(flv_tag_type eType, char* pBuff, int nBuffSize)
 {
-
+    CHECK_POINT_VOID(m_pCallBack);
+    m_pCallBack->push_flv_frame(eType, pBuff, nBuffSize);
 }
 
 void CLiveObj::Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize)
 {
-
+    CHECK_POINT_VOID(m_pCallBack);
+    m_pCallBack->push_mp4_stream(eType, pBuff, nBuffSize);
 }
 
 void CLiveObj::TsCb(char* pBuff, int nBuffSize)
 {
-
+    CHECK_POINT_VOID(m_pCallBack);
+    m_pCallBack->push_ts_stream(pBuff, nBuffSize);
 }
 
 void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
