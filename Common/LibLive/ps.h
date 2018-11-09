@@ -3,7 +3,7 @@
  * Êä³öPES°ü
  */
 #pragma once
-#include "live_obj.h"
+#include "liveObj.h"
 
 #pragma pack(1)
 //ps header

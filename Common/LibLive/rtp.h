@@ -3,7 +3,7 @@
  * Êä³öPS°ü
  */
 #pragma once
-#include "live_obj.h"
+#include "liveObj.h"
 
 //error code
 #define ERR_RTP_SUCCESS            0

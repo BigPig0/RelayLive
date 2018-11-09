@@ -1,6 +1,6 @@
 #pragma once
 #include "commonDefine.h"
-#include "live_obj.h"
+#include "liveObj.h"
 #include "NetStreamMaker.h"
 
 /** 直播时用的fmp4格式

@@ -5,23 +5,16 @@
 
 #pragma once
 
-#include "targetver.h"
-
 #include <stdio.h>
 #include <tchar.h>
-
-
-
-// TODO: 在此处引用程序需要的其他头文件  
-#define WIN32_LEAN_AND_MEAN
-#include "common.h"
-#include "Endian.h"
-
 #include <stdlib.h>   
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <thread>
-#include <windows.h>
+
+
+// TODO: 在此处引用程序需要的其他头文件  
+#include "common.h"
+#include "Endian.h"
 
 using namespace std;
