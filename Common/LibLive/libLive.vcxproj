@@ -22,6 +22,7 @@
     <ClCompile Include="Src\ES.cpp" />
     <ClCompile Include="Src\Flv.cpp" />
     <ClCompile Include="Src\H264.cpp" />
+    <ClCompile Include="Src\MP4.cpp" />
     <ClCompile Include="Src\Pes.cpp" />
     <ClCompile Include="Src\Ps.cpp" />
     <ClCompile Include="Src\Rtp.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="Include\ES.h" />
     <ClInclude Include="Include\Flv.h" />
     <ClInclude Include="Include\H264.h" />
+    <ClInclude Include="Include\MP4.h" />
     <ClInclude Include="Include\Pes.h" />
     <ClInclude Include="Include\Ps.h" />
     <ClInclude Include="Include\Rtp.h" />

@@ -36,6 +36,9 @@
     <ClCompile Include="Src\ES.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Src\MP4.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Include\ES.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MP4.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

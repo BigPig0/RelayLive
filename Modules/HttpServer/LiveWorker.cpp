@@ -6,18 +6,19 @@
 #include "libLive.h"
 #include "H264.h"
 #include "Flv.h"
+#include "MP4.h"
 
 namespace HttpWsServer
 {
     static map<string,CLiveWorker*>  m_workerMap;
     static CriticalSection           m_cs;
     static FLV_TAG_BUFF              m_flvHeader = {nullptr,0,callback_flv_header}; // flv头，对所有视频都是一样的
-    
+
     static string m_strRtpIP;            //< RTP服务IP
     static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
     static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-    
+
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
     static bool _do_port = false;
@@ -28,10 +29,10 @@ namespace HttpWsServer
         MutexLock lock(&m_csRTP);
         if(!_do_port) {
             _do_port = true;
-			m_strRtpIP           = Settings::getValue("RtpClient","IP");                    //< RTP服务IP
-			m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
-			m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-			m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
+            m_strRtpIP           = Settings::getValue("RtpClient","IP");                    //< RTP服务IP
+            m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
+            m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
+            m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
 
             Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
                 , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
@@ -59,17 +60,9 @@ namespace HttpWsServer
         m_vecRtpPort.push_back(nPort);
     }
 
-    static void destroy_flvtag(void *_msg)
+    static void destroy_ring_node(void *_msg)
     {
-        FLV_TAG_BUFF *msg = (FLV_TAG_BUFF*)_msg;
-        free(msg->pBuff);
-        msg->pBuff = NULL;
-        msg->nLen = 0;
-    }
-
-    static void destroy_h264nalu(void *_msg)
-    {
-        H264_NALU_BUFF *msg = (H264_NALU_BUFF*)_msg;
+        BASIC_BUFF *msg = (BASIC_BUFF*)_msg;
         free(msg->pBuff);
         msg->pBuff = NULL;
         msg->nLen = 0;
@@ -79,14 +72,16 @@ namespace HttpWsServer
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort)
         : m_strCode(strCode)
-		, m_nPort(rtpPort)
-        , m_type(0)
+        , m_nPort(rtpPort)
+        , m_nType(0)
         , m_pLive(nullptr)
     {
-        memset(&m_pScriptTag, 0, sizeof(m_pScriptTag));
-        memset(&m_pDecodeConfig, 0, sizeof(m_pDecodeConfig));
-        m_flvRing = lws_ring_create(sizeof(FLV_TAG_BUFF), 100, destroy_flvtag);
-        m_h264Ring = lws_ring_create(sizeof(H264_NALU_BUFF), 100, destroy_h264nalu);
+        memset(&m_stFlvScript, 0, sizeof(m_stFlvScript));
+        memset(&m_stFlvDecCof, 0, sizeof(m_stFlvDecCof));
+        memset(&m_stMP4Head,   0, sizeof(m_stMP4Head));
+        m_pFlvRing  = lws_ring_create(sizeof(FLV_TAG_BUFF),  100, destroy_ring_node);
+        m_pH264Ring = lws_ring_create(sizeof(H264_NALU_BUFF),100, destroy_ring_node);
+        m_pMP4Ring  = lws_ring_create(sizeof(MP4_FRAG_BUFF), 100, destroy_ring_node);
 
         m_pLive = IlibLive::CreateObj();
         m_pLive->SetLocalAddr(m_strRtpIP, m_nPort);
@@ -97,7 +92,7 @@ namespace HttpWsServer
 
     CLiveWorker::~CLiveWorker()
     {
-        if(m_type == 0) {
+        if(m_nType == 0) {
             if (!SipInstance::StopPlay(m_strCode)) {
                 Log::error("stop play failed");
             }
@@ -106,10 +101,12 @@ namespace HttpWsServer
                 Log::error("stop play failed");
             }
         }
-        lws_ring_destroy(m_flvRing);
-        lws_ring_destroy(m_h264Ring);
-        if(m_pScriptTag.pBuff) free(m_pScriptTag.pBuff);
-        if(m_pDecodeConfig.pBuff) free(m_pDecodeConfig.pBuff);
+        lws_ring_destroy(m_pFlvRing);
+        lws_ring_destroy(m_pH264Ring);
+        lws_ring_destroy(m_pMP4Ring);
+        if(m_stFlvScript.pBuff) free(m_stFlvScript.pBuff);
+        if(m_stFlvDecCof.pBuff) free(m_stFlvDecCof.pBuff);
+        if(m_stMP4Head.pBuff) free(m_stMP4Head.pBuff);
         SAFE_DELETE(m_pLive);
         GiveBackRtpPort(m_nPort);
     }
@@ -118,14 +115,14 @@ namespace HttpWsServer
     {
         if(pss->media_type == media_flv) {
             m_bFlv = true;
-            pss->pss_next = m_flvPssList;
-            m_flvPssList = pss;
-            pss->tail = lws_ring_get_oldest_tail(m_flvRing);
+            pss->pss_next = m_pFlvPssList;
+            m_pFlvPssList = pss;
+            pss->tail = lws_ring_get_oldest_tail(m_pFlvRing);
         } else if (pss->media_type == media_h264) {
             m_bH264 = true;
-            pss->pss_next = m_h264PssList;
-            m_h264PssList = pss;
-            pss->tail = lws_ring_get_oldest_tail(m_h264Ring);
+            pss->pss_next = m_pH264PssList;
+            m_pH264PssList = pss;
+            pss->tail = lws_ring_get_oldest_tail(m_pH264Ring);
         } else {
             return false;
         }
@@ -135,17 +132,17 @@ namespace HttpWsServer
     bool CLiveWorker::DelConnect(pss_http_ws_live* pss)
     {
         if(pss->media_type == media_flv) {
-            lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_flvPssList);
-            if(nullptr == m_flvPssList) m_bFlv = false;
+            lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pFlvPssList);
+            if(nullptr == m_pFlvPssList) m_bFlv = false;
         } else if(pss->media_type == media_h264){
-            lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_h264PssList);
-            if (nullptr == m_h264PssList) m_bH264 = false;
+            lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pH264PssList);
+            if (nullptr == m_pH264PssList) m_bH264 = false;
         }
 
-        if(m_flvPssList == NULL && m_h264PssList == NULL) {
+        if(m_pFlvPssList == NULL && m_pH264PssList == NULL) {
             std::thread t([&](){
                 Sleep(20000);
-                if (m_flvPssList == NULL && m_h264PssList == NULL) {
+                if (m_pFlvPssList == NULL && m_pH264PssList == NULL) {
                     DelLiveWorker(m_strCode);
                 }
             });
@@ -157,43 +154,43 @@ namespace HttpWsServer
     void CLiveWorker::push_flv_frame(int tag_type, char* pBuff, int nLen)
     {
         flv_tag_type eType = (flv_tag_type)tag_type;
-		if (eType == callback_script_tag) {
-			char* pSaveBuff = (char*)malloc(nLen);
-			memcpy(pSaveBuff, pBuff, nLen);
-            m_pScriptTag.pBuff = pSaveBuff;
-            m_pScriptTag.nLen = nLen;
-            m_pScriptTag.eType = callback_script_tag;
+        if (eType == callback_script_tag) {
+            char* pSaveBuff = (char*)malloc(nLen);
+            memcpy(pSaveBuff, pBuff, nLen);
+            m_stFlvScript.pBuff = pSaveBuff;
+            m_stFlvScript.nLen = nLen;
+            m_stFlvScript.eType = callback_script_tag;
             Log::debug("send script tag ok");
-		} else if (eType == callback_video_spspps_tag) {
-			char* pSaveBuff = (char*)malloc(nLen);
-			memcpy(pSaveBuff, pBuff, nLen);
-            m_pDecodeConfig.pBuff = pSaveBuff;
-            m_pDecodeConfig.nLen = nLen;
-            m_pDecodeConfig.eType = callback_video_spspps_tag;
+        } else if (eType == callback_video_spspps_tag) {
+            char* pSaveBuff = (char*)malloc(nLen);
+            memcpy(pSaveBuff, pBuff, nLen);
+            m_stFlvDecCof.pBuff = pSaveBuff;
+            m_stFlvDecCof.nLen = nLen;
+            m_stFlvDecCof.eType = callback_video_spspps_tag;
             Log::debug("AVCDecoderConfigurationRecord ok");
         } else {
             //内存数据保存至ring-buff
-            int n = (int)lws_ring_get_count_free_elements(m_flvRing);
+            int n = (int)lws_ring_get_count_free_elements(m_pFlvRing);
             if (!n) {
                 cull_lagging_clients(media_flv);
-                n = (int)lws_ring_get_count_free_elements(m_flvRing);
+                n = (int)lws_ring_get_count_free_elements(m_pFlvRing);
             }
             Log::debug("LWS_CALLBACK_RECEIVE: free space %d\n", n);
             if (!n)
                 return;
 
-			// 将数据保存在ring buff
-			char* pSaveBuff = (char*)malloc(nLen);
-			memcpy(pSaveBuff, pBuff, nLen);
+            // 将数据保存在ring buff
+            char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
+            memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
             FLV_TAG_BUFF newTag = {pSaveBuff, nLen, eType};
-            if (!lws_ring_insert(m_flvRing, &newTag, 1)) {
-                destroy_flvtag(&newTag);
+            if (!lws_ring_insert(m_pFlvRing, &newTag, 1)) {
+                destroy_ring_node(&newTag);
                 Log::error("dropping!");
                 return;
             }
 
             //向所有播放链接发送数据
-            lws_start_foreach_llp(pss_http_ws_live **, ppss, m_flvPssList) {
+            lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
                 lws_callback_on_writable((*ppss)->wsi);
             } lws_end_foreach_llp(ppss, pss_next);
         }    
@@ -201,34 +198,69 @@ namespace HttpWsServer
 
     void CLiveWorker::push_h264_stream(NalType eType, char* pBuff, int nLen)
     {
-        int n = (int)lws_ring_get_count_free_elements(m_h264Ring);
+        int n = (int)lws_ring_get_count_free_elements(m_pH264Ring);
         if (!n) {
             cull_lagging_clients(media_h264);
-            n = (int)lws_ring_get_count_free_elements(m_h264Ring);
+            n = (int)lws_ring_get_count_free_elements(m_pH264Ring);
         }
         Log::debug("h264 ring free space %d\n", n);
         if (!n)
             return;
 
-		// 将数据保存在ring buff
-		char* pSaveBuff = (char*)malloc(nLen);
-		memcpy(pSaveBuff, pBuff, nLen);
+        // 将数据保存在ring buff
+        char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
+        memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
         H264_NALU_BUFF newTag = {pSaveBuff, nLen, eType};
-        if (!lws_ring_insert(m_h264Ring, &newTag, 1)) {
-            destroy_h264nalu(&newTag);
+        if (!lws_ring_insert(m_pH264Ring, &newTag, 1)) {
+            destroy_ring_node(&newTag);
             Log::error("dropping!");
             return;
         }
 
         //向所有播放链接发送数据
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_h264PssList) {
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
             lws_callback_on_writable((*ppss)->wsi);
         } lws_end_foreach_llp(ppss, pss_next);
     }
 
-    void CLiveWorker::push_ts_stream(char* pBuff, int nBuffSize)
+    void CLiveWorker::push_ts_stream(char* pBuff, int nLen)
     {
+    }
 
+    void CLiveWorker::push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nLen)
+    {
+        if(eType == MP4_HEAD) {
+            char* pSaveBuff = (char*)malloc(nLen);
+            memcpy(pSaveBuff, pBuff, nLen);
+            m_stMP4Head.pBuff = pSaveBuff;
+            m_stMP4Head.nLen = nLen;
+            m_stMP4Head.eType = MP4_HEAD;
+            Log::debug("MP4 Head ok");
+        } else {
+            int n = (int)lws_ring_get_count_free_elements(m_pMP4Ring);
+            if (!n) {
+                cull_lagging_clients(media_mp4);
+                n = (int)lws_ring_get_count_free_elements(m_pMP4Ring);
+            }
+            Log::debug("mp4 ring free space %d\n", n);
+            if (!n)
+                return;
+
+            // 将数据保存在ring buff
+            char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
+            memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
+            MP4_FRAG_BUFF newTag = {pSaveBuff, nLen, eType};
+            if (!lws_ring_insert(m_pMP4Ring, &newTag, 1)) {
+                destroy_ring_node(&newTag);
+                Log::error("dropping!");
+                return;
+            }
+
+            //向所有播放链接发送数据
+            lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
+                lws_callback_on_writable((*ppss)->wsi);
+            } lws_end_foreach_llp(ppss, pss_next);
+        }
     }
 
     void CLiveWorker::stop()
@@ -241,21 +273,21 @@ namespace HttpWsServer
         FLV_TAG_BUFF ret;
         memset(&ret,0,sizeof(ret));
 
-        if (m_pScriptTag.pBuff == nullptr || m_pDecodeConfig.pBuff == nullptr)
+        if (m_stFlvScript.pBuff == nullptr || m_stFlvDecCof.pBuff == nullptr)
             return ret;
         if (m_flvHeader.pBuff == nullptr) {
             IlibLive::MakeFlvHeader(&m_flvHeader.pBuff,&m_flvHeader.nLen);
         }
 
-        ret.nLen = m_flvHeader.nLen + m_pScriptTag.nLen + m_pDecodeConfig.nLen;
+        ret.nLen = m_flvHeader.nLen + m_stFlvScript.nLen + m_stFlvDecCof.nLen;
         ret.pBuff = (char *)malloc(ret.nLen);
 
         int nPos = 0;
-        memcpy(ret.pBuff + nPos, m_flvHeader.pBuff, m_flvHeader.nLen);         //flv header
+        memcpy(ret.pBuff + nPos, m_flvHeader.pBuff, m_flvHeader.nLen);     //flv header
         nPos += m_flvHeader.nLen;
-        memcpy(ret.pBuff + nPos, m_pScriptTag.pBuff, m_pScriptTag.nLen);       //flv script
-        nPos += m_pScriptTag.nLen;
-        memcpy(ret.pBuff + nPos, m_pDecodeConfig.pBuff, m_pDecodeConfig.nLen); //flv decode config
+        memcpy(ret.pBuff + nPos, m_stFlvScript.pBuff, m_stFlvScript.nLen); //flv script
+        nPos += m_stFlvScript.nLen;
+        memcpy(ret.pBuff + nPos, m_stFlvDecCof.pBuff, m_stFlvDecCof.nLen); //flv decode config
 
         return ret;
     }
@@ -263,7 +295,7 @@ namespace HttpWsServer
     FLV_TAG_BUFF CLiveWorker::GetFlvVideo(uint32_t *tail)
     {
         FLV_TAG_BUFF ret = {nullptr,0,callback_flv_header};
-        FLV_TAG_BUFF* tag = (FLV_TAG_BUFF*)lws_ring_get_element(m_flvRing, tail);
+        FLV_TAG_BUFF* tag = (FLV_TAG_BUFF*)lws_ring_get_element(m_pFlvRing, tail);
         if(tag) ret = *tag;
 
         return ret;
@@ -272,7 +304,21 @@ namespace HttpWsServer
     H264_NALU_BUFF CLiveWorker::GetH264Video(uint32_t *tail)
     {
         H264_NALU_BUFF ret = {nullptr,0,unknow};
-        H264_NALU_BUFF* tag = (H264_NALU_BUFF*)lws_ring_get_element(m_h264Ring, tail);
+        H264_NALU_BUFF* tag = (H264_NALU_BUFF*)lws_ring_get_element(m_pH264Ring, tail);
+        if(tag) ret = *tag;
+
+        return ret;
+    }
+
+    MP4_FRAG_BUFF CLiveWorker::GetMp4Header()
+    {
+        return m_stMP4Head;
+    }
+
+    MP4_FRAG_BUFF CLiveWorker::GetMp4Video(uint32_t *tail)
+    {
+        MP4_FRAG_BUFF ret = {nullptr,0,MP4_HEAD};
+        MP4_FRAG_BUFF* tag = (MP4_FRAG_BUFF*)lws_ring_get_element(m_pMP4Ring, tail);
         if(tag) ret = *tag;
 
         return ret;
@@ -283,11 +329,11 @@ namespace HttpWsServer
         struct lws_ring *ring;
         pss_http_ws_live* pssList;
         if(pss->media_type == media_flv) {
-            ring = m_flvRing;
-            pssList = m_flvPssList;
+            ring = m_pFlvRing;
+            pssList = m_pFlvPssList;
         } else if(pss->media_type == media_h264){
-            ring = m_h264Ring;
-            pssList = m_h264PssList;
+            ring = m_pH264Ring;
+            pssList = m_pH264PssList;
         } else {
             return;
         }
@@ -320,11 +366,11 @@ namespace HttpWsServer
         struct lws_ring *ring;
         pss_http_ws_live* pssList;
         if(type == media_flv) {
-            ring = m_flvRing;
-            pssList = m_flvPssList;
+            ring = m_pFlvRing;
+            pssList = m_pFlvPssList;
         } else {
-            ring = m_h264Ring;
-            pssList = m_h264PssList;
+            ring = m_pH264Ring;
+            pssList = m_pH264PssList;
         }
 
         uint32_t oldest_tail = lws_ring_get_oldest_tail(ring);
@@ -362,11 +408,11 @@ namespace HttpWsServer
     CLiveWorker* CreatLiveWorker(string strCode)
     {
         Log::debug("CreatFlvBuffer begin");
-		int rtpPort = GetRtpPort();
-		if(rtpPort < 0) {
-			Log::error("play failed %s, no rtp port",strCode.c_str());
-			return nullptr;
-		}
+        int rtpPort = GetRtpPort();
+        if(rtpPort < 0) {
+            Log::error("play failed %s, no rtp port",strCode.c_str());
+            return nullptr;
+        }
 
         CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
@@ -378,8 +424,8 @@ namespace HttpWsServer
         }
         Log::debug("RealPlay ok: %s",strCode.c_str());
 
-            MutexLock lock(&m_cs);
-            m_workerMap.insert(make_pair(strCode, pNew));
+        MutexLock lock(&m_cs);
+        m_workerMap.insert(make_pair(strCode, pNew));
 
         return pNew;
     }

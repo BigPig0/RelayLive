@@ -11,6 +11,7 @@
 
 enum NalType;
 enum flv_tag_type;
+enum MP4_FRAG_TYPE;
 
 /**
  * 数据回调处理接口
@@ -24,7 +25,7 @@ struct IlibLiveCb
     virtual void push_flv_frame(int tag_type, char* frames, int frames_size) = 0;
 
     /**
-     * TS数据处理接口
+     * TS数据处理接口(HLS)
      */
     virtual void push_ts_stream(char* pBuff, int nBuffSize) = 0;
 
@@ -32,6 +33,11 @@ struct IlibLiveCb
      * h264裸流处理接口
      */
     virtual void push_h264_stream(NalType eType, char* pBuff, int nBuffSize) = 0;
+
+    /**
+     * mp4数据处理接口
+     */
+    virtual void push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize) = 0;
 
     /**
      * rtsp接收端结束

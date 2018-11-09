@@ -21,7 +21,7 @@ public:
      * @param size[in] 数据大小
      * @return 成功true，失败false
      */
-    bool append_data(char* data, unsigned size );
+    bool append_data(char* data, uint32_t size );
 
     /**
      * 向数据流中追加一个字符串(以0结尾)
@@ -36,6 +36,7 @@ public:
     void append_be24(uint32_t val);
     void append_be32(uint32_t val);
     void append_be64(uint64_t val);
+    void append_bytes(uint8_t val, uint32_t num);
     void append_double(double val);
 
     /**

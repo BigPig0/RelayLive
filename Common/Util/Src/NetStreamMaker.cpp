@@ -18,7 +18,7 @@ CNetStreamMaker::~CNetStreamMaker()
     }
 }
 
-bool CNetStreamMaker::append_data(char* data, unsigned size )
+bool CNetStreamMaker::append_data(char* data, uint32_t size )
 {
     unsigned ns = m_nCurrent + size;
 
@@ -88,6 +88,14 @@ void CNetStreamMaker::append_be64(uint64_t val)
 {
     append_be32( val >> 32 );
     append_be32( val );
+}
+
+void CNetStreamMaker::append_bytes(uint8_t val, uint32_t num)
+{
+    for (int i=0; i<num; i++)
+    {
+        append_byte(val);
+    }
 }
 
 void CNetStreamMaker::append_double(double val)
