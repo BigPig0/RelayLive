@@ -47,7 +47,8 @@ struct IlibLiveCb
     bool        m_bFlv;
     bool        m_bTs;
     bool        m_bH264;
-    IlibLiveCb():m_bFlv(false),m_bTs(false),m_bH264(false){}
+    bool        m_bMp4;
+    IlibLiveCb():m_bFlv(false),m_bTs(false),m_bH264(false),m_bMp4(false){}
 };
 
 struct RTSP_API IlibLive

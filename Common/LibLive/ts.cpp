@@ -1,18 +1,18 @@
 #include "stdafx.h"
-#include "TS.h"
+#include "ts.h"
 #include "crc.h"
-#include "H264.h"
+#include "h264.h"
 
 const uint8_t nTsContentLength = TS_PACKET_SIZE - TS_PACKET_HEADER;
 
-CTS::CTS(void)
-    : m_pTsBuff(nullptr)
+CTS::CTS(CLiveObj* pObj)
+    : m_pObj(pObj)
+    , m_pTsBuff(nullptr)
     , m_nTsBuffLen(0)
     , m_nTsDataLen(0)
     , m_nBeginPts(0)
     , m_nNalType(0)
     , m_nVideoPts(0)
-    , m_funCallBack(nullptr)
 {
 }
 
@@ -25,7 +25,6 @@ int CTS::InputBuffer(char* pBuf, long nLen)
 {
     //Log::debug("ts begin");
     CHECK_POINT(pBuf);
-    CHECK_POINT(m_funCallBack);
 
     uint8_t  nNalType  = m_nNalType;
     uint64_t nVideoPts = m_nVideoPts;
@@ -54,7 +53,7 @@ int CTS::InputBuffer(char* pBuf, long nLen)
         if (bEnough && (nNalType == idr_Nal || nNalType == sps_Nal || nNalType == pps_Nal))
         {
             Log::debug("ts callback");
-            m_funCallBack(m_pTsBuff, m_nTsDataLen);
+            m_pObj->TsCb(m_pTsBuff, m_nTsDataLen);
             m_pTsBuff = nullptr;
             m_nTsBuffLen = m_nTsDataLen = 0;
             m_nBeginPts = nVideoPts;

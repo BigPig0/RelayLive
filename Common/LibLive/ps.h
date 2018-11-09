@@ -3,7 +3,7 @@
  * 输出PES包
  */
 #pragma once
-#include "LiveInstance.h"
+#include "live_obj.h"
 
 #pragma pack(1)
 //ps header
@@ -124,7 +124,7 @@ bool inline is_psm_header(psm_header_t* psm)
 class CPs : public IAnalyzer
 {
 public:
-    CPs(CLiveInstance* pObj);
+    CPs(CLiveObj* pObj);
     ~CPs(void);
 
     /**
@@ -154,6 +154,6 @@ private:
     int ParsePES(char* pBuf, long nLen);
 
 private:
-    CLiveInstance*   m_pObj;                  // 回调处理对象
+    CLiveObj*   m_pObj;                  // 回调处理对象
 };
 

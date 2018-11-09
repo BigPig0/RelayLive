@@ -3,7 +3,7 @@
  * 输出PS包
  */
 #pragma once
-#include "LiveInstance.h"
+#include "live_obj.h"
 
 //error code
 #define ERR_RTP_SUCCESS            0
@@ -129,7 +129,7 @@ typedef list<rtp_list_node*> ListRtpFrame;
 class CRtp : public IAnalyzer
 {
 public:
-    CRtp(CLiveInstance* pObj);
+    CRtp(CLiveObj* pObj);
     ~CRtp(void);
 
     /**
@@ -192,6 +192,6 @@ private:
     bool              m_bBegin;                // 默认false，取出第一个节点改成true
 
 
-    CLiveInstance*   m_pObj;                  // 回调处理对象
+    CLiveObj*   m_pObj;                  // 回调处理对象
 };
 

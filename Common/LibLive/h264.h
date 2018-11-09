@@ -83,7 +83,7 @@ private:
 private:
     char*       m_pNaluBuff;    //< 数据内容
     uint32_t    m_nBuffLen;     //< 数据长度
-    char*       m_pDataBuff;    //< 去除掉001或0001的内容
+    char*       m_pDataBuff;    //< 去除掉001或0001后的内容
     uint32_t    m_nDataLen;     //< 内容数据的长度
     NalType     m_eNaluType;    //< 类型
 

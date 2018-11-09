@@ -1,5 +1,5 @@
 #pragma once
-#include "LiveInstance.h"
+#include "live_obj.h"
 
 #define TS_PACKET_HEADER               4
 #define TS_PACKET_SIZE                 188
@@ -174,7 +174,7 @@ typedef struct ts_adaptation_field_pcr
 class CTS : public IAnalyzer
 {
 public:
-    CTS(void);
+    CTS(CLiveObj* pObj);
     ~CTS(void);
 
     /**
@@ -183,11 +183,6 @@ public:
      * @param nLen[in] PES数据长度
      */
     int InputBuffer(char* pBuf, long nLen);
-
-    /**
-     * 设置回调方法
-     */
-    void SetCallBack(const function<void(char*,uint32_t)> cb){m_funCallBack = cb;};
 
     /**
      * 设置下一次输入pes的参数信息
@@ -252,6 +247,7 @@ private:
 
     uint8_t        m_nNalType;      // 添加进来的nalu的类型
     uint64_t       m_nVideoPts;     // 添加进来的pes的时间基准
-    function<void(char*,uint32_t)>  m_funCallBack;     // 回调方法
+    
+    CLiveObj*      m_pObj;
 };
 

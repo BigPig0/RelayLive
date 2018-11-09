@@ -22,11 +22,11 @@ struct IAnalyzer
  * RTSP功能模块接口
  * 使用前主程序必须先初始化<指UdpSocket必须初始化才能使用>
  */
-class CLiveInstance : public IlibLive
+class CLiveObj : public IlibLive
 {
 public:
-    CLiveInstance(void);
-    ~CLiveInstance(void);
+    CLiveObj(void);
+    ~CLiveObj(void);
 
     /**
      * 设置本地监听的IP和端口
@@ -86,6 +86,18 @@ public:
      */
     void ESParseCb(char* pBuff, long nLen, uint8_t nNalType);
 
+    /** FLV合成回调 */
+    void FlvCb(flv_tag_type eType, char* pBuff, int nBuffSize);
+
+    /** MP4合成回调 */
+    void Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize);
+
+    /** TS合成回调 */
+    void TsCb(char* pBuff, int nBuffSize);
+
+    /** H264合成回调 */
+    void H264Cb(char* pBuff, int nBuffSize);
+
     /**
      * 设置处理数据回调的对象
      * @param[in] pHandle
@@ -112,8 +124,9 @@ private:
     IAnalyzer*  m_pEsParser;        // ES包解析类
     IAnalyzer*  m_pTs;              // TS组包类
     IAnalyzer*  m_pFlv;             // FLV组包类
+    IAnalyzer*  m_pMp4;             // MP4组包类
 
-    IlibLiveCb* m_pCallBack;  // 处理h264数据的对象
+    IlibLiveCb* m_pCallBack;        // 回调对象
 
     char*       m_pRtpBuff;         // rtp数据指针
     uint32_t    m_nRtpLen;          // rtp数据长度

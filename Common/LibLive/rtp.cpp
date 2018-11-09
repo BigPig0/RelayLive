@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "Rtp.h"
-#include "Ps.h"
+#include "rtp.h"
+#include "ps.h"
 
 
-CRtp::CRtp(CLiveInstance* pObj)
+CRtp::CRtp(CLiveObj* pObj)
     : m_frame_buf(nullptr)
     , m_nCatchPacketNum(5000)
     , m_nDoneSeq(0)

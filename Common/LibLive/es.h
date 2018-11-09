@@ -3,8 +3,8 @@
  * 输出H264片(帧)
  */
 #pragma once
-#include "LiveInstance.h"
-#include "H264.h"
+#include "live_obj.h"
+#include "h264.h"
 
 
 /**
@@ -13,7 +13,7 @@
 class CES : public IAnalyzer
 {
 public:
-    CES(CLiveInstance* pObj);
+    CES(CLiveObj* pObj);
     ~CES(void);
 
     /**
@@ -25,6 +25,6 @@ public:
     int InputBuffer(char* pBuf, long nLen);
 
 private:
-    CLiveInstance*   m_pObj;                  // 回调处理对象
+    CLiveObj*   m_pObj;                  // 回调处理对象
 };
 

@@ -9,72 +9,72 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\stdafx.cpp">
+    <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\TS.cpp">
+    <ClCompile Include="live_obj.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Flv.cpp">
+    <ClCompile Include="es.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\H264.cpp">
+    <ClCompile Include="flv.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\LiveInstance.cpp">
+    <ClCompile Include="h264.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Rtp.cpp">
+    <ClCompile Include="mp4.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Ps.cpp">
+    <ClCompile Include="pes.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Pes.cpp">
+    <ClCompile Include="ps.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\ES.cpp">
+    <ClCompile Include="rtp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Src\MP4.cpp">
+    <ClCompile Include="ts.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\stdafx.h">
+    <ClInclude Include="stdafx.h">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\targetver.h">
+    <ClInclude Include="targetver.h">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\TS.h">
+    <ClInclude Include="libLive.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\H264.h">
+    <ClInclude Include="live_obj.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Flv.h">
+    <ClInclude Include="es.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\libLive.h">
+    <ClInclude Include="flv.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\LiveInstance.h">
+    <ClInclude Include="h264.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Rtp.h">
+    <ClInclude Include="mp4.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Ps.h">
+    <ClInclude Include="pes.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Pes.h">
+    <ClInclude Include="ps.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\ES.h">
+    <ClInclude Include="rtp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Include\MP4.h">
+    <ClInclude Include="ts.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

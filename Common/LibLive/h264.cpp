@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "H264.h"
+#include "h264.h"
 
 CH264::CH264()
     : m_pNaluBuff(nullptr)

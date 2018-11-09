@@ -1,5 +1,5 @@
 #pragma once
-#include "LiveInstance.h"
+#include "live_obj.h"
 #include "NetStreamMaker.h"
 
 enum flv_tag_type
@@ -11,7 +11,6 @@ enum flv_tag_type
     callback_video_tag
 };
 
-typedef function<void(flv_tag_type,char*,uint32_t)> cbFunc;
 
 class flv_buffer : public CNetStreamMaker
 {
@@ -23,12 +22,10 @@ public:
 class CFlv : public IAnalyzer
 {
 public:
-    CFlv(void);
+    CFlv(CLiveObj* pObj);
     ~CFlv(void);
 
     int InputBuffer(char* pBuf, long nLen);
-
-    void SetCallBack(cbFunc cb);
 
     /**
      * 生成flv文件头信息并上抛
@@ -60,7 +57,7 @@ private:
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
 
-    cbFunc             m_funCallBack;     // 回调方法
+    CLiveObj*          m_pObj;
 
     // SPS解析出的信息
     uint32_t           m_nWidth;          // 视频宽

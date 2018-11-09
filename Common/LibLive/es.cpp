@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "ES.h"
+#include "es.h"
 
 
-CES::CES(CLiveInstance* pObj)
+CES::CES(CLiveObj* pObj)
     : m_pObj(pObj)
 {
 }

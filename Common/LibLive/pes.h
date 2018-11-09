@@ -3,7 +3,7 @@
  * 输出ES包
  */
 #pragma once
-#include "LiveInstance.h"
+#include "live_obj.h"
 
 /** PES包类型 */
 enum PESType
@@ -72,7 +72,7 @@ bool inline is_pes_header(pes_header_t* pes)
 class CPes : public IAnalyzer
 {
 public:
-    CPes(CLiveInstance* pObj);
+    CPes(CLiveObj* pObj);
     ~CPes(void);
 
     /**
@@ -84,6 +84,6 @@ public:
     int InputBuffer(char* pBuf, long nLen);
 
 private:
-    CLiveInstance*   m_pObj;                  // 回调处理对象
+    CLiveObj*   m_pObj;                  // 回调处理对象
 };
 

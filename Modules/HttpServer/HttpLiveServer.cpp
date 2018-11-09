@@ -4,9 +4,9 @@
 #include "LiveWorker.h"
 // 其他模块引用
 #include "SipInstance.h"
-#include "H264.h"
-#include "Flv.h"
-#include "MP4.h"
+#include "h264.h"
+#include "flv.h"
+#include "mp4.h"
 
 namespace HttpWsServer
 {

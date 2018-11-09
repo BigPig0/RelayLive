@@ -19,33 +19,33 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\ES.cpp" />
-    <ClCompile Include="Src\Flv.cpp" />
-    <ClCompile Include="Src\H264.cpp" />
-    <ClCompile Include="Src\MP4.cpp" />
-    <ClCompile Include="Src\Pes.cpp" />
-    <ClCompile Include="Src\Ps.cpp" />
-    <ClCompile Include="Src\Rtp.cpp" />
-    <ClCompile Include="Src\LiveInstance.cpp" />
-    <ClCompile Include="src\stdafx.cpp">
+    <ClCompile Include="es.cpp" />
+    <ClCompile Include="flv.cpp" />
+    <ClCompile Include="h264.cpp" />
+    <ClCompile Include="mp4.cpp" />
+    <ClCompile Include="pes.cpp" />
+    <ClCompile Include="ps.cpp" />
+    <ClCompile Include="rtp.cpp" />
+    <ClCompile Include="live_obj.cpp" />
+    <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Src\TS.cpp" />
+    <ClCompile Include="ts.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\ES.h" />
-    <ClInclude Include="Include\Flv.h" />
-    <ClInclude Include="Include\H264.h" />
-    <ClInclude Include="Include\MP4.h" />
-    <ClInclude Include="Include\Pes.h" />
-    <ClInclude Include="Include\Ps.h" />
-    <ClInclude Include="Include\Rtp.h" />
-    <ClInclude Include="Include\LiveInstance.h" />
-    <ClInclude Include="Include\libLive.h" />
-    <ClInclude Include="Include\TS.h" />
-    <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\targetver.h" />
+    <ClInclude Include="es.h" />
+    <ClInclude Include="flv.h" />
+    <ClInclude Include="h264.h" />
+    <ClInclude Include="mp4.h" />
+    <ClInclude Include="pes.h" />
+    <ClInclude Include="ps.h" />
+    <ClInclude Include="rtp.h" />
+    <ClInclude Include="live_obj.h" />
+    <ClInclude Include="libLive.h" />
+    <ClInclude Include="ts.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Util\Util.vcxproj">
@@ -130,7 +130,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;$(SolutionDir)../common/Util/include;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -168,7 +168,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;$(SolutionDir)../common/Util/include;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

@@ -1,16 +1,17 @@
 #include "stdafx.h"
 #include "uv.h"
-#include "LiveInstance.h"
-#include "Rtp.h"
-#include "Ps.h"
-#include "Pes.h"
-#include "ES.h"
-#include "TS.h"
-#include "Flv.h"
+#include "live_obj.h"
+#include "rtp.h"
+#include "ps.h"
+#include "pes.h"
+#include "es.h"
+#include "ts.h"
+#include "flv.h"
+#include "mp4.h"
 
 IlibLive* IlibLive::CreateObj()
 {
-    return new CLiveInstance;
+    return new CLiveObj;
 }
 
 bool IlibLive::MakeFlvHeader(char** ppBuff, int* pLen)
@@ -32,17 +33,17 @@ static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, con
 	if(nread == 0)
 		return;
 
-    CLiveInstance* pLive = (CLiveInstance*)handle->data;
+    CLiveObj* pLive = (CLiveObj*)handle->data;
     pLive->RtpRecv(buf->base, nread);
 }
 
 static void timer_cb(uv_timer_t* handle)
 {
-    CLiveInstance* pLive = (CLiveInstance*)handle->data;
+    CLiveObj* pLive = (CLiveObj*)handle->data;
     pLive->RtpOverTime();
 }
 
-CLiveInstance::CLiveInstance(void)
+CLiveObj::CLiveObj(void)
     : m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
@@ -68,21 +69,12 @@ CLiveInstance::CLiveInstance(void)
     m_pPsParser      = new CPs(this);
     m_pPesParser     = new CPes(this);
     m_pEsParser      = new CES(this);
-    m_pTs            = new CTS;
-    m_pFlv           = new CFlv;
-
-    // 设置回调
-    CFlv* flv = (CFlv*)m_pFlv;
-    flv->SetCallBack([&](flv_tag_type tagType,char* pFlvTag, uint32_t nTagLen){
-        m_pCallBack->push_flv_frame(tagType, pFlvTag, nTagLen);
-    });
-    CTS* ts = (CTS*)m_pTs;
-    ts->SetCallBack([&](char* pTsBuff, uint32_t nTsLen){
-        m_pCallBack->push_ts_stream(pTsBuff, nTsLen);
-    });
+    m_pTs            = new CTS(this);
+    m_pFlv           = new CFlv(this);
+    m_pMp4           = new CMP4(this);
 }
 
-CLiveInstance::~CLiveInstance(void)
+CLiveObj::~CLiveObj(void)
 {
     m_pCallBack = nullptr;
     int ret = uv_udp_recv_stop(&m_uvRtpSocket);
@@ -103,13 +95,13 @@ CLiveInstance::~CLiveInstance(void)
     Sleep(2000);
 }
 
-void CLiveInstance::SetCatchPacketNum(int nPacketNum)
+void CLiveObj::SetCatchPacketNum(int nPacketNum)
 {
     CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
     rtpAnalyzer->SetCatchFrameNum(nPacketNum);
 }
 
-void CLiveInstance::StartListen()
+void CLiveObj::StartListen()
 {
     // 开启udp接收
     int ret = uv_udp_init(uv_default_loop(), &m_uvRtpSocket);
@@ -155,7 +147,7 @@ void CLiveInstance::StartListen()
     }
 }
 
-void CLiveInstance::RtpRecv(char* pBuff, long nLen)
+void CLiveObj::RtpRecv(char* pBuff, long nLen)
 {
     int ret = uv_timer_again(&m_uvTimeOver);
     if(ret < 0) {
@@ -166,7 +158,7 @@ void CLiveInstance::RtpRecv(char* pBuff, long nLen)
     rtpAnalyzer->InputBuffer(pBuff, nLen);
 }
 
-void CLiveInstance::RtpOverTime()
+void CLiveObj::RtpOverTime()
 {
     Log::debug("OverTimeThread thread ID : %d", GetCurrentThreadId());
     time_t nowTime = time(NULL);
@@ -177,7 +169,7 @@ void CLiveInstance::RtpOverTime()
     }
 }
 
-void CLiveInstance::RTPParseCb(char* pBuff, long nLen)
+void CLiveObj::RTPParseCb(char* pBuff, long nLen)
 {
     //Log::debug("CRTSPInterface::RTPParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(pBuff)
@@ -188,7 +180,7 @@ void CLiveInstance::RTPParseCb(char* pBuff, long nLen)
     pPsParser->InputBuffer(pBuff, nLen);
 }
 
-void CLiveInstance::PSParseCb(char* pBuff, long nLen)
+void CLiveObj::PSParseCb(char* pBuff, long nLen)
 {
     //Log::debug("CRTSPInterface::PSParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(pBuff)
@@ -199,7 +191,7 @@ void CLiveInstance::PSParseCb(char* pBuff, long nLen)
     pPesParser->InputBuffer(pBuff, nLen);
 }
 
-void CLiveInstance::PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dts)
+void CLiveObj::PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dts)
 {
     //Log::debug("CRTSPInterface::PESParseCb nlen:%ld,pts:%lld,dts:%lld", nLen,pts,dts);
     CHECK_POINT_VOID(pBuff)
@@ -212,7 +204,7 @@ void CLiveInstance::PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dt
 	pEsParser->InputBuffer(pBuff, nLen);
 }
 
-void CLiveInstance::ESParseCb(char* pBuff, long nLen, uint8_t nNalType)
+void CLiveObj::ESParseCb(char* pBuff, long nLen, uint8_t nNalType)
 {
     //nal_unit_header4* nalu = (nal_unit_header4*)pBuff;
     //Log::debug("CLiveInstance::ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", nLen,pBuff[0],pBuff[1],pBuff[2],pBuff[3],pBuff[4]);
@@ -244,4 +236,24 @@ void CLiveInstance::ESParseCb(char* pBuff, long nLen, uint8_t nNalType)
             ts->InputBuffer(m_pPesBuff, m_nPesLen);
         }
     }
+}
+
+void CLiveObj::FlvCb(flv_tag_type eType, char* pBuff, int nBuffSize)
+{
+
+}
+
+void CLiveObj::Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize)
+{
+
+}
+
+void CLiveObj::TsCb(char* pBuff, int nBuffSize)
+{
+
+}
+
+void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
+{
+
 }

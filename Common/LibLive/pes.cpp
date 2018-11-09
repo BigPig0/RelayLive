@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Pes.h"
+#include "pes.h"
 
 //#define SELF_DTS
 
@@ -80,7 +80,7 @@ static uint64_t get_dts(optional_pes_header* option)
 #endif
 
 
-CPes::CPes(CLiveInstance* pObj)
+CPes::CPes(CLiveObj* pObj)
     : m_pObj(pObj)
 {
 }

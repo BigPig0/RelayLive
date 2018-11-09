@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "mp4.h"
-#include "H264.h"
+#include "h264.h"
 
 
 #define MP4_BOX_HEADER \
@@ -212,12 +212,12 @@ struct mp4_mdat_box {
 #pragma pack()
 
 
-CMP4::CMP4()
-    : m_nSampleNum(0)
+CMP4::CMP4(CLiveObj* pObj)
+    : m_pObj(pObj)
+    , m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
     , m_nfps(25.0)
-    , m_fCB(NULL)
     , m_nHorizresolution(0x00480000)
     , m_mVertresolution(0x00480000)
     , m_bMakeHeader(false)
@@ -323,11 +323,6 @@ int CMP4::InputBuffer(char* pBuf, long nLen)
         break;
     }
     return true;
-}
-
-void CMP4::SetCallBack(MP4_CB cb)
-{
-    m_fCB = cb;
 }
 
 bool CMP4::ParseSPS()
@@ -545,7 +540,7 @@ bool CMP4::MakeHeader()
     m_pHeader->rewrite_be32((char*)moov - pPos, m_pHeader->size() - ((char*)moov - pPos));
     // moov end
 
-    if(!m_fCB) m_fCB(MP4_HEAD, m_pFragment->get(), m_pFragment->size());
+    m_pObj->Mp4Cb(MP4_HEAD, m_pFragment->get(), m_pFragment->size());
     return true;
 }
 
@@ -616,6 +611,6 @@ bool CMP4::MakeVideo()
     m_pFragment->append_data(m_pMdat->get(), m_pMdat->size());        //mdat->data
     // mdat end
 
-    if(!m_fCB) m_fCB(MP4_FRAG, m_pFragment->get(), m_pFragment->size());
+    m_pObj->Mp4Cb(MP4_FRAG, m_pFragment->get(), m_pFragment->size());
     return true;
 }

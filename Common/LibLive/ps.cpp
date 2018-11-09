@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "Ps.h"
-#include "Pes.h"
+#include "ps.h"
+#include "pes.h"
 
 
-CPs::CPs(CLiveInstance* pObj)
+CPs::CPs(CLiveObj* pObj)
     : m_pObj(pObj)
 {
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "commonDefine.h"
-#include "LiveInstance.h"
+#include "live_obj.h"
 #include "NetStreamMaker.h"
 
 /** 直播时用的fmp4格式
@@ -45,12 +45,10 @@ typedef void (*MP4_CB)(MP4_FRAG_TYPE,char*,uint32_t);
 class CMP4 : public IAnalyzer
 {
 public:
-    CMP4();
+    CMP4(CLiveObj* pObj);
     ~CMP4();
 
     int InputBuffer(char* pBuf, long nLen);
-
-    void SetCallBack(MP4_CB cb);
 
 private:
     bool ParseSPS();
@@ -71,7 +69,7 @@ private:
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
 
-    MP4_CB             m_fCB;
+    CLiveObj*          m_pObj;
 
     // SPS解析出的信息
     uint32_t           m_nWidth;          // 视频宽

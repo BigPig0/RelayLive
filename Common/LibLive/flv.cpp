@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "Flv.h"
-#include "H264.h"
+#include "flv.h"
+#include "h264.h"
 
 /* offsets for packed values */
 #define FLV_AUDIO_SAMPLESSIZE_OFFSET 1
@@ -103,13 +103,13 @@ void flv_buffer::append_amf_double(double d)
     append_double(d);
 }
 
-CFlv::CFlv(void)
-    : m_pSPS(nullptr)
+CFlv::CFlv(CLiveObj* pObj)
+    : m_pObj(pObj)
+    , m_pSPS(nullptr)
     , m_pPPS(nullptr)
     , m_pData(nullptr)
     , m_timestamp(0)
     , m_tick_gap(0)
-    , m_funCallBack(nullptr)
     , m_nWidth(0)
     , m_nHeight(0)
     , m_nfps(25)
@@ -211,11 +211,6 @@ int CFlv::InputBuffer(char* pBuf, long nLen)
     return true;
 }
 
-void CFlv::SetCallBack(cbFunc cb)
-{
-    m_funCallBack = cb;
-}
-
 bool CFlv::MakeHeader(char** ppBuff, int* pLen)
 {
     flv_buffer* c = new flv_buffer();
@@ -246,11 +241,6 @@ bool CFlv::MakeScriptTag()
     if (c == nullptr || sps == nullptr || sps->get() == nullptr)
     {
         Log::error("m_pData:%d,m_pSPS:%d",m_pData,m_pSPS);
-        return false;
-    }
-    if (m_funCallBack == nullptr)
-    {
-        Log::error("m_funCallBack is null");
         return false;
     }
 
@@ -316,17 +306,8 @@ bool CFlv::MakeScriptTag()
     c->append_be32( nDataLen + 11 ); // PreviousTagSize
 
     //上抛scriptTag
-    //m_funCallBack->popflv(IFlvCallBack::callback_script_tag, (char*)c->get(), c->size());
-    m_funCallBack(flv_tag_type::callback_script_tag, c->get(), c->size());
+    m_pObj->FlvCb(flv_tag_type::callback_script_tag, c->get(), c->size());
 
-
-    // flv写文件
-    //char* pheader = nullptr;
-    //int headlen = 0;
-    //MakeHeader(&pheader, &headlen);
-    //fwrite(pheader, headlen, 1, fpflv);
-    //fwrite(c->data, c->d_cur, 1, fpflv);
-    //fflush(fpflv);
     return true;
 }
 
@@ -340,11 +321,6 @@ bool CFlv::MakeVideoH264HeaderTag()
         || pps == nullptr )
     {
         Log::error("m_pData:%d, m_pSPS:%d, m_pPPS:%d",m_pData,m_pSPS,m_pPPS);
-        return false;
-    }
-    if (m_funCallBack == nullptr)
-    {
-        Log::error("m_funCallBack is null");
         return false;
     }
 
@@ -393,16 +369,10 @@ bool CFlv::MakeVideoH264HeaderTag()
 
     c->append_be32( length + 11 );      // PreviousTagSize
 
-    m_funCallBack(flv_tag_type::callback_video_spspps_tag, (char*)c->get(), c->size());
+    m_pObj->FlvCb(flv_tag_type::callback_video_spspps_tag, (char*)c->get(), c->size());
 
     Log::debug("get sps size:%d,get pps size:%d",sps->size(),pps->size());
-    // h264写文件
-    //fwrite(sps->data, sps->d_cur, 1, fp);
-    //fwrite(pps->data, pps->d_cur, 1, fp);
-    //fflush(fp);
-    //// flv写文件
-    //fwrite(c->data, c->d_cur, 1, fpflv);
-    //fflush(fpflv);
+
     return true;
 }
 
@@ -412,11 +382,6 @@ bool CFlv::MakeVideoH264Tag(char *data,int size,int bIsKeyFrame)
     if (c == nullptr)
     {
         Log::error("m_pData is null");
-        return false;
-    }
-    if (m_funCallBack == nullptr)
-    {
-        Log::error("m_funCallBack is null");
         return false;
     }
 
@@ -471,9 +436,9 @@ bool CFlv::MakeVideoH264Tag(char *data,int size,int bIsKeyFrame)
     c->append_be32( 11 + length );               // PreviousTagSize
 
     if(bIsKeyFrame)
-        m_funCallBack(flv_tag_type::callback_key_video_tag, (char*)c->get(), c->size());
+        m_pObj->FlvCb(flv_tag_type::callback_key_video_tag, (char*)c->get(), c->size());
     else
-        m_funCallBack(flv_tag_type::callback_video_tag, (char*)c->get(), c->size());
+        m_pObj->FlvCb(flv_tag_type::callback_video_tag, (char*)c->get(), c->size());
 
     //// h264写文件
     //fwrite(data, size, 1, fp);
