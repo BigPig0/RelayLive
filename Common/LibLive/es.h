@@ -10,7 +10,7 @@
 /**
  * ES包解析类
  */
-class CES : public IAnalyzer
+class CES
 {
 public:
     CES(CLiveObj* pObj);
@@ -22,7 +22,7 @@ public:
      * @param[in] nLen PES帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(char* pBuf, uint32_t nLen);
 
 private:
     CLiveObj*   m_pObj;                  // 回调处理对象

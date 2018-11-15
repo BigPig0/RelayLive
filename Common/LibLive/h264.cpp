@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "h264.h"
 
-CH264::CH264()
-    : m_pNaluBuff(nullptr)
+CH264::CH264(CLiveObj* pObj)
+    : m_pObj(pObj)
+    , m_pNaluBuff(nullptr)
     , m_nBuffLen(0)
     , m_pDataBuff(nullptr)
     , m_nDataLen(0)
@@ -10,20 +11,76 @@ CH264::CH264()
     , m_nWidth(0)
     , m_nHeight(0)
     , m_nFps(0)
+    , m_bFirstKey(false)
+    , m_bDecode(false)
 {
-
+    m_pSPS = new CNetStreamMaker();
+    m_pPPS = new CNetStreamMaker();
+    m_pFullBuff = new CNetStreamMaker();
 }
 
 CH264::~CH264()
 {
-
+    SAFE_DELETE(m_pSPS);
+    SAFE_DELETE(m_pPPS);
+    SAFE_DELETE(m_pFullBuff);
 }
 
-void CH264::SetBuff(char *nal_str, uint32_t nLen)
+int CH264::InputBuffer(char *pBuf, uint32_t nLen)
 {
-    m_pNaluBuff = nal_str;
+    m_pNaluBuff = pBuf;
     m_nBuffLen = nLen;
     ParseNalu();
+
+    switch (m_eNaluType)
+    {
+    case b_Nal:
+        // 发送非关键帧
+        if(!m_bFirstKey)
+            break;
+        //Log::debug("h264 frame");
+        m_pFullBuff->append_data(pBuf, nLen);
+        break;
+    case idr_Nal:
+        // 发送关键帧
+        Log::debug("h264 key frame");
+        if(m_pFullBuff->size() > 0) {
+            m_pObj->H264Cb(m_pFullBuff->get(), m_pFullBuff->size());
+            m_pFullBuff->clear();
+        }
+        m_pFullBuff->append_data(m_pSPS->get(), m_pSPS->size());
+        m_pFullBuff->append_data(m_pPPS->get(), m_pPPS->size());
+        m_pFullBuff->append_data(pBuf, nLen);
+        m_bFirstKey = true;
+        break;
+    case sei_Nal:
+        break;
+    case sps_Nal:
+        {
+            //Log::debug("save sps size:%d",nLen);
+            CHECK_POINT_INT(m_pSPS,-1);
+            m_pSPS->clear();
+            m_pSPS->append_data(pBuf, nLen);
+            if(!m_bDecode)
+                m_bDecode = DecodeSps();
+        }
+        break;
+    case pps_Nal:
+        {
+            //Log::debug("save pps size:%d",nLen);
+            CHECK_POINT_INT(m_pPPS,-1);
+            m_pPPS->clear();
+            m_pPPS->append_data(pBuf, nLen);
+        }
+        break;
+    case other:
+    case unknow:
+    default:
+        Log::warning("h264 nal type: %d", m_eNaluType);
+        break;
+    }
+
+    return 0;
 }
 
 void CH264::ParseNalu()
@@ -61,17 +118,13 @@ void CH264::ParseNalu()
     m_eNaluType = (NalType)pNalUnit->nal_type;
 }
 
-bool CH264::DecodeSps(uint32_t &width,uint32_t &height,double &fps)
+bool CH264::DecodeSps()
 {
-    if (m_eNaluType != sps_Nal)
-    {
-        return false;
-    }
-    CHECK_POINT(m_pDataBuff)
-
-    fps    = m_nFps    = 0;
-    width  = m_nWidth  = 0;
-    height = m_nHeight = 0;
+    if(m_eNaluType != sps_Nal) return false;
+    CHECK_POINT(m_pDataBuff);
+    m_nFps    = 0;
+    m_nWidth  = 0;
+    m_nHeight = 0;
 
     // 拷贝一份临时数据
     uint32_t nLen = m_nDataLen;
@@ -193,8 +246,8 @@ bool CH264::DecodeSps(uint32_t &width,uint32_t &height,double &fps)
     int pic_width_in_mbs_minus1=Ue(buf,nLen,StartBit);
     int pic_height_in_map_units_minus1=Ue(buf,nLen,StartBit);
     //Log::debug("h264_decode_sps pic_width_in_mbs_minus1:%d pic_width_in_mbs_minus1:%d",pic_width_in_mbs_minus1,pic_width_in_mbs_minus1);
-    width  = m_nWidth = (pic_width_in_mbs_minus1+1)*16;
-    height = m_nHeight = (pic_height_in_map_units_minus1+1)*16;
+    m_nWidth = (pic_width_in_mbs_minus1+1)*16;
+    m_nHeight = (pic_height_in_map_units_minus1+1)*16;
 
     int frame_mbs_only_flag=u(1,buf,StartBit);
     if(!frame_mbs_only_flag)
@@ -251,7 +304,7 @@ bool CH264::DecodeSps(uint32_t &width,uint32_t &height,double &fps)
             int num_units_in_tick=u(32,buf,StartBit);   
             int time_scale=u(32,buf,StartBit);    
             //Log::debug("h264_decode_sps num_units_in_tick:%d, time_scale:%d",num_units_in_tick,time_scale);
-            fps = m_nFps = (double)time_scale/(2*num_units_in_tick);
+            m_nFps = (double)time_scale/(2*num_units_in_tick);
         }
     }
 

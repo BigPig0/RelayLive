@@ -12,47 +12,41 @@ enum flv_tag_type
 };
 
 
-class flv_buffer : public CNetStreamMaker
+class CFlvStreamMaker : public CNetStreamMaker
 {
 public:
     void append_amf_string(const char *str );
     void append_amf_double(double d );
 } ;
 
-class CFlv : public IAnalyzer
+class CFlv
 {
 public:
     CFlv(CLiveObj* pObj);
     ~CFlv(void);
 
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
 
+    void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
+
+private:
     /**
      * 生成flv文件头信息并上抛
      * @param ppBuff 输出flv头缓存
      * @param pLen 输出flv头长度
      */
-    static bool MakeHeader(char** ppBuff, int* pLen);
-
-    /**
-     * 生成一个码流描述信息，并上抛
-     */
-    bool MakeScriptTag();
-
-    /**
-     * 生成一个视频h264头片段并上抛
-     */
-    bool MakeVideoH264HeaderTag();
+    bool MakeHeader();
 
     /**
      * 生成一个视频断并上抛
      */
-    bool MakeVideoH264Tag(char *data,int size,int bIsKeyFrame);
+    bool MakeVideo(char *data,int size,int bIsKeyFrame);
 
 private:
-    flv_buffer*        m_pSPS;            // 保存SPS内容的缓存
-    flv_buffer*        m_pPPS;            // 保存PPS内容的缓存
-    flv_buffer*        m_pData;           // 存放生成的flv数据
+    CFlvStreamMaker*        m_pSPS;            // 保存SPS内容的缓存
+    CFlvStreamMaker*        m_pPPS;            // 保存PPS内容的缓存
+    CFlvStreamMaker*        m_pHeader;         // flv头数据
+    CFlvStreamMaker*        m_pData;           // 存放生成的flv数据
 
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔

@@ -171,7 +171,7 @@ typedef struct ts_adaptation_field_pcr
 /**
  * TS流处理，用来解析ts流或生成ts流
  */
-class CTS : public IAnalyzer
+class CTS
 {
 public:
     CTS(CLiveObj* pObj);
@@ -182,7 +182,7 @@ public:
      * @param pBuf[in] PES数据
      * @param nLen[in] PES数据长度
      */
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(char* pBuf, uint32_t nLen);
 
     /**
      * 设置下一次输入pes的参数信息

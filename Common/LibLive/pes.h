@@ -69,7 +69,7 @@ bool inline is_pes_header(pes_header_t* pes)
 /**
  * PES包解析类
  */
-class CPes : public IAnalyzer
+class CPes
 {
 public:
     CPes(CLiveObj* pObj);
@@ -81,7 +81,7 @@ public:
      * @param[in] nLen PES帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(char* pBuf, uint32_t nLen);
 
 private:
     CLiveObj*   m_pObj;                  // 回调处理对象

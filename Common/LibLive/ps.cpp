@@ -13,7 +13,7 @@ CPs::~CPs(void)
 {
 }
 
-int CPs::InputBuffer(char* pBuf, long nLen)
+int CPs::InputBuffer(char* pBuf, uint32_t nLen)
 {
     long nHeadLen = 0;
     if(0 != ParseHeader(pBuf, nLen, nHeadLen))

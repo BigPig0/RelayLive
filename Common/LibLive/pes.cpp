@@ -90,7 +90,7 @@ CPes::~CPes(void)
 {
 }
 
-int CPes::InputBuffer(char* pBuf, long nLen)
+int CPes::InputBuffer(char* pBuf, uint32_t nLen)
 {
     UNUSED(nLen);
     pes_header_t* pes = (pes_header_t*)pBuf;

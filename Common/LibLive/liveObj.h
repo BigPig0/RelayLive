@@ -3,20 +3,7 @@
 #include "libLive.h"
 #include "uv.h"
 
-/**
- * 解析接口
- */
-struct IAnalyzer
-{
-    /**
-     * 插入一个PES包
-     * @param[in] pBuf PES帧
-     * @param[in] nLen PES帧长度
-     * @return 0成功 -1失败
-     */
-    virtual int InputBuffer(char* pBuf, long nLen) = 0;
-};
-
+enum NalType;
 
 /**
  * RTSP功能模块接口
@@ -84,10 +71,13 @@ public:
      * @param[in] nLen H264帧长度
      * @param[in] nNalType Nalu的类型
      */
-    void ESParseCb(char* pBuff, long nLen, uint8_t nNalType);
+    void ESParseCb(char* pBuff, long nLen/*, uint8_t nNalType*/);
+
+    /** H264中sps解析回调 */
+    void H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps);
 
     /** FLV合成回调 */
-    void FlvCb(flv_tag_type eType, char* pBuff, int nBuffSize);
+    void FlvCb(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize);
 
     /** MP4合成回调 */
     void Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize);
@@ -118,28 +108,18 @@ private:
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器
 
-    IAnalyzer*  m_pRtpParser;       // rtp报文解析类
-    IAnalyzer*  m_pPsParser;        // PS帧解析类
-    IAnalyzer*  m_pPesParser;       // PES包解析类
-    IAnalyzer*  m_pEsParser;        // ES包解析类
-    IAnalyzer*  m_pTs;              // TS组包类
-    IAnalyzer*  m_pFlv;             // FLV组包类
-    IAnalyzer*  m_pMp4;             // MP4组包类
-
+    void*       m_pRtpParser;       // rtp报文解析类
+    void*       m_pPsParser;        // PS帧解析类
+    void*       m_pPesParser;       // PES包解析类
+    void*       m_pEsParser;        // ES包解析类
+    void*       m_pH264;            // H264解析类
+    void*       m_pTs;              // TS组包类
+    void*       m_pFlv;             // FLV组包类
+    void*       m_pMp4;             // MP4组包类
     IlibLiveCb* m_pCallBack;        // 回调对象
 
-    char*       m_pRtpBuff;         // rtp数据指针
-    uint32_t    m_nRtpLen;          // rtp数据长度
-    char*       m_pPsBuff;          // ps数据指针
-    uint32_t    m_nPsLen;           // ps数据长度
-    char*       m_pPesBuff;         // pes数据指针
-    uint32_t    m_nPesLen;          // pes数据长度
-    char*       m_pEsBuff;          // es数据指针
-    uint32_t    m_nEsLen;           // es数据长度
-    char*       m_pNaluBuff;        // h264片元指针
-    uint32_t    m_nNaluLen;         // h264片元长度
     uint64_t    m_pts;              // 记录PES中的pts
     uint64_t    m_dts;              // 记录PES中的dts
-    uint8_t     m_nalu_type;        // h264片元类型
+    NalType     m_nalu_type;        // h264片元类型
 };
 

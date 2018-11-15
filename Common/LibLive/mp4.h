@@ -34,25 +34,18 @@ moof
 mdat...
  */
 
-enum MP4_FRAG_TYPE
-{
-    MP4_HEAD,
-    MP4_FRAG
-};
 
-typedef void (*MP4_CB)(MP4_FRAG_TYPE,char*,uint32_t);
-
-class CMP4 : public IAnalyzer
+class CMP4
 {
 public:
     CMP4(CLiveObj* pObj);
     ~CMP4();
 
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
+
+    void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 
 private:
-    bool ParseSPS();
-
     bool MakeHeader();
 
     bool MakeVideo();

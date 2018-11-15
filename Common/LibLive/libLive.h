@@ -9,9 +9,17 @@
 #define LIBLIVE_API
 #endif
 
-enum NalType;
-enum flv_tag_type;
-enum MP4_FRAG_TYPE;
+enum FLV_FRAG_TYPE
+{
+    FLV_HEAD,
+    FLV_FRAG
+};
+
+enum MP4_FRAG_TYPE
+{
+    MP4_HEAD,
+    MP4_FRAG
+};
 
 /**
  * 数据回调处理接口
@@ -22,7 +30,7 @@ struct IlibLiveCb
     /**
      * FLV数据处理接口
      */
-    virtual void push_flv_frame(int tag_type, char* frames, int frames_size) = 0;
+    virtual void push_flv_frame(FLV_FRAG_TYPE tag_type, char* frames, int frames_size) = 0;
 
     /**
      * TS数据处理接口(HLS)
@@ -32,7 +40,7 @@ struct IlibLiveCb
     /**
      * h264裸流处理接口
      */
-    virtual void push_h264_stream(NalType eType, char* pBuff, int nBuffSize) = 0;
+    virtual void push_h264_stream(char* pBuff, int nBuffSize) = 0;
 
     /**
      * mp4数据处理接口
@@ -60,11 +68,6 @@ struct LIBLIVE_API IlibLive
      * return 实例的指针，注意要由申请者释放
      */
     static IlibLive* CreateObj();
-
-    /**
-     * 创建flv头
-     */
-    static bool MakeFlvHeader(char** ppBuff, int* pLen);
 
     /**
      * 设置本地监听的IP和端口

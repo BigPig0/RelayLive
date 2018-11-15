@@ -19,7 +19,7 @@ CRtp::~CRtp(void)
     SAFE_DELETE(m_frame_buf);
 }
 
-int CRtp::InputBuffer(char* pBuf, long nLen)
+int CRtp::InputBuffer(char* pBuf, uint32_t nLen)
 {
     if (NULL == pBuf || RTP_HEADER_SIZE > nLen)
     {

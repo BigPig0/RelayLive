@@ -12,13 +12,13 @@ CES::~CES(void)
 {
 }
 
-int CES::InputBuffer(char* pBuf, long nLen)
+int CES::InputBuffer(char* pBuf, uint32_t nLen)
 {
     // ES包没有es头，由h264片组成
-    nal_unit_header_t* nalUnit = nullptr;
-    uint8_t nNalType = 0;
-    long pos = 0;
-    long begin_pos = 0;
+    //nal_unit_header_t* nalUnit = nullptr;
+    //uint8_t nNalType = 0;
+    uint32_t pos = 0;
+    uint32_t begin_pos = 0;
     char* begin_buff = pBuf;
     while (pos < nLen)
     {
@@ -32,11 +32,11 @@ int CES::InputBuffer(char* pBuf, long nLen)
                 // 回调处理H264帧
                 if (m_pObj != nullptr)
                 {
-                    m_pObj->ESParseCb(begin_buff, pos-begin_pos, nNalType);
+                    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
                 }
             }
-            nalUnit = (nal_unit_header_t*)(pPos+3);
-            nNalType = nalUnit->nal_type;
+            //nalUnit = (nal_unit_header_t*)(pPos+3);
+            //nNalType = nalUnit->nal_type;
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 3;
@@ -50,11 +50,11 @@ int CES::InputBuffer(char* pBuf, long nLen)
                 // 回调处理H264帧
                 if (m_pObj != nullptr)
                 {
-                    m_pObj->ESParseCb(begin_buff, pos-begin_pos, nNalType);
+                    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
                 }
             }
-            nalUnit = (nal_unit_header_t*)(pPos+4);
-            nNalType = nalUnit->nal_type;
+            //nalUnit = (nal_unit_header_t*)(pPos+4);
+            //nNalType = nalUnit->nal_type;
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 4;
@@ -71,7 +71,7 @@ int CES::InputBuffer(char* pBuf, long nLen)
         // 回调处理H264帧
         if (m_pObj != nullptr)
         {
-            m_pObj->ESParseCb(begin_buff, nLen-begin_pos, nNalType);
+            m_pObj->ESParseCb(begin_buff, nLen-begin_pos/*, nNalType*/);
         }
     }
     return 0;

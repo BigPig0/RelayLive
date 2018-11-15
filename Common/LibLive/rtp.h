@@ -126,7 +126,7 @@ struct Sequence
 typedef map<Sequence,rtp_list_node*> MapRtpList;
 typedef list<rtp_list_node*> ListRtpFrame;
 
-class CRtp : public IAnalyzer
+class CRtp
 {
 public:
     CRtp(CLiveObj* pObj);
@@ -135,7 +135,7 @@ public:
     /**
      * 插入一个rtp包
      */
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(char* pBuf, uint32_t nLen);
 
     /**
      * 设置缓存帧数量

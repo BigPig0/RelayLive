@@ -21,7 +21,7 @@ CTS::~CTS(void)
 {
 }
 
-int CTS::InputBuffer(char* pBuf, long nLen)
+int CTS::InputBuffer(char* pBuf, uint32_t nLen)
 {
     //Log::debug("ts begin");
     CHECK_POINT(pBuf);

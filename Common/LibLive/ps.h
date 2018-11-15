@@ -121,7 +121,7 @@ bool inline is_psm_header(psm_header_t* psm)
     return false;
 }
 
-class CPs : public IAnalyzer
+class CPs
 {
 public:
     CPs(CLiveObj* pObj);
@@ -133,7 +133,7 @@ public:
      * @param[in] nLen PS帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, long nLen);
+    int InputBuffer(char* pBuf, uint32_t nLen);
 
 private:
     /**

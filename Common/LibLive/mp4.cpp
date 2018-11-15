@@ -244,7 +244,7 @@ CMP4::~CMP4()
     m_bRun = false;
 }
 
-int CMP4::InputBuffer(char* pBuf, long nLen)
+int CMP4::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
 {
     if(!m_bRun)
     {
@@ -252,28 +252,21 @@ int CMP4::InputBuffer(char* pBuf, long nLen)
         return false;
     }
 
-    CH264 nalu;
-    nalu.SetBuff(pBuf, nLen);
-    NalType type = nalu.NaluType();
-    uint32_t nDataLen = 0;
-    char* pData = nalu.DataBuff(nDataLen);
-    switch (type)
+    switch (eType)
     {
     case b_Nal:
         // 发送非关键帧
         if(!m_bFirstKey)
             break;
-        m_pMdat->append_be32(nDataLen);
-        m_pMdat->append_data(pBuf, nDataLen);
-        m_pSamplePos->append_be32(nDataLen+4);
+        m_pMdat->append_be32(nLen);
+        m_pMdat->append_data(pBuf, nLen);
+        m_pSamplePos->append_be32(nLen+4);
         m_nSampleNum++;
         break;
     case idr_Nal:
         //Log::debug("send scriptTag");
         if(!m_bMakeHeader)
-        {    
-            if(!ParseSPS())
-                break;
+        {
             // 生成fmp4头
             if(!MakeHeader())
                 break;
@@ -294,9 +287,9 @@ int CMP4::InputBuffer(char* pBuf, long nLen)
         m_pMdat->append_data(m_pSPS->get(), m_pSPS->size());
         m_pMdat->append_be32(m_pPPS->size());
         m_pMdat->append_data(m_pPPS->get(), m_pPPS->size());
-        m_pMdat->append_be32(nDataLen);
-        m_pMdat->append_data(pBuf, nDataLen);
-        m_pSamplePos->append_be32(m_pSPS->size() + m_pPPS->size() + nDataLen + 12); //12是这3个长度区域
+        m_pMdat->append_be32(nLen);
+        m_pMdat->append_data(pBuf, nLen);
+        m_pSamplePos->append_be32(m_pSPS->size() + m_pPPS->size() + nLen + 12); //12是这3个长度区域
         m_nSampleNum++;
         m_bFirstKey = true;
         break;
@@ -319,24 +312,19 @@ int CMP4::InputBuffer(char* pBuf, long nLen)
     case other:
     case unknow:
     default:
-        Log::warning("h264 nal type: %d", type);
+        Log::warning("h264 nal type: %d", eType);
         break;
     }
     return true;
 }
 
-bool CMP4::ParseSPS()
+void CMP4::SetSps(uint32_t nWidth, uint32_t nHeight, double fFps) 
 {
-    CH264 nalu;
-    nalu.SetBuff(m_pSPS->get(), m_pSPS->size());
-    if(false == nalu.DecodeSps(m_nWidth,m_nHeight,m_nfps))
-    {
-        Log::error("解码sps失败");
-        return false;
-    }
+    m_nWidth = nWidth;
+    m_nHeight = nHeight;
+    m_nfps = fFps;
     m_tick_gap = 1000/(m_nfps>0?m_nfps:25);
     Log::debug("width = %d,height = %d, fps= %lf, tickgap= %d",m_nWidth,m_nHeight,m_nfps,m_tick_gap);
-    return true;
 }
 
 bool CMP4::MakeHeader()

@@ -1,4 +1,6 @@
 #pragma once
+#include "liveObj.h"
+#include "NetStreamMaker.h"
 
 /**
  * H264的结构：
@@ -37,13 +39,13 @@ typedef struct nal_unit_header
 class CH264
 {
 public:
-    CH264();
+    CH264(CLiveObj* pObj);
     ~CH264();
 
     /**
      * 设置数据内容
      */
-    void SetBuff(char *nal_str, uint32_t nLen);
+    int InputBuffer(char *pBuf, uint32_t nLen);
 
     /** 获取类型 */
     NalType NaluType(){return m_eNaluType;}
@@ -51,19 +53,22 @@ public:
     /** 获取数据内容位置(去除掉001或0001) */
     char* DataBuff(uint32_t& nLen){nLen=m_nDataLen;return m_pDataBuff;}
 
-    /**
-     * 解码SPS,获取视频图像宽、高信息 
-     * @param width 图像宽度
-     * @param height 图像高度
-     * @return 成功则返回true , 失败则返回false
-     */ 
-    bool DecodeSps(uint32_t &width,uint32_t &height,double &fps);
+    /** 获取sps解析得到的配置信息 */
+    uint32_t Width(){return m_nWidth;}
+    uint32_t Height(){return m_nHeight;}
+    double Fps(){return m_nFps;}
 
 private:
     /**
      * 解析数据
      */
     void ParseNalu();
+
+    /**
+     * 解码SPS,获取视频图像宽、高信息 
+     * @return 成功则返回true , 失败则返回false
+     */ 
+    bool DecodeSps();
 
     uint32_t Ue(uchar *pBuff, uint32_t nLen, uint32_t &nStartBit);
 
@@ -78,6 +83,9 @@ private:
      */
     uint32_t u(uint32_t BitCount,uchar* buf,uint32_t &nStartBit);
 
+    /**
+     * 数据还原，内容中的0031、00031还原位001、0001
+     */
     void de_emulation_prevention(uchar* buf,uint32_t* buf_size);
 
 private:
@@ -86,6 +94,13 @@ private:
     char*       m_pDataBuff;    //< 去除掉001或0001后的内容
     uint32_t    m_nDataLen;     //< 内容数据的长度
     NalType     m_eNaluType;    //< 类型
+
+    CNetStreamMaker    *m_pSPS;            // 缓存SPS
+    CNetStreamMaker    *m_pPPS;            // 缓存PPS
+    CNetStreamMaker    *m_pFullBuff;       // 缓存h264数据 7 8 5 1 1 1 1 ... 1
+    bool               m_bFirstKey;        // 已经处理第一个关键帧
+    bool               m_bDecode;          // 是否已经解析sps
+    CLiveObj*          m_pObj;
 
     /** sps中的数据 */
     int32_t     m_nWidth;
