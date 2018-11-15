@@ -26,8 +26,6 @@ int CES::InputBuffer(char* pBuf, long nLen)
         if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 1)
         {
             //if(pos > 0) Log::debug("nal3 begin width 001 pos:%d",pos);
-            nalUnit = (nal_unit_header_t*)(pPos+3);
-            nNalType = nalUnit->nal_type;
             // 是h264报文开头
             if (pos > begin_pos)
             {
@@ -37,6 +35,8 @@ int CES::InputBuffer(char* pBuf, long nLen)
                     m_pObj->ESParseCb(begin_buff, pos-begin_pos, nNalType);
                 }
             }
+            nalUnit = (nal_unit_header_t*)(pPos+3);
+            nNalType = nalUnit->nal_type;
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 3;
@@ -44,8 +44,6 @@ int CES::InputBuffer(char* pBuf, long nLen)
         else if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 0 && pPos[3] == 1)
         {
 			//if(pos > 0) Log::debug("nal4 begin width 0001 pos:%d",pos);
-            nalUnit = (nal_unit_header_t*)(pPos+4);
-            nNalType = nalUnit->nal_type;
             // 是h264报文开头
             if (pos > begin_pos)
             {
@@ -55,6 +53,8 @@ int CES::InputBuffer(char* pBuf, long nLen)
                     m_pObj->ESParseCb(begin_buff, pos-begin_pos, nNalType);
                 }
             }
+            nalUnit = (nal_unit_header_t*)(pPos+4);
+            nNalType = nalUnit->nal_type;
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 4;

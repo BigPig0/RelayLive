@@ -436,6 +436,11 @@ bool CMP4::MakeHeader()
     m_pHeader->append_bytes(0, 12);                     //vmhd->version vmhd->flags vmhd->graphicsmode vmhd->opcolor
     // moov=>trak=>mdia=>minf=>vmhd end
 
+    // moov=>trak=>mdia=>minf=>dinf
+    mp4_dinf_box* dinf = (mp4_dinf_box*)(pPos + m_pHeader->size());
+    m_pHeader->append_be32(sizeof(mp4_dinf_box));       //dinf->size
+    m_pHeader->append_string("dinf\0");                 //dinf->type
+
     // moov=>trak=>mdia=>minf=>dinf=>dref
     mp4_dref_box* dref = (mp4_dref_box*)(pPos + m_pHeader->size());
     m_pHeader->append_be32(sizeof(mp4_dref_box));       //dref->size
@@ -446,6 +451,7 @@ bool CMP4::MakeHeader()
     m_pHeader->append_string("url \0");                 //dref->url
     m_pHeader->append_be32(1);                          //dref->entry_flags
     // moov=>trak=>mdia=>minf=>dinf=>dref end
+    // moov=>trak=>mdia=>minf=>dinf end
 
     // moov=>trak=>mdia=>minf=>stbl
     mp4_stbl_box* stbl = (mp4_stbl_box*)(pPos + m_pHeader->size());
@@ -486,6 +492,7 @@ bool CMP4::MakeHeader()
     mp4_stbl_box_inner *stts = (mp4_stbl_box_inner*)((char*)pPos + m_pHeader->size());
     m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)); //stts->size
     m_pHeader->append_string("stts\0");                 //stts->type
+    m_pHeader->append_be32(0);                          //stsd->version  stsd->flags
     m_pHeader->append_be32(0);                          //stts->entry_count
     // moov=>trak=>mdia=>minf=>stbl=>stts end
 
@@ -493,6 +500,7 @@ bool CMP4::MakeHeader()
     mp4_stbl_box_inner *stsc = (mp4_stbl_box_inner*)((char*)pPos + m_pHeader->size());
     m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)); //stsc->size
     m_pHeader->append_string("stsc\0");                 //stsc->type
+    m_pHeader->append_be32(0);                          //stsd->version  stsd->flags
     m_pHeader->append_be32(0);                          //stsc->entry_count
     // moov=>trak=>mdia=>minf=>stbl=>stsc end
 
@@ -500,6 +508,7 @@ bool CMP4::MakeHeader()
     mp4_stbl_box_inner *stsz = (mp4_stbl_box_inner*)((char*)pPos + m_pHeader->size());
     m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)); //stsz->size
     m_pHeader->append_string("stsz\0");                 //stsz->type
+    m_pHeader->append_be32(0);                          //stsd->version  stsd->flags
     m_pHeader->append_be32(0);                          //stsz->entry_count
     // moov=>trak=>mdia=>minf=>stbl=>stsz end
 
@@ -507,6 +516,7 @@ bool CMP4::MakeHeader()
     mp4_stbl_box_inner *stco = (mp4_stbl_box_inner*)((char*)pPos + m_pHeader->size());
     m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)); //stco->size
     m_pHeader->append_string("stco\0");                 //stco->type
+    m_pHeader->append_be32(0);                          //stsd->version  stsd->flags
     m_pHeader->append_be32(0);                          //stco->entry_count
     // moov=>trak=>mdia=>minf=>stbl=>stco end
 
@@ -540,7 +550,7 @@ bool CMP4::MakeHeader()
     m_pHeader->rewrite_be32((char*)moov - pPos, m_pHeader->size() - ((char*)moov - pPos));
     // moov end
 
-    m_pObj->Mp4Cb(MP4_HEAD, m_pFragment->get(), m_pFragment->size());
+    m_pObj->Mp4Cb(MP4_HEAD, m_pHeader->get(), m_pHeader->size());
     return true;
 }
 
@@ -552,7 +562,7 @@ bool CMP4::MakeVideo()
 
     // moof
     mp4_moof_box* moof = (mp4_moof_box*)pPos;
-    m_pFragment->append_be32(sizeof(mp4_minf_box) + samples_size); //moof->size
+    m_pFragment->append_be32(sizeof(mp4_moof_box) + samples_size); //moof->size
     m_pFragment->append_string("moof\0");                 //moof->type
 
     // moof=>mfhd

@@ -228,6 +228,13 @@ void CLiveObj::ESParseCb(char* pBuff, long nLen, uint8_t nNalType)
             m_pCallBack->push_h264_stream((NalType)nNalType, pBuff, nLen);
         }
 
+        //需要回调mp4
+        if (m_pCallBack->m_bMp4 && nullptr != m_pMp4)
+        {
+            CMP4* mp4 = (CMP4*)m_pMp4;
+            mp4->InputBuffer(pBuff, nLen);
+        }
+
         //需要回调TS
         if(m_pCallBack->m_bTs && nullptr != m_pTs)
         {

@@ -63,6 +63,7 @@ namespace HttpWsServer
 
     static void SendLiveH264(pss_http_ws_live *pss) {
         H264_NALU_BUFF tag = pss->m_pWorker->GetH264Video(&pss->tail);
+		if(tag.pBuff == nullptr) return;
         if (!pss->m_bSendHead) {
             if(tag.eType == NalType::sps_Nal) {
                 int wlen = lws_write(pss->wsi, (uint8_t *)tag.pBuff + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
@@ -95,7 +96,7 @@ namespace HttpWsServer
             int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, len, LWS_WRITE_BINARY);
             pss->m_bSendHead = true;
             free(buff);
-            free(mp4_header.pBuff);
+            //free(mp4_header.pBuff);
             pWorker->NextWork(pss);
         } else {
             Log::debug(" mp4 data tail:%d", pss->tail);
@@ -139,6 +140,7 @@ namespace HttpWsServer
                     }
                     string uri_type = strPath.substr(pos+1, strPath.size()-pos-1);
                     string devcode = strPath.substr(1, pos -1);
+					char* mime;
 
                     if (!_stricmp(uri_type.c_str(), "flv")) {
                         pss->media_type = media_flv;
@@ -146,29 +148,32 @@ namespace HttpWsServer
                         if(!strErrInfo.empty()){
                             break;
                         }
-                    } else if(!_stricmp(uri_type.c_str(), "hls")) {
-                        pss->media_type = media_hls;
-                        strErrInfo = "error request path";
-                        break;
+						mime = "video/x-flv";
                     } else if(!_stricmp(uri_type.c_str(), "h264")) {
                         pss->media_type = media_h264;
                         strErrInfo = StartPlayLive(pss, devcode);
                         if(!strErrInfo.empty()){
                             break;
                         }
+						mime = "video/h264";
                     } else if(!_stricmp(uri_type.c_str(), "mp4")) {
                         pss->media_type = media_mp4;
                         strErrInfo = StartPlayLive(pss, devcode);
                         if(!strErrInfo.empty()){
                             break;
                         }
+						mime = "video/mp4";
+                    } else if(!_stricmp(uri_type.c_str(), "hls")) {
+                        pss->media_type = media_hls;
+                        strErrInfo = "error request path";
+                        break;
                     } else {
                         strErrInfo = "error request path";
                         break;
                     }
                     lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end);
                     lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
-                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Content-Type", (const uint8_t *)"video/x-flv", 11, &p, end);
+                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Content-Type", (const uint8_t *)mime, strlen(mime), &p, end);
                     lws_add_http_header_by_name(wsi, (const uint8_t *)"Cache-Control", (const uint8_t *)"no-cache", 8, &p, end);
                     lws_add_http_header_by_name(wsi, (const uint8_t *)"Expires", (const uint8_t *)"-1", 2, &p, end);
                     lws_add_http_header_by_name(wsi, (const uint8_t *)"Pragma", (const uint8_t *)"no-cache", 8, &p, end);

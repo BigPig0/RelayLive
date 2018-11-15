@@ -147,10 +147,10 @@ namespace HttpWsServer
             if (nullptr == m_pMP4PssList) m_bMp4 = false;
         }
 
-        if(m_pFlvPssList == NULL && m_pH264PssList == NULL) {
+        if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
             std::thread t([&](){
                 Sleep(20000);
-                if (m_pFlvPssList == NULL && m_pH264PssList == NULL) {
+                if (m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
                     DelLiveWorker(m_strCode);
                 }
             });
@@ -211,7 +211,7 @@ namespace HttpWsServer
             cull_lagging_clients(media_h264);
             n = (int)lws_ring_get_count_free_elements(m_pH264Ring);
         }
-        Log::debug("h264 ring free space %d\n", n);
+        Log::debug("h264 ring free space %d, etype:%d\n", n, eType);
         if (!n)
             return;
 
@@ -342,6 +342,9 @@ namespace HttpWsServer
         } else if(pss->media_type == media_h264){
             ring = m_pH264Ring;
             pssList = m_pH264PssList;
+        } else if (pss->media_type == media_mp4) {
+            ring = m_pMP4Ring;
+            pssList = m_pMP4PssList;
         } else {
             return;
         }
