@@ -247,6 +247,11 @@ void CLiveObj::H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps)
         CFlv* flv = (CFlv*)m_pFlv;
         flv->SetSps(nWidth,nHeight,fFps);
     }
+    if (nullptr != m_pMp4)
+    {
+        CMP4* mp4 = (CMP4*)m_pMp4;
+        mp4->SetSps(nWidth,nHeight,fFps);
+    }
 }
 
 void CLiveObj::FlvCb(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize)

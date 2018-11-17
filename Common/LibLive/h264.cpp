@@ -61,8 +61,11 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
             CHECK_POINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
-            if(!m_bDecode)
+            if(!m_bDecode) {
                 m_bDecode = DecodeSps();
+                if(m_bDecode)
+                    m_pObj->H264SpsCb(m_nWidth, m_nHeight, m_nFps);
+            }
         }
         break;
     case pps_Nal:

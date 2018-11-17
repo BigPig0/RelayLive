@@ -313,7 +313,7 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
     CHECK_POINT(m_pData);
 
-    if(m_pData->size() > 0) {
+    if(bIsKeyFrame && m_pData->size() > 0) {
         m_pObj->FlvCb(FLV_FRAG, (char*)m_pData->get(), m_pData->size());
         m_pData->clear();
     }
@@ -335,9 +335,8 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
     m_pData->append_be24( m_tick_gap );               // composition time
     if(bIsKeyFrame)
     {
-        if (m_pData != nullptr && m_pData->get() != nullptr 
-            && m_pSPS != nullptr && m_pSPS->get() != nullptr
-            && m_pPPS != nullptr && m_pPPS->get() != nullptr)
+        if (m_pSPS != nullptr && m_pSPS->size() > 0
+            && m_pPPS != nullptr && m_pPPS->size() > 0)
         {
             //Ð´Èësps NALU
             m_pData->append_be32( m_pSPS->size() );           // SPS NALU Length
