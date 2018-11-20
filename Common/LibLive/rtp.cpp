@@ -1,22 +1,38 @@
 #include "stdafx.h"
 #include "rtp.h"
 #include "ps.h"
+#include "ring_buff.h"
+#include <thread>
 
+typedef struct rtp_frame {
+    char* buff;
+    long len; 
+}rtp_frame_t;
 
 CRtp::CRtp(CLiveObj* pObj)
-    : m_frame_buf(nullptr)
-    , m_nCatchPacketNum(5000)
+    : m_nCatchPacketNum(5000)
     , m_nDoneSeq(0)
     , m_bBegin(false)
     , m_pObj(pObj)
 {
-    m_frame_buf = new char[FRAME_MAX_SIZE];
-    memset(m_frame_buf, '\0', FRAME_MAX_SIZE);
+    m_pRing = (void*)create_ring_buff(sizeof(rtp_frame_t), 50, NULL);
+    m_pRun = new bool;
+    *m_pRun = true;
+    m_pFinish = new bool;
+    *m_pFinish = false;
+
+    std::thread t([&](){
+        ReadingThread();
+    });
+    t.detach();
 }
 
 CRtp::~CRtp(void)
 {
-    SAFE_DELETE(m_frame_buf);
+    m_pRun = false;
+    while (!m_pFinish)
+        Sleep(100);
+    destroy_ring_buff((ring_buff*)m_pRing);
 }
 
 int CRtp::InputBuffer(char* pBuf, uint32_t nLen)
@@ -238,24 +254,33 @@ int CRtp::DelRtpNode(rtp_list_node* pNode)
 int CRtp::ComposePsFrame()
 {
     // 拷贝rtp的载荷数据到帧缓存
-    long nPsLen = 0;
-    memset(m_frame_buf, '\0', FRAME_MAX_SIZE);
+    long nFrameLen = 0;
+    char* pFrame = (char*)calloc(1, FRAME_MAX_SIZE);
     for (auto pNode : m_listRtpFrame)
     {
-        memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len, pNode->playload_len);
-        nPsLen += pNode->playload_len;  // 累加载荷大小
-        if (nPsLen > FRAME_MAX_SIZE)
+        memcpy(pFrame+nFrameLen, pNode->data+pNode->head_len, pNode->playload_len);
+        nFrameLen += pNode->playload_len;  // 累加载荷大小
+        if (nFrameLen > FRAME_MAX_SIZE)
         {
-            Log::error("CRtpAnalyzer::ComposePsFrame failed nPSLen:%ld",nPsLen);
+            Log::error("CRtpAnalyzer::ComposePsFrame failed nPSLen:%ld",nFrameLen);
             return -1;
         }
     }
 
-    // PS帧组合完毕，回调处理PS帧
-    if (m_pObj != nullptr)
-    {
-        m_pObj->RTPParseCb(m_frame_buf, nPsLen);
+    //rtp帧添加到ringbuff。此处必然是线程安全地顺序进来。
+    size_t n = ring_get_count_free_elements((ring_buff_t*)m_pRing);
+    if(!n) {
+        Log::error("rtp frame buff is full");
+        return -1;
     }
+    rtp_frame_t newFrame = {pFrame, nFrameLen};
+    if (!ring_insert((ring_buff_t*)m_pRing, &newFrame, 1)) {
+        free(pFrame);
+        Log::error("insert to ring buff error");
+        return -1;
+    }
+
+    
     return 0;
 }
 
@@ -277,4 +302,21 @@ char* CRtp::EndianChange(char* src, int bytes)
         src[2]=c;
     }
     return src;
+}
+
+void CRtp::ReadingThread()
+{
+    while (*m_pRun)
+    {
+        rtp_frame_t frame;
+        size_t len = ring_consume((ring_buff_t*)m_pRing, NULL, &frame, 1);
+        if(!len){
+            Sleep(10);
+        } else {
+            if (m_pObj != nullptr)
+                m_pObj->RTPParseCb(frame.buff, frame.len);
+            free(frame.buff);
+        }
+    }
+    *m_pFinish = true;
 }

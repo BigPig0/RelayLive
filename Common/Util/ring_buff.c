@@ -1,5 +1,5 @@
-
-
+#include <windows.h>
+#include <stdio.h>
 #include "ring_buff.h"
 
 typedef struct ring_buff {
@@ -13,8 +13,7 @@ typedef struct ring_buff {
 
 ring_buff_t* create_ring_buff(size_t element_len, size_t count, void (*destroy_element)(void *))
 {
-	struct ring_buff *ring = malloc(sizeof(*ring));
-
+	struct ring_buff *ring = (struct ring_buff *)malloc(sizeof(*ring));
 	if (!ring)
 		return NULL;
 
@@ -26,7 +25,7 @@ ring_buff_t* create_ring_buff(size_t element_len, size_t count, void (*destroy_e
 
 	ring->buf = malloc(ring->buflen);
 	if (!ring->buf) {
-		lws_free(ring);
+		free(ring);
 
 		return NULL;
 	}
@@ -44,10 +43,12 @@ void destroy_ring_buff(struct ring_buff *ring)
 				(ring->oldest_tail + ring->element_len) %
 				ring->buflen;
 		}
-	if (ring->buf)
-		lws_free_set_NULL(ring->buf);
+	if (ring->buf) {
+		free(ring->buf);
+        ring->buf = NULL;
+    }
 
-	lws_free(ring);
+	free(ring);
 }
 
 size_t ring_get_count_free_elements(struct ring_buff *ring)
@@ -102,35 +103,6 @@ size_t ring_get_count_waiting_elements(struct ring_buff *ring, uint32_t *tail)
 			f = (ring->buflen - *tail) + ring->head;
 
 	return f / ring->element_len;
-}
-
-int ring_next_linear_insert_range(struct ring_buff *ring, void **start,
-				  size_t *bytes)
-{
-	int n;
-
-	/* n is how many bytes the whole fifo can take */
-	n = (int)(ring_get_count_free_elements(ring) * ring->element_len);
-
-	if (!n)
-		return 1;
-
-	if (ring->head + n > ring->buflen) {
-		*start = (void *)(((uint8_t *)ring->buf) + ring->head);
-		*bytes = ring->buflen - ring->head;
-
-		return 0;
-	}
-
-	*start = (void *)(((uint8_t *)ring->buf) + ring->head);
-	*bytes = n;
-
-	return 0;
-}
-
-void ring_bump_head(struct ring_buff *ring, size_t bytes)
-{
-	ring->head = (ring->head + (uint32_t)bytes) % ring->buflen;
 }
 
 size_t ring_insert(struct ring_buff *ring, const void *src, size_t max_count)
@@ -258,11 +230,40 @@ uint32_t ring_get_oldest_tail(struct ring_buff *ring)
 	return ring->oldest_tail;
 }
 
+int ring_next_linear_insert_range(struct ring_buff *ring, void **start,
+				  size_t *bytes)
+{
+	int n;
+
+	/* n is how many bytes the whole fifo can take */
+	n = (int)(ring_get_count_free_elements(ring) * ring->element_len);
+
+	if (!n)
+		return 1;
+
+	if (ring->head + n > ring->buflen) {
+		*start = (void *)(((uint8_t *)ring->buf) + ring->head);
+		*bytes = ring->buflen - ring->head;
+
+		return 0;
+	}
+
+	*start = (void *)(((uint8_t *)ring->buf) + ring->head);
+	*bytes = n;
+
+	return 0;
+}
+
+void ring_bump_head(struct ring_buff *ring, size_t bytes)
+{
+	ring->head = (ring->head + (uint32_t)bytes) % ring->buflen;
+}
+
 void ring_dump(struct ring_buff *ring, uint32_t *tail)
 {
 	if (tail == NULL)
 		tail = &ring->oldest_tail;
-	lwsl_notice("ring %p: buflen %u, elem_len %u, head %u, oldest_tail %u\n"
+	printf("ring %p: buflen %u, elem_len %u, head %u, oldest_tail %u\n"
 		    "     free_elems: %u; for tail %u, waiting elements: %u\n",
 		    ring, ring->buflen, ring->element_len, ring->head,
 		    ring->oldest_tail,
