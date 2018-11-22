@@ -181,13 +181,8 @@ private:
      * 大小码转换
      */
     char*  EndianChange(char* src, int bytes);
-
-    /**
-     * 读取组好的rtpFrame进行处理的线程。后续所有视频处理都在该线程中。
-     */
-    void ReadingThread();
 private:
-    //char*             m_frame_buf;            // PS帧缓存
+    char*             m_frame_buf;            // PS帧缓存
     CriticalSection   m_cs;                   // 确保当前对象的处理函数是非并行的
 
     MapRtpList        m_mapRtpList;            // 接收到的rtp/udp报文排序列表
@@ -198,8 +193,5 @@ private:
 
 
     CLiveObj*   m_pObj;                  // 回调处理对象
-    void*       m_pRing;                 // rtp帧数据缓存
-    bool*       m_pRun;
-    bool*       m_pFinish;
 };
 
