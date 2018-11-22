@@ -229,14 +229,14 @@ void CLiveObj::ESParseCb(char* pBuff, long nLen/*, uint8_t nNalType*/)
     if(m_pCallBack->m_bFlv && nullptr != m_pFlv)
     {
         CFlv* flv = (CFlv*)m_pFlv;
-        flv->InputBuffer(m_nalu_type, pBuff, nLen);
+        flv->InputBuffer(m_nalu_type, pData, nDataLen);
     }
 
     //需要回调mp4
     if (m_pCallBack->m_bMp4 && nullptr != m_pMp4)
     {
         CMP4* mp4 = (CMP4*)m_pMp4;
-        mp4->InputBuffer(m_nalu_type, pBuff, nLen);
+        mp4->InputBuffer(m_nalu_type, pData, nDataLen);
     }
 }
 
