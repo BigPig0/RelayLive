@@ -10,10 +10,24 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="memfile.h" />
+    <ClInclude Include="netstream.h" />
+    <ClInclude Include="ring_buff.h" />
+    <ClInclude Include="util.h" />
+    <ClInclude Include="util_api.h" />
+    <ClInclude Include="util_def.h" />
+    <ClInclude Include="util_export.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="memfile.c" />
+    <ClCompile Include="netstream.c" />
+    <ClCompile Include="ring_buff.c" />
+    <ClCompile Include="util_api.c" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D99BDF45-2F42-4D81-8795-5357C4A1914F}</ProjectGuid>
+    <ProjectGuid>{5D8B3C31-2629-40A1-8C75-8E50224B60A7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>HttpServer2</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -51,70 +65,39 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="LiveWorker.cpp" />
-    <ClCompile Include="HttpServer.cpp" />
-    <ClCompile Include="HttpWebServer.cpp" />
-    <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="HttpLiveServer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="LiveWorker.h" />
-    <ClInclude Include="HttpServer.h" />
-    <ClInclude Include="HttpWebServer.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="HttpLiveServer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\common\libLive\libLive.vcxproj">
-      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\common\Util\Util.vcxproj">
-      <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\DeviceManager\DeviceManager.vcxproj">
-      <Project>{6d6b65d6-58d0-4f74-9124-1cfb11fadcbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\SipServer\sipServer.vcxproj">
-      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

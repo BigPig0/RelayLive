@@ -1,6 +1,9 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
-#include "stdafx.h" 
+#include "common.h"
+#include "HttpServer.h"
+#include "RtspServer.h"
+#include <windows.h>
 #include "MiniDump.h"
 #include "uv.h"
 #include <thread>
@@ -8,11 +11,11 @@
 int main()
 {
     /** Dump设置 */
-    CMiniDump dump("gb28181_video_control.dmp");
+    CMiniDump dump("relayLive.dmp");
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log\\gb28181_video_control.txt");
+    sprintf_s(path, MAX_PATH, ".\\log\\relayLive.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
 
     /** 加载配置文件 */
@@ -22,22 +25,6 @@ int main()
         return -1;
     }
     Log::debug("Settings::loadFromProfile ok");
-
-
-    /** 初始化设备模块 */
-    if (!DeviceMgr::Init())
-    {
-        Log::error("DeviceManagerInstance init failed");
-        return -1;
-    }
-
-    /** 初始化SIP服务器 */
-    if (!SipInstance::Init())
-    {
-        Log::error("SipInstance init failed");
-        return -1;
-    }
-    Log::debug("SipInstance::Init ok");
 
     //根据cpu数量设置libuv线程池的线程数量
     static uv_loop_t *p_loop_uv = nullptr;

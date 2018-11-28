@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="MemoryPool">
-      <UniqueIdentifier>{c6707172-367e-4fa5-ad8b-d17b1c9dc208}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Thread">
       <UniqueIdentifier>{07cfc907-8095-47d1-9716-25e4483e5c29}</UniqueIdentifier>
     </Filter>
@@ -68,21 +65,6 @@
     </ClInclude>
     <ClInclude Include="include\ProcessMgr.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MemoryPool\ChunkList.h">
-      <Filter>MemoryPool</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MemoryPool\IMemoryPool.h">
-      <Filter>MemoryPool</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MemoryPool\MaxHeap.h">
-      <Filter>MemoryPool</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MemoryPool\MemoryPoolList.h">
-      <Filter>MemoryPool</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MemoryPool\MemoryPoolMaxheap.h">
-      <Filter>MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="include\ExportDefine.h">
       <Filter>头文件</Filter>
@@ -166,21 +148,6 @@
     </ClCompile>
     <ClCompile Include="src\ProcessMgr.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MemoryPool\ChunkList.cpp">
-      <Filter>MemoryPool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MemoryPool\IMemoryPool.cpp">
-      <Filter>MemoryPool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MemoryPool\MaxHeap.cpp">
-      <Filter>MemoryPool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MemoryPool\MemoryPoolList.cpp">
-      <Filter>MemoryPool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MemoryPool\MemoryPoolMaxheap.cpp">
-      <Filter>MemoryPool</Filter>
     </ClCompile>
     <ClCompile Include="src\ThreadPool.cpp">
       <Filter>Thread</Filter>

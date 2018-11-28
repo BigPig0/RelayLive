@@ -10,20 +10,23 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sip_server.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D99BDF45-2F42-4D81-8795-5357C4A1914F}</ProjectGuid>
+    <ProjectGuid>{2262E19B-E22D-4003-98C9-A1F237B2FE85}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>HttpServer2</RootNamespace>
+    <RootNamespace>client</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -41,80 +44,54 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)Lib\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)Lib\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/Util/include;$(SolutionDir)../Modules/SipServer/include;$(SolutionDir)../Modules/DeviceManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;liboci.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../thirdParty/ocilib/lib/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/Util/include;$(SolutionDir)../Modules/SipServer/include;$(SolutionDir)../Modules/DeviceManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../thirdParty/ocilib/lib/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;liboci.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="LiveWorker.cpp" />
-    <ClCompile Include="HttpServer.cpp" />
-    <ClCompile Include="HttpWebServer.cpp" />
-    <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="HttpLiveServer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="LiveWorker.h" />
-    <ClInclude Include="HttpServer.h" />
-    <ClInclude Include="HttpWebServer.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="HttpLiveServer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\common\libLive\libLive.vcxproj">
-      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\common\Util\Util.vcxproj">
-      <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\DeviceManager\DeviceManager.vcxproj">
-      <Project>{6d6b65d6-58d0-4f74-9124-1cfb11fadcbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\SipServer\sipServer.vcxproj">
-      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
