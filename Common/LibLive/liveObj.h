@@ -97,6 +97,8 @@ public:
         m_pCallBack = pHandle;
     }
 
+    bool        m_bRun;
+    uv_loop_t   *m_uvLoop;
 private:
     string      m_strLocalIP;       // 本地IP
     int         m_nLocalRTPPort;    // 本地RTP端口

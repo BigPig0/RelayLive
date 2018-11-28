@@ -98,6 +98,7 @@ bool CSipCall::StopSipCall(string strDevCode)
         Log::error("m_mapDeviceCall isn't find %s:%d",strDevCode.c_str(),nCallID);
         return false;
     }
+    m_mapGlobalCall.erase(findCall);
 
     Log::debug("Stopped call %s",strDevCode.c_str());
     return true;

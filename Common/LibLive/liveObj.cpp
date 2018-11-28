@@ -39,6 +39,17 @@ static void timer_cb(uv_timer_t* handle)
     pLive->RtpOverTime();
 }
 
+static void run_loop_thread(void* arg)
+{
+    CLiveObj* h = (CLiveObj*)arg;
+    while (h->m_bRun) {
+        uv_run(h->m_uvLoop, UV_RUN_DEFAULT);
+        Sleep(200);
+    }
+    uv_loop_close(h->m_uvLoop);
+    h->m_uvLoop = NULL;
+}
+
 CLiveObj::CLiveObj(void)
     : m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
@@ -82,6 +93,10 @@ CLiveObj::~CLiveObj(void)
     if(ret < 0) {
         Log::error("stop timer error: %s",uv_strerror(ret));
     }
+    m_bRun =  false;
+    uv_stop(m_uvLoop);
+    while (m_uvLoop)
+        Sleep(1000);
 
     SAFE_DELETE(m_pRtpParser);
     SAFE_DELETE(m_pPsParser);
@@ -102,8 +117,13 @@ void CLiveObj::SetCatchPacketNum(int nPacketNum)
 
 void CLiveObj::StartListen()
 {
+    m_uvLoop = uv_loop_new();
+    uv_thread_t tid;
+    m_bRun = true;
+    uv_thread_create(&tid, run_loop_thread, this);
+
     // 开启udp接收
-    int ret = uv_udp_init(uv_default_loop(), &m_uvRtpSocket);
+    int ret = uv_udp_init(m_uvLoop, &m_uvRtpSocket);
     if(ret < 0) {
         Log::error("udp init error: %s", uv_strerror(ret));
         return;
@@ -132,7 +152,7 @@ void CLiveObj::StartListen()
     uv_udp_recv_start(&m_uvRtpSocket, echo_alloc, after_read);
 
     //开启udp接收超时判断
-    ret = uv_timer_init(uv_default_loop(), &m_uvTimeOver);
+    ret = uv_timer_init(m_uvLoop, &m_uvTimeOver);
     if(ret < 0) {
         Log::error("timer init error: %s", uv_strerror(ret));
         return;
@@ -160,7 +180,6 @@ void CLiveObj::RtpRecv(char* pBuff, long nLen)
 void CLiveObj::RtpOverTime()
 {
     Log::debug("OverTimeThread thread ID : %d", GetCurrentThreadId());
-    time_t nowTime = time(NULL);
     // rtp接收超时
     if(nullptr != m_pCallBack)
     {
