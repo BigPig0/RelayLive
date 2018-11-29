@@ -2,7 +2,6 @@
 //
 #include "common.h"
 #include "DeviceMgr.h"
-#include "SipInstance.h"
 #include "MiniDump.h"
 #include "uvIpc.h"
 #include "util_api.h"
@@ -16,7 +15,7 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
 int main()
 {
     /** Dump设置 */
-    CMiniDump dump("sipServer.dmp");
+    CMiniDump dump("rtsp_trans.dmp");
 
     /** 进程间通信 */
     uv_ipc_handle_t* h = NULL;
@@ -27,7 +26,7 @@ int main()
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log\\sipServer.txt");
+    sprintf_s(path, MAX_PATH, ".\\log\\rtspTrans.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
 
     /** 加载配置文件 */
@@ -45,14 +44,6 @@ int main()
         Log::error("DeviceManagerInstance init failed");
         return -1;
     }
-
-    /** 初始化SIP服务器 */
-    if (!SipInstance::Init())
-    {
-        Log::error("SipInstance init failed");
-        return -1;
-    }
-    Log::debug("SipInstance::Init ok");
     
     sleep(INFINITE);
     return 0;

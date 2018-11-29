@@ -5,13 +5,26 @@
 #include "RtspServer.h"
 #include <windows.h>
 #include "MiniDump.h"
+#include "uvIpc.h"
 #include "uv.h"
-#include <thread>
+//#include <thread>
+
+void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len)
+{
+
+}
 
 int main()
 {
     /** Dump设置 */
     CMiniDump dump("relayLive.dmp");
+
+    /** 进程间通信 */
+    uv_ipc_handle_t* h = NULL;
+    int ret = uv_ipc_client(&h, "relay_live", NULL, "liveDest", on_ipc_recv, NULL);
+    if(ret < 0) {
+        printf("ipc server err: %s\n", uv_ipc_strerr(ret));
+    }
 
     /** 创建日志文件 */
     char path[MAX_PATH];
@@ -56,7 +69,7 @@ int main()
     while(true)
     {
         uv_run(p_loop_uv, UV_RUN_DEFAULT);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        Sleep(1000);
     }
     Sleep(INFINITE);
     return 0;

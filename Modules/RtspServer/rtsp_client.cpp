@@ -1,0 +1,423 @@
+#include "stdafx.h"
+#include "rtsp_client.h"
+#include "md5.h"
+
+extern uv_loop_t* _uv_loop_;
+
+static uint32_t _seq_ = 1;
+
+/** socket关闭回调 */
+static void close_cb(uv_handle_t* handle) {
+    CRtspClient* rtsp = (CRtspClient*)handle->data;
+    rtsp->_conn_state = RTSP_CONNECT_CLOSE;
+}
+
+static void shutdown_cb(uv_shutdown_t* req, int status) {
+    CRtspClient* rtsp = (CRtspClient*)req->data;
+    rtsp->_conn_state = RTSP_CONNECT_SHUTDOWN;
+    uv_close((uv_handle_t*)&rtsp->_tcp, close_cb);
+}
+
+/** 接收数据申请空间回调 */
+static void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+{
+    CRtspClient* rtsp = (CRtspClient*)handle->data;
+    memset(rtsp->_recv_buff, 0, SOCKET_RECV_BUFF_LEN);
+    *buf = uv_buf_init(rtsp->_recv_buff, SOCKET_RECV_BUFF_LEN);
+}
+
+/** 接收数据回调 */
+static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+    CRtspClient* rtsp = (CRtspClient*)stream->data;
+    if (nread < 0) {
+        fprintf(stderr, "read_cb error %s-%s\r\n", uv_err_name(nread), uv_strerror(nread));
+        if(nread == UV_EOF) {
+            uv_close((uv_handle_t*)&rtsp->_tcp, close_cb);
+        }
+        uv_shutdown(&rtsp->_shutdown, (uv_stream_t*)&rtsp->_tcp, shutdown_cb);
+        rtsp->_step_state = RTSP_STEP_FAILED;
+        rtsp->_play_cb(RTSP_ERR_TCP_RECV_FAILED);
+        return;
+    }
+    rtsp->_recv_len = nread;
+
+    //读取到数据
+    if(rtsp->_step == RTSP_STEP_OPTION)
+        rtsp->parse_options();
+    else if(rtsp->_step == RTSP_STEP_DESCRIBE)
+        rtsp->parse_describe();
+    else if(rtsp->_step == RTSP_STEP_SETUP)
+        rtsp->parse_setup();
+    else if(rtsp->_step == RTSP_STEP_PLAY)
+        rtsp->parse_play();
+    else if(rtsp->_step == RTSP_STEP_TEARDOWN)
+        rtsp->parse_teardown();
+}
+
+/** 发送数据回调 */
+static void write_cb(uv_write_t* req, int status) {
+    CRtspClient* rtsp = (CRtspClient*)req->data;
+    if (status < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(status), uv_strerror(status)); 
+        rtsp->_step_state = RTSP_STEP_FAILED;
+        uv_shutdown(&rtsp->_shutdown, (uv_stream_t*)&rtsp->_tcp, shutdown_cb);
+        rtsp->_play_cb(RTSP_ERR_TCP_SEND_FAILED);
+    }
+}
+
+void on_connect(uv_connect_t* req, int status) {
+    CRtspClient* rtsp = (CRtspClient*)req->data;
+    int ret = uv_read_start(req->handle, alloc_cb, read_cb);//客户端开始接收服务器的数据
+    if (ret) {
+        fprintf(stderr, "tcp receive failed:%s-%s\r\n", uv_err_name(ret), uv_strerror(ret)); 
+        rtsp->_play_cb(RTSP_ERR_CONNECT_FAILED);
+        return;
+    }
+
+    rtsp->_conn_state = RTSP_CONNECT_CONNECTED;
+    rtsp->send_options();
+}
+
+CRtspClient::CRtspClient(RTSP_REQUEST option)
+    : _option(option)
+    , _step(RTSP_STEP_NONE)
+    , _conn_state(RTSP_CONNECT_INIT)
+    , _need_auth(false)
+    , _send_buff(NULL)
+    , _recv_buff(NULL)
+{
+    uv_tcp_init(_uv_loop_, &_tcp);
+    make_uri();
+    Log::debug(_uri.c_str());
+}
+
+CRtspClient::~CRtspClient()
+{
+    stop();
+    while (_conn_state != RTSP_CONNECT_CLOSE)
+    {
+
+    }
+    if(_send_buff) free(_send_buff);
+    if(_recv_buff) free(_recv_buff);
+}
+
+int CRtspClient::play(play_cb cb)
+{
+    _play_cb       = cb;
+    _conn.data     = this;
+    _tcp.data      = this;
+    _write.data    = this;
+    _shutdown.data = this;
+    _send_buff     = (char*)malloc(SOCKET_RECV_BUFF_LEN);
+    _recv_buff     = (char*)malloc(SOCKET_RECV_BUFF_LEN);
+
+    struct sockaddr_in addr;
+    int ret = uv_ip4_addr(_option.ip.c_str(), _option.port, &addr);
+    if(ret < 0) {
+        Log::error("make address err: %s",  uv_strerror(ret));
+        return RTSP_ERR_IP4_ADDR_FAILED;
+    }
+
+    ret = uv_tcp_connect(&_conn, &_tcp, (struct sockaddr*)&addr, on_connect);
+    if(ret < 0) {
+        Log::error("tcp connect failed: %s", uv_strerror(ret));
+        return RTSP_ERR_CONNECT_FAILED;
+    }
+    return 0;
+}
+
+int CRtspClient::stop()
+{
+    if(_step == RTSP_STEP_PLAY && _step_state == RTSP_STEP_SUCESS)
+        send_teardown();
+    else if(_conn_state == RTSP_CONNECT_CONNECTED)
+        uv_shutdown(&_shutdown, (uv_stream_t*)&_tcp, shutdown_cb);
+
+    return 0;
+}
+
+int CRtspClient::send_options()
+{
+    _step = RTSP_STEP_OPTION;
+    _step_state = RTSP_STEP_BEGIN;
+
+    stringstream ss;
+    ss << "OPTIONS " << _uri << " RTSP/1.0\r\n"
+        << "CSeq: " << _seq_++ << "\r\n"
+        << "User-Agent: relay live rtsp\r\n"
+        << "\r\n";
+    memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
+    strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+
+    uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
+    int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
+    if (ret < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+        return ret;
+    }
+    return 0;
+}
+
+int CRtspClient::send_describe()
+{
+    _step = RTSP_STEP_DESCRIBE;
+    _step_state = RTSP_STEP_BEGIN;
+
+    stringstream ss;
+    ss << "DESCRIBE " << _uri << " RTSP/1.0\r\n"
+        << "CSeq: " << _seq_++ << "\r\n";
+    if(_need_auth) {
+        MD5 md5;
+        string auth = "DESCRIBE:" + _uri;
+        md5.ComputMd5(auth.c_str(), auth.size());
+        string auth_md5 = md5.GetMd5();
+        MD5 md5_2;
+        string auth_2 = _auth_md5 + ":" + _nonce + ":" + auth_md5;
+        md5_2.ComputMd5(auth_2.c_str(), auth_2.size());
+        string response = md5_2.GetMd5();
+
+        ss << "Authorization: Digest username=\"" << _option.user_name
+            << "\", realm=\"" << _realm << "\", nonce=\"" << _nonce
+            << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
+    }
+    ss << "User-Agent: relay live rtsp\r\n"
+        << "Accept: application/sdp\r\n"
+        << "\r\n";
+    memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
+    strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+
+    uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
+    int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
+    if (ret < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
+        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+        return ret;
+    }
+    return 0;
+}
+
+int CRtspClient::send_setup()
+{
+    _step = RTSP_STEP_SETUP;
+    _step_state = RTSP_STEP_BEGIN;
+
+    stringstream ss;
+    ss << "SETUP " << _uri << "/trackID=1 RTSP/1.0\r\n"
+        << "CSeq: " << _seq_++ << "\r\n";
+    if(_need_auth) {
+        MD5 md5;
+        string auth = "SETUP:" + _uri + "/trackID=1";
+        md5.ComputMd5(auth.c_str(), auth.size());
+        string auth_md5 = md5.GetMd5();
+        MD5 md5_2;
+        string auth_2 = _auth_md5 + ":" + _nonce + ":" + auth_md5;
+        md5_2.ComputMd5(auth_2.c_str(), auth_2.size());
+        string response = md5_2.GetMd5();
+
+        ss << "Authorization: Digest username=\"" << _option.user_name
+            << "\", realm=\"" << _realm << "\", nonce=\"" << _nonce
+            << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
+    }
+    ss << "User-Agent: relay live rtsp\r\n"
+        << "Transport: RTP/AVP;unicast;client_port=" << _option.port
+        << "-" << _option.port+1 << "\r\n"
+        << "\r\n";
+    memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
+    strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+
+    uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
+    int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
+    if (ret < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
+        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+        return ret;
+    }
+    return 0;
+}
+
+int CRtspClient::send_play()
+{
+    _step = RTSP_STEP_PLAY;
+    _step_state = RTSP_STEP_BEGIN;
+
+    stringstream ss;
+    ss << "PLAY " << _uri << " RTSP/1.0\r\n"
+        << "CSeq: " << _seq_++ << "\r\n";
+    if(_need_auth) {
+        MD5 md5;
+        string auth = "PLAY:" + _uri;
+        md5.ComputMd5(auth.c_str(), auth.size());
+        string auth_md5 = md5.GetMd5();
+        MD5 md5_2;
+        string auth_2 = _auth_md5 + ":" + _nonce + ":" + auth_md5;
+        md5_2.ComputMd5(auth_2.c_str(), auth_2.size());
+        string response = md5_2.GetMd5();
+
+        ss << "Authorization: Digest username=\"" << _option.user_name
+            << "\", realm=\"" << _realm << "\", nonce=\"" << _nonce
+            << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
+    }
+    ss << "User-Agent: relay live rtsp\r\n"
+        << "Session: " << _session << "\r\n"
+        << "Range: npt=0.000-\r\n"
+        << "\r\n";
+    memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
+    strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+
+    uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
+    int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
+    if (ret < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
+        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+        return ret;
+    }
+    return 0;
+}
+
+int CRtspClient::send_teardown()
+{
+    _step = RTSP_STEP_TEARDOWN;
+    _step_state = RTSP_STEP_BEGIN;
+
+    stringstream ss;
+    ss << "TEARDOWN " << _uri << " RTSP/1.0\r\n"
+        << "CSeq: " << _seq_++ << "\r\n";
+    if(_need_auth) {
+        MD5 md5;
+        string auth = "TEARDOWN:" + _uri;
+        md5.ComputMd5(auth.c_str(), auth.size());
+        string auth_md5 = md5.GetMd5();
+        MD5 md5_2;
+        string auth_2 = _auth_md5 + ":" + _nonce + ":" + auth_md5;
+        md5_2.ComputMd5(auth_2.c_str(), auth_2.size());
+        string response = md5_2.GetMd5();
+
+        ss << "Authorization: Digest username=\"" << _option.user_name
+            << "\", realm=\"" << _realm << "\", nonce=\"" << _nonce
+            << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
+    }
+    ss << "User-Agent: relay live rtsp\r\n"
+        << "Session: " << _session << "\r\n"
+        << "\r\n";
+    memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
+    strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+
+    uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
+    int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
+    if (ret < 0)
+    {
+        Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
+        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+        return ret;
+    }
+    return 0;
+}
+
+int CRtspClient::parse_options()
+{
+    if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(RTSP_ERR_OPTION_FAILED);
+        return -1;
+    }
+
+    _step_state = RTSP_STEP_SUCESS;
+    return send_describe();
+}
+
+int CRtspClient::parse_describe()
+{
+    if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        if(strncasecmp(_recv_buff, "RTSP/1.0 401 Unauthorized\r\n", 27)) {
+            _step_state = RTSP_STEP_FAILED;
+            _play_cb(RTSP_ERR_DESCRIBE_FAILED);
+            return -1;
+        }
+
+        _need_auth = true;
+        char* p = strstr(_recv_buff, "\r\nWWW-Authenticate:");
+        char* realm = strstr(p, " realm=\"");
+        realm += 8;
+        char* end = strstr(realm, "\"");
+        _realm = string(realm, end-realm);
+        char* nonce = strstr(p, " nonce=\"");
+        nonce += 8;
+        end = strstr(nonce, "\"");
+        _nonce = string(nonce, end-nonce);
+        MD5 md5;
+        string auth = _option.user_name + ":" + _realm + ":" + _option.password;
+        md5.ComputMd5(auth.c_str(), auth.size());
+        _auth_md5 = md5.GetMd5();
+
+        return send_describe();
+    }
+
+    _step_state = RTSP_STEP_SUCESS;
+    return send_setup();
+}
+
+int CRtspClient::parse_setup()
+{
+    if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(RTSP_ERR_SETUP_FAILED);
+        return -1;
+    }
+
+    char* p = strstr(_recv_buff, "\r\nSession:");
+    p += 10;
+    while(*p == ' ') p++;
+    char* session = p;
+    char* e1 = strstr(p, ";");
+    char* e2 = strstr(p, "\r\n");
+    if(e1 && e2) {
+        char* e;
+        if(e1 < e2) e=e1; else e=e2;
+        _session = string(session, e-session);
+    } else if(e1 && !e2) {
+        _session = string(session, e1-session);
+    } else if(!e1 && e2) {
+        _session = string(session, e2-session);
+    } else {
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(RTSP_ERR_SETUP_FAILED);
+        return -1;
+    }
+
+    _step_state = RTSP_STEP_SUCESS;
+    return send_play();
+}
+
+int CRtspClient::parse_play()
+{
+    if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(RTSP_ERR_PLAY_FAILED);
+        return -1;
+    }
+
+    _step_state = RTSP_STEP_SUCESS;
+    return 0;
+}
+
+int CRtspClient::parse_teardown()
+{
+    if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        _step_state = RTSP_STEP_FAILED;
+        //_play_cb(RTSP_ERR_TEARDOWN_FAILED);
+        //return -1;
+    }
+
+    _step_state = RTSP_STEP_SUCESS;
+
+    uv_shutdown(&_shutdown, (uv_stream_t*)&_tcp, shutdown_cb);
+    return 0;
+}
