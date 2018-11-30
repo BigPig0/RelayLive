@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="lib/bootstrap.min.css"/>
+  <style>
+    tr{
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body ng-app="myApp" ng-controller="myCtrl">
+  <div style="width: 80%;margin: 20px auto;">
+    <div class="row clearfix" style="margin-bottom: 20px;">
+        <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛选</button>
+    </div>
+    
+    <table class="table">
+      <tr>
+        <th>序号</th>
+        <th>DeviceID</th>
+        <th>Name</th>
+        <th>Model</th>
+        <th>Longitude</th>
+        <th>Latitude</th>
+        <th>Status</th>
+      </tr>
+      <tbody ng-repeat="item in data track by $index" ng-show="!isFilter || item.FlvClient">
+          <tr ng-class="{'success':item.FlvClient && item.FlvClient.length > 0}"  ng-click="item.showSub = !item.showSub">
+            <td>{{$index+1}}</td>
+            <td>{{item.DeviceID}}</td>
+            <td>{{item.Name}}</td>
+            <td>{{item.Model}}</td>
+            <td>{{item.Longitude}}</td>
+            <td>{{item.Latitude}}</td>
+            <td>{{item.Status}}</td>
+          </tr>
+          <tr class="warning" ng-repeat="subItem in item.FlvClient" ng-show="!item.showSub">
+              <td colspan="5"></td>
+              <td>{{subItem.ip}}</td>
+              <td>{{subItem.port}}</td>
+              <td colspan="2"></td>
+          </tr>
+      </tbody>
+      
+    </table>
+  </div>
+</body>
+</html>
+<script src="lib/angular.min.js"></script>
+<script src="lib/jquery-1.11.3.min.js"></script>
+<script>
+  var _test = false;
+  var url = _test ? 'data/data.json' : 'http://172.31.7.88:81/device/infolist';
+  var app = angular.module('myApp', []);
+  app.controller('myCtrl', function($scope,$http) {
+    $http({
+        method: 'GET',
+        url: url,
+        dataType: 'json',
+    }).then(function successCallback(response) {
+      $scope.data = response.data.root;
+      
+    }, function errorCallback(response) {
+    });
+
+    
+  });
+
+  
+</script>

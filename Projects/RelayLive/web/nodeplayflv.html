@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <title>Simple Web Live Flv player in pure JavaScript.</title>
+    <style>
+        #url {
+            width: 350px;
+        }
+
+        #logview {
+            width: 640px;
+            height: 200px;
+            margin-top: 10px;
+            border-left: 0px;
+            border-right: 0px;
+            padding-left: 0px;
+            padding-right: 0px;
+            display: block;
+            background-color: black;
+            color: white;
+            font-size: medium;
+            font-family: 'Lucida Console', Monaco, monospace;
+            outline: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div>
+        <div>Web Flv player 1 </div>
+        <canvas id="video1" width="1024" height="720"></canvas>
+    </div>
+    <div>
+        <input id="url" value="ws://172.31.7.88:8000/36030100061320000026.flv" />
+        <input id="play1" type="button" value="Play" />
+        <input id="stop1" type="button" value="Stop" />
+        <input id="switch" type="button" value="switch" />
+    </div>
+    <script type="text/javascript" src="./NodePlayer.min.js"></script>
+    <script>
+        /**
+         * 是否打印debug信息
+         */
+        // NodePlayer.debug(false);
+
+        var urls = ['ws://172.31.7.88:8000/36030100061320000026.h264', 'ws://172.31.7.88:8000/36030100061320000026.h264'];
+        var index = 0;
+        var player = new NodePlayer();
+
+        /**
+         * 自动测试浏览器是否支持MSE播放，如不支持，仍然使用软解码。
+         * 紧随 new 后调用
+         * 不调用则只使用软解
+         */
+        // player.useMSE();
+
+
+        /**
+         * 传入 canvas视图的id，当使用mse时，自动转换为video标签
+         */
+        player.setView('video1');
+
+        /**
+         * 视频缩放模式, 当视频分辨率比例与Canvas显示区域比例不同时,缩放效果不同:
+         *  0 视频画面完全填充canvas区域,画面会被拉伸
+         *  1 视频画面做等比缩放后,对齐Canvas区域,画面不被拉伸,但有黑边
+         *  2 视频画面做等比缩放后,完全填充Canvas区域,画面不被拉伸,没有黑边,但画面显示不全
+         * 软解时有效
+         */
+        player.setScaleMode(1);
+
+        /**
+         * 设置最大缓冲时长，单位毫秒，只在软解时有效
+         */
+        player.setBufferTime(500);
+
+        /**
+         * 打开音频
+         * 一个页面可以创建多个播放实例,但只能有一个实例播放音频
+         * 默认都为关闭
+         * 当开启一个音频时,若一个实例已打开,需先关闭
+         * iOS的safari浏览器及webview控件,iOS微信内,需要给一个触摸事件才能解锁音频 
+         */
+        player.enableAudio(true);
+
+        /**
+            AVDISCARD_NONE    =-16, ///< discard nothing
+            AVDISCARD_DEFAULT =  0, ///< discard useless packets like 0 size packets in avi
+            AVDISCARD_NONREF  =  8, ///< discard all non reference
+            AVDISCARD_BIDIR   = 16, ///< discard all bidirectional frames
+            AVDISCARD_NONINTRA= 24, ///< discard all non intra frames
+            AVDISCARD_NONKEY  = 32, ///< discard all frames except keyframes
+            AVDISCARD_ALL     = 48, ///< discard all
+
+            只在软解时有效
+        */
+        player.skipLoopFilter(32);
+
+        player.on('start', () => {
+            console.log("player on start");
+        });
+
+        player.on('error', (e) => {
+            console.log("player on error", e);
+        });
+
+        player.on('stop', () => {
+            console.log("player on stop");
+        });
+
+        var startFunc = function () {
+            var url = document.getElementById("url");
+            player.start(url.value);
+        }
+
+        var stopFunc = function () {
+            player.stop();
+        }
+
+        var switchFunc = function () {
+            player.stop();
+            player.start(urls[index++]);
+            index %= 2;
+        }
+
+        var btPl1 = document.getElementById("play1");
+        var btSt1 = document.getElementById("stop1");
+        var btSw1 = document.getElementById("switch");
+
+        if (btPl1.addEventListener) {
+            btPl1.addEventListener("click", startFunc, false);
+        } else if (btPl1.attachEvent) {
+            btPl1.attachEvent('onclick', startFunc);
+        }
+
+        if (btSt1.addEventListener) {
+            btSt1.addEventListener("click", stopFunc, false);
+        } else if (btSt1.attachEvent) {
+            btSt1.attachEvent('onclick', stopFunc);
+        }
+
+        if (btSw1.addEventListener) {
+            btSw1.addEventListener("click", switchFunc, false);
+        } else if (btSt1.attachEvent) {
+            btSw1.attachEvent('onclick', switchFunc);
+        }
+
+    </script>
+</body>
+
+</html>

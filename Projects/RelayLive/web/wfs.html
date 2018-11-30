@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>h.264 To fmp4</title>  
+ 
+</head>
+<body>
+    <h2>h.264 To fmp4</h2>
+
+ 
+   <script type="text/javascript" src="wfs.js" ></script>  
+  
+   <div class="wfsjs">
+   <video id="video1"  width="640" height="480" controls></video> 
+   <div class="ratio"></div>
+   </div>
+ 
+    <script>
+ 
+	window.onload = function () {
+        if (Wfs.isSupported()) {
+        	
+            var video1 = document.getElementById("video1"),
+            wfs = new Wfs();    
+            //wfs.attachMedia(video1, 'wslive', 'H264Raw', 'ws://localhost:8000/36030100061320000026.h264');
+            wfs.attachMedia(video1, 'wslive', 'FMp4', 'ws://localhost:8000/36030100061320000026.mp4');
+        }
+    };
+ 
+    </script>
+	
+</body>
+</html>
