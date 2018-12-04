@@ -21,20 +21,22 @@ typedef struct _uv_ipc_clients_
 {
     uv_ipc_handle_t         *ipc;
     uv_pipe_t               pipe;
+	uv_shutdown_t           shutdown;
     struct _uv_ipc_clients_ *pre;
     struct _uv_ipc_clients_ *next;
     char                    name[100];
 }uv_ipc_clients_t;
 
 typedef struct _uv_ipc_handle_ {
-    void        *data;
-    int         is_svr;     //ture:服务端 false:客户端
-    int         inner_uv;   //true:内部创建的 false:外部传入的
-    uv_loop_t*  uv;
-    uv_pipe_t   pipe;
-    uv_ipc_clients_t *clients;  //服务端有用。
-    uv_ipc_recv_cb cb;          //客户端回调函数
-    char        name[100];      //客户端名称
+    void                    *data;
+    int                     is_svr;     //ture:服务端 false:客户端
+    int                     inner_uv;   //true:内部创建的 false:外部传入的
+    uv_loop_t              *uv;
+    uv_pipe_t               pipe;
+	uv_shutdown_t           shutdown;
+    uv_ipc_clients_t        *clients;    //服务端有用。
+    uv_ipc_recv_cb          cb;          //客户端回调函数
+    char                    name[100];   //客户端名称
 }uv_ipc_handle_t;
 
 typedef struct _uv_ipc_write_s_ {
@@ -60,6 +62,18 @@ static void run_loop_thread(void* arg)
     free(h);
 }
 
+static void close_cb(uv_handle_t* handle) {
+    uv_ipc_clients_t* c = (uv_ipc_clients_t*)handle->data;
+	printf("close client %s\n", c->name);
+	free(c);
+}
+
+static void shutdown_cb(uv_shutdown_t* req, int status) {
+    uv_ipc_clients_t* c = (uv_ipc_clients_t*)req->data;
+	printf("shutdown client %s  status:%s\n", c->name, uv_strerror(status));
+	uv_close((uv_handle_t*)&c->pipe, close_cb);
+}
+
 static void on_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {//用于读数据时的缓冲区分配
     buf->base = (char*)malloc(suggested_size);
     buf->len = suggested_size;
@@ -83,14 +97,13 @@ static void on_write_s(uv_write_t *req, int status) {
 static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     uv_ipc_clients_t* c = (uv_ipc_clients_t*)client->data;
     uv_ipc_handle_t* ipc = (uv_ipc_handle_t*)c->ipc;
-    char *recv_name, *next_name, *recvs, *data; 
-    uint32_t recv_len, total_len;
+    char *recv_name, *next_name, *recvs, *total, *sender, *msg, *data; 
+    uint32_t recv_len, total_len, sender_len, msg_len, data_len;
     net_stream_parser_t *s;
     uv_ipc_write_s_t *w;
 
     if (nread < 0) {
         printf("Read error %s\n", uv_strerror(nread));
-        uv_close((uv_handle_t*)client, NULL);
         if(c->pre) {
             c->pre->next = c->next;
             if(c->next)
@@ -100,50 +113,46 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
             if(c->next)
                 c->next->pre = NULL;
         }
-        free(c);
+		uv_shutdown(&c->shutdown, client, shutdown_cb);
         return;
     }
 
     //解析消息内容
     s         = create_net_stream_parser(buf->base, nread);
     recv_len  = net_stream_read_be32(s, 32);
-    if(recv_len < 0) {
-        // 客户端发送给服务端的内部通知
-        char *sender, *msg, *data;
-        uint32_t sender_len, msg_len, data_len;
-        total_len  = net_stream_read_be32(s, 32);
-        sender_len = net_stream_read_be32(s, 32);
-        sender     = net_stream_read_buff(s, sender_len);
-        msg_len    = net_stream_read_be32(s, 32);
-        if(msg_len > 0)
-            msg    = net_stream_read_buff(s, msg_len);
-        data_len   = net_stream_read_be32(s, 32);
-        if(data_len > 0)
-            data   = net_stream_read_buff(s, data_len);
+	if(recv_len > 0)
+		recvs  = net_stream_read_buff(s, recv_len);
+    total_len  = net_stream_read_be32(s, 32);
+	total      = net_stream_read_buff(s, 0);
+	sender_len = net_stream_read_be32(s, 32);
+    sender     = net_stream_read_buff(s, sender_len);
+    msg_len    = net_stream_read_be32(s, 32);
+    if(msg_len > 0)
+        msg    = net_stream_read_buff(s, msg_len);
+    data_len   = net_stream_read_be32(s, 32);
+    if(data_len > 0)
+        data   = net_stream_read_buff(s, data_len);
+    destory_net_stream_parser(s);
 
-        //如果没有设置名字，必须设置自身名字
-        if (c->name[0] == 0){
-            strncpy(c->name, sender, 100);
-        }
+    //如果没有设置名字，必须设置自身名字
+    if (c->name[0] == 0){
+        strncpy(c->name, sender, 100);
+		printf("new client %s\n", c->name);
+    }
+
+    if(recv_len == 0) {
+        // 客户端发送给服务端的内部通知
         return;
     }
 
-    recvs     = net_stream_read_buff(s, recv_len);
-    total_len = net_stream_read_be32(s, 32);
-    data      = net_stream_read_buff(s, 0);
-    if(c->name[0] == 0) {
-        uint32_t send_len  = net_stream_read_be32(s, 32);
-        char* send_name = net_stream_read_buff(s, send_len);
-        strncpy(c->name, send_name, 100);
-        c->name[99] = 0;
-    }
-    destory_net_stream_parser(s);
-
     w = (uv_ipc_write_s_t *)malloc(sizeof(uv_ipc_write_s_t));
     w->buff = buf->base;
-    w->data = data;
+    w->data = total;
     w->ipc = ipc;
     w->num = 0;
+
+	recvs[recv_len] = 0;
+	printf("sender:%s, recver:%s, msg:%s data:%s\n", c->name, recvs, msg, data);
 
     //分割接受者名字
     recv_name = strtok_r(recvs, ",", &next_name);
@@ -151,7 +160,7 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
         uv_ipc_clients_t* tmp = ipc->clients;
         while(tmp != NULL) {
             if(!strncmp(recv_name, tmp->name, 100)) {
-                uv_buf_t buff = uv_buf_init(data, total_len);
+                uv_buf_t buff = uv_buf_init(total, total_len+1);
                 uv_write_t *req = (uv_write_t *)malloc(sizeof(uv_write_t));
                 w->num++;
                 req->data = w;
@@ -178,6 +187,8 @@ static void on_connection(uv_stream_t *server, int status) {
     memset(c, 0, sizeof(uv_ipc_clients_t));
     c->ipc = ipc;
     uv_pipe_init(ipc->uv, &c->pipe, 0);
+	c->pipe.data = c;
+	c->shutdown.data = c;
     if (uv_accept(server, (uv_stream_t*)&c->pipe) == 0) {//accept成功之后开始读
         c->next = ipc->clients;
         if(ipc->clients)
@@ -222,6 +233,8 @@ static void on_read_c(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf){
 
     sender[sender_len] = 0;
     msg[msg_len] = 0;
+
+	printf("ipc recv sender:%s, msg:%s, data:%s\n", sender, msg, data);
 
     if(ipc->cb)
         ipc->cb(ipc, ipc->data, sender, msg, data, data_len);
@@ -405,6 +418,7 @@ int uv_ipc_send(uv_ipc_handle_t* h, char* names, char* msg, char* data, int len)
     } else {
         net_stream_append_be32(s, 0);
     }
+	net_stream_append_byte(s,0);
     buff = uv_buf_init(get_net_stream_data(s), get_net_stream_len(s));
 
     w = (uv_ipc_write_c_t*)malloc(sizeof(uv_ipc_write_c_t));

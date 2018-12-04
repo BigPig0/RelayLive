@@ -6,7 +6,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ipc_server.cpp">
+    <ClCompile Include="..\..\Projects\ipc_server.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

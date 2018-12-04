@@ -133,6 +133,9 @@ namespace HttpWsServer
             return -1;
         }
 
+        //IPC≥ı ºªØ
+        ipc_init();
+
         return 0;
     }
 

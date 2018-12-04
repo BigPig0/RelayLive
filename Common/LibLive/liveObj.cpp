@@ -10,6 +10,12 @@
 #include "mp4.h"
 #include "h264.h"
 
+enum STREAM_TYPE {
+	STREAM_UNKNOW = 0,
+	STREAM_PS,
+	STREAM_H264
+};
+
 IlibLive* IlibLive::CreateObj()
 {
     return new CLiveObj;
@@ -71,6 +77,7 @@ CLiveObj::CLiveObj(void)
     , m_pts(0)
     , m_dts(0)
     , m_nalu_type(unknow)
+	, m_stream_type(STREAM_UNKNOW)
 {
     m_pRtpParser     = new CRtp(this);
     m_pPsParser      = new CPs(this);
@@ -190,12 +197,19 @@ void CLiveObj::RtpOverTime()
 void CLiveObj::RTPParseCb(char* pBuff, long nLen)
 {
     //Log::debug("CRTSPInterface::RTPParseCb nlen:%ld", nLen);
-    CHECK_POINT_VOID(pBuff)
-    CPs* pPsParser = (CPs*)m_pPsParser;
-    CHECK_POINT_VOID(pPsParser)
-    //m_pPsBuff = pBuff;
-    //m_nPsLen  = nLen;
-    pPsParser->InputBuffer(pBuff, nLen);
+    CHECK_POINT_VOID(pBuff);
+	if(m_stream_type == STREAM_UNKNOW) {
+		check_filter(pBuff, nLen);
+	}
+	if(m_stream_type == STREAM_PS) {
+		CPs* pPsParser = (CPs*)m_pPsParser;
+		CHECK_POINT_VOID(pPsParser)
+		//m_pPsBuff = pBuff;
+		//m_nPsLen  = nLen;
+		pPsParser->InputBuffer(pBuff, nLen);
+	} else if(m_stream_type == STREAM_H264) {
+		PESParseCb(pBuff, nLen,0,0);
+	}
 }
 
 void CLiveObj::PSParseCb(char* pBuff, long nLen)
@@ -296,4 +310,21 @@ void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
     CHECK_POINT_VOID(m_pCallBack);
     if(m_pCallBack->m_bH264)
     m_pCallBack->push_h264_stream(pBuff, nBuffSize);
+}
+
+void CLiveObj::check_filter(char* pBuff, int nBuffSize) 
+{
+	CHECK_POINT_VOID(pBuff);
+	if(is_ps_header((ps_header_t*)pBuff)) {
+		m_stream_type = STREAM_PS;
+		Log::debug("this stram is mpeg-4 ps");
+		return;
+	}
+
+	CH264 h264(this);
+	if(!h264.InputBuffer(pBuff, nBuffSize)) {
+		m_stream_type = STREAM_H264;
+		Log::debug("this stram is h264");
+		return;
+	}
 }

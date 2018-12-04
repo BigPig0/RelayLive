@@ -1,13 +1,13 @@
 #pragma once
-#include "uv.h"
 
 enum devType {
-    DEV_HIK = 0,
-    DEV_DAHUA
+    DEV_DAHUA = 0,
+    DEV_HIK
 };
 
 struct RTSP_REQUEST
 {
+    string     ssid;
     string     ip;
     uint32_t   port;
     string     user_name;
@@ -18,17 +18,19 @@ struct RTSP_REQUEST
     devType    dev_type;    //设备类型
 };
 
-extern int set_uv(uv_loop_t* uv);
+extern int set_uv(void* uv);
 
 extern void stop_uv();
 
 /**
  * 发起请求
  */
-typedef void (*play_cb)(int status);
-extern int rtsp_play(RTSP_REQUEST config);
+typedef void (*play_cb)(string ssid, int status);
+extern int rtsp_play(RTSP_REQUEST option, play_cb cb);
 
 /**
  * 关闭rtsp
  */
-extern int rtsp_stop(string ip);
+extern int rtsp_stop(string ssid);
+
+extern char* rtsp_strerr(int status);

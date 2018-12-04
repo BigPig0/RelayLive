@@ -28,7 +28,8 @@ enum RTSP_ERR_NUM
     RTSP_ERR_DESCRIBE_FAILED,
     RTSP_ERR_SETUP_FAILED,
     RTSP_ERR_PLAY_FAILED,
-    RTSP_ERR_TEARDOWN_FAILED
+    RTSP_ERR_TEARDOWN_FAILED,
+    RTSP_ERR_MAX
 };
 
 enum RTSP_STEP
@@ -60,10 +61,10 @@ class CRtspClient
 {
 public:
     CRtspClient(RTSP_REQUEST option);
-    ~CRtspClient();
+    virtual ~CRtspClient();
 
-    int play(play_cb cb);
-    int stop();
+    virtual int play(play_cb cb);
+    virtual int stop();
 
     virtual int send_options();
     virtual int send_describe();

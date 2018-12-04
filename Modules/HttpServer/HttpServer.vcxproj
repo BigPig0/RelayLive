@@ -56,7 +56,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/libLive;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -73,7 +73,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/libLive;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -102,17 +102,11 @@
     <ClInclude Include="HttpLiveServer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\common\libLive\libLive.vcxproj">
+    <ProjectReference Include="..\..\Common\LibLive\libLive.vcxproj">
       <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\common\Util\Util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\DeviceManager\DeviceManager.vcxproj">
-      <Project>{6d6b65d6-58d0-4f74-9124-1cfb11fadcbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\SipServer\sipServer.vcxproj">
-      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

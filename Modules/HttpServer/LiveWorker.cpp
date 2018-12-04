@@ -2,8 +2,9 @@
 #include "HttpLiveServer.h"
 #include "LiveWorker.h"
 //其他模块
-#include "SipInstance.h"
+//#include "SipInstance.h"
 #include "libLive.h"
+#include "uvIpc.h"
 
 namespace HttpWsServer
 {
@@ -20,6 +21,66 @@ namespace HttpWsServer
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
     static bool _do_port = false;
+
+    static uv_ipc_handle_t* h = NULL;
+
+    struct ipc_play_task
+    {
+        int ipc_status;
+        int ret;
+        string ssid;
+        string error;
+    };
+    static ipc_play_task _ipc_task;
+
+    static string strfind(char* src, char* begin, char* end){
+        char *p1, *p2;
+        p1 = strstr(src, begin);
+        if(!p1) return "";
+        p1 += strlen(begin);
+        p2 = strstr(p1, end);
+        if(p2) return string(p1, p2-p1);
+        else return string(p1);
+    }
+
+    static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
+        if (!strcmp(msg,"live_play_answer")) {
+            // ssid=123&ret=0&error=XXXX
+			data[len] = 0;
+            _ipc_task.ssid = strfind(data, "ssid=", "&");
+            _ipc_task.ret = stoi(strfind(data, "ret=", "&"));
+            _ipc_task.error = strfind(data, "error=", "&");
+            _ipc_task.ipc_status = 0;
+        }
+    }
+
+    static int real_play(string dev_code, string rtp_ip, int rtp_port){
+        // ssid=123&rtpip=1.1.1.1&rtpport=50000
+        _ipc_task.ssid = dev_code;
+        _ipc_task.ret = 0;
+        _ipc_task.ipc_status = 1;
+        _ipc_task.error = "";
+
+        stringstream ss;
+        ss << "ssid=" << dev_code << "&rtpip=" << rtp_ip << "&rtpport=" << rtp_port;
+        int ret = uv_ipc_send(h, "liveSrc", "live_play", (char*)ss.str().c_str(), ss.str().size());
+        if(ret) {
+            Log::error("ipc send real play error");
+            return ret;
+        }
+
+        while (_ipc_task.ipc_status) Sleep(100);
+        return _ipc_task.ret;
+    }
+
+    static int stop_play(string dev_code){
+        int ret = uv_ipc_send(h, "liveSrc", "stop_play", (char*)dev_code.c_str(), dev_code.size());
+        if(ret) {
+            Log::error("ipc send stop error");
+            return ret;
+        }
+		return 0;
+    }
 
 
     static int GetRtpPort()
@@ -135,14 +196,17 @@ namespace HttpWsServer
 
     CLiveWorker::~CLiveWorker()
     {
-        if(m_nType == 0) {
-            if (!SipInstance::StopPlay(m_strCode)) {
-                Log::error("stop play failed");
-            }
-        } else {
-            if (!SipInstance::StopRecordPlay(m_strCode, "")) {
-                Log::error("stop play failed");
-            }
+        //if(m_nType == 0) {
+        //    if (!SipInstance::StopPlay(m_strCode)) {
+        //        Log::error("stop play failed");
+        //    }
+        //} else {
+        //    if (!SipInstance::StopRecordPlay(m_strCode, "")) {
+        //        Log::error("stop play failed");
+        //    }
+        //}
+        if(stop_play(m_strCode)) {
+            Log::error("stop play failed");
         }
         SAFE_DELETE(m_pLive);
         lws_ring_destroy(m_pFlvRing);
@@ -450,6 +514,14 @@ namespace HttpWsServer
 
     //////////////////////////////////////////////////////////////////////////
 
+    void ipc_init(){
+        /** 进程间通信 */
+        int ret = uv_ipc_client(&h, "relay_live", NULL, "liveDest", on_ipc_recv, NULL);
+        if(ret < 0) {
+            printf("ipc server err: %s\n", uv_ipc_strerr(ret));
+        }
+    }
+
     CLiveWorker* CreatLiveWorker(string strCode)
     {
         Log::debug("CreatFlvBuffer begin");
@@ -461,7 +533,8 @@ namespace HttpWsServer
 
         CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
-        if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
+        //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
+        if(real_play(strCode, m_strRtpIP,  rtpPort))
         {
             delete pNew;
             Log::error("play failed %s",strCode.c_str());

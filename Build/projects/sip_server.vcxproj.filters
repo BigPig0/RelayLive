@@ -6,7 +6,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rtsp_trans.cpp">
+    <ClCompile Include="..\..\Projects\sip_server.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

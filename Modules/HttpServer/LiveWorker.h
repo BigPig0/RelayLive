@@ -79,6 +79,9 @@ namespace HttpWsServer
         bool                  m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
     };
 
+    /** ipc 初始化 */
+    void ipc_init();
+
     /** 直播 */
     CLiveWorker* CreatLiveWorker(string strCode);
     CLiveWorker* GetLiveWorker(string strCode);

@@ -1,22 +1,33 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdParty", "ThirdParty", "{16DBA568-1950-4EC7-B013-48D84DFBCC3B}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{E3618F7A-E947-4367-B08B-FF30C2E17CFF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{7E7DDDC2-5D55-464E-AEF4-FEE79738B8CD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{49D91353-B067-42D9-A46A-FA715F0A75B2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "relayLive", "..\Projects\RelayLive\relayLive.vcxproj", "{1E1F4CDE-C5F5-4FFD-A17C-5C2B882C14C1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{0F61C3D4-F56F-4E6D-9E54-7CEFA7932F71} = {0F61C3D4-F56F-4E6D-9E54-7CEFA7932F71}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "exOsip", "..\ThirdParty\ExOsip\build\exOsip.vcxproj", "{EE73524F-2100-4479-A0C9-30B4072EBE1B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libuv", "..\ThirdParty\LibUV\libuv.vcxproj", "{6197738F-BB03-47B6-8685-677BC2C346BC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "websockets_static", "..\ThirdParty\libWebSockets\websockets_static.vcxproj", "{61AD327B-12DB-3EDF-A2F2-C0B7A4712A04}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Util", "..\Common\Util\Util.vcxproj", "{642077F6-2CA8-4E04-9B0D-9CFA1E5EFA49}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libLive", "..\Common\LibLive\libLive.vcxproj", "{A84623A7-D5EB-4241-8468-7FB658A8A562}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libOci", "..\Common\LibOci\libOci.vcxproj", "{CE0DE8D5-CDBD-4193-91C0-F894A5B11050}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "uvIpc", "..\Common\uvIpc\uvIpc.vcxproj", "{19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5D8B3C31-2629-40A1-8C75-8E50224B60A7} = {5D8B3C31-2629-40A1-8C75-8E50224B60A7}
+		{6197738F-BB03-47B6-8685-677BC2C346BC} = {6197738F-BB03-47B6-8685-677BC2C346BC}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utilc", "..\Common\utilc\utilc.vcxproj", "{5D8B3C31-2629-40A1-8C75-8E50224B60A7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceManager", "..\Modules\DeviceManager\DeviceManager.vcxproj", "{6D6B65D6-58D0-4F74-9124-1CFB11FADCBC}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -31,36 +42,25 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpServer", "..\Modules\Ht
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RtspServer", "..\Modules\RtspServer\RtspServer.vcxproj", "{0F61C3D4-F56F-4E6D-9E54-7CEFA7932F71}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdParty", "ThirdParty", "{16DBA568-1950-4EC7-B013-48D84DFBCC3B}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "exOsip", "..\ThirdParty\ExOsip\build\exOsip.vcxproj", "{EE73524F-2100-4479-A0C9-30B4072EBE1B}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libuv", "..\ThirdParty\LibUV\libuv.vcxproj", "{6197738F-BB03-47B6-8685-677BC2C346BC}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "websockets_static", "..\ThirdParty\libWebSockets\websockets_static.vcxproj", "{61AD327B-12DB-3EDF-A2F2-C0B7A4712A04}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SipServer", "..\Modules\SipServer\sipServer.vcxproj", "{E9A98601-1181-4E67-B68E-D5C5C1E53E19}"
 	ProjectSection(ProjectDependencies) = postProject
 		{EE73524F-2100-4479-A0C9-30B4072EBE1B} = {EE73524F-2100-4479-A0C9-30B4072EBE1B}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "uvIpc", "..\Common\uvIpc\uvIpc.vcxproj", "{19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "relay_live", "projects\relay_live.vcxproj", "{1E1F4CDE-C5F5-4FFD-A17C-5C2B882C14C1}"
 	ProjectSection(ProjectDependencies) = postProject
-		{5D8B3C31-2629-40A1-8C75-8E50224B60A7} = {5D8B3C31-2629-40A1-8C75-8E50224B60A7}
-		{6197738F-BB03-47B6-8685-677BC2C346BC} = {6197738F-BB03-47B6-8685-677BC2C346BC}
+		{0F61C3D4-F56F-4E6D-9E54-7CEFA7932F71} = {0F61C3D4-F56F-4E6D-9E54-7CEFA7932F71}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ipc_server", "..\Projects\ipc_server\ipc_server.vcxproj", "{40AC2285-128F-48E8-8045-4D9550255A7C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ipc_server", "projects\ipc_server.vcxproj", "{40AC2285-128F-48E8-8045-4D9550255A7C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{5D8B3C31-2629-40A1-8C75-8E50224B60A7} = {5D8B3C31-2629-40A1-8C75-8E50224B60A7}
 		{19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9} = {19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utilc", "..\Common\utilc\utilc.vcxproj", "{5D8B3C31-2629-40A1-8C75-8E50224B60A7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sip_server", "projects\sip_server.vcxproj", "{2262E19B-E22D-4003-98C9-A1F237B2FE85}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sip_server", "..\Projects\sip_server\sip_server.vcxproj", "{2262E19B-E22D-4003-98C9-A1F237B2FE85}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtsp_trans", "..\Projects\rtsp_trans\rtsp_trans.vcxproj", "{BDCCAB53-9476-4967-A1C7-C0FE985AC20D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtsp_trans", "projects\rtsp_trans.vcxproj", "{BDCCAB53-9476-4967-A1C7-C0FE985AC20D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

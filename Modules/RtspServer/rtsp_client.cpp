@@ -36,10 +36,11 @@ static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         }
         uv_shutdown(&rtsp->_shutdown, (uv_stream_t*)&rtsp->_tcp, shutdown_cb);
         rtsp->_step_state = RTSP_STEP_FAILED;
-        rtsp->_play_cb(RTSP_ERR_TCP_RECV_FAILED);
+		rtsp->_play_cb(rtsp->_option.ssid, RTSP_ERR_TCP_RECV_FAILED);
         return;
     }
     rtsp->_recv_len = nread;
+    Log::debug(rtsp->_recv_buff);
 
     //读取到数据
     if(rtsp->_step == RTSP_STEP_OPTION)
@@ -62,16 +63,23 @@ static void write_cb(uv_write_t* req, int status) {
         Log::error("tcp send failed:%s-%s", uv_err_name(status), uv_strerror(status)); 
         rtsp->_step_state = RTSP_STEP_FAILED;
         uv_shutdown(&rtsp->_shutdown, (uv_stream_t*)&rtsp->_tcp, shutdown_cb);
-        rtsp->_play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		rtsp->_play_cb(rtsp->_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
     }
+	Log::debug("send ok: %d", rtsp->_step);
 }
 
 void on_connect(uv_connect_t* req, int status) {
     CRtspClient* rtsp = (CRtspClient*)req->data;
+	if(status < 0) {
+		Log::error("tcp connect failed:%s-%s\r\n", uv_err_name(status), uv_strerror(status)); 
+		rtsp->_play_cb(rtsp->_option.ssid, RTSP_ERR_CONNECT_FAILED);
+        return;
+	}
+
     int ret = uv_read_start(req->handle, alloc_cb, read_cb);//客户端开始接收服务器的数据
     if (ret) {
-        fprintf(stderr, "tcp receive failed:%s-%s\r\n", uv_err_name(ret), uv_strerror(ret)); 
-        rtsp->_play_cb(RTSP_ERR_CONNECT_FAILED);
+        Log::error("tcp receive failed:%s-%s\r\n", uv_err_name(ret), uv_strerror(ret)); 
+		rtsp->_play_cb(rtsp->_option.ssid, RTSP_ERR_CONNECT_FAILED);
         return;
     }
 
@@ -88,8 +96,9 @@ CRtspClient::CRtspClient(RTSP_REQUEST option)
     , _recv_buff(NULL)
 {
     uv_tcp_init(_uv_loop_, &_tcp);
-    make_uri();
-    Log::debug(_uri.c_str());
+	int nOverTime = 3000; 
+	setsockopt(_tcp.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+	setsockopt(_tcp.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
 }
 
 CRtspClient::~CRtspClient()
@@ -119,6 +128,9 @@ int CRtspClient::play(play_cb cb)
         Log::error("make address err: %s",  uv_strerror(ret));
         return RTSP_ERR_IP4_ADDR_FAILED;
     }
+
+    make_uri();
+    Log::debug(_uri.c_str());
 
     ret = uv_tcp_connect(&_conn, &_tcp, (struct sockaddr*)&addr, on_connect);
     if(ret < 0) {
@@ -157,7 +169,7 @@ int CRtspClient::send_options()
     {
         Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
         _step_state = RTSP_STEP_FAILED;
-        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
         return ret;
     }
     return 0;
@@ -196,7 +208,7 @@ int CRtspClient::send_describe()
     if (ret < 0)
     {
         Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
-        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
         return ret;
     }
     return 0;
@@ -225,8 +237,8 @@ int CRtspClient::send_setup()
             << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
     }
     ss << "User-Agent: relay live rtsp\r\n"
-        << "Transport: RTP/AVP;unicast;client_port=" << _option.port
-        << "-" << _option.port+1 << "\r\n"
+		<< "Transport: RTP/AVP;unicast;client_port=" << _option.rtp_port
+        << "-" << _option.rtp_port+1 << "\r\n"
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
@@ -236,7 +248,7 @@ int CRtspClient::send_setup()
     if (ret < 0)
     {
         Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
-        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
         return ret;
     }
     return 0;
@@ -276,7 +288,7 @@ int CRtspClient::send_play()
     if (ret < 0)
     {
         Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
-        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
         return ret;
     }
     return 0;
@@ -315,7 +327,7 @@ int CRtspClient::send_teardown()
     if (ret < 0)
     {
         Log::error("tcp send failed:%s-%s", uv_err_name(ret), uv_strerror(ret)); 
-        _play_cb(RTSP_ERR_TCP_SEND_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_TCP_SEND_FAILED);
         return ret;
     }
     return 0;
@@ -324,8 +336,9 @@ int CRtspClient::send_teardown()
 int CRtspClient::parse_options()
 {
     if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        Log::error("parse option error");
         _step_state = RTSP_STEP_FAILED;
-        _play_cb(RTSP_ERR_OPTION_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_OPTION_FAILED);
         return -1;
     }
 
@@ -337,8 +350,9 @@ int CRtspClient::parse_describe()
 {
     if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
         if(strncasecmp(_recv_buff, "RTSP/1.0 401 Unauthorized\r\n", 27)) {
+            Log::error("parse describe error");
             _step_state = RTSP_STEP_FAILED;
-            _play_cb(RTSP_ERR_DESCRIBE_FAILED);
+			_play_cb(_option.ssid, RTSP_ERR_DESCRIBE_FAILED);
             return -1;
         }
 
@@ -367,8 +381,9 @@ int CRtspClient::parse_describe()
 int CRtspClient::parse_setup()
 {
     if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        Log::error("parse setup error");
         _step_state = RTSP_STEP_FAILED;
-        _play_cb(RTSP_ERR_SETUP_FAILED);
+        _play_cb(_option.ssid, RTSP_ERR_SETUP_FAILED);
         return -1;
     }
 
@@ -388,7 +403,7 @@ int CRtspClient::parse_setup()
         _session = string(session, e2-session);
     } else {
         _step_state = RTSP_STEP_FAILED;
-        _play_cb(RTSP_ERR_SETUP_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_SETUP_FAILED);
         return -1;
     }
 
@@ -399,20 +414,23 @@ int CRtspClient::parse_setup()
 int CRtspClient::parse_play()
 {
     if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        Log::error("parse play error");
         _step_state = RTSP_STEP_FAILED;
-        _play_cb(RTSP_ERR_PLAY_FAILED);
+		_play_cb(_option.ssid, RTSP_ERR_PLAY_FAILED);
         return -1;
     }
 
     _step_state = RTSP_STEP_SUCESS;
+	_play_cb(_option.ssid, RTSP_ERR_SUCESS);
     return 0;
 }
 
 int CRtspClient::parse_teardown()
 {
     if(strncasecmp(_recv_buff, "RTSP/1.0 200 OK\r\n", 17)) {
+        Log::error("parse teardown error");
         _step_state = RTSP_STEP_FAILED;
-        //_play_cb(RTSP_ERR_TEARDOWN_FAILED);
+        //_play_cb(_option, RTSP_ERR_TEARDOWN_FAILED);
         //return -1;
     }
 

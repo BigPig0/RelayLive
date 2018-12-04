@@ -4,6 +4,7 @@
 #include "uv.h"
 
 enum NalType;
+enum STREAM_TYPE;
 
 /**
  * RTSP功能模块接口
@@ -97,6 +98,8 @@ public:
         m_pCallBack = pHandle;
     }
 
+	void check_filter(char* pBuff, int nBuffSize);
+
     bool        m_bRun;
     uv_loop_t   *m_uvLoop;
 private:
@@ -123,5 +126,7 @@ private:
     uint64_t    m_pts;              // 记录PES中的pts
     uint64_t    m_dts;              // 记录PES中的dts
     NalType     m_nalu_type;        // h264片元类型
+
+	STREAM_TYPE m_stream_type;      // 
 };
 

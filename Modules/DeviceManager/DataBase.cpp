@@ -24,7 +24,7 @@ void CDataBase::init()
             , OCI_GetUserName(conn)
             , OCI_GetSql(OCI_ErrorGetStatement(err)));
     };
-    string path = Settings::getValue("DataBase", "path");
+    string path = Settings::getValue("DataBase", "Path");
 
     if(!OCI_Initialize(oci_error_handler, path.c_str(), OCI_ENV_THREADED))
         return;

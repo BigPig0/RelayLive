@@ -106,9 +106,6 @@
     <ProjectReference Include="..\..\common\Util\Util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\SipServer\sipServer.vcxproj">
-      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

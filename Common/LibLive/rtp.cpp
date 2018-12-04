@@ -110,9 +110,14 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 
         if(it_pos == it_first) {
             /** 队列中第一个不是ps包头 */
-            if(!is_ps_header(pPS)) {
-                break;
-            }
+            //if(!is_ps_header(pPS)) {
+            //    break;
+            //}
+			char* begin = (char*)pPS;
+			if(!((begin[0]==0 && begin[1]==0 && begin[2]==0 && begin[3] ==1) ||
+				(begin[0]==0 && begin[1]==0 && begin[2]==1) )) {
+					break;
+			}
             /** 队列中第一个rtp包是已完成的rtp后那一个，没有中断 */
             if(m_bBegin && m_mapRtpList.size() < m_nCatchPacketNum && seqLast+1 != it_pos->first.seq) {
                 break;
