@@ -105,7 +105,8 @@ void CH264::ParseNalu()
     }
     else
     {
-        return;
+         m_pDataBuff = m_pNaluBuff;
+		 m_nDataLen  = m_nBuffLen;
     }
 
     nal_unit_header* pNalUnit = (nal_unit_header*)m_pDataBuff;

@@ -26,7 +26,7 @@ CRtspHik::~CRtspHik()
 string CRtspHik::make_uri()
 {
     stringstream ss;
-    ss << "rtsp://" << _option.ip << ":" << _option.port << "/MPEG-4/ch" << _option.channel;
+    ss << "rtsp://" << _option.ip << ":" << _option.port << "/h264/ch" << _option.channel;
     if(0 == _option.stream) {
         ss << "/main/av_stream";
     } else {

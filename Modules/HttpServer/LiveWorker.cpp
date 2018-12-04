@@ -17,6 +17,7 @@ namespace HttpWsServer
     static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
     static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
+	static int    m_nRtpStreamType;      //< rtp
 
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
@@ -92,6 +93,7 @@ namespace HttpWsServer
             m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
             m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
             m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
+			m_nRtpStreamType     = Settings::getValue("RtpClient", "Filter", 0);            //< rtp缓存的包的数量
 
             Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
                 , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
@@ -187,9 +189,8 @@ namespace HttpWsServer
         m_pH264Ring = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
         m_pMP4Ring  = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
 
-        m_pLive = IlibLive::CreateObj();
-        m_pLive->SetLocalAddr(m_strRtpIP, m_nPort);
-        m_pLive->SetCatchPacketNum(m_nRtpCatchPacketNum);
+		liblive_option opt = {m_nPort, m_nRtpCatchPacketNum, m_nRtpStreamType};
+        m_pLive = IlibLive::CreateObj(opt);
         m_pLive->SetCallback(this);
         m_pLive->StartListen();
     }

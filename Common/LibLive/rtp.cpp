@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "rtp.h"
 #include "ps.h"
+#include "h264.h"
 
 
 CRtp::CRtp(CLiveObj* pObj)
@@ -87,11 +88,15 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
     // 插入列表
     m_mapRtpList.insert(make_pair(newSeq, pNode));
 
-    //Log::debug("parse header success, header size:%d, playload size:%d, seq:%lu"
-    //    ,pNode->head_len, pNode->playload_len,newRtp->seq);
+    /*Log::debug("parse header success, header size:%d, playload size:%d, seq:%lu"
+        ,pNode->head_len, pNode->playload_len,newRtp->seq);*/
 
 
     //查询是否收到完整的帧
+	if(m_mapRtpList.size() < 10) {
+		return 0;
+	}
+
     pNode = nullptr;
     RtpHeader* pRTP      = nullptr;
     ps_header_t* pPS     = nullptr;
@@ -110,13 +115,11 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 
         if(it_pos == it_first) {
             /** 队列中第一个不是ps包头 */
-            //if(!is_ps_header(pPS)) {
-            //    break;
-            //}
-			char* begin = (char*)pPS;
-			if(!((begin[0]==0 && begin[1]==0 && begin[2]==0 && begin[3] ==1) ||
-				(begin[0]==0 && begin[1]==0 && begin[2]==1) )) {
-					break;
+			if(g_stream_type==STREAM_PS && !is_ps_header(pPS)) {
+                break;
+            }
+			if(g_stream_type==STREAM_H264 && !is_h264_header((char*)pPS)) {
+				break;
 			}
             /** 队列中第一个rtp包是已完成的rtp后那一个，没有中断 */
             if(m_bBegin && m_mapRtpList.size() < m_nCatchPacketNum && seqLast+1 != it_pos->first.seq) {
@@ -131,7 +134,8 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
         seqLast = it_pos->first.seq;
 
         //这个包是一个rtp帧的末尾包，且从头到尾连续
-        if(pRTP->m != 0)
+        if((g_stream_type==STREAM_PS && pRTP->m != 0)
+			|| (g_stream_type==STREAM_H264 && is_h264_end((char*)pPS)))
         {
             auto it_next = it_last = it_pos;
             it_next++;
@@ -243,18 +247,47 @@ int CRtp::DelRtpNode(rtp_list_node* pNode)
 int CRtp::ComposePsFrame()
 {
     // 拷贝rtp的载荷数据到帧缓存
+	static char h264_head3[3] = {0,0,1};
     long nPsLen = 0;
     memset(m_frame_buf, '\0', FRAME_MAX_SIZE);
+	//Log::debug("compose num: %d", m_listRtpFrame.size());
     for (auto pNode : m_listRtpFrame)
     {
-        memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len, pNode->playload_len);
-        nPsLen += pNode->playload_len;  // 累加载荷大小
+		if(g_stream_type == STREAM_PS) {
+			memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len, pNode->playload_len);
+			nPsLen += pNode->playload_len;  // 累加载荷大小
+		} else if(g_stream_type == STREAM_H264) {
+			bool isSilce = is_h264_slice(pNode->data+pNode->head_len);
+			NalType nal = h264_naltype(pNode->data+pNode->head_len);
+			//Log::debug("slice:%d - type:%d - begin:%d - end:%d", isSilce, nal, is_h264_header(pNode->data+pNode->head_len), is_h264_end(pNode->data+pNode->head_len));
+			if(!isSilce) {
+				memcpy(m_frame_buf+nPsLen, h264_head3, 3);
+				nPsLen += 3;
+				memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len, pNode->playload_len);
+				nPsLen += pNode->playload_len;
+				break;
+			} else {
+				if ( nPsLen == 0) {
+					memcpy(m_frame_buf+nPsLen, h264_head3, 3);
+					nPsLen += 3;
+					nal_unit_header_t uh;
+					uh.for_bit = 0;
+					uh.nal_ref_idc = 3;
+					uh.nal_type = nal;
+					memcpy(m_frame_buf+nPsLen, &uh, 1);
+					nPsLen += 1;
+				}
+				memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len+2, pNode->playload_len-2);
+				nPsLen += (pNode->playload_len-2);
+			}
+		}
         if (nPsLen > FRAME_MAX_SIZE)
         {
             Log::error("CRtpAnalyzer::ComposePsFrame failed nPSLen:%ld",nPsLen);
             return -1;
         }
     }
+	//Log::debug("Composed");
 
     // PS帧组合完毕，回调处理PS帧
     if (m_pObj != nullptr)

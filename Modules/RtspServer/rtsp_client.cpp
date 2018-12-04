@@ -9,11 +9,13 @@ static uint32_t _seq_ = 1;
 /** socket¹Ø±Õ»Øµ÷ */
 static void close_cb(uv_handle_t* handle) {
     CRtspClient* rtsp = (CRtspClient*)handle->data;
+	Log::debug("close %s", rtsp->_uri.c_str());
     rtsp->_conn_state = RTSP_CONNECT_CLOSE;
 }
 
 static void shutdown_cb(uv_shutdown_t* req, int status) {
     CRtspClient* rtsp = (CRtspClient*)req->data;
+	Log::debug("shutdown %s,%d", rtsp->_uri.c_str(), status);
     rtsp->_conn_state = RTSP_CONNECT_SHUTDOWN;
     uv_close((uv_handle_t*)&rtsp->_tcp, close_cb);
 }
@@ -106,7 +108,7 @@ CRtspClient::~CRtspClient()
     stop();
     while (_conn_state != RTSP_CONNECT_CLOSE)
     {
-
+		sleep(100);
     }
     if(_send_buff) free(_send_buff);
     if(_recv_buff) free(_recv_buff);
@@ -162,6 +164,7 @@ int CRtspClient::send_options()
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+	Log::warning(_send_buff);
 
     uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
     int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
@@ -202,6 +205,7 @@ int CRtspClient::send_describe()
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+	Log::warning(_send_buff);
 
     uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
     int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
@@ -242,6 +246,7 @@ int CRtspClient::send_setup()
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+	Log::warning(_send_buff);
 
     uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
     int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
@@ -282,6 +287,7 @@ int CRtspClient::send_play()
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+	Log::warning(_send_buff);
 
     uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
     int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);
@@ -321,6 +327,7 @@ int CRtspClient::send_teardown()
         << "\r\n";
     memset(_send_buff, 0 , SOCKET_RECV_BUFF_LEN);
     strncpy(_send_buff, ss.str().c_str(), SOCKET_RECV_BUFF_LEN);
+	Log::warning(_send_buff);
 
     uv_buf_t buf = uv_buf_init(_send_buff, ss.str().size());
     int ret = uv_write(&_write, (uv_stream_t*)&_tcp, &buf, 1, write_cb);

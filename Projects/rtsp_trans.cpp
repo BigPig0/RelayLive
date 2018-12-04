@@ -150,7 +150,7 @@ static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, c
         req.rtp_port = stoi(port);
         rtsp_play(req, on_play_cb);
     } else if(!strcmp(msg,"stop_play")) {
-		string ssid(data, 1);
+		string ssid(data, len);
 		RTSP_REQUEST req = find_dev(ssid);
         if(req.ssid != ssid) {
             stringstream ss;
