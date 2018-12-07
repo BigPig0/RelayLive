@@ -7,6 +7,7 @@ class CDataBase
 public:
     CDataBase(void);
     ~CDataBase(void);
+    void init();
 
     vector<DevInfo*> GetDevInfo();
     bool UpdateStatus(string code, bool online);

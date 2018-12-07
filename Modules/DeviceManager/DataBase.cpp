@@ -6,6 +6,15 @@
 CDataBase::CDataBase(void)
     : m_strDB("DB")
 {
+}
+
+
+CDataBase::~CDataBase(void)
+{
+}
+
+void CDataBase::init()
+{
     auto oci_error_handler = [](OCI_Error *err){
         OCI_Connection * conn = OCI_ErrorGetConnection(err);
         Log::error("Error[ORA-%05d] - msg[%s] - database[%s] - user[%s] - sql[%s]"
@@ -29,11 +38,6 @@ CDataBase::CDataBase(void)
     dbset.inc_conns = 2;
     OracleClient* client = OracleClient::GetInstance();
     client->connect(m_strDB, dbset);
-}
-
-
-CDataBase::~CDataBase(void)
-{
 }
 
 vector<DevInfo*> CDataBase::GetDevInfo()

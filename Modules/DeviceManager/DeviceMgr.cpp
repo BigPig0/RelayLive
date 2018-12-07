@@ -35,6 +35,7 @@ namespace DeviceMgr
 
     bool Init()
     {
+        _db.init();
         _platform.strDevCode = Settings::getValue("PlatFormInfo","Code");
         _platform.strAddrIP = Settings::getValue("PlatFormInfo","IP");
         _platform.strAddrPort = Settings::getValue("PlatFormInfo","Port");

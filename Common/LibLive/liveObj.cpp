@@ -294,5 +294,6 @@ void CLiveObj::TsCb(char* pBuff, int nBuffSize)
 void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
 {
     CHECK_POINT_VOID(m_pCallBack);
+    if(m_pCallBack->m_bH264)
     m_pCallBack->push_h264_stream(pBuff, nBuffSize);
 }
