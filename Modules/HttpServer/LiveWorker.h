@@ -23,6 +23,8 @@ namespace HttpWsServer
 
 		/** 客户端全部断开，延时后销毁实例 */
 		void Clear2Stop();
+        void SetTimeStop(bool b){m_bStop=b;}
+        bool GetTimeStop(){return m_bStop;}
         /** 源超时，主动断开所有客户端 */
         void Over2Stop();
 
@@ -72,6 +74,7 @@ namespace HttpWsServer
         int                   m_nPort;          //< rtp接收端口
 
         uv_timer_t            m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
+        bool                  m_bStop;          //< 进入定时器回调后设为true，close定时器回调中销毁对象
         uv_timer_t            m_uvTimerOver;    //< 接收超时定时器,一段时间没有从源收到数据，断开所有客户连接，并立即销毁
         bool                  m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
     };

@@ -69,6 +69,10 @@ namespace HttpWsServer
     /** 延时销毁定时器从loop中移除 */
     static void stop_timer_close_cb(uv_handle_t* handle) {
         Log::debug("all client has been closed");
+        CLiveWorker* live = (CLiveWorker*)handle->data;
+        if (live->GetTimeStop()){
+            live->Clear2Stop();
+        }
     }
 
     /** 客户端全部断开后，延时断开源的定时器 */
@@ -80,8 +84,7 @@ namespace HttpWsServer
         }
         uv_close((uv_handle_t*)handle, stop_timer_close_cb);
 
-		live->Clear2Stop(); //这里面就进入CLiveWorker的析构了。
-        // 因为handle已经停止，所以析构导致handle内存释放不会引起loop出错，只是在close回调之前存在一个野指针
+        live->SetTimeStop(true);
 	}
 
     /** 超时定时器从loop移除的回调 */
@@ -101,6 +104,11 @@ namespace HttpWsServer
         live->Over2Stop();
     }
 
+    /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
+    static void live_worker_destory_thread(void* arg) {
+        SAFE_DELETE(arg);
+    }
+
     //////////////////////////////////////////////////////////////////////////
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort)
@@ -108,6 +116,7 @@ namespace HttpWsServer
         , m_nPort(rtpPort)
         , m_nType(0)
         , m_pLive(nullptr)
+        , m_bStop(false)
         , m_bOver(false)
     {
         memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
@@ -139,6 +148,7 @@ namespace HttpWsServer
         lws_ring_destroy(m_pH264Ring);
         lws_ring_destroy(m_pMP4Ring);
         GiveBackRtpPort(m_nPort);
+        Log::debug("CLiveWorker release");
     }
 
     bool CLiveWorker::AddConnect(pss_http_ws_live* pss)
@@ -486,7 +496,10 @@ namespace HttpWsServer
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
-            SAFE_DELETE(itFind->second);
+            // CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。
+            uv_thread_t tid;
+            uv_thread_create(&tid, live_worker_destory_thread, itFind->second);
+            
             m_workerMap.erase(itFind);
             return true;
         }
