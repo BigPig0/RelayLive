@@ -129,12 +129,13 @@ namespace HttpWsServer
         msg->nLen = 0;
     }
 
-    /** 延时销毁定时器从loop中移除 */
+    /** 延时销毁定时器从loop中移除完成 */
     static void stop_timer_close_cb(uv_handle_t* handle) {
-        Log::debug("all client has been closed");
         CLiveWorker* live = (CLiveWorker*)handle->data;
         if (live->GetTimeStop()){
             live->Clear2Stop();
+        } else {
+            Log::debug("new client comed, and will not close live stream");
         }
     }
 
@@ -145,17 +146,16 @@ namespace HttpWsServer
 		if(ret < 0) {
 			Log::error("timer stop error:%s",uv_strerror(ret));
         }
-        uv_close((uv_handle_t*)handle, stop_timer_close_cb);
-
         live->SetTimeStop(true);
+        uv_close((uv_handle_t*)handle, stop_timer_close_cb);
 	}
 
-    /** 超时定时器从loop移除的回调 */
+    /** 数据源超时定时器从loop移除完成 */
     static void over_timer_close_cb(uv_handle_t* handle) {
         Log::debug("src live stoped");
     }
 
-    /** 源数据一段时间未收到，超时，断开所有客户端的定时器 */
+    /** 数据源超时，断开所有客户端的定时器 */
     static void over_timer_cb(uv_timer_t* handle) {
         CLiveWorker* live = (CLiveWorker*)handle->data;
         int ret = uv_timer_stop(handle);
@@ -169,7 +169,7 @@ namespace HttpWsServer
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
-		CLiveWorker* live = (CLiveWorker*)arg;
+        CLiveWorker* live = (CLiveWorker*)arg;
         SAFE_DELETE(live);
     }
 
@@ -269,7 +269,7 @@ namespace HttpWsServer
 
 	void CLiveWorker::Clear2Stop() {
 		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-			Log::debug("need close stream");
+			Log::debug("need close live stream");
 			DelLiveWorker(m_strCode);
 		}
 	}
