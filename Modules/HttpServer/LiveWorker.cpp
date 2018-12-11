@@ -7,6 +7,8 @@
 
 namespace HttpWsServer
 {
+	extern uv_loop_t *g_uv_loop;
+
     static map<string,CLiveWorker*>  m_workerMap;
     static CriticalSection           m_cs;
 
@@ -64,6 +66,17 @@ namespace HttpWsServer
         msg->nLen = 0;
     }
 
+	static void stop_timer_cb(uv_timer_t* handle) {
+		CLiveWorker* live = (CLiveWorker*)handle->data;
+		int ret = uv_timer_stop(handle);
+		if(ret < 0) {
+			Log::error("timer stop error:%s",uv_strerror(ret));
+		}
+		free(handle);
+
+		live->Clear2Stop();
+	}
+
     //////////////////////////////////////////////////////////////////////////
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort)
@@ -96,10 +109,10 @@ namespace HttpWsServer
                 Log::error("stop play failed");
             }
         }
+        SAFE_DELETE(m_pLive);
         lws_ring_destroy(m_pFlvRing);
         lws_ring_destroy(m_pH264Ring);
         lws_ring_destroy(m_pMP4Ring);
-        SAFE_DELETE(m_pLive);
         GiveBackRtpPort(m_nPort);
     }
 
@@ -139,18 +152,23 @@ namespace HttpWsServer
             if (nullptr == m_pMP4PssList) m_bMp4 = false;
         }
 
+		return true;
         if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-            DelLiveWorker(m_strCode);
-            //std::thread t([&](){
-            //    Sleep(20000);
-            //    if (m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-            //        DelLiveWorker(m_strCode);
-            //    }
-            //});
-            //t.detach();
+            //DelLiveWorker(m_strCode);
+			uv_timer_t *stop_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
+			uv_timer_init(g_uv_loop, stop_timer);
+			stop_timer->data = this;
+			uv_timer_start(stop_timer, stop_timer_cb, 20000, 0);
         }
         return true;
     }
+
+	void CLiveWorker::Clear2Stop(){
+		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
+			Log::debug("need close stream");
+			DelLiveWorker(m_strCode);
+		}
+	}
 
     void CLiveWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)
     {

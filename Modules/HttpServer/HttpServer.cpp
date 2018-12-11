@@ -7,6 +7,7 @@
 
 namespace HttpWsServer
 {
+	uv_loop_t *g_uv_loop = NULL;
     static struct lws_context_creation_info info;  //libwebsockets配置信息
     static struct lws_context *context;            //libwebsockets句柄
     // 服务器配置
@@ -86,6 +87,8 @@ namespace HttpWsServer
 
     int Init(void** uv)
     {
+		g_uv_loop = (uv_loop_t *)(*uv);
+
         //设置日志
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
         lws_set_log_level(level, userLog);

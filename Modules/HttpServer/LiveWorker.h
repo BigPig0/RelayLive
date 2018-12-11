@@ -20,6 +20,8 @@ namespace HttpWsServer
         /** 客户端连接 */
         bool AddConnect(pss_http_ws_live* pss);
         bool DelConnect(pss_http_ws_live* pss);
+		/** */
+		void Clear2Stop();
 
         /** 从源过来的视频数据，单线程输入 */
         void push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen);
