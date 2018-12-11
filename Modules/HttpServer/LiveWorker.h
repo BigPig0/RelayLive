@@ -20,8 +20,11 @@ namespace HttpWsServer
         /** 客户端连接 */
         bool AddConnect(pss_http_ws_live* pss);
         bool DelConnect(pss_http_ws_live* pss);
-		/** */
+
+		/** 客户端全部断开，延时后销毁实例 */
 		void Clear2Stop();
+        /** 源超时，主动断开所有客户端 */
+        void Over2Stop();
 
         /** 从源过来的视频数据，单线程输入 */
         void push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen);
@@ -67,6 +70,10 @@ namespace HttpWsServer
         int                   m_nType;          //< 0:live直播；1:record历史视频
         IlibLive*             m_pLive;          //< 直播数据接收和解包装包
         int                   m_nPort;          //< rtp接收端口
+
+        uv_timer_t            m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
+        uv_timer_t            m_uvTimerOver;    //< 接收超时定时器,一段时间没有从源收到数据，断开所有客户连接，并立即销毁
+        bool                  m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
     };
 
     /** 直播 */

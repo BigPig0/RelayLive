@@ -66,16 +66,40 @@ namespace HttpWsServer
         msg->nLen = 0;
     }
 
+    /** 延时销毁定时器从loop中移除 */
+    static void stop_timer_close_cb(uv_handle_t* handle) {
+        Log::debug("all client has been closed");
+    }
+
+    /** 客户端全部断开后，延时断开源的定时器 */
 	static void stop_timer_cb(uv_timer_t* handle) {
 		CLiveWorker* live = (CLiveWorker*)handle->data;
 		int ret = uv_timer_stop(handle);
 		if(ret < 0) {
 			Log::error("timer stop error:%s",uv_strerror(ret));
-		}
-		free(handle);
+        }
+        uv_close((uv_handle_t*)handle, stop_timer_close_cb);
 
-		live->Clear2Stop();
+		live->Clear2Stop(); //这里面就进入CLiveWorker的析构了。
+        // 因为handle已经停止，所以析构导致handle内存释放不会引起loop出错，只是在close回调之前存在一个野指针
 	}
+
+    /** 超时定时器从loop移除的回调 */
+    static void over_timer_close_cb(uv_handle_t* handle) {
+        Log::debug("src live stoped");
+    }
+
+    /** 源数据一段时间未收到，超时，断开所有客户端的定时器 */
+    static void over_timer_cb(uv_timer_t* handle) {
+        CLiveWorker* live = (CLiveWorker*)handle->data;
+        int ret = uv_timer_stop(handle);
+        if(ret < 0) {
+            Log::error("timer stop error:%s",uv_strerror(ret));
+        }
+        uv_close((uv_handle_t*)handle, over_timer_close_cb);
+
+        live->Over2Stop();
+    }
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -84,6 +108,7 @@ namespace HttpWsServer
         , m_nPort(rtpPort)
         , m_nType(0)
         , m_pLive(nullptr)
+        , m_bOver(false)
     {
         memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
         memset(&m_stMP4Head, 0, sizeof(m_stMP4Head));
@@ -136,6 +161,12 @@ namespace HttpWsServer
         } else {
             return false;
         }
+
+        //如果刚刚开启了结束定时器，需要将其关闭
+        if(uv_is_active((const uv_handle_t*)&m_uvTimerStop)) {
+            uv_timer_stop(&m_uvTimerStop);
+            uv_close((uv_handle_t*)&m_uvTimerStop, stop_timer_close_cb);
+        }
         return true;
     }
 
@@ -152,23 +183,32 @@ namespace HttpWsServer
             if (nullptr == m_pMP4PssList) m_bMp4 = false;
         }
 
-		return true;
         if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-            //DelLiveWorker(m_strCode);
-			uv_timer_t *stop_timer = (uv_timer_t*)malloc(sizeof(uv_timer_t));
-			uv_timer_init(g_uv_loop, stop_timer);
-			stop_timer->data = this;
-			uv_timer_start(stop_timer, stop_timer_cb, 20000, 0);
+            uv_timer_init(g_uv_loop, &m_uvTimerStop);
+            m_uvTimerStop.data = this;
+			uv_timer_start(&m_uvTimerStop, stop_timer_cb, 20000, 0);
         }
         return true;
     }
 
-	void CLiveWorker::Clear2Stop(){
+	void CLiveWorker::Clear2Stop() {
 		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
 			Log::debug("need close stream");
 			DelLiveWorker(m_strCode);
 		}
 	}
+
+    void CLiveWorker::Over2Stop() {
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
+            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        } lws_end_foreach_llp(ppss, pss_next);
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
+            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        } lws_end_foreach_llp(ppss, pss_next);
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
+            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        } lws_end_foreach_llp(ppss, pss_next);
+    }
 
     void CLiveWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)
     {
@@ -270,7 +310,12 @@ namespace HttpWsServer
 
     void CLiveWorker::stop()
     {
-
+        // stop是由rtp接收线程调用的，通过timer转为由当前模块的loop线程调用
+        // 主动关闭客户端连接
+        m_bOver = true;
+        uv_timer_init(g_uv_loop, &m_uvTimerOver);
+        m_uvTimerOver.data = this;
+        uv_timer_start(&m_uvTimerOver, over_timer_cb, 0, 0);
     }
 
     LIVE_BUFF CLiveWorker::GetFlvHeader()
