@@ -11,65 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AbstractFile.h" />
-    <ClInclude Include="include\Clock.h" />
-    <ClInclude Include="include\common.h" />
-    <ClInclude Include="include\commonDefine.h" />
-    <ClInclude Include="include\crc.h" />
-    <ClInclude Include="include\EncodeConvert.h" />
-    <ClInclude Include="include\Endian.h" />
-    <ClInclude Include="include\ExportDefine.h" />
-    <ClInclude Include="include\File.h" />
-    <ClInclude Include="include\FtpCmd.h" />
-    <ClInclude Include="include\Iconv.h" />
-    <ClInclude Include="include\LastError.h" />
-    <ClInclude Include="include\List.h" />
-    <ClInclude Include="include\Log.h" />
-    <ClInclude Include="include\MailSlot.h" />
-    <ClInclude Include="include\md5.h" />
-    <ClInclude Include="include\memfile.h" />
-    <ClInclude Include="include\MiniDump.h" />
-    <ClInclude Include="include\Mutex.h" />
-    <ClInclude Include="include\NetStreamMaker.h" />
-    <ClInclude Include="include\ProcessMgr.h" />
-    <ClInclude Include="include\Profile.h" />
-    <ClInclude Include="include\pugiconfig.hpp" />
-    <ClInclude Include="include\pugixml.hpp" />
-    <ClInclude Include="include\Runnable.h" />
-    <ClInclude Include="include\Settings.h" />
-    <ClInclude Include="include\Singleton.h" />
-    <ClInclude Include="include\StringHandle.h" />
-    <ClInclude Include="include\ThreadPool.h" />
-    <ClInclude Include="include\Timer.h" />
-    <ClInclude Include="include\WINFile.h" />
-    <ClInclude Include="include\TimeFormat.h" />
-    <ClInclude Include="ring_buff.h" />
-    <ClInclude Include="src\stdafx.h" />
+    <ClCompile Include="uvIpc.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ring_buff.c" />
-    <ClCompile Include="src\AbstractFile.cpp" />
-    <ClCompile Include="src\EncodeConvert.cpp" />
-    <ClCompile Include="src\File.cpp" />
-    <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\MailSlot.cpp" />
-    <ClCompile Include="src\md5.cpp" />
-    <ClCompile Include="src\memfile.cpp" />
-    <ClCompile Include="src\MiniDump.cpp" />
-    <ClCompile Include="src\NetStreamMaker.cpp" />
-    <ClCompile Include="src\ProcessMgr.cpp" />
-    <ClCompile Include="src\pugixml.cpp" />
-    <ClCompile Include="src\Settings.cpp" />
-    <ClCompile Include="src\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\StringHandle.cpp" />
-    <ClCompile Include="src\ThreadPool.cpp" />
-    <ClCompile Include="src\Timer.cpp" />
-    <ClCompile Include="src\WINFile.cpp" />
+    <ClInclude Include="uvIpc.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{642077F6-2CA8-4E04-9B0D-9CFA1E5EFA49}</ProjectGuid>
+    <ProjectGuid>{19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -110,12 +58,12 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;include/MemoryPool;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/util/include;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../thirdParty/libuv/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,11 +77,11 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;include/MemoryPool;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/util/include;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../thirdParty/libuv/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

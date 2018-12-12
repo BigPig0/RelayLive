@@ -2,7 +2,7 @@
 #include "libwebsockets.h"
 #include "HttpWebServer.h"
 #include <string>
-#include "DeviceMgr.h"
+//#include "DeviceMgr.h"
 #include "LiveWorker.h"
 
 namespace HttpWsServer
@@ -227,6 +227,8 @@ namespace HttpWsServer
 
     static string GetDevInfo()
     {
+        return "";
+        /*
         vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
         if (vecDev.size() == 0)
         {
@@ -457,8 +459,8 @@ namespace HttpWsServer
         }
         strResJson = StringHandle::StringTrimRight(strResJson,',');
         strResJson += "]}";
-
         return strResJson;
+        */
     }
 
     int callback_device_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)

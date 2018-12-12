@@ -23,6 +23,13 @@ enum NalType
     aud_Nal = 9,
     filler_Nal = 12,
     other,        // 其他类型
+	reserve_end = 23,
+	STAP_A = 24,  //24 单一时间的组合包
+	STAP_B,       //25 单一时间的组合包
+	MTAP16,       //26 多个时间的组合包
+	MTAP24,       //27 多个时间的组合包
+	FU_A,         //28 分片的单元
+	FU_B,         //29 分片的单元
 };
 
 /**
@@ -35,6 +42,77 @@ typedef struct nal_unit_header
     unsigned char for_bit : 1;      // 第一位 forbidden_zero_bit：在H.264规范中规定了这一位必须为0。
 
 }nal_unit_header_t;
+
+typedef struct nal_unit_header_rtp {
+	unsigned char ex_type : 5;      // 4-8位  这个NALU单元的类型 FU_A
+    unsigned char nal_ref_idc : 2;  // 2-3位  nal_ref_idc：取00~11，似乎指示这个NALU的重要性, 如00的NALU解码器可以丢弃它而不影响图像的回放。不过一般情况下不太关心这个属性
+    unsigned char for_bit : 1;      // 第一位 forbidden_zero_bit：在H.264规范中规定了这一位必须为0。
+
+	unsigned char nal_type : 5;     // 4-8位  这个NALU单元的类型 NalType
+	unsigned char R : 1;            //
+	unsigned char E : 1;            //
+	unsigned char S : 1;
+}nal_unit_header_rtp_t;
+
+bool inline is_h264_slice(char* buff) {
+	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
+	if(pNalUnit->nal_type == NalType::FU_A) {
+		return true;
+	}
+	return false;
+}
+
+bool inline is_h264_header(char* buff) {
+	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
+	bool s = 1;
+	NalType nal = (NalType)pNalUnit->nal_type;
+	if(NalType::FU_A == pNalUnit->nal_type) {
+		s = 0;
+		nal_unit_header_rtp_t* pNalUnit2 = (nal_unit_header_rtp_t*)buff;
+		nal = (NalType)pNalUnit2->nal_type;
+		s = pNalUnit2->S;
+	}
+    if ( NalType::sps_Nal == nal
+      || NalType::pps_Nal == nal
+      || NalType::sei_Nal == nal
+      || NalType::idr_Nal == nal
+      || NalType::b_Nal   == nal) {
+		  if(s)
+			return true;
+	}
+	return false;
+}
+
+bool inline is_h264_end(char* buff) {
+	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
+	bool e = 1;
+	NalType nal = (NalType)pNalUnit->nal_type;
+	if(NalType::FU_A == pNalUnit->nal_type) {
+		e = 0;
+		nal_unit_header_rtp_t* pNalUnit2 = (nal_unit_header_rtp_t*)buff;
+		nal = (NalType)pNalUnit2->nal_type;
+		e = pNalUnit2->E;
+	}
+    if ( NalType::sps_Nal == nal
+      || NalType::pps_Nal == nal
+      || NalType::sei_Nal == nal
+      || NalType::idr_Nal == nal
+      || NalType::b_Nal   == nal) {
+		  if(e)
+			return true;
+	}
+	return false;
+}
+
+NalType inline h264_naltype(char* buff) {
+	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
+	NalType nal = (NalType)pNalUnit->nal_type;
+	if(NalType::FU_A == pNalUnit->nal_type) {
+		nal_unit_header_rtp_t* pNalUnit2 = (nal_unit_header_rtp_t*)buff;
+		nal = (NalType)pNalUnit2->nal_type;
+	}
+	return nal;
+}
 
 class CH264
 {

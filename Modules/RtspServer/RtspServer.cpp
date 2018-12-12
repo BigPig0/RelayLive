@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "RtspServer.h"
-#include "DeviceMgr.h"
-#include "SipInstance.h"
+//#include "DeviceMgr.h"
+//#include "SipInstance.h"
 
 typedef enum _parse_step_
 {
@@ -399,10 +399,11 @@ rtsp_response CClient::make_play_answer(rtsp_ruquest req)
 
     m_strDevCode = "36030100061320000026";
     string rtpIP="172.31.7.88";
+    /*
     if(!SipInstance::rtsp_play(m_strDevCode, rtpIP, m_strRtpPort)) {
         res.code = Code_503_ServiceUnavailable;
         return res;
-    }
+    }*/
     res.headers.insert(make_pair("Session",session));
     res.code = Code_200_OK;
     return res;
@@ -426,10 +427,11 @@ rtsp_response CClient::make_teardown_answer(rtsp_ruquest req)
     }
     string session = sess_it->second;
 
+    /*
     if(!SipInstance::StopPlay(m_strDevCode)) {
         res.code = Code_503_ServiceUnavailable;
         return res;
-    }
+    }*/
     res.headers.insert(make_pair("Session",session));
     res.code = Code_200_OK;
     return res;

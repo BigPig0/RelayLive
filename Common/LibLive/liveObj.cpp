@@ -10,9 +10,15 @@
 #include "mp4.h"
 #include "h264.h"
 
-IlibLive* IlibLive::CreateObj()
+IlibLive* IlibLive::CreateObj(liblive_option opt)
 {
-    return new CLiveObj;
+	if(g_stream_type == STREAM_UNKNOW) {
+		if(opt.nStreamType == 0)
+			g_stream_type = STREAM_PS;
+		else if(opt.nStreamType == 1)
+			g_stream_type = STREAM_H264;
+	}
+    return new CLiveObj(opt);
 }
 
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -50,24 +56,16 @@ static void run_loop_thread(void* arg)
     h->m_uvLoop = NULL;
 }
 
-CLiveObj::CLiveObj(void)
-    : m_pRtpParser(nullptr)
+CLiveObj::CLiveObj(liblive_option opt)
+	: m_nLocalRTPPort(opt.nPort)
+	, m_nLocalRTCPPort(opt.nPort+1)
+	, m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
     , m_pEsParser(nullptr)
     , m_pTs(nullptr)
     , m_pFlv(nullptr)
     , m_pCallBack(nullptr)
-    //, m_pRtpBuff(nullptr)
-    //, m_nRtpLen(0)
-    //, m_pPsBuff(nullptr)
-    //, m_nPsLen(0)
-    //, m_pPesBuff(nullptr)
-    //, m_nPesLen(0)
-    //, m_pEsBuff(nullptr)
-    //, m_nEsLen(0)
-    //, m_pNaluBuff(nullptr)
-    //, m_nNaluLen(0)
     , m_pts(0)
     , m_dts(0)
     , m_nalu_type(unknow)
@@ -80,6 +78,9 @@ CLiveObj::CLiveObj(void)
     m_pTs            = new CTS(this);
     m_pFlv           = new CFlv(this);
     m_pMp4           = new CMP4(this);
+
+	CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
+	rtpAnalyzer->SetCatchFrameNum(opt.nPacketNum);
 }
 
 CLiveObj::~CLiveObj(void)
@@ -107,12 +108,6 @@ CLiveObj::~CLiveObj(void)
     SAFE_DELETE(m_pFlv);
     SAFE_DELETE(m_pMp4);
     Sleep(2000);
-}
-
-void CLiveObj::SetCatchPacketNum(int nPacketNum)
-{
-    CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
-    rtpAnalyzer->SetCatchFrameNum(nPacketNum);
 }
 
 void CLiveObj::StartListen()
@@ -190,12 +185,16 @@ void CLiveObj::RtpOverTime()
 void CLiveObj::RTPParseCb(char* pBuff, long nLen)
 {
     //Log::debug("CRTSPInterface::RTPParseCb nlen:%ld", nLen);
-    CHECK_POINT_VOID(pBuff)
-    CPs* pPsParser = (CPs*)m_pPsParser;
-    CHECK_POINT_VOID(pPsParser)
-    //m_pPsBuff = pBuff;
-    //m_nPsLen  = nLen;
-    pPsParser->InputBuffer(pBuff, nLen);
+    CHECK_POINT_VOID(pBuff);
+	if(g_stream_type == STREAM_PS) {
+		CPs* pPsParser = (CPs*)m_pPsParser;
+		CHECK_POINT_VOID(pPsParser)
+		//m_pPsBuff = pBuff;
+		//m_nPsLen  = nLen;
+		pPsParser->InputBuffer(pBuff, nLen);
+	} else if(g_stream_type == STREAM_H264) {
+		ESParseCb(pBuff, nLen);
+	}
 }
 
 void CLiveObj::PSParseCb(char* pBuff, long nLen)
@@ -294,6 +293,6 @@ void CLiveObj::TsCb(char* pBuff, int nBuffSize)
 void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
 {
     CHECK_POINT_VOID(m_pCallBack);
-    if(m_pCallBack->m_bH264)
-    m_pCallBack->push_h264_stream(pBuff, nBuffSize);
+	if (m_pCallBack->m_bH264)
+		m_pCallBack->push_h264_stream(pBuff, nBuffSize);
 }

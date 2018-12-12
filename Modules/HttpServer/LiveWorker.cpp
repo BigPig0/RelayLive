@@ -2,8 +2,9 @@
 #include "HttpLiveServer.h"
 #include "LiveWorker.h"
 //其他模块
-#include "SipInstance.h"
+//#include "SipInstance.h"
 #include "libLive.h"
+#include "uvIpc.h"
 
 namespace HttpWsServer
 {
@@ -16,10 +17,71 @@ namespace HttpWsServer
     static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
     static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
+	static int    m_nRtpStreamType;      //< rtp
 
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
     static bool _do_port = false;
+
+    static uv_ipc_handle_t* h = NULL;
+
+    struct ipc_play_task
+    {
+        int ipc_status;
+        int ret;
+        string ssid;
+        string error;
+    };
+    static ipc_play_task _ipc_task;
+
+    static string strfind(char* src, char* begin, char* end){
+        char *p1, *p2;
+        p1 = strstr(src, begin);
+        if(!p1) return "";
+        p1 += strlen(begin);
+        p2 = strstr(p1, end);
+        if(p2) return string(p1, p2-p1);
+        else return string(p1);
+    }
+
+    static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
+        if (!strcmp(msg,"live_play_answer")) {
+            // ssid=123&ret=0&error=XXXX
+			data[len] = 0;
+            _ipc_task.ssid = strfind(data, "ssid=", "&");
+            _ipc_task.ret = stoi(strfind(data, "ret=", "&"));
+            _ipc_task.error = strfind(data, "error=", "&");
+            _ipc_task.ipc_status = 0;
+        }
+    }
+
+    static int real_play(string dev_code, string rtp_ip, int rtp_port){
+        // ssid=123&rtpip=1.1.1.1&rtpport=50000
+        _ipc_task.ssid = dev_code;
+        _ipc_task.ret = 0;
+        _ipc_task.ipc_status = 1;
+        _ipc_task.error = "";
+
+        stringstream ss;
+        ss << "ssid=" << dev_code << "&rtpip=" << rtp_ip << "&rtpport=" << rtp_port;
+        int ret = uv_ipc_send(h, "liveSrc", "live_play", (char*)ss.str().c_str(), ss.str().size());
+        if(ret) {
+            Log::error("ipc send real play error");
+            return ret;
+        }
+
+        while (_ipc_task.ipc_status) Sleep(100);
+        return _ipc_task.ret;
+    }
+
+    static int stop_play(string dev_code){
+        int ret = uv_ipc_send(h, "liveSrc", "stop_play", (char*)dev_code.c_str(), dev_code.size());
+        if(ret) {
+            Log::error("ipc send stop error");
+            return ret;
+        }
+		return 0;
+    }
 
 
     static int GetRtpPort()
@@ -31,6 +93,7 @@ namespace HttpWsServer
             m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
             m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
             m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
+			m_nRtpStreamType     = Settings::getValue("RtpClient", "Filter", 0);            //< rtp缓存的包的数量
 
             Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
                 , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
@@ -66,12 +129,13 @@ namespace HttpWsServer
         msg->nLen = 0;
     }
 
-    /** 延时销毁定时器从loop中移除 */
+    /** 延时销毁定时器从loop中移除完成 */
     static void stop_timer_close_cb(uv_handle_t* handle) {
-        Log::debug("all client has been closed");
         CLiveWorker* live = (CLiveWorker*)handle->data;
         if (live->GetTimeStop()){
             live->Clear2Stop();
+        } else {
+            Log::debug("new client comed, and will not close live stream");
         }
     }
 
@@ -82,17 +146,16 @@ namespace HttpWsServer
 		if(ret < 0) {
 			Log::error("timer stop error:%s",uv_strerror(ret));
         }
-        uv_close((uv_handle_t*)handle, stop_timer_close_cb);
-
         live->SetTimeStop(true);
+        uv_close((uv_handle_t*)handle, stop_timer_close_cb);
 	}
 
-    /** 超时定时器从loop移除的回调 */
+    /** 数据源超时定时器从loop移除完成 */
     static void over_timer_close_cb(uv_handle_t* handle) {
         Log::debug("src live stoped");
     }
 
-    /** 源数据一段时间未收到，超时，断开所有客户端的定时器 */
+    /** 数据源超时，断开所有客户端的定时器 */
     static void over_timer_cb(uv_timer_t* handle) {
         CLiveWorker* live = (CLiveWorker*)handle->data;
         int ret = uv_timer_stop(handle);
@@ -106,7 +169,7 @@ namespace HttpWsServer
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
-		CLiveWorker* live = (CLiveWorker*)arg;
+        CLiveWorker* live = (CLiveWorker*)arg;
         SAFE_DELETE(live);
     }
 
@@ -126,23 +189,25 @@ namespace HttpWsServer
         m_pH264Ring = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
         m_pMP4Ring  = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
 
-        m_pLive = IlibLive::CreateObj();
-        m_pLive->SetLocalAddr(m_strRtpIP, m_nPort);
-        m_pLive->SetCatchPacketNum(m_nRtpCatchPacketNum);
+		liblive_option opt = {m_nPort, m_nRtpCatchPacketNum, m_nRtpStreamType};
+        m_pLive = IlibLive::CreateObj(opt);
         m_pLive->SetCallback(this);
         m_pLive->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
     {
-        if(m_nType == 0) {
-            if (!SipInstance::StopPlay(m_strCode)) {
-                Log::error("stop play failed");
-            }
-        } else {
-            if (!SipInstance::StopRecordPlay(m_strCode, "")) {
-                Log::error("stop play failed");
-            }
+        //if(m_nType == 0) {
+        //    if (!SipInstance::StopPlay(m_strCode)) {
+        //        Log::error("stop play failed");
+        //    }
+        //} else {
+        //    if (!SipInstance::StopRecordPlay(m_strCode, "")) {
+        //        Log::error("stop play failed");
+        //    }
+        //}
+        if(stop_play(m_strCode)) {
+            Log::error("stop play failed");
         }
         SAFE_DELETE(m_pLive);
         lws_ring_destroy(m_pFlvRing);
@@ -204,7 +269,7 @@ namespace HttpWsServer
 
 	void CLiveWorker::Clear2Stop() {
 		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-			Log::debug("need close stream");
+			Log::debug("need close live stream");
 			DelLiveWorker(m_strCode);
 		}
 	}
@@ -450,6 +515,14 @@ namespace HttpWsServer
 
     //////////////////////////////////////////////////////////////////////////
 
+    void ipc_init(){
+        /** 进程间通信 */
+        int ret = uv_ipc_client(&h, "relay_live", NULL, "liveDest", on_ipc_recv, NULL);
+        if(ret < 0) {
+            printf("ipc server err: %s\n", uv_ipc_strerr(ret));
+        }
+    }
+
     CLiveWorker* CreatLiveWorker(string strCode)
     {
         Log::debug("CreatFlvBuffer begin");
@@ -461,7 +534,8 @@ namespace HttpWsServer
 
         CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
-        if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
+        //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
+        if(real_play(strCode, m_strRtpIP,  rtpPort))
         {
             delete pNew;
             Log::error("play failed %s",strCode.c_str());

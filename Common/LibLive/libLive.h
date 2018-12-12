@@ -21,6 +21,13 @@ enum MP4_FRAG_TYPE
     MP4_FRAG
 };
 
+struct liblive_option
+{
+	int nPort;			//监听的UDP端口
+	int nPacketNum;     //rtp帧缓存数量,数值越大延迟越大，但能应对更差的网络状况
+	int nStreamType;    //rtp
+};
+
 /**
  * 数据回调处理接口
  * 由上层实现一个继承该接口的类来处理RTP解析后的数据
@@ -67,20 +74,7 @@ struct LIBLIVE_API IlibLive
      * 创建一个拥有本接口功能的实例
      * return 实例的指针，注意要由申请者释放
      */
-    static IlibLive* CreateObj();
-
-    /**
-     * 设置本地监听的IP和端口
-     * @param[in] strIP 本地IP
-     * @param[in] nPort 监听的UDP端口
-     */
-    virtual void SetLocalAddr(string strIP, int nPort) = 0;
-
-    /**
-     * 设置缓存帧数量
-     * @param[in] nPacketNum 帧缓存数量,数值越大延迟越大，但能应对更差的网络状况
-     */
-    virtual void SetCatchPacketNum(int nPacketNum) = 0;
+    static IlibLive* CreateObj(liblive_option opt);
 
     /** 
      * 启动UDP端口监听 

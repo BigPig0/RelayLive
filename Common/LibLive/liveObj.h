@@ -4,6 +4,7 @@
 #include "uv.h"
 
 enum NalType;
+enum STREAM_TYPE;
 
 /**
  * RTSP功能模块接口
@@ -12,26 +13,8 @@ enum NalType;
 class CLiveObj : public IlibLive
 {
 public:
-    CLiveObj(void);
+    CLiveObj(liblive_option opt);
     ~CLiveObj(void);
-
-    /**
-     * 设置本地监听的IP和端口
-     * @param[in] strIP 本地IP
-     * @param[in] nPort 监听的UDP端口
-     */
-    void SetLocalAddr(string strIP, int nPort)
-    {
-        m_strLocalIP = strIP;
-        m_nLocalRTPPort = nPort;
-        m_nLocalRTCPPort = nPort + 1;
-    }
-
-    /**
-     * 设置缓存帧数量
-     * @param[in] nPacketNum 帧缓存数量,数值越大延迟越大，但能应对更差的网络状况
-     */
-    void SetCatchPacketNum(int nPacketNum);
 
     /** 启动UDP端口监听 */
     void StartListen();
@@ -100,7 +83,6 @@ public:
     bool        m_bRun;
     uv_loop_t   *m_uvLoop;
 private:
-    string      m_strLocalIP;       // 本地IP
     int         m_nLocalRTPPort;    // 本地RTP端口
     int         m_nLocalRTCPPort;   // 本地RTCP端口
     string      m_strRemoteIP;      // 远端IP

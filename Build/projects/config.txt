@@ -33,7 +33,9 @@ CatchPacketNum = 100
 IP = 192.168.1.235
 ;服务器IP，若为空表示本机所有IP
 Port = 81
-;服务器端口
+;http端口
+wsPort = 8000
+;websocket端口
 RootPath = D:\red5-server\webapps\oflaDemo
 ;根目录
 TmpPath = C:\TmpPath
@@ -42,21 +44,5 @@ DefaultFile = index.html
 ;默认文件名称
 DirVisible = yes
 ;是否可以显示目录，yes表示可以，no或其他表示不能
-MaxConnect = 0
-;最大连接数,0表示不限制
-MaxConnectPerIP = 0
-;每个IP的最大连接数,0表示不限制
-MaxSpeed = 128
-;每个连接的最大限速(kb/s)，0表示不限制
-SessionTimeOut = 0
-;会话超时时间(ms), 0表示不限制
-KeepAliveTimeOut = 0
-;keep-alive超时时间(ms), 0表示不限制
-ReceiveTimeOut = 0
-;recv, connect, accept超时时间(ms), 0表示不限制
-SendTimeOut = 0
-;send超时时间(ms), 0表示不限制
 
-[RtmpServer]
-IP = 192.168.1.235
-Port = 5080
+
