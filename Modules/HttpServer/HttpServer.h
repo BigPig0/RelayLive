@@ -2,7 +2,7 @@
 
 namespace HttpWsServer
 {
-    int Init(void** uv);
+    int Init(void* uv);
 
     int Cleanup();
 };

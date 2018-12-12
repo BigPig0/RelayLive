@@ -45,7 +45,7 @@ int main()
     p_loop_uv = uv_default_loop();
 
     /** 创建一个http服务器 */
-    HttpWsServer::Init((void**)&p_loop_uv);
+    HttpWsServer::Init((void*)p_loop_uv);
 
     /** 创建一个rtsp服务器 */
     CRtspServer rtsp;

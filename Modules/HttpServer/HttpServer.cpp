@@ -85,9 +85,9 @@ namespace HttpWsServer
             Log::debug(line);
     }
 
-    int Init(void** uv)
+    int Init(void* uv)
     {
-		g_uv_loop = (uv_loop_t *)(*uv);
+		g_uv_loop = (uv_loop_t *)uv;
 
         //…Ë÷√»’÷æ
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
@@ -99,7 +99,7 @@ namespace HttpWsServer
         memset(&info, 0, sizeof info);
         info.pcontext = &context;
         info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
-        info.foreign_loops = uv;
+        info.foreign_loops = (void**)&g_uv_loop;
 		info.timeout_secs = 0x1fffffff;
 		info.timeout_secs_ah_idle = 0x1fffffff;
         context = lws_create_context(&info);
