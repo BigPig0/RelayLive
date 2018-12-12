@@ -106,7 +106,8 @@ namespace HttpWsServer
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
-        SAFE_DELETE(arg);
+		CLiveWorker* live = (CLiveWorker*)arg;
+        SAFE_DELETE(live);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -209,15 +210,15 @@ namespace HttpWsServer
 	}
 
     void CLiveWorker::Over2Stop() {
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
-            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        } lws_end_foreach_llp(ppss, pss_next);
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
-            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        } lws_end_foreach_llp(ppss, pss_next);
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
-            lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        } lws_end_foreach_llp(ppss, pss_next);
+        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
+        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        //} lws_end_foreach_llp(ppss, pss_next);
+        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
+        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        //} lws_end_foreach_llp(ppss, pss_next);
+        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
+        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
+        //} lws_end_foreach_llp(ppss, pss_next);
     }
 
     void CLiveWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)

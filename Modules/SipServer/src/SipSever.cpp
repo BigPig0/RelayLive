@@ -78,58 +78,59 @@ void CSipSever::SeverThread()
                 }
             }
             break;
-        case EXOSIP_MESSAGE_ANSWERED:
-            {
-                Log::warning("recive message ok 200");
-            }
-            break;
-        case EXOSIP_SUBSCRIPTION_ANSWERED:
-            {
-                Log::warning("recive subscription ok 200");
-            }
-            break;
-        case EXOSIP_CALL_MESSAGE_ANSWERED:
-            {
-                Log::warning("recive call message ok 200");
-            }
-            break;
-        case EXOSIP_CALL_PROCEEDING:
-            {
-                Log::warning("recive call-trying message 100");
-            }
-            break;
+        //case EXOSIP_MESSAGE_ANSWERED:
+        //    {
+        //        Log::warning("recive message ok 200");
+        //    }
+        //    break;
+        //case EXOSIP_SUBSCRIPTION_ANSWERED:
+        //    {
+        //        Log::warning("recive subscription ok 200");
+        //    }
+        //    break;
+        //case EXOSIP_CALL_MESSAGE_ANSWERED:
+        //    {
+        //        Log::warning("recive call message ok 200");
+        //    }
+        //    break;
+        //case EXOSIP_CALL_PROCEEDING:
+        //    {
+        //        Log::warning("recive call-trying message 100");
+        //    }
+        //    break;
         case EXOSIP_CALL_ANSWERED:
             {
                 Log::warning("recive call-answer message 200");
                 OnInviteOK(osipEventPtr);
             }
             break;
-        case EXOSIP_CALL_MESSAGE_NEW:
-            {
-                Log::warning("announce new incoming request");
-                OnCallNew(osipEventPtr);
-            }
-            break;
+        //case EXOSIP_CALL_MESSAGE_NEW:
+        //    {
+        //        Log::warning("announce new incoming request");
+        //        OnCallNew(osipEventPtr);
+        //    }
+        //    break;
         case EXOSIP_SUBSCRIPTION_NOTIFY:
             {
 				Log::warning("recive notify");
 				OnMessage(osipEventPtr);
             }
             break;
-        case EXOSIP_CALL_CLOSED:
-            {
-                Log::warning("recive EXOSIP_CALL_CLOSED");
-                OnCallClose(osipEventPtr);
-            }
-            break;
-        case EXOSIP_CALL_RELEASED:
-            {
-                Log::warning("recive EXOSIP_CALL_RELEASED");
-                //OnCallClear(osipEventPtr);
-            }
-            break;
+        //case EXOSIP_CALL_CLOSED:
+        //    {
+        //        Log::warning("recive EXOSIP_CALL_CLOSED");
+        //        OnCallClose(osipEventPtr);
+        //    }
+        //    break;
+        //case EXOSIP_CALL_RELEASED:
+        //    {
+        //        Log::warning("recive EXOSIP_CALL_RELEASED");
+        //        //OnCallClear(osipEventPtr);
+        //    }
+        //    break;
         default:
             Log::warning("The sip event type that not be precessed.the event type is : %d\r\n",osipEventPtr->type);
+			eXosip_event_free(osipEventPtr);
             break;
         }
         //eXosip_event_free(osipEventPtr);

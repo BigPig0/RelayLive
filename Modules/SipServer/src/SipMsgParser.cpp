@@ -453,7 +453,7 @@ msgPublic* CSipMsgParser::ParseNotifyCatalog(pugi::xml_node& root)
                     {
                         dev.strDevID = devNode.child_value();
                     }
-                    else if (nodeName == "Event")
+                    else if (nodeName == "Status")
                     {
                         dev.strStatus = devNode.child_value();
                     }
