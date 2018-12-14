@@ -1,6 +1,6 @@
 #ifndef _UTIL_CAPI_
 #define _UTIL_CAPI_
-#include "util_export.h"
+#include "utilc_export.h"
 
 #if defined(WIN32) || defined(_WIN32)
 #if _MSC_VER < 1700

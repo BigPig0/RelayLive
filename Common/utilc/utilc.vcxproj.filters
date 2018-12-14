@@ -18,16 +18,16 @@
     <ClInclude Include="ring_buff.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="utilc.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="util_api.h">
+    <ClInclude Include="utilc_api.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="util_def.h">
+    <ClInclude Include="utilc_def.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="util_export.h">
+    <ClInclude Include="utilc_export.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,7 +41,7 @@
     <ClCompile Include="ring_buff.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="util_api.c">
+    <ClCompile Include="utilc_api.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,7 +5,7 @@
 #include "SipInstance.h"
 #include "MiniDump.h"
 #include "uvIpc.h"
-#include "util_api.h"
+#include "utilc_api.h"
 #include "stdio.h"
 
 uv_ipc_handle_t* h = NULL;

@@ -14,16 +14,16 @@
     <ClInclude Include="memfile.h" />
     <ClInclude Include="netstream.h" />
     <ClInclude Include="ring_buff.h" />
-    <ClInclude Include="util.h" />
-    <ClInclude Include="util_api.h" />
-    <ClInclude Include="util_def.h" />
-    <ClInclude Include="util_export.h" />
+    <ClInclude Include="utilc.h" />
+    <ClInclude Include="utilc_api.h" />
+    <ClInclude Include="utilc_def.h" />
+    <ClInclude Include="utilc_export.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="memfile.c" />
     <ClCompile Include="netstream.c" />
     <ClCompile Include="ring_buff.c" />
-    <ClCompile Include="util_api.c" />
+    <ClCompile Include="utilc_api.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5D8B3C31-2629-40A1-8C75-8E50224B60A7}</ProjectGuid>

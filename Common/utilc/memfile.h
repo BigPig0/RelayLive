@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-#include "util_export.h"
-#include "util_api.h"
-#include "util_def.h"
+#include "utilc_export.h"
+#include "utilc_api.h"
+#include "utilc_def.h"
 
 /** 内存文件数据结构 */
 typedef struct _memfile_

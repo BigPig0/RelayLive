@@ -51,12 +51,11 @@ typedef struct _uv_ipc_write_c_ {
     net_stream_maker_t* s;
 }uv_ipc_write_c_t;
 
-static void run_loop_thread(void* arg)
-{
+static void run_loop_thread(void* arg) {
     uv_ipc_handle_t* h = (uv_ipc_handle_t*)arg;
     while (h->inner_uv) {
         uv_run(h->uv, UV_RUN_DEFAULT);
-        Sleep(2000);
+        sleep(2000);
     }
     uv_loop_close(h->uv);
     free(h);
