@@ -132,7 +132,7 @@ namespace HttpWsServer
     /** 延时销毁定时器从loop中移除完成 */
     static void stop_timer_close_cb(uv_handle_t* handle) {
         CLiveWorker* live = (CLiveWorker*)handle->data;
-        if (live->GetTimeStop()){
+        if (live->m_bStop){
             live->Clear2Stop();
         } else {
             Log::debug("new client comed, and will not close live stream");
@@ -146,26 +146,9 @@ namespace HttpWsServer
 		if(ret < 0) {
 			Log::error("timer stop error:%s",uv_strerror(ret));
         }
-        live->SetTimeStop(true);
+        live->m_bStop = true;
         uv_close((uv_handle_t*)handle, stop_timer_close_cb);
 	}
-
-    /** 数据源超时定时器从loop移除完成 */
-    static void over_timer_close_cb(uv_handle_t* handle) {
-        Log::debug("src live stoped");
-    }
-
-    /** 数据源超时，断开所有客户端的定时器 */
-    static void over_timer_cb(uv_timer_t* handle) {
-        CLiveWorker* live = (CLiveWorker*)handle->data;
-        int ret = uv_timer_stop(handle);
-        if(ret < 0) {
-            Log::error("timer stop error:%s",uv_strerror(ret));
-        }
-        uv_close((uv_handle_t*)handle, over_timer_close_cb);
-
-        live->Over2Stop();
-    }
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
@@ -260,9 +243,16 @@ namespace HttpWsServer
         }
 
         if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
-            uv_timer_init(g_uv_loop, &m_uvTimerStop);
-            m_uvTimerStop.data = this;
-			uv_timer_start(&m_uvTimerStop, stop_timer_cb, 20000, 0);
+            if(m_bOver) {
+                // 视频源没有数据，超时，已经从map移走，直接销毁对象
+                uv_thread_t tid;
+                uv_thread_create(&tid, live_worker_destory_thread, this);
+            } else {
+                // 视频源依然连接，延时20秒再销毁对象，以便短时间内有新请求能快速播放
+                uv_timer_init(g_uv_loop, &m_uvTimerStop);
+                m_uvTimerStop.data = this;
+                uv_timer_start(&m_uvTimerStop, stop_timer_cb, 20000, 0);
+            }
         }
         return true;
     }
@@ -270,21 +260,13 @@ namespace HttpWsServer
 	void CLiveWorker::Clear2Stop() {
 		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
 			Log::debug("need close live stream");
-			DelLiveWorker(m_strCode);
+            //首先从map中移走对象
+            DelLiveWorker(m_strCode);
+            // CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程销毁对象。
+            uv_thread_t tid;
+            uv_thread_create(&tid, live_worker_destory_thread, this);
 		}
 	}
-
-    void CLiveWorker::Over2Stop() {
-        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
-        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        //} lws_end_foreach_llp(ppss, pss_next);
-        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
-        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        //} lws_end_foreach_llp(ppss, pss_next);
-        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
-        //    lws_close_reason((*ppss)->wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char*)"rtp stop", 8);
-        //} lws_end_foreach_llp(ppss, pss_next);
-    }
 
     void CLiveWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)
     {
@@ -386,12 +368,10 @@ namespace HttpWsServer
 
     void CLiveWorker::stop()
     {
-        // stop是由rtp接收线程调用的，通过timer转为由当前模块的loop线程调用
-        // 主动关闭客户端连接
+        //视频源没有数据并超时
+        Log::debug("no data recived any more, stopped");
         m_bOver = true;
-        uv_timer_init(g_uv_loop, &m_uvTimerOver);
-        m_uvTimerOver.data = this;
-        uv_timer_start(&m_uvTimerOver, over_timer_cb, 0, 0);
+        DelLiveWorker(m_strCode);
     }
 
     LIVE_BUFF CLiveWorker::GetFlvHeader()
@@ -468,7 +448,41 @@ namespace HttpWsServer
 
     string CLiveWorker::GetClientInfo()
     {
-        return "{}";
+        stringstream ss;
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
+            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
+            if((*ppss)->isWs){
+                ss << "web socket";
+            } else {
+                ss << "Http";
+            }
+            ss << "\",\"Media\":\"flv\",\"ClientIP\":\"" 
+                << (*ppss)->clientIP << "\"},";
+        } lws_end_foreach_llp(ppss, pss_next);
+
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pH264PssList) {
+            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
+            if((*ppss)->isWs){
+                ss << "web socket";
+            } else {
+                ss << "Http";
+            }
+            ss << "\",\"Media\":\"h264\",\"ClientIP\":\"" 
+                << (*ppss)->clientIP << "\"},";
+        } lws_end_foreach_llp(ppss, pss_next);
+
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pMP4PssList) {
+            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
+            if((*ppss)->isWs){
+                ss << "web socket";
+            } else {
+                ss << "Http";
+            }
+            ss << "\",\"Media\":\"mp4\",\"ClientIP\":\"" 
+                << (*ppss)->clientIP << "\"},";
+        } lws_end_foreach_llp(ppss, pss_next);
+
+        return ss.str();
     }
 
     void CLiveWorker::cull_lagging_clients(MediaType type)
@@ -551,7 +565,7 @@ namespace HttpWsServer
 
     CLiveWorker* GetLiveWorker(string strCode)
     {
-        Log::debug("GetWorker begin");
+        //Log::debug("GetWorker begin");
 
         MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
@@ -561,7 +575,7 @@ namespace HttpWsServer
             return itFind->second;
         }
 
-        Log::error("GetWorker failed: %s",strCode.c_str());
+        //Log::error("GetWorker failed: %s",strCode.c_str());
         return nullptr;
     }
 
@@ -571,15 +585,26 @@ namespace HttpWsServer
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
-            // CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。
-            uv_thread_t tid;
-            uv_thread_create(&tid, live_worker_destory_thread, itFind->second);
-            
             m_workerMap.erase(itFind);
             return true;
         }
 
         Log::error("dosn't find worker object");
         return false;
+    }
+
+    string GetClientsInfo() 
+    {
+        MutexLock lock(&m_cs);
+        auto it = m_workerMap.begin();
+        auto end = m_workerMap.end();
+        string strResJson = "{\"root\":[";
+        for (;it != end; ++it)
+        {
+            strResJson += it->second->GetClientInfo();
+        }
+        strResJson = StringHandle::StringTrimRight(strResJson,',');
+        strResJson += "]}";
+        return strResJson;
     }
 }

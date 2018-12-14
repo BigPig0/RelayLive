@@ -479,7 +479,7 @@ namespace HttpWsServer
                 Log::debug("new request: %s", pss->path);
 
                 pss->json = new string;
-                *pss->json = GetDevInfo();
+                *pss->json = GetClientsInfo();
 
                 if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
                     "text/html",

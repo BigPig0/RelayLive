@@ -3,41 +3,12 @@
 
 <head>
     <meta charset='utf-8'>
-    <title>Simple Web Live Flv player in pure JavaScript.</title>
-    <style>
-        #url {
-            width: 350px;
-        }
-
-        #logview {
-            width: 640px;
-            height: 200px;
-            margin-top: 10px;
-            border-left: 0px;
-            border-right: 0px;
-            padding-left: 0px;
-            padding-right: 0px;
-            display: block;
-            background-color: black;
-            color: white;
-            font-size: medium;
-            font-family: 'Lucida Console', Monaco, monospace;
-            outline: none;
-        }
-    </style>
-
+    <title>NodePlayer flv demo</title>
 </head>
 
 <body>
     <div>
-        <div>Web Flv player 1 </div>
-        <canvas id="video1" width="1024" height="720"></canvas>
-    </div>
-    <div>
-        <input id="url" value="ws://172.31.7.88:8000/36030100061320000026.flv" />
-        <input id="play1" type="button" value="Play" />
-        <input id="stop1" type="button" value="Stop" />
-        <input id="switch" type="button" value="switch" />
+        <canvas id="video1" width="600" height="300"></canvas>
     </div>
     <script type="text/javascript" src="./NodePlayer.min.js"></script>
     <script>
@@ -110,43 +81,8 @@
         player.on('stop', () => {
             console.log("player on stop");
         });
-
-        var startFunc = function () {
-            var url = document.getElementById("url");
-            player.start(url.value);
-        }
-
-        var stopFunc = function () {
-            player.stop();
-        }
-
-        var switchFunc = function () {
-            player.stop();
-            player.start(urls[index++]);
-            index %= 2;
-        }
-
-        var btPl1 = document.getElementById("play1");
-        var btSt1 = document.getElementById("stop1");
-        var btSw1 = document.getElementById("switch");
-
-        if (btPl1.addEventListener) {
-            btPl1.addEventListener("click", startFunc, false);
-        } else if (btPl1.attachEvent) {
-            btPl1.attachEvent('onclick', startFunc);
-        }
-
-        if (btSt1.addEventListener) {
-            btSt1.addEventListener("click", stopFunc, false);
-        } else if (btSt1.attachEvent) {
-            btSt1.attachEvent('onclick', stopFunc);
-        }
-
-        if (btSw1.addEventListener) {
-            btSw1.addEventListener("click", switchFunc, false);
-        } else if (btSt1.attachEvent) {
-            btSw1.attachEvent('onclick', switchFunc);
-        }
+		
+		player.start("ws://192.200.200.144:8000/125.flv");
 
     </script>
 </body>

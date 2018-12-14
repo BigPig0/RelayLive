@@ -10,8 +10,7 @@ extern "C" {
 #include "utilc_def.h"
 
 /** 内存文件数据结构 */
-typedef struct _memfile_
-{
+typedef struct _memfile_ {
     char*   _buffer;      //< 缓存区域指针
     size_t  _bufLen;      //< 缓存区域大小
 
