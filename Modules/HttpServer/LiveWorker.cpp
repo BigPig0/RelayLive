@@ -17,7 +17,7 @@ namespace HttpWsServer
     static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
     static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-	static int    m_nRtpStreamType;      //< rtp
+	static int    m_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
 
     static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     static CriticalSection m_csRTP;          //< RTP端口锁
@@ -98,16 +98,14 @@ namespace HttpWsServer
             Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
                 , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
             m_vecRtpPort.clear();
-            for (int i=0; i<m_nRtpPortNum; ++i)
-            {
+            for (int i=0; i<m_nRtpPortNum; ++i) {
                 m_vecRtpPort.push_back(m_nRtpBeginPort+i*2);
             }
         }
 
         int nRet = -1;
         auto it = m_vecRtpPort.begin();
-        if (it != m_vecRtpPort.end())
-        {
+        if (it != m_vecRtpPort.end()) {
             nRet = *it;
             m_vecRtpPort.erase(it);
         }
@@ -244,9 +242,8 @@ namespace HttpWsServer
 
         if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
             if(m_bOver) {
-                // 视频源没有数据，超时，已经从map移走，直接销毁对象
-                uv_thread_t tid;
-                uv_thread_create(&tid, live_worker_destory_thread, this);
+                // 视频源没有数据，超时，不需要延时
+                Clear2Stop();
             } else {
                 // 视频源依然连接，延时20秒再销毁对象，以便短时间内有新请求能快速播放
                 uv_timer_init(g_uv_loop, &m_uvTimerStop);
@@ -262,9 +259,6 @@ namespace HttpWsServer
 			Log::debug("need close live stream");
             //首先从map中移走对象
             DelLiveWorker(m_strCode);
-            // CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程销毁对象。
-            uv_thread_t tid;
-            uv_thread_create(&tid, live_worker_destory_thread, this);
 		}
 	}
 
@@ -370,8 +364,19 @@ namespace HttpWsServer
     {
         //视频源没有数据并超时
         Log::debug("no data recived any more, stopped");
+        //状态改变为超时，此时前端全部断开，不需要延时，直接销毁
         m_bOver = true;
-        DelLiveWorker(m_strCode);
+
+        //断开所有客户端连接
+        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pFlvPssList, pss_next) {
+            lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        } lws_end_foreach_llp_safe(ppss, pss_next);
+        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pH264PssList, pss_next) {
+            lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        } lws_end_foreach_llp_safe(ppss, pss_next);
+        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pMP4PssList, pss_next) {
+            lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        } lws_end_foreach_llp_safe(ppss, pss_next);
     }
 
     LIVE_BUFF CLiveWorker::GetFlvHeader()
@@ -551,7 +556,8 @@ namespace HttpWsServer
         //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
         if(real_play(strCode, m_strRtpIP,  rtpPort))
         {
-            delete pNew;
+            uv_thread_t tid;
+            uv_thread_create(&tid, live_worker_destory_thread, pNew);
             Log::error("play failed %s",strCode.c_str());
             return nullptr;
         }
@@ -585,6 +591,10 @@ namespace HttpWsServer
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
+            // CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程销毁对象。
+            uv_thread_t tid;
+            uv_thread_create(&tid, live_worker_destory_thread, itFind->second);
+
             m_workerMap.erase(itFind);
             return true;
         }
