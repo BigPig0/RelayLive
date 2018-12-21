@@ -55,7 +55,7 @@ struct IlibLiveCb
     virtual void push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize) = 0;
 
     /**
-     * rtsp接收端结束
+     * rtp接收端结束，目前已知只有接收超时引起
      */
     virtual void stop() = 0;
 

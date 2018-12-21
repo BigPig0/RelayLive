@@ -26,12 +26,6 @@ namespace HttpWsServer
         bool m_bStop;          //< 进入定时器回调后设为true，close定时器回调中销毁对象
         bool m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
 
-        /** 从源过来的视频数据，单线程输入 */
-        void push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen);
-        void push_h264_stream(char* pBuff, int nLen);
-        void push_ts_stream(char* pBuff, int nLen);
-        void push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize);
-
         /** 请求端获取视频数据 */
         LIVE_BUFF GetFlvHeader();
         LIVE_BUFF GetFlvVideo(uint32_t *tail);
@@ -45,14 +39,28 @@ namespace HttpWsServer
 
         /** 获取客户端信息 */
         string GetClientInfo();
+
+        /**
+         * 从源过来的视频数据，单线程输入 
+         * 以下继承自IlibLiveCb的方法由rtp接收所在的loop线程调用
+         * 类中其他方法包括构造、析构都由http所在的loop线程调用
+         */
+        void push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen);
+        void push_h264_stream(char* pBuff, int nLen);
+        void push_ts_stream(char* pBuff, int nLen);
+        void push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize);
+        void stop();
     private:
         void cull_lagging_clients(MediaType type);
 
-        void stop();
 
     private:
         string                m_strCode;     // 播放媒体编号
 
+        /**
+         * lws_ring无锁环形缓冲区，只能一个线程写入，一个线程读取
+         * m_pFlvRing、m_pH264Ring、m_pMP4Ring由rtp读取的loop线程写入，http服务所在的loop线程读取
+         */
         //flv
         LIVE_BUFF             m_stFlvHead;  //flv头数据保存在libLive模块，外部不需要释放
         struct lws_ring       *m_pFlvRing;

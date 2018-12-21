@@ -112,10 +112,10 @@ CLiveObj::~CLiveObj(void)
 
 void CLiveObj::StartListen()
 {
-    m_uvLoop = uv_loop_new();
+    m_uvLoop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
     uv_thread_t tid;
+    uv_loop_init(m_uvLoop);
     m_bRun = true;
-    uv_thread_create(&tid, run_loop_thread, this);
 
     // ¿ªÆôudp½ÓÊÕ
     int ret = uv_udp_init(m_uvLoop, &m_uvRtpSocket);
@@ -159,6 +159,8 @@ void CLiveObj::StartListen()
         Log::error("timer start error: %s", uv_strerror(ret));
         return;
     }
+
+    uv_thread_create(&tid, run_loop_thread, this);
 }
 
 void CLiveObj::RtpRecv(char* pBuff, long nLen)

@@ -16,9 +16,10 @@
 #include "uvIpc.h"
 #include "netstream.h"
 
+typedef struct _send_data_ send_data_t;
+
 /** 服务端连接的客户 */
-typedef struct _uv_ipc_clients_
-{
+typedef struct _uv_ipc_clients_ {
     uv_ipc_handle_t         *ipc;
     uv_pipe_t               pipe;
 	uv_shutdown_t           shutdown;
@@ -30,10 +31,15 @@ typedef struct _uv_ipc_clients_
 typedef struct _uv_ipc_handle_ {
     void                    *data;
     int                     is_svr;     //ture:服务端 false:客户端
-    int                     inner_uv;   //true:内部创建的 false:外部传入的
-    uv_loop_t              *uv;
-    uv_pipe_t               pipe;
-	uv_shutdown_t           shutdown;
+    int                     inner_uv;   //true:内部创建的libuv事件循环 false:外部传入的
+    uv_loop_t               *uv;        //libuv事件循环
+    uv_thread_t             tid;        //libuv执行事件循环的线程id
+    uv_pipe_t               pipe;       //管道对象
+	uv_shutdown_t           shutdown;   //销毁对象
+    uv_async_t              async;      //客户端发送数据的异步操作对象
+    send_data_t             *first_data; //客户端存储发送的数据
+    send_data_t             *end_data;   //客户端存储发送的数据
+    uv_mutex_t              mutex;      //客户端给发送数据加锁
     uv_ipc_clients_t        *clients;    //服务端有用。
     uv_ipc_recv_cb          cb;          //客户端回调函数
     char                    name[100];   //客户端名称
@@ -51,6 +57,12 @@ typedef struct _uv_ipc_write_c_ {
     net_stream_maker_t* s;
 }uv_ipc_write_c_t;
 
+/** 客户端生成的发送数据链表 */
+typedef struct _send_data_ {
+    uv_ipc_write_c_t        *w;      //生成好的数据
+    struct _send_data_      *next;  //指向下一个
+}send_data_t;
+
 static void run_loop_thread(void* arg) {
     uv_ipc_handle_t* h = (uv_ipc_handle_t*)arg;
     while (h->inner_uv) {
@@ -58,6 +70,7 @@ static void run_loop_thread(void* arg) {
         sleep(2000);
     }
     uv_loop_close(h->uv);
+    free(h->uv);
     free(h);
 }
 
@@ -264,6 +277,20 @@ static void on_connect(uv_connect_t* req, int status){
     }
 }
 
+// 用户通过其他线程进行的调用发送数据，在loop线程中同步执行
+static void on_async_send(uv_async_t* handle){
+    uv_ipc_handle_t* h = (uv_ipc_handle_t*)handle->data;
+    uv_mutex_lock(&h->mutex);
+    while (h->first_data) {
+        uv_ipc_write_c_t *w   = h->first_data->w;
+        uv_buf_t         buff = uv_buf_init(get_net_stream_data(w->s), get_net_stream_len(w->s));
+        uv_write_t       *req = (uv_write_t *)malloc(sizeof(uv_write_t));
+        req->data = w;
+        uv_write(req, (uv_stream_t*)&h->pipe, &buff, 1, on_write_c);
+        h->first_data = h->first_data->next;
+    }
+    uv_mutex_unlock(&h->mutex);
+}
 //public api
 
 int uv_ipc_server(uv_ipc_handle_t** h, char* ipc, void* uv) {
@@ -281,29 +308,28 @@ int uv_ipc_server(uv_ipc_handle_t** h, char* ipc, void* uv) {
         uvipc->uv = (uv_loop_t*)uv;
         uvipc->inner_uv = 0;
     } else {
-        uv_thread_t tid;
-        uvipc->uv = uv_loop_new();
-        uvipc->inner_uv = 1;
-        ret = uv_thread_create(&tid, run_loop_thread, uvipc);
+        uvipc->uv = (uv_loop_t*)malloc(sizeof(uv_loop_t));
+        ret = uv_loop_init(uvipc->uv);
         if(ret < 0) {
-            printf("uv thread creat failed: %s\n", uv_strerror(ret));
+            printf("uv loop init failed: %s\n", uv_strerror(ret));
             uv_loop_close(uvipc->uv);
             free(uvipc);
             return ret;
         }
+        uvipc->inner_uv = 1;
     }
 
     ret = uv_pipe_init(uvipc->uv, &uvipc->pipe, 0);
     if(ret < 0) {
         printf("uv pipe init failed: %s\n", uv_strerror(ret));
-        uv_stop(uvipc->uv);
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
         free(uvipc);
         return ret;
     }
     ret = uv_pipe_bind(&uvipc->pipe, pipe_name);
     if(ret < 0) {
         printf("uv pipe bind failed: %s\n", uv_strerror(ret));
-        uv_stop(uvipc->uv);
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
         free(uvipc);
         return ret;
     }
@@ -312,9 +338,20 @@ int uv_ipc_server(uv_ipc_handle_t** h, char* ipc, void* uv) {
     ret = uv_listen((uv_stream_t*)&uvipc->pipe, 128, on_connection);
     if(ret < 0) {
         printf("uv listen failed: %s\n", uv_strerror(ret));
-        uv_stop(uvipc->uv);
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
         free(uvipc);
         return ret;
+    }
+
+    if(uvipc->inner_uv) {
+        //由新建线程进行run loop
+        ret = uv_thread_create(&uvipc->tid, run_loop_thread, uvipc);
+        if(ret < 0) {
+            printf("uv thread creat failed: %s\n", uv_strerror(ret));
+            uv_loop_close(uvipc->uv);
+            free(uvipc);
+            return ret;
+        }
     }
 
     *h = uvipc;
@@ -337,6 +374,7 @@ int uv_ipc_client(uv_ipc_handle_t** h, char* ipc, void* uv, char* name, uv_ipc_r
     uvipc->is_svr = 0;
     uvipc->cb = cb;
     uvipc->data = user;
+    uvipc->first_data = NULL;
     strncpy(uvipc->name, name, 100);
     uvipc->name[99] = 0;
 
@@ -344,8 +382,7 @@ int uv_ipc_client(uv_ipc_handle_t** h, char* ipc, void* uv, char* name, uv_ipc_r
         uvipc->uv = (uv_loop_t*)uv;
         uvipc->inner_uv = 0;
     } else {
-        uv_thread_t tid;
-        uvipc->uv = uv_loop_new();
+        uvipc->uv = (uv_loop_t*)malloc(sizeof(uv_loop_t));
         ret = uv_loop_init(uvipc->uv);
         if(ret < 0) {
             printf("uv loop init failed: %s\n", uv_strerror(ret));
@@ -354,19 +391,29 @@ int uv_ipc_client(uv_ipc_handle_t** h, char* ipc, void* uv, char* name, uv_ipc_r
             return ret;
         }
         uvipc->inner_uv = 1;
-        uv_thread_create(&tid, run_loop_thread, uvipc);
-        if(ret < 0) {
-            printf("uv thread creat failed: %s\n", uv_strerror(ret));
-            uv_loop_close(uvipc->uv);
-            free(uvipc);
-            return ret;
-        }
+    }
+
+    ret = uv_async_init(uvipc->uv, &uvipc->async, on_async_send);
+    if(ret < 0) {
+        printf("uv_async_init failed: %s\n", uv_strerror(ret));
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
+        free(uvipc);
+        return ret;
+    }
+    uvipc->async.data = (void*)uvipc;
+
+    ret = uv_mutex_init(&uvipc->mutex);
+    if(ret < 0) {
+        printf("uv_mutex_init failed: %s\n", uv_strerror(ret));
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
+        free(uvipc);
+        return ret;
     }
 
     ret = uv_pipe_init(uvipc->uv, &uvipc->pipe, 0);
     if(ret < 0) {
         printf("uv pipe init failed: %s\n", uv_strerror(ret));
-        uv_stop(uvipc->uv);
+        if(uvipc->inner_uv) uv_loop_close(uvipc->uv);
         free(uvipc);
         return ret;
     }
@@ -376,18 +423,28 @@ int uv_ipc_client(uv_ipc_handle_t** h, char* ipc, void* uv, char* name, uv_ipc_r
     conn->data = uvipc;
     uv_pipe_connect(conn, &uvipc->pipe, pipe_name, on_connect); //连接pipe
 
+    if(uvipc->inner_uv) {
+        uv_thread_create(&uvipc->tid, run_loop_thread, uvipc);
+        if(ret < 0) {
+            printf("uv thread creat failed: %s\n", uv_strerror(ret));
+            uv_loop_close(uvipc->uv);
+            free(uvipc);
+            return ret;
+        }
+    }
+
     *h = uvipc;
     return 0;
 }
 
 int uv_ipc_send(uv_ipc_handle_t* h, char* names, char* msg, char* data, int len) {
-    net_stream_maker_t* s;
-    uv_ipc_write_c_t* w;
-    uv_buf_t buff;
-    uv_write_t *req;
-    uint32_t tmp = 0;
+    net_stream_maker_t *s         = create_net_stream_maker();
+    send_data_t        *send_data = (send_data_t*)malloc(sizeof(send_data_t));
+    uint32_t           tmp        = 0;
 
-    s = create_net_stream_maker();
+    send_data->w = (uv_ipc_write_c_t*)malloc(sizeof(uv_ipc_write_c_t));
+    send_data->next = NULL;
+
     //receivers
     if(names) {
         net_stream_append_be32(s, strlen(names));
@@ -418,14 +475,21 @@ int uv_ipc_send(uv_ipc_handle_t* h, char* names, char* msg, char* data, int len)
         net_stream_append_be32(s, 0);
     }
 	net_stream_append_byte(s,0);
-    buff = uv_buf_init(get_net_stream_data(s), get_net_stream_len(s));
 
-    w = (uv_ipc_write_c_t*)malloc(sizeof(uv_ipc_write_c_t));
-    w->ipc = h;
-    w->s = s;
-    req = (uv_write_t *)malloc(sizeof(uv_write_t));
-    req->data = w;
-    uv_write(req, (uv_stream_t*)&h->pipe, &buff, 1, on_write_c);
+    uv_mutex_lock(&h->mutex);
+    send_data->w->ipc = h;
+    send_data->w->s = s;
+    if(h->first_data == NULL) {
+        h->first_data = send_data;
+        h->end_data = send_data;
+    } else {
+        h->end_data->next = send_data;
+        h->end_data = send_data;
+    }
+    uv_mutex_unlock(&h->mutex);
+
+    uv_async_send(&h->async);
+    
     return 0;
 }
 
