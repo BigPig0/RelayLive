@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "rtsp_client.h"
 #include "md5.h"
+#include "base64.h"
 
 extern uv_loop_t* _uv_loop_;
+extern void sure_move(string ssid);
 
 static uint32_t _seq_ = 1;
 
@@ -11,6 +13,8 @@ static void close_cb(uv_handle_t* handle) {
     CRtspClient* rtsp = (CRtspClient*)handle->data;
 	Log::debug("close %s", rtsp->_uri.c_str());
     rtsp->_conn_state = RTSP_CONNECT_CLOSE;
+    sure_move(rtsp->_option.ssid);
+    delete rtsp;
 }
 
 static void shutdown_cb(uv_shutdown_t* req, int status) {
@@ -93,7 +97,7 @@ CRtspClient::CRtspClient(RTSP_REQUEST option)
     : _option(option)
     , _step(RTSP_STEP_NONE)
     , _conn_state(RTSP_CONNECT_INIT)
-    , _need_auth(false)
+    , _need_auth(RTSP_AUTHORIZATION_NONE)
     , _send_buff(NULL)
     , _recv_buff(NULL)
 {
@@ -105,11 +109,11 @@ CRtspClient::CRtspClient(RTSP_REQUEST option)
 
 CRtspClient::~CRtspClient()
 {
-    stop();
-    while (_conn_state != RTSP_CONNECT_CLOSE)
-    {
-		sleep(100);
-    }
+  //  stop();
+  //  while (_conn_state != RTSP_CONNECT_CLOSE)
+  //  {
+		//sleep(100);
+  //  }
     if(_send_buff) free(_send_buff);
     if(_recv_buff) free(_recv_buff);
 }
@@ -186,7 +190,7 @@ int CRtspClient::send_describe()
     stringstream ss;
     ss << "DESCRIBE " << _uri << " RTSP/1.0\r\n"
         << "CSeq: " << _seq_++ << "\r\n";
-    if(_need_auth) {
+    if(_need_auth == RTSP_AUTHORIZATION_DIGEST) {
         MD5 md5;
         string auth = "DESCRIBE:" + _uri;
         md5.ComputMd5(auth.c_str(), auth.size());
@@ -199,6 +203,8 @@ int CRtspClient::send_describe()
         ss << "Authorization: Digest username=\"" << _option.user_name
             << "\", realm=\"" << _realm << "\", nonce=\"" << _nonce
             << "\", uri=\"" << _uri << "\", response=\"" << response << "\"\r\n";
+    } else if(_need_auth == RTSP_AUTHORIZATION_BASIC) {
+        ss << "Authorization: Basic " << _auth_md5 << "\r\n";
     }
     ss << "User-Agent: relay live rtsp\r\n"
         << "Accept: application/sdp\r\n"
@@ -226,7 +232,7 @@ int CRtspClient::send_setup()
     stringstream ss;
     ss << "SETUP " << _uri << "/trackID=1 RTSP/1.0\r\n"
         << "CSeq: " << _seq_++ << "\r\n";
-    if(_need_auth) {
+    if(_need_auth == RTSP_AUTHORIZATION_DIGEST) {
         MD5 md5;
         string auth = "SETUP:" + _uri + "/trackID=1";
         md5.ComputMd5(auth.c_str(), auth.size());
@@ -267,7 +273,7 @@ int CRtspClient::send_play()
     stringstream ss;
     ss << "PLAY " << _uri << " RTSP/1.0\r\n"
         << "CSeq: " << _seq_++ << "\r\n";
-    if(_need_auth) {
+    if(_need_auth == RTSP_AUTHORIZATION_DIGEST) {
         MD5 md5;
         string auth = "PLAY:" + _uri;
         md5.ComputMd5(auth.c_str(), auth.size());
@@ -308,7 +314,7 @@ int CRtspClient::send_teardown()
     stringstream ss;
     ss << "TEARDOWN " << _uri << " RTSP/1.0\r\n"
         << "CSeq: " << _seq_++ << "\r\n";
-    if(_need_auth) {
+    if(_need_auth == RTSP_AUTHORIZATION_DIGEST) {
         MD5 md5;
         string auth = "TEARDOWN:" + _uri;
         md5.ComputMd5(auth.c_str(), auth.size());
@@ -363,22 +369,60 @@ int CRtspClient::parse_describe()
             return -1;
         }
 
-        _need_auth = true;
-        char* p = strstr(_recv_buff, "\r\nWWW-Authenticate:");
-        char* realm = strstr(p, " realm=\"");
-        realm += 8;
-        char* end = strstr(realm, "\"");
-        _realm = string(realm, end-realm);
-        char* nonce = strstr(p, " nonce=\"");
-        nonce += 8;
-        end = strstr(nonce, "\"");
-        _nonce = string(nonce, end-nonce);
-        MD5 md5;
-        string auth = _option.user_name + ":" + _realm + ":" + _option.password;
-        md5.ComputMd5(auth.c_str(), auth.size());
-        _auth_md5 = md5.GetMd5();
+        if(_need_auth > RTSP_AUTHORIZATION_NONE){
+            _step_state = RTSP_STEP_FAILED;
+            _play_cb(_option.ssid, RTSP_ERR_DESCRIBE_FAILED);
+            Log::error("Authenticate failed %s:%s", _option.user_name.c_str(), _option.password.c_str());
+            return -1;
+        }
 
-        return send_describe();
+        do {
+            char* p = strstr(_recv_buff, "\r\nWWW-Authenticate:");
+            if(!p) break;
+
+            char* Digest = strstr(p, " Digest ");
+            char* Basic = strstr(p, " Basic ");
+            if(Digest) {
+                _need_auth = RTSP_AUTHORIZATION_DIGEST;
+
+                char* realm = strstr(Digest, " realm=\"");
+                if(!realm) break;
+                realm += 8;
+                char* end = strstr(realm, "\"");
+                _realm = string(realm, end-realm);
+
+                char* nonce = strstr(p, " nonce=\"");
+                if(!nonce) break;
+                nonce += 8;
+                end = strstr(nonce, "\"");
+                _nonce = string(nonce, end-nonce);
+
+                MD5 md5;
+                string auth = _option.user_name + ":" + _realm + ":" + _option.password;
+                md5.ComputMd5(auth.c_str(), auth.size());
+                _auth_md5 = md5.GetMd5();
+            } else if(Basic){
+                _need_auth = RTSP_AUTHORIZATION_BASIC;
+
+                char* realm = strstr(Basic, " realm=\"");
+                if(!realm) break;
+                realm += 8;
+                char* end = strstr(realm, "\"");
+                _realm = string(realm, end-realm);
+
+                string auth = _option.user_name + ":" + _option.password;
+                _auth_md5 = CBase64::Encode((const unsigned char*)auth.c_str(), auth.size());
+            } else {
+                break;
+            }
+
+            return send_describe();
+        }while(0);
+
+        _step_state = RTSP_STEP_FAILED;
+        _play_cb(_option.ssid, RTSP_ERR_DESCRIBE_FAILED);
+        Log::error("Authenticate failed %s:%s", _option.user_name.c_str(), _option.password.c_str());
+        return -1;
     }
 
     _step_state = RTSP_STEP_SUCESS;

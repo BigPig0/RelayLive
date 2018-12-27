@@ -18,7 +18,7 @@
 
 
 #define RTP_VERSION          2                   // rtp版本号
-#define PACK_MAX_SIZE        1500                // rtp包最大长度
+#define PACK_MAX_SIZE        1700                // rtp包最大长度
 #define PACK_MIN_SIZE        50                  // rtp包最小长度
 #define RTP_HEADER_SIZE      12                  // rtp头默认长度
 #define SPS_MAX_SIZE         64

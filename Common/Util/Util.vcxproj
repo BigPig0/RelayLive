@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\AbstractFile.h" />
+    <ClInclude Include="Include\base64.h" />
     <ClInclude Include="include\Clock.h" />
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\commonDefine.h" />
@@ -49,6 +50,7 @@
   <ItemGroup>
     <ClCompile Include="ring_buff.c" />
     <ClCompile Include="src\AbstractFile.cpp" />
+    <ClCompile Include="Src\base64.cpp" />
     <ClCompile Include="src\EncodeConvert.cpp" />
     <ClCompile Include="src\File.cpp" />
     <ClCompile Include="src\Log.cpp" />

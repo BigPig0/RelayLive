@@ -57,6 +57,13 @@ enum RTSP_CONNECT_STATE
     RTSP_CONNECT_CLOSE
 };
 
+enum RTSP_AUTHORIZATION_TYPE 
+{
+    RTSP_AUTHORIZATION_NONE = 0,
+    RTSP_AUTHORIZATION_BASIC,
+    RTSP_AUTHORIZATION_DIGEST
+};
+
 class CRtspClient
 {
 public:
@@ -97,7 +104,7 @@ public:
     RTSP_CONNECT_STATE  _conn_state;
 
     play_cb             _play_cb;
-    bool                _need_auth;
+    RTSP_AUTHORIZATION_TYPE    _need_auth;
     string              _uri;
     string              _realm;
     string              _nonce;

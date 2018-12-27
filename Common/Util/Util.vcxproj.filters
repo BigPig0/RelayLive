@@ -135,6 +135,9 @@
     <ClInclude Include="ring_buff.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Include\base64.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MailSlot.cpp">
@@ -189,6 +192,9 @@
       <Filter>Thread</Filter>
     </ClCompile>
     <ClCompile Include="ring_buff.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\base64.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
