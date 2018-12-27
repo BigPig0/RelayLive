@@ -54,6 +54,9 @@ void CSipSever::SeverThread()
     {
         // Wait the osip event.
         osipEventPtr = ::eXosip_event_wait(m_pExContext, 0, 200);// 0的单位是秒，200是毫秒
+        eXosip_lock(m_pExContext);
+        eXosip_automatic_action (m_pExContext);
+        eXosip_unlock(m_pExContext);
         // If get nothing osip event,then continue the loop.
         if (NULL == osipEventPtr)
         {
@@ -68,13 +71,17 @@ void CSipSever::SeverThread()
                     strlen("REGISTER")))
                 {
                     Log::warning("recive REGISTER");
-                    OnRegister(osipEventPtr);
+                    //OnRegister(osipEventPtr);
+                    CSipRegister Register(m_pExContext);
+                    Register.SetAuthorization(CSipMgr::m_pConfig->bRegAuthor);
+                    Register.OnRegister(osipEventPtr);
                 }
                 else if (!strncmp(osipEventPtr->request->sip_method, "MESSAGE",
                     strlen("MESSAGE")))
                 {
                     Log::warning("recive MESSAGE");
-                    OnMessage(osipEventPtr);
+                    //OnMessage(osipEventPtr);
+                    CSipMgr::m_pMessage->OnMessage(osipEventPtr);
                 }
             }
             break;
@@ -101,7 +108,18 @@ void CSipSever::SeverThread()
         case EXOSIP_CALL_ANSWERED:
             {
                 Log::warning("recive call-answer message 200");
-                OnInviteOK(osipEventPtr);
+                //OnInviteOK(osipEventPtr);
+                CSipMgr::m_pInvite->OnInviteOK(osipEventPtr);
+            }
+            break;
+        case EXOSIP_SUBSCRIPTION_NOANSWER:
+        case EXOSIP_SUBSCRIPTION_REQUESTFAILURE:
+        case EXOSIP_SUBSCRIPTION_SERVERFAILURE:
+        case EXOSIP_SUBSCRIPTION_GLOBALFAILURE:
+            {
+                Log::warning("recive call-answer failed %d", osipEventPtr->type);
+                CSipMgr::m_pInvite->OnInviteFailed(osipEventPtr);
+                eXosip_event_free(osipEventPtr);
             }
             break;
         //case EXOSIP_CALL_MESSAGE_NEW:
@@ -113,7 +131,8 @@ void CSipSever::SeverThread()
         case EXOSIP_SUBSCRIPTION_NOTIFY:
             {
 				Log::warning("recive notify");
-				OnMessage(osipEventPtr);
+				//OnMessage(osipEventPtr);
+                CSipMgr::m_pMessage->OnMessage(osipEventPtr);
             }
             break;
         //case EXOSIP_CALL_CLOSED:
@@ -130,10 +149,9 @@ void CSipSever::SeverThread()
         //    break;
         default:
             Log::warning("The sip event type that not be precessed.the event type is : %d\r\n",osipEventPtr->type);
-			eXosip_event_free(osipEventPtr);
             break;
         }
-        //eXosip_event_free(osipEventPtr);
+        eXosip_event_free(osipEventPtr);
         osipEventPtr = NULL;
     } //while(true)
 }

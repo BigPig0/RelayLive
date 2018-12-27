@@ -39,7 +39,7 @@ public:
      * 发送视频请求成功
      */
     bool OnInviteOk(int nDID, char* szBody, int nLength);
-
+    bool OnInviteFailed();
     bool WaiteInviteFinish();
 
     /**

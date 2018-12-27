@@ -195,6 +195,15 @@ bool CSipCall::OnInviteOk(int nDID, char* szBody, int nLength)
     return true;
 }
 
+bool CSipCall::OnInviteFailed()
+{
+    Log::debug("CSipCall::OnInvite Failed");
+    m_nDialogID = -1;
+    m_nInvite   = 1;
+
+    return true;
+}
+
 bool CSipCall::WaiteInviteFinish()
 {
     time_t inviteTime = time(NULL);
@@ -209,7 +218,7 @@ bool CSipCall::WaiteInviteFinish()
             return false;
         }
     }
-    return true;
+    return m_nDialogID==-1?false:true;
 }
 
 bool CSipCall::SendBye()

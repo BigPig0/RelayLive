@@ -159,6 +159,34 @@ void CSipInvite::OnInviteOK(eXosip_event_t *osipEvent)
     //eXosip_call_terminate(m_pExContext,osipEvent->cid,osipEvent->did);
 }
 
+void CSipInvite::OnInviteFailed(eXosip_event_t *osipEvent)
+{
+    Log::debug("CSipInvite::OnInviteFailed cid:%d,did:%d",osipEvent->cid,osipEvent->did);
+    // 保存did
+    osip_body_t *body;
+    osip_message_get_body(osipEvent->response,0,&body);
+    CSipCall* pCall = CSipCall::FindByCallID(osipEvent->cid);
+    pCall->OnInviteFailed();
+
+    // 组织ack报文
+    osip_message_t *cackMsg = 0;
+    int nID = eXosip_call_build_ack(m_pExContext,osipEvent->did,&cackMsg);
+    if (nID != OSIP_SUCCESS)
+    {
+        Log::error("CSipInvite::OnInviteOK init invite failed:%d",nID);
+        return;
+    }
+
+    // 发送ack报文
+    eXosip_lock(m_pExContext);
+    int ret = eXosip_call_send_ack(m_pExContext,osipEvent->did, cackMsg);
+    if (ret < 0)
+    {
+        Log::error("CSipInvite::OnInviteOK send ack failed:%d",ret);
+    }
+    eXosip_unlock(m_pExContext);
+}
+
 void CSipInvite::SendBye(int cid, int did)
 {
     // 发送bye报文

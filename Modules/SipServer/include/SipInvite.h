@@ -24,6 +24,7 @@ public:
      * 接收到200OK返回
      */
     void OnInviteOK(eXosip_event_t *osipEvent);
+    void OnInviteFailed(eXosip_event_t *osipEvent);
 
     /**
      * 结束会话
