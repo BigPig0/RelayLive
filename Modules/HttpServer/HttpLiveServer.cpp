@@ -328,7 +328,7 @@ namespace HttpWsServer
             }
         case LWS_CALLBACK_CLOSED:
             {
-                if (!pss)
+                if (!pss || !pss->m_pWorker)
                     break;
                 Log::debug("live ws protocol cloes %s", pss->path);
                 pss->m_pWorker->DelConnect(pss);
