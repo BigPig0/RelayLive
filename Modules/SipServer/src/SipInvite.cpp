@@ -173,7 +173,7 @@ void CSipInvite::OnInviteFailed(eXosip_event_t *osipEvent)
     int nID = eXosip_call_build_ack(m_pExContext,osipEvent->did,&cackMsg);
     if (nID != OSIP_SUCCESS)
     {
-        Log::error("CSipInvite::OnInviteOK init invite failed:%d",nID);
+        Log::error("CSipInvite::OnInviteFailed init invite failed:%d",nID);
         return;
     }
 
@@ -182,7 +182,7 @@ void CSipInvite::OnInviteFailed(eXosip_event_t *osipEvent)
     int ret = eXosip_call_send_ack(m_pExContext,osipEvent->did, cackMsg);
     if (ret < 0)
     {
-        Log::error("CSipInvite::OnInviteOK send ack failed:%d",ret);
+        Log::error("CSipInvite::OnInviteFailed send ack failed:%d",ret);
     }
     eXosip_unlock(m_pExContext);
 }

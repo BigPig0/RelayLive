@@ -112,10 +112,10 @@ void CSipSever::SeverThread()
                 CSipMgr::m_pInvite->OnInviteOK(osipEventPtr);
             }
             break;
-        case EXOSIP_SUBSCRIPTION_NOANSWER:
-        case EXOSIP_SUBSCRIPTION_REQUESTFAILURE:
-        case EXOSIP_SUBSCRIPTION_SERVERFAILURE:
-        case EXOSIP_SUBSCRIPTION_GLOBALFAILURE:
+        case EXOSIP_CALL_NOANSWER:
+        case EXOSIP_CALL_REQUESTFAILURE:
+        case EXOSIP_CALL_SERVERFAILURE:
+        case EXOSIP_CALL_GLOBALFAILURE:
             {
                 Log::warning("recive call-answer failed %d", osipEventPtr->type);
                 CSipMgr::m_pInvite->OnInviteFailed(osipEventPtr);
