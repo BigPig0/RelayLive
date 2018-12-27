@@ -119,7 +119,6 @@ void CSipSever::SeverThread()
             {
                 Log::warning("recive call-answer failed %d", osipEventPtr->type);
                 CSipMgr::m_pInvite->OnInviteFailed(osipEventPtr);
-                eXosip_event_free(osipEventPtr);
             }
             break;
         //case EXOSIP_CALL_MESSAGE_NEW:
