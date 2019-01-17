@@ -45,6 +45,11 @@ static void timer_cb(uv_timer_t* handle)
     pLive->RtpOverTime();
 }
 
+static void async_cb(uv_async_t* handle){
+    CLiveObj* obj = (CLiveObj*)handle->data;
+    obj->AsyncClose();
+}
+
 static void run_loop_thread(void* arg)
 {
     CLiveObj* h = (CLiveObj*)arg;
@@ -85,20 +90,11 @@ CLiveObj::CLiveObj(liblive_option opt)
 
 CLiveObj::~CLiveObj(void)
 {
-    m_pCallBack = nullptr;
-    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
-    if(ret < 0) {
-        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
-    }
-    ret = uv_timer_stop(&m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("stop timer error: %s",uv_strerror(ret));
-    }
-    m_bRun =  false;
-    uv_stop(m_uvLoop);
+    uv_async_send(&m_uvAsync);
     while (m_uvLoop)
         Sleep(1000);
 
+    m_pCallBack = nullptr;
     SAFE_DELETE(m_pRtpParser);
     SAFE_DELETE(m_pPsParser);
     SAFE_DELETE(m_pPesParser);
@@ -107,7 +103,7 @@ CLiveObj::~CLiveObj(void)
     SAFE_DELETE(m_pTs);
     SAFE_DELETE(m_pFlv);
     SAFE_DELETE(m_pMp4);
-    Sleep(2000);
+    //Sleep(2000);
 }
 
 void CLiveObj::StartListen()
@@ -159,6 +155,10 @@ void CLiveObj::StartListen()
         Log::error("timer start error: %s", uv_strerror(ret));
         return;
     }
+
+    //Òì²½²Ù×÷
+    m_uvAsync.data = (void*)this;
+    uv_async_init(m_uvLoop, &m_uvAsync, async_cb);
 
     uv_thread_create(&tid, run_loop_thread, this);
 }
@@ -297,4 +297,18 @@ void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
     CHECK_POINT_VOID(m_pCallBack);
 	if (m_pCallBack->m_bH264)
 		m_pCallBack->push_h264_stream(pBuff, nBuffSize);
+}
+
+void CLiveObj::AsyncClose()
+{
+    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
+    if(ret < 0) {
+        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
+    }
+    ret = uv_timer_stop(&m_uvTimeOver);
+    if(ret < 0) {
+        Log::error("stop timer error: %s",uv_strerror(ret));
+    }
+    m_bRun =  false;
+    uv_stop(m_uvLoop);
 }

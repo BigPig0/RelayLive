@@ -80,6 +80,9 @@ public:
         m_pCallBack = pHandle;
     }
 
+    /** 结束时关闭loop */
+    void AsyncClose();
+
     bool        m_bRun;
     uv_loop_t   *m_uvLoop;
 private:
@@ -91,6 +94,7 @@ private:
 
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器
+    uv_async_t  m_uvAsync;          // 异步操作句柄
 
     void*       m_pRtpParser;       // rtp报文解析类
     void*       m_pPsParser;        // PS帧解析类
