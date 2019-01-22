@@ -370,13 +370,13 @@ namespace HttpWsServer
         //断开所有客户端连接
         lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pFlvPssList, pss_next) {
             lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-        } lws_end_foreach_llp_safe(ppss, pss_next);
+        } lws_end_foreach_llp_safe(ppss);
         lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pH264PssList, pss_next) {
             lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-        } lws_end_foreach_llp_safe(ppss, pss_next);
+        } lws_end_foreach_llp_safe(ppss);
         lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pMP4PssList, pss_next) {
             lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-        } lws_end_foreach_llp_safe(ppss, pss_next);
+        } lws_end_foreach_llp_safe(ppss);
     }
 
     LIVE_BUFF CLiveWorker::GetFlvHeader()
