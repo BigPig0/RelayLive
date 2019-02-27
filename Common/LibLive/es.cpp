@@ -4,6 +4,8 @@
 
 CES::CES(CLiveObj* pObj)
     : m_pObj(pObj)
+    , m_pH264Buf(NULL)
+    , m_nH264DataLen(0)
 {
 }
 
@@ -30,10 +32,11 @@ int CES::InputBuffer(char* pBuf, uint32_t nLen)
             if (pos > begin_pos)
             {
                 // 回调处理H264帧
-                if (m_pObj != nullptr)
-                {
-                    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
-                }
+                //if (m_pObj != nullptr)
+                //{
+                //    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
+                //}
+                CatchData(begin_buff, pos-begin_pos);
             }
             //nalUnit = (nal_unit_header_t*)(pPos+3);
             //nNalType = nalUnit->nal_type;
@@ -48,10 +51,11 @@ int CES::InputBuffer(char* pBuf, uint32_t nLen)
             if (pos > begin_pos)
             {
                 // 回调处理H264帧
-                if (m_pObj != nullptr)
-                {
-                    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
-                }
+                //if (m_pObj != nullptr)
+                //{
+                //    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
+                //}
+                CatchData(begin_buff, pos-begin_pos);
             }
             //nalUnit = (nal_unit_header_t*)(pPos+4);
             //nNalType = nalUnit->nal_type;
@@ -69,10 +73,56 @@ int CES::InputBuffer(char* pBuf, uint32_t nLen)
     if (nLen > begin_pos)
     {
         // 回调处理H264帧
-        if (m_pObj != nullptr)
-        {
-            m_pObj->ESParseCb(begin_buff, nLen-begin_pos/*, nNalType*/);
-        }
+        //if (m_pObj != nullptr)
+        //{
+        //    m_pObj->ESParseCb(begin_buff, nLen-begin_pos/*, nNalType*/);
+        //}
+        CatchData(begin_buff, pos-begin_pos);
     }
     return 0;
+}
+
+
+void CES::CatchData(char* pBuf, uint32_t nLen) 
+{
+    if(m_pH264Buf == NULL)
+    {
+        m_pH264Buf = (char*)malloc(nLen);
+        m_nH264BufLen = nLen;
+    }
+
+    bool begin = false;
+    if ((pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 1)
+        || (pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 0 && pBuf[3] == 1))
+    {
+        begin = true;
+    }
+
+    if (begin)
+    {
+        if(m_nH264DataLen > 0) {
+            if (m_pObj != nullptr)
+            {
+                m_pObj->ESParseCb(m_pH264Buf, m_nH264DataLen);
+            }
+            m_nH264DataLen = 0;
+        }
+    }
+    else
+    {
+        //必须以nalu起始数据作为数据的开头
+        if(m_nH264DataLen == 0) {
+            Log::error("this is not nalu head");
+            return;
+        }
+    }
+
+    int nNewLen = m_nH264DataLen + nLen;
+    if(nNewLen > m_nH264BufLen) {
+        m_pH264Buf = (char*)realloc(m_pH264Buf, nNewLen);
+        m_nH264BufLen = nNewLen;
+    }
+
+    memcpy(m_pH264Buf+m_nH264DataLen, pBuf, nLen);
+    m_nH264DataLen += nLen;
 }

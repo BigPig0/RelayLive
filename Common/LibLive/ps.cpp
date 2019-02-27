@@ -120,14 +120,14 @@ int CPs::ParseHeader(char* pBuf, long nLen, long& nHeadLen)
 int CPs::ParsePES(char* pBuf, long nLen)
 {
     long nPos = 0;
-    //for (; nPos<nLen-6;)
+    for (; nPos<nLen-6;)
     {
         pes_header_t* pes = (pes_header_t*)(pBuf + nPos);
         if (!is_pes_header(pes))
         {
             Log::error("CPsAnalyzer::ParsePES is not pes header");
             nPos++;
-            //continue;
+            continue;
         }
         int32_t pesLen =  pes->PES_packet_length[0];
         pesLen <<= 8;
