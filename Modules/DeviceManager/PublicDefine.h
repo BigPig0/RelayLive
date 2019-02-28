@@ -51,8 +51,6 @@ struct PlatFormInfo
     string strAddrPort;   //< 端口
     string strStatus;     //< 状态
     int    nExpire;       //< 超时时间
-
-    
 };
 
 

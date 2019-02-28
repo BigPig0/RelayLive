@@ -56,33 +56,33 @@ bool SipInstance::RealPlay(string strDev, string rtpIP, int rtpPort)
     return true;
 }
 
-bool SipInstance::StopPlay(string strDev)
+bool SipInstance::StopPlay(string rtpPort)
 {
-    Log::debug("stop %s",strDev.c_str());
-    CSipCall::StopSipCall(strDev);
+    Log::debug("stop %s",rtpPort.c_str());
+    CSipCall::StopSipCall(rtpPort);
 
     return true;
 }
 
-bool SipInstance::RecordPlay(string strDev, string startTime, string endTime, string session)
+bool SipInstance::StopPlayAll()
+{
+    Log::debug("stop all");
+    CSipCall::StopSipCallAll();
+
+    return true;
+}
+
+bool SipInstance::RecordPlay(string strDev, string startTime, string endTime)
 {
     Log::debug("start SipInstance::RealPlay strDev:%s",strDev.c_str());
     string strIP;
     int nPort;
 
     // 创建会话邀请
-    if (!CSipCall::CreatSipCall(strDev, strIP, nPort, startTime, endTime, session))
+    if (!CSipCall::CreatSipCall(strDev, strIP, nPort, startTime, endTime))
     {
         return false;
     }
-    return true;
-}
-
-bool SipInstance::StopRecordPlay(string strDev, string session)
-{
-    Log::debug("stop %s", session.c_str());
-    CSipCall::StopSipCall(strDev, session);
-
     return true;
 }
 

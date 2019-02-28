@@ -32,12 +32,12 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port));
         if(bplay) {
             stringstream ss;
-            ss << "ssid=" << ssid << "&ret=0&error=success";
+            ss << "ssid=" << port << "&ret=0&error=success";
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         } else {
             stringstream ss;
-            ss << "ssid=" << ssid << "&ret=-1&error=sip play failed";
+            ss << "ssid=" << port << "&ret=-1&error=sip play failed";
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         }
@@ -45,6 +45,9 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         string ssid(data, len);
 
         SipInstance::StopPlay(ssid);
+    } else if(!strcmp(msg,"close")) {
+        //关闭所有正在进行的播放
+        SipInstance::StopPlayAll();
     }
 }
 

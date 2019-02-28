@@ -74,18 +74,6 @@ static void run_loop_thread(void* arg) {
     free(h);
 }
 
-static void close_cb(uv_handle_t* handle) {
-    uv_ipc_clients_t* c = (uv_ipc_clients_t*)handle->data;
-	printf("close client %s\n", c->name);
-	free(c);
-}
-
-static void shutdown_cb(uv_shutdown_t* req, int status) {
-    uv_ipc_clients_t* c = (uv_ipc_clients_t*)req->data;
-	printf("shutdown client %s  status:%s\n", c->name, uv_strerror(status));
-	uv_close((uv_handle_t*)&c->pipe, close_cb);
-}
-
 static void on_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {//用于读数据时的缓冲区分配
     buf->base = (char*)malloc(suggested_size);
     buf->len = suggested_size;
@@ -106,6 +94,45 @@ static void on_write_s(uv_write_t *req, int status) {
     free(req);
 }
 
+static void close_cb(uv_handle_t* handle) {
+    uv_ipc_clients_t   *c   = (uv_ipc_clients_t*)handle->data;  //关闭的客户端
+    uv_ipc_clients_t   *tmp = c->ipc->clients;                  //所有客户端
+    net_stream_maker_t *s   = create_net_stream_maker();        //消息生成器
+    uv_ipc_write_s_t   *w   = (uv_ipc_write_s_t *)malloc(sizeof(uv_ipc_write_s_t)); //消息缓存工具
+    int                len  = 0;                                //消息长度
+    net_stream_append_be32(s, strlen(c->name) + 5 + 12);
+    net_stream_append_be32(s, strlen(c->name));
+    net_stream_append_string(s, c->name);
+    net_stream_append_be32(s, 5);
+    net_stream_append_string(s, "close");
+    net_stream_append_be32(s, 0);
+    net_stream_append_byte(s,0);    //额外增加结尾的0
+    len = get_net_stream_len(s);
+    w->buff = (char*)malloc(len);
+    memcpy(w->buff, get_net_stream_data(s), len);
+    w->data = w->buff + 4;
+    w->ipc = c->ipc;
+    w->num = 0;
+    destory_net_stream_maker(s);
+    printf("close client %s\n", c->name);
+    free(c);
+    //通知所有客户端该客户端关闭
+    while(tmp != NULL) {
+        uv_buf_t buff = uv_buf_init(w->data, len);
+        uv_write_t *req = (uv_write_t *)malloc(sizeof(uv_write_t));
+        w->num++;
+        req->data = w;
+        uv_write(req, (uv_stream_t*)&tmp->pipe, &buff, 1, on_write_s);
+        tmp = tmp->next;
+    }
+}
+
+static void shutdown_cb(uv_shutdown_t* req, int status) {
+    uv_ipc_clients_t* c = (uv_ipc_clients_t*)req->data;
+    printf("shutdown client %s  status:%s\n", c->name, uv_strerror(status));
+    uv_close((uv_handle_t*)&c->pipe, close_cb);
+}
+
 static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     uv_ipc_clients_t* c = (uv_ipc_clients_t*)client->data;
     uv_ipc_handle_t* ipc = (uv_ipc_handle_t*)c->ipc;
@@ -115,7 +142,7 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     uv_ipc_write_s_t *w;
 
     if (nread < 0) {
-        printf("Read error %s\n", uv_strerror(nread));
+        printf("Read error: %d(%s)\n", nread, uv_strerror(nread));
         if(c->pre) {
             c->pre->next = c->next;
             if(c->next)

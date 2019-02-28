@@ -45,7 +45,7 @@ bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort)
 }
 
 bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort, 
-                  string startTime, string endTime, string session)
+                  string startTime, string endTime)
 {
     CSipCall* pNew          = new CSipCall;
     pNew->m_strDevCode      = strDevCode;
@@ -54,7 +54,6 @@ bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort,
     pNew->m_bRecord         = true;
     pNew->m_strBeginTime    = startTime;
     pNew->m_strEndTime      = endTime;
-    pNew->m_strSession      = session;
 
     // ·¢ËÍÍ¨»°ÑûÇë
     if (!pNew->SendRecordInvite())
@@ -72,14 +71,14 @@ bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort,
     return true;
 }
 
-bool CSipCall::StopSipCall(string strDevCode)
+bool CSipCall::StopSipCall(string strRtpPort)
 {
     CSipCall* pCall = nullptr;
     MutexLock lock(&m_csGlobalCall);
-    auto find = m_mapDeviceCall.find(strDevCode);
+    auto find = m_mapDeviceCall.find(strRtpPort);
     if (find == m_mapDeviceCall.end())
     {
-        Log::error("m_mapDeviceCall isn't find %s",strDevCode.c_str());
+        Log::error("m_mapDeviceCall isn't find %s",strRtpPort.c_str());
         return false;
     }
     pCall = find->second;
@@ -95,44 +94,25 @@ bool CSipCall::StopSipCall(string strDevCode)
     auto findCall = m_mapGlobalCall.find(nCallID);
     if (findCall == m_mapGlobalCall.end())
     {
-        Log::error("m_mapDeviceCall isn't find %s:%d",strDevCode.c_str(),nCallID);
+        Log::error("m_mapDeviceCall isn't find %s:%d",strRtpPort.c_str(),nCallID);
         return false;
     }
     m_mapGlobalCall.erase(findCall);
 
-    Log::debug("Stopped call %s",strDevCode.c_str());
+    Log::debug("Stopped call %s",strRtpPort.c_str());
     return true;
 }
 
-bool CSipCall::StopSipCall(string strDevCode, string session)
+bool CSipCall::StopSipCallAll()
 {
-    CSipCall* pCall = nullptr;
     MutexLock lock(&m_csGlobalCall);
-    auto find = m_mapDeviceCall.find(strDevCode+session);
-    if (find == m_mapDeviceCall.end())
+    for(auto devCall : m_mapDeviceCall)
     {
-        Log::error("m_mapDeviceCall isn't find %s:%s",strDevCode.c_str(),session.c_str());
-        return false;
+        delete devCall.second;
     }
-    pCall = find->second;
-    m_mapDeviceCall.erase(find);
-    if (pCall == nullptr)
-    {
-        Log::error("sipCall in m_mapDeviceCall is null");
-        return false;
-    }
-
-    int nCallID = pCall->m_nCallID;
-    delete pCall;
-    auto findCall = m_mapGlobalCall.find(nCallID);
-    if (findCall == m_mapGlobalCall.end())
-    {
-        Log::error("m_mapDeviceCall isn't find %s:%d",strDevCode.c_str(),nCallID);
-        return false;
-    }
-	m_mapGlobalCall.erase(findCall);
-
-    Log::debug("Stopped call %s",strDevCode.c_str());
+    m_mapDeviceCall.clear();
+    m_mapGlobalCall.clear();
+    Log::debug("Stopped call all");
     return true;
 }
 
@@ -157,7 +137,7 @@ bool CSipCall::SendInvite()
 
     MutexLock lock(&m_csGlobalCall);
     m_mapGlobalCall.insert(make_pair(m_nCallID, this));
-    m_mapDeviceCall.insert(make_pair(m_strPlatformCode+m_strDevCode,this));
+    m_mapDeviceCall.insert(make_pair(StringHandle::toStr<int>(m_nRtpPort),this));
     return true;
 }
 
@@ -182,7 +162,7 @@ bool CSipCall::SendRecordInvite()
 
     MutexLock lock(&m_csGlobalCall);
     m_mapGlobalCall.insert(make_pair(m_nCallID, this));
-    m_mapDeviceCall.insert(make_pair(m_strPlatformCode+m_strDevCode+m_strSession,this));
+    m_mapDeviceCall.insert(make_pair(StringHandle::toStr<int>(m_nRtpPort),this));
     return true;
 }
 

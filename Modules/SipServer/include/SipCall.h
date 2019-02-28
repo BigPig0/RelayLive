@@ -19,15 +19,16 @@ public:
      */
     static bool CreatSipCall(string strDevCode, string strIP, int nPort);
     static bool CreatSipCall(string strDevCode, string strIP, int nPort, 
-        string startTime, string endTime, string session);
+        string startTime, string endTime);
 
     /**
      * 结束一个SIP通话，并删除对象
-     * @param strDevCode[in] 设备编码
+     * @param strRtpPort[in] rtp端口，作为会话id
      * @return 成功true,失败false
      */
-    static bool StopSipCall(string strDevCode);
-    static bool StopSipCall(string strDevCode, string session);
+    static bool StopSipCall(string strRtpPort);
+
+    static bool StopSipCallAll();
 
     /**
      * 发送视频邀请
@@ -57,7 +58,7 @@ private:
 
 public:
     static map<int,CSipCall*>     m_mapGlobalCall;  //< 所有的该类实例建立索引，key是callid，以便响应时找到
-    static map<string,CSipCall*>  m_mapDeviceCall;  //< key是DevCode[+session]
+    static map<string,CSipCall*>  m_mapDeviceCall;  //< key是rtp端口。因为端口不重复，可以作为ID
     static CriticalSection        m_csGlobalCall;
 
 private:
@@ -76,6 +77,5 @@ private:
     bool            m_bRecord;
     string          m_strBeginTime;
     string          m_strEndTime;
-    string          m_strSession;
 };
 

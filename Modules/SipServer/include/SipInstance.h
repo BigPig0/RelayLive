@@ -28,10 +28,15 @@ public:
 
     /**
      * 关闭一个实时播放
-     * @param[in] strDev 设备编码
+     * @param[in] rtpPort 用端口作为id
      * @return true:成功 false:失败
      */
-    static bool StopPlay(string strDev);
+    static bool StopPlay(string rtpPort);
+
+    /**
+     * 关闭所有播放
+     */
+    static bool StopPlayAll();
 
     /**
      * 开启一个历史视频播放
@@ -41,15 +46,7 @@ public:
      * @param session 会话session
      * @return true:成功 false:失败
      */
-    static bool RecordPlay(string strDev, string startTime, string endTime, string session);
-
-    /**
-     * 关闭一个实时播放
-     * @param[in] strDev 设备编码
-     * @param session 会话session
-     * @return true:成功 false:失败
-     */
-    static bool StopRecordPlay(string strDev, string session);
+    static bool RecordPlay(string strDev, string startTime, string endTime);
 
     /**
      * 云台控制
