@@ -2,7 +2,6 @@
 #include "HttpLiveServer.h"
 #include "LiveWorker.h"
 //ÆäËûÄ£¿é
-//#include "SipInstance.h"
 #include "libLive.h"
 #include "uvIpc.h"
 

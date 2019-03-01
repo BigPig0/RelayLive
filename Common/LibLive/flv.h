@@ -45,6 +45,7 @@ private:
 private:
     CFlvStreamMaker*        m_pSPS;            // 保存SPS内容的缓存
     CFlvStreamMaker*        m_pPPS;            // 保存PPS内容的缓存
+    CFlvStreamMaker*        m_pKeyFrame;       // 缓存关键帧，sps和pps有可能在后面
     CFlvStreamMaker*        m_pHeader;         // flv头数据
     CFlvStreamMaker*        m_pData;           // 存放生成的flv数据
 
