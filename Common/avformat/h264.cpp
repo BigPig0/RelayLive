@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "h264.h"
 
-CH264::CH264(CLiveObj* pObj)
-    : m_pObj(pObj)
-    , m_pNaluBuff(nullptr)
+CH264::CH264(void* handle)
+    : m_pNaluBuff(nullptr)
     , m_nBuffLen(0)
     , m_pDataBuff(nullptr)
     , m_nDataLen(0)
@@ -13,6 +12,9 @@ CH264::CH264(CLiveObj* pObj)
     , m_nFps(0)
     , m_bFirstKey(false)
     , m_bDecode(false)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
+    , m_fCBSPS(nullptr)
 {
     m_pSPS = new CNetStreamMaker();
     m_pPPS = new CNetStreamMaker();
@@ -45,7 +47,7 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
         // ·¢ËÍ¹Ø¼üÖ¡
         Log::debug("h264 key frame");
         if(m_pFullBuff->size() > 0) {
-            m_pObj->H264Cb(m_pFullBuff->get(), m_pFullBuff->size());
+            m_fCB(m_pFullBuff->get(), m_pFullBuff->size(), m_hUser);
             m_pFullBuff->clear();
         }
         m_pFullBuff->append_data(m_pSPS->get(), m_pSPS->size());
@@ -64,7 +66,7 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
             if(!m_bDecode) {
                 m_bDecode = DecodeSps();
                 if(m_bDecode)
-                    m_pObj->H264SpsCb(m_nWidth, m_nHeight, m_nFps);
+                    m_fCBSPS(m_nWidth, m_nHeight, m_nFps, m_hUser);
             }
         }
         break;

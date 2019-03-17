@@ -11,6 +11,7 @@ enum flv_tag_type
     callback_video_tag
 };
 
+typedef void (*FLV_CALLBACK)(FLV_FRAG_TYPE, char*, int, void*);
 
 class CFlvStreamMaker : public CNetStreamMaker
 {
@@ -22,7 +23,7 @@ public:
 class CFlv
 {
 public:
-    CFlv(CLiveObj* pObj);
+    CFlv(void* handle);
     ~CFlv(void);
 
     int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
@@ -52,7 +53,8 @@ private:
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
 
-    CLiveObj*          m_pObj;
+    void*             m_hUser;                  // 回调处理对象
+    FLV_CALLBACK      m_fCB;
 
     // SPS解析出的信息
     uint32_t           m_nWidth;          // 视频宽

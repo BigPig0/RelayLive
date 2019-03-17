@@ -2,10 +2,11 @@
 #include "es.h"
 
 
-CES::CES(CLiveObj* pObj)
-    : m_pObj(pObj)
-    , m_pH264Buf(NULL)
+CES::CES(void* handle)
+    : m_pH264Buf(NULL)
     , m_nH264DataLen(0)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
 {
 }
 
@@ -101,9 +102,9 @@ void CES::CatchData(char* pBuf, uint32_t nLen)
     if (begin)
     {
         if(m_nH264DataLen > 0) {
-            if (m_pObj != nullptr)
+            if (m_fCB != nullptr)
             {
-                m_pObj->ESParseCb(m_pH264Buf, m_nH264DataLen);
+                m_fCB(m_pH264Buf, m_nH264DataLen, m_hUser);
             }
             m_nH264DataLen = 0;
         }

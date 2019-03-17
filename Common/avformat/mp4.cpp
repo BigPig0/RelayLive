@@ -212,9 +212,8 @@ struct mp4_mdat_box {
 #pragma pack()
 
 
-CMP4::CMP4(CLiveObj* pObj)
-    : m_pObj(pObj)
-    , m_nSampleNum(0)
+CMP4::CMP4(void* handle)
+    : m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
     , m_nfps(25.0)
@@ -224,6 +223,8 @@ CMP4::CMP4(CLiveObj* pObj)
     , m_bFirstKey(false)
     , m_bRun(true)
     , m_nSeq(1)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
 {
     m_pSPS = new CNetStreamMaker();
     m_pPPS = new CNetStreamMaker();
@@ -538,7 +539,8 @@ bool CMP4::MakeHeader()
     m_pHeader->rewrite_be32((char*)moov - pPos, m_pHeader->size() - ((char*)moov - pPos));
     // moov end
 
-    m_pObj->Mp4Cb(MP4_HEAD, m_pHeader->get(), m_pHeader->size());
+    if(m_fCB != nullptr)
+        m_fCB(MP4_HEAD, m_pHeader->get(), m_pHeader->size(), m_hUser);
     return true;
 }
 
@@ -609,6 +611,7 @@ bool CMP4::MakeVideo()
     m_pFragment->append_data(m_pMdat->get(), m_pMdat->size());        //mdat->data
     // mdat end
 
-    m_pObj->Mp4Cb(MP4_FRAG, m_pFragment->get(), m_pFragment->size());
+    if(m_fCB != nullptr)
+        m_fCB(MP4_FRAG, m_pFragment->get(), m_pFragment->size(), m_hUser);
     return true;
 }

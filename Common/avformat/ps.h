@@ -121,10 +121,12 @@ bool inline is_psm_header(psm_header_t* psm)
     return false;
 }
 
+typedef void(*PS_CALLBACK)(char*, long, void*);
+
 class CPs
 {
 public:
-    CPs(CLiveObj* pObj);
+    CPs(void* handle);
     ~CPs(void);
 
     /**
@@ -154,6 +156,7 @@ private:
     int ParsePES(char* pBuf, long nLen);
 
 private:
-    CLiveObj*   m_pObj;                  // 回调处理对象
+    void*             m_hUser;                  // 回调处理对象
+    PS_CALLBACK       m_fCB;
 };
 

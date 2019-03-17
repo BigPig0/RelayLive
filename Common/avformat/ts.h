@@ -167,6 +167,8 @@ typedef struct ts_adaptation_field_pcr
 }ts_adaptation_field_pcr;
 #pragma pack()
 
+typedef void (*TS_CALLBACK)(char*, long, void*);
+
 
 /**
  * TS流处理，用来解析ts流或生成ts流
@@ -174,7 +176,7 @@ typedef struct ts_adaptation_field_pcr
 class CTS
 {
 public:
-    CTS(CLiveObj* pObj);
+    CTS(void* handle);
     ~CTS(void);
 
     /**
@@ -248,6 +250,7 @@ private:
     uint8_t        m_nNalType;      // 添加进来的nalu的类型
     uint64_t       m_nVideoPts;     // 添加进来的pes的时间基准
     
-    CLiveObj*      m_pObj;
+    void*              m_hUser;                  // 回调处理对象
+    TS_CALLBACK        m_fCB;
 };
 

@@ -34,11 +34,12 @@ moof
 mdat...
  */
 
+typedef void (*MP4_CALLBACK)(MP4_FRAG_TYPE, char*, int, void*);
 
 class CMP4
 {
 public:
-    CMP4(CLiveObj* pObj);
+    CMP4(void* handle);
     ~CMP4();
 
     int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
@@ -62,7 +63,8 @@ private:
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
 
-    CLiveObj*          m_pObj;
+    void*              m_hUser;                  // 回调处理对象
+    MP4_CALLBACK       m_fCB;
 
     // SPS解析出的信息
     uint32_t           m_nWidth;          // 视频宽

@@ -114,10 +114,13 @@ NalType inline h264_naltype(char* buff) {
 	return nal;
 }
 
+typedef void (*H264SPS_CALLBACK)(uint32_t, uint32_t, double, void*);
+typedef void (*H264_CALLBACK)(char*, int, void*);
+
 class CH264
 {
 public:
-    CH264(CLiveObj* pObj);
+    CH264(void* handle);
     ~CH264();
 
     /**
@@ -178,7 +181,10 @@ private:
     CNetStreamMaker    *m_pFullBuff;       // 缓存h264数据 7 8 5 1 1 1 1 ... 1
     bool               m_bFirstKey;        // 已经处理第一个关键帧
     bool               m_bDecode;          // 是否已经解析sps
-    CLiveObj*          m_pObj;
+    
+    void*             m_hUser;                  // 回调处理对象
+    H264SPS_CALLBACK  m_fCBSPS;
+    H264_CALLBACK     m_fCB;
 
     /** sps中的数据 */
     int32_t     m_nWidth;

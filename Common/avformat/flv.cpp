@@ -103,9 +103,8 @@ void CFlvStreamMaker::append_amf_double(double d)
     append_double(d);
 }
 
-CFlv::CFlv(CLiveObj* pObj)
-    : m_pObj(pObj)
-    , m_pSPS(nullptr)
+CFlv::CFlv(void* handle)
+    : m_pSPS(nullptr)
     , m_pPPS(nullptr)
     , m_pData(nullptr)
     , m_timestamp(0)
@@ -115,6 +114,8 @@ CFlv::CFlv(CLiveObj* pObj)
     , m_nfps(25)
     , m_bMakeScript(false)
     , m_bFirstKey(false)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
 {
     m_pSPS = new CFlvStreamMaker();
     m_pPPS = new CFlvStreamMaker();
@@ -327,7 +328,8 @@ bool CFlv::MakeHeader()
     m_pHeader->append_be32( length + 11 );      // PreviousTagSize
 
     /** call back */
-    m_pObj->FlvCb(FLV_HEAD, m_pHeader->get(), m_pHeader->size());
+    if(m_fCB != nullptr)
+        m_fCB(FLV_HEAD, m_pHeader->get(), m_pHeader->size(), m_hUser);
     return true;
 }
 
@@ -336,7 +338,8 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
     CHECK_POINT(m_pData);
 
     if(bIsKeyFrame && m_pData->size() > 0) {
-        m_pObj->FlvCb(FLV_FRAG, (char*)m_pData->get(), m_pData->size());
+        if(m_fCB != nullptr)
+            m_fCB(FLV_FRAG, (char*)m_pData->get(), m_pData->size(), m_hUser);
         m_pData->clear();
     }
 

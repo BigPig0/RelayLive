@@ -3,8 +3,9 @@
 #include "pes.h"
 
 
-CPs::CPs(CLiveObj* pObj)
-    : m_pObj(pObj)
+CPs::CPs(void* handle)
+    : m_hUser(handle)
+    , m_fCB(nullptr)
 {
 }
 
@@ -135,9 +136,9 @@ int CPs::ParsePES(char* pBuf, long nLen)
         //Log::debug("CPsAnalyzer::ParsePES this pes len:%d(+head 6), totle:%d",pesLen,nLen);
 
         // 回调解析PES包
-        if (m_pObj != nullptr)
+        if (m_fCB != nullptr)
         {
-            m_pObj->PSParseCb((char*)pes,pesLen+6);
+            m_fCB((char*)pes, pesLen+6, m_hUser);
         }
 
         nPos += (6+pesLen);

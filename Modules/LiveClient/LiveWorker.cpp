@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "HttpLiveServer.h"
 #include "LiveWorker.h"
 //ÆäËûÄ£¿é
-#include "libLive.h"
+#include "LiveClient.h"
 #include "uvIpc.h"
+#include "uv.h"
 
 namespace HttpWsServer
 {

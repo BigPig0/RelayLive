@@ -4,12 +4,13 @@
 #include "h264.h"
 
 
-CRtp::CRtp(CLiveObj* pObj)
+CRtp::CRtp(void* handle)
     : m_frame_buf(nullptr)
     , m_nCatchPacketNum(5000)
     , m_nDoneSeq(0)
     , m_bBegin(false)
-    , m_pObj(pObj)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
 {
     m_frame_buf = new char[FRAME_MAX_SIZE];
     memset(m_frame_buf, '\0', FRAME_MAX_SIZE);
@@ -290,9 +291,9 @@ int CRtp::ComposePsFrame()
 	//Log::debug("Composed");
 
     // PS帧组合完毕，回调处理PS帧
-    if (m_pObj != nullptr)
+    if (m_fCB != nullptr)
     {
-        m_pObj->RTPParseCb(m_frame_buf, nPsLen);
+        m_fCB(m_frame_buf, nPsLen, m_hUser);
     }
     return 0;
 }

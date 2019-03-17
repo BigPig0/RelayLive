@@ -10,6 +10,43 @@
 #include "mp4.h"
 #include "h264.h"
 
+static void RTPParseCb(char* pBuff, long nLen, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->RTPParseCb(pBuff, nLen);
+}
+static void PSParseCb(char* pBuff, long nLen, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->PSParseCb(pBuff, nLen);
+}
+static void PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dts, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->PESParseCb(pBuff, nLen, pts, dts);
+}
+static void ESParseCb(char* pBuff, long nLen, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->ESParseCb(pBuff, nLen);
+}
+static void H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->H264SpsCb(nWidth, nHeight, fFps);
+}
+static void FlvCb(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->FlvCb(eType, pBuff, nBuffSize);
+}
+static void Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->Mp4Cb(eType, pBuff, nBuffSize);
+}
+static void TsCb(char* pBuff, int nBuffSize, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->TsCb(pBuff, nBuffSize);
+}
+static void H264Cb(char* pBuff, int nBuffSize, void* pUser){
+    CLiveObj* pLive = (CLiveObj*)pUser;
+    pLive->H264Cb(pBuff, nBuffSize);
+}
+
 IlibLive* IlibLive::CreateObj(liblive_option opt)
 {
 	if(g_stream_type == STREAM_UNKNOW) {
