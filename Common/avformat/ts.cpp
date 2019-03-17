@@ -5,14 +5,15 @@
 
 const uint8_t nTsContentLength = TS_PACKET_SIZE - TS_PACKET_HEADER;
 
-CTS::CTS(CLiveObj* pObj)
-    : m_pObj(pObj)
-    , m_pTsBuff(nullptr)
+CTS::CTS(void* handle)
+    : m_pTsBuff(nullptr)
     , m_nTsBuffLen(0)
     , m_nTsDataLen(0)
     , m_nBeginPts(0)
     , m_nNalType(0)
     , m_nVideoPts(0)
+    , m_hUser(handle)
+    , m_fCB(nullptr)
 {
 }
 
@@ -53,7 +54,8 @@ int CTS::InputBuffer(char* pBuf, uint32_t nLen)
         if (bEnough && (nNalType == idr_Nal || nNalType == sps_Nal || nNalType == pps_Nal))
         {
             Log::debug("ts callback");
-            m_pObj->TsCb(m_pTsBuff, m_nTsDataLen);
+            if(m_fCB != nullptr)
+                m_fCB(m_pTsBuff, m_nTsDataLen, m_hUser);
             m_pTsBuff = nullptr;
             m_nTsBuffLen = m_nTsDataLen = 0;
             m_nBeginPts = nVideoPts;

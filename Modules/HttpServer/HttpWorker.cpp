@@ -1,128 +1,17 @@
 #include "stdafx.h"
 #include "HttpLiveServer.h"
-#include "LiveWorker.h"
+#include "HttpWorker.h"
 //其他模块
-#include "libLive.h"
+#include "LiveClient.h"
 #include "uvIpc.h"
+#include "uv.h"
 
 namespace HttpWsServer
 {
 	extern uv_loop_t *g_uv_loop;
 
-    static map<string,CLiveWorker*>  m_workerMap;
+    static map<string,CHttpWorker*>  m_workerMap;
     static CriticalSection           m_cs;
-
-    static string m_strRtpIP;            //< RTP服务IP
-    static int    m_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
-    static int    m_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-    static int    m_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-	static int    m_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
-
-    static vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
-    static CriticalSection m_csRTP;          //< RTP端口锁
-    static bool _do_port = false;
-
-    static uv_ipc_handle_t* h = NULL;
-
-    struct ipc_play_task
-    {
-        int ipc_status;
-        int ret;
-        string ssid;
-        string error;
-    };
-    static ipc_play_task _ipc_task;
-
-    static string strfind(char* src, char* begin, char* end){
-        char *p1, *p2;
-        p1 = strstr(src, begin);
-        if(!p1) return "";
-        p1 += strlen(begin);
-        p2 = strstr(p1, end);
-        if(p2) return string(p1, p2-p1);
-        else return string(p1);
-    }
-
-	extern int dev_list_answer(int pss_num, string devlist);
-    static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
-        if (!strcmp(msg,"live_play_answer")) {
-            // ssid=123&ret=0&error=XXXX
-			data[len] = 0;
-            _ipc_task.ssid = strfind(data, "ssid=", "&");
-            _ipc_task.ret = stoi(strfind(data, "ret=", "&"));
-            _ipc_task.error = strfind(data, "error=", "&");
-            _ipc_task.ipc_status = 0;
-        } else if (!strcmp(msg,"dev_list_answer")) {
-			string devjson(data, len);
-			int pss  = stoi(strfind(data, "ssid=", "&"));
-			string json = strfind(data, "devlist=", "&");
-			dev_list_answer(pss, json);
-		}
-    }
-
-    static int real_play(string dev_code, string rtp_ip, int rtp_port){
-        // ssid=123&rtpip=1.1.1.1&rtpport=50000
-        _ipc_task.ssid = dev_code;
-        _ipc_task.ret = 0;
-        _ipc_task.ipc_status = 1;
-        _ipc_task.error = "";
-
-        stringstream ss;
-        ss << "ssid=" << dev_code << "&rtpip=" << rtp_ip << "&rtpport=" << rtp_port;
-        int ret = uv_ipc_send(h, "liveSrc", "live_play", (char*)ss.str().c_str(), ss.str().size());
-        if(ret) {
-            Log::error("ipc send real play error");
-            return ret;
-        }
-
-        while (_ipc_task.ipc_status) Sleep(100);
-        return _ipc_task.ret;
-    }
-
-    static int stop_play(string dev_code){
-        int ret = uv_ipc_send(h, "liveSrc", "stop_play", (char*)dev_code.c_str(), dev_code.size());
-        if(ret) {
-            Log::error("ipc send stop error");
-            return ret;
-        }
-		return 0;
-    }
-
-
-    static int GetRtpPort()
-    {
-        MutexLock lock(&m_csRTP);
-        if(!_do_port) {
-            _do_port = true;
-            m_strRtpIP           = Settings::getValue("RtpClient","IP");                    //< RTP服务IP
-            m_nRtpBeginPort      = Settings::getValue("RtpClient","BeginPort",10000);       //< RTP监听的起始端口，必须是偶数
-            m_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-            m_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
-			m_nRtpStreamType     = Settings::getValue("RtpClient", "Filter", 0);            //< rtp缓存的包的数量
-
-            Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
-                , m_strRtpIP.c_str(), m_nRtpBeginPort, m_nRtpPortNum, m_nRtpCatchPacketNum);
-            m_vecRtpPort.clear();
-            for (int i=0; i<m_nRtpPortNum; ++i) {
-                m_vecRtpPort.push_back(m_nRtpBeginPort+i*2);
-            }
-        }
-
-        int nRet = -1;
-        auto it = m_vecRtpPort.begin();
-        if (it != m_vecRtpPort.end()) {
-            nRet = *it;
-            m_vecRtpPort.erase(it);
-        }
-
-        return nRet;
-    }
-
-    static void GiveBackRtpPort(int nPort)
-    {
-        MutexLock lock(&m_csRTP);
-        m_vecRtpPort.push_back(nPort);
-    }
 
     static void destroy_ring_node(void *_msg)
     {
@@ -134,7 +23,7 @@ namespace HttpWsServer
 
     /** 延时销毁定时器从loop中移除完成 */
     static void stop_timer_close_cb(uv_handle_t* handle) {
-        CLiveWorker* live = (CLiveWorker*)handle->data;
+        CHttpWorker* live = (CHttpWorker*)handle->data;
         if (live->m_bStop){
             live->Clear2Stop();
         } else {
@@ -144,7 +33,7 @@ namespace HttpWsServer
 
     /** 客户端全部断开后，延时断开源的定时器 */
 	static void stop_timer_cb(uv_timer_t* handle) {
-		CLiveWorker* live = (CLiveWorker*)handle->data;
+		CHttpWorker* live = (CHttpWorker*)handle->data;
 		int ret = uv_timer_stop(handle);
 		if(ret < 0) {
 			Log::error("timer stop error:%s",uv_strerror(ret));
@@ -155,15 +44,14 @@ namespace HttpWsServer
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
-        CLiveWorker* live = (CLiveWorker*)arg;
+        CHttpWorker* live = (CHttpWorker*)arg;
         SAFE_DELETE(live);
     }
 
     //////////////////////////////////////////////////////////////////////////
 
-    CLiveWorker::CLiveWorker(string strCode, int rtpPort)
+    CHttpWorker::CHttpWorker(string strCode)
         : m_strCode(strCode)
-        , m_nPort(rtpPort)
         , m_nType(0)
         , m_pLive(nullptr)
         , m_bStop(false)
@@ -181,7 +69,7 @@ namespace HttpWsServer
         m_pLive->StartListen();
     }
 
-    CLiveWorker::~CLiveWorker()
+    CHttpWorker::~CHttpWorker()
     {
         //if(m_nType == 0) {
         //    if (!SipInstance::StopPlay(m_strCode)) {
@@ -192,19 +80,17 @@ namespace HttpWsServer
         //        Log::error("stop play failed");
         //    }
         //}
-		string ssid = StringHandle::toStr<int>(m_nPort);
-        if(stop_play(ssid)) {
+        if(stop_play(m_strCode)) {
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pLive);
         lws_ring_destroy(m_pFlvRing);
         lws_ring_destroy(m_pH264Ring);
         lws_ring_destroy(m_pMP4Ring);
-        GiveBackRtpPort(m_nPort);
         Log::debug("CLiveWorker release");
     }
 
-    bool CLiveWorker::AddConnect(pss_http_ws_live* pss)
+    bool CHttpWorker::AddConnect(pss_http_ws_live* pss)
     {
         if(pss->media_type == media_flv) {
             m_bFlv = true;
@@ -233,7 +119,7 @@ namespace HttpWsServer
         return true;
     }
 
-    bool CLiveWorker::DelConnect(pss_http_ws_live* pss)
+    bool CHttpWorker::DelConnect(pss_http_ws_live* pss)
     {
         if(pss->media_type == media_flv) {
             lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pFlvPssList);
@@ -260,15 +146,15 @@ namespace HttpWsServer
         return true;
     }
 
-	void CLiveWorker::Clear2Stop() {
+	void CHttpWorker::Clear2Stop() {
 		if(m_pFlvPssList == NULL && m_pH264PssList == NULL && m_pMP4PssList == NULL) {
 			Log::debug("need close live stream");
             //首先从map中移走对象
-            DelLiveWorker(m_strCode);
+            DelHttpWorker(m_strCode);
 		}
 	}
 
-    void CLiveWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)
+    void CHttpWorker::push_flv_frame(FLV_FRAG_TYPE eType, char* pBuff, int nLen)
     {
         if (eType == FLV_HEAD) {
             m_stFlvHead.pBuff = pBuff;
@@ -302,7 +188,7 @@ namespace HttpWsServer
         }    
     }
 
-    void CLiveWorker::push_h264_stream(char* pBuff, int nLen)
+    void CHttpWorker::push_h264_stream(char* pBuff, int nLen)
     {
         int n = (int)lws_ring_get_count_free_elements(m_pH264Ring);
         if (!n) {
@@ -329,11 +215,11 @@ namespace HttpWsServer
         } lws_end_foreach_llp(ppss, pss_next);
     }
 
-    void CLiveWorker::push_ts_stream(char* pBuff, int nLen)
+    void CHttpWorker::push_ts_stream(char* pBuff, int nLen)
     {
     }
 
-    void CLiveWorker::push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nLen)
+    void CHttpWorker::push_mp4_stream(MP4_FRAG_TYPE eType, char* pBuff, int nLen)
     {
         if(eType == MP4_HEAD) {
             m_stMP4Head.pBuff = pBuff;
@@ -366,7 +252,7 @@ namespace HttpWsServer
         }
     }
 
-    void CLiveWorker::stop()
+    void CHttpWorker::stop()
     {
         //视频源没有数据并超时
         Log::debug("no data recived any more, stopped");
@@ -385,12 +271,12 @@ namespace HttpWsServer
         } lws_end_foreach_llp_safe(ppss);
     }
 
-    LIVE_BUFF CLiveWorker::GetFlvHeader()
+    LIVE_BUFF CHttpWorker::GetFlvHeader()
     {
         return m_stFlvHead;
     }
 
-    LIVE_BUFF CLiveWorker::GetFlvVideo(uint32_t *tail)
+    LIVE_BUFF CHttpWorker::GetFlvVideo(uint32_t *tail)
     {
         LIVE_BUFF ret = {nullptr,0};
         LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pFlvRing, tail);
@@ -399,7 +285,7 @@ namespace HttpWsServer
         return ret;
     }
 
-    LIVE_BUFF CLiveWorker::GetH264Video(uint32_t *tail)
+    LIVE_BUFF CHttpWorker::GetH264Video(uint32_t *tail)
     {
         LIVE_BUFF ret = {nullptr,0};
         LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pH264Ring, tail);
@@ -408,12 +294,12 @@ namespace HttpWsServer
         return ret;
     }
 
-    LIVE_BUFF CLiveWorker::GetMp4Header()
+    LIVE_BUFF CHttpWorker::GetMp4Header()
     {
         return m_stMP4Head;
     }
 
-    LIVE_BUFF CLiveWorker::GetMp4Video(uint32_t *tail)
+    LIVE_BUFF CHttpWorker::GetMp4Video(uint32_t *tail)
     {
         LIVE_BUFF ret = {nullptr,0};
         LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pMP4Ring, tail);
@@ -422,7 +308,7 @@ namespace HttpWsServer
         return ret;
     }
 
-    void CLiveWorker::NextWork(pss_http_ws_live* pss)
+    void CHttpWorker::NextWork(pss_http_ws_live* pss)
     {
         struct lws_ring *ring;
         pss_http_ws_live* pssList;
@@ -457,7 +343,7 @@ namespace HttpWsServer
                 lws_callback_on_writable(pss->wsi);
     }
 
-    string CLiveWorker::GetClientInfo()
+    string CHttpWorker::GetClientInfo()
     {
         stringstream ss;
         lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pFlvPssList) {
@@ -496,7 +382,7 @@ namespace HttpWsServer
         return ss.str();
     }
 
-    void CLiveWorker::cull_lagging_clients(MediaType type)
+    void CHttpWorker::cull_lagging_clients(MediaType type)
     {
         struct lws_ring *ring;
         pss_http_ws_live* pssList;
@@ -548,26 +434,11 @@ namespace HttpWsServer
         }
     }
 
-    CLiveWorker* CreatLiveWorker(string strCode)
+    CHttpWorker* CreatHttpWorker(string strCode)
     {
-        Log::debug("CreatFlvBuffer begin");
-        int rtpPort = GetRtpPort();
-        if(rtpPort < 0) {
-            Log::error("play failed %s, no rtp port",strCode.c_str());
-            return nullptr;
-        }
+        Log::debug("CreatHttpWorker begin");
 
-        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
-
-        //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
-        if(real_play(strCode, m_strRtpIP,  rtpPort))
-        {
-            uv_thread_t tid;
-            uv_thread_create(&tid, live_worker_destory_thread, pNew);
-            Log::error("play failed %s",strCode.c_str());
-            return nullptr;
-        }
-        Log::debug("RealPlay ok: %s",strCode.c_str());
+        CHttpWorker* pNew = new CHttpWorker(strCode);
 
         MutexLock lock(&m_cs);
         m_workerMap.insert(make_pair(strCode, pNew));
@@ -575,7 +446,7 @@ namespace HttpWsServer
         return pNew;
     }
 
-    CLiveWorker* GetLiveWorker(string strCode)
+    CHttpWorker* GetHttpWorker(string strCode)
     {
         //Log::debug("GetWorker begin");
 
@@ -591,7 +462,7 @@ namespace HttpWsServer
         return nullptr;
     }
 
-    bool DelLiveWorker(string strCode)
+    bool DelHttpWorker(string strCode)
     {
         MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
@@ -623,25 +494,4 @@ namespace HttpWsServer
         strResJson += "]}";
         return strResJson;
     }
-
-	int GetDevList(int pss)
-	{
-		string user = StringHandle::toStr<int>(pss);
-		int ret = uv_ipc_send(h, "liveSrc", "devices_list", (char*)user.c_str(), user.size());
-        if(ret) {
-            Log::error("ipc send devices_list error");
-            return ret;
-        }
-		return 0;
-	}
-
-	int QueryDirtionary()
-	{
-		int ret = uv_ipc_send(h, "liveSrc", "QueryDirtionary", NULL, 0);
-        if(ret) {
-            Log::error("ipc send devices_list error");
-            return ret;
-        }
-		return 0;
-	}
 }

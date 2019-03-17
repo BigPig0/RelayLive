@@ -11,37 +11,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="es.cpp" />
-    <ClCompile Include="flv.cpp" />
-    <ClCompile Include="h264.cpp" />
-    <ClCompile Include="mp4.cpp" />
-    <ClCompile Include="pes.cpp" />
-    <ClCompile Include="ps.cpp" />
-    <ClCompile Include="rtp.cpp" />
-    <ClCompile Include="liveObj.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="ts.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="es.h" />
-    <ClInclude Include="flv.h" />
-    <ClInclude Include="h264.h" />
-    <ClInclude Include="mp4.h" />
-    <ClInclude Include="pes.h" />
-    <ClInclude Include="ps.h" />
-    <ClInclude Include="rtp.h" />
-    <ClInclude Include="liveObj.h" />
-    <ClInclude Include="libLive.h" />
-    <ClInclude Include="ts.h" />
-    <ClInclude Include="stdafx.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Util\Util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Common\avformat\es.cpp" />
+    <ClCompile Include="..\..\Common\avformat\flv.cpp" />
+    <ClCompile Include="..\..\Common\avformat\h264.cpp" />
+    <ClCompile Include="..\..\Common\avformat\mp4.cpp" />
+    <ClCompile Include="..\..\Common\avformat\pes.cpp" />
+    <ClCompile Include="..\..\Common\avformat\ps.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\ts.cpp" />
+    <ClCompile Include="liveObj.cpp" />
+    <ClCompile Include="LiveWorker.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\avformat\es.h" />
+    <ClInclude Include="..\..\Common\avformat\flv.h" />
+    <ClInclude Include="..\..\Common\avformat\h264.h" />
+    <ClInclude Include="..\..\Common\avformat\mp4.h" />
+    <ClInclude Include="..\..\Common\avformat\pes.h" />
+    <ClInclude Include="..\..\Common\avformat\ps.h" />
+    <ClInclude Include="..\..\Common\avformat\rtp.h" />
+    <ClInclude Include="..\..\Common\avformat\ts.h" />
+    <ClInclude Include="LiveClient.h" />
+    <ClInclude Include="liveObj.h" />
+    <ClInclude Include="LiveWorker.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A84623A7-D5EB-4241-8468-7FB658A8A562}</ProjectGuid>
@@ -89,7 +88,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -108,7 +107,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../thirdParty/libUV/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

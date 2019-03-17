@@ -80,8 +80,9 @@ static uint64_t get_dts(optional_pes_header* option)
 #endif
 
 
-CPes::CPes(CLiveObj* pObj)
-    : m_pObj(pObj)
+CPes::CPes(void* handle)
+    : m_hUser(handle)
+    , m_fCB(nullptr)
 {
 }
 
@@ -126,9 +127,9 @@ int CPes::InputBuffer(char* pBuf, uint32_t nLen)
     int nESLength = pesLen - (sizeof(optional_pes_header) + option->PES_header_data_length);
 
     // 回调处理ES包
-    if (m_pObj != nullptr)
+    if (m_fCB != nullptr)
     {
-        m_pObj->PESParseCb(pESBuffer, nESLength, pts, dts);
+        m_fCB(pESBuffer, nESLength, pts, dts, m_hUser);
     }
 
     return 0;

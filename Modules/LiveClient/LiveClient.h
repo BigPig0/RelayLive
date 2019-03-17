@@ -87,3 +87,5 @@ struct LIBLIVE_API IlibLive
      */
     virtual void SetCallback(IlibLiveCb* pHandle) = 0;
 };
+
+struct LIBLIVE_API ILiveHandle

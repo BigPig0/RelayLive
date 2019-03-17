@@ -65,6 +65,7 @@ bool inline is_pes_header(pes_header_t* pes)
     return false;
 }
 
+typedef void(*PES_CALLBACK)(char*, long, uint64_t, uint64_t, void*);
 
 /**
  * PES包解析类
@@ -72,7 +73,7 @@ bool inline is_pes_header(pes_header_t* pes)
 class CPes
 {
 public:
-    CPes(CLiveObj* pObj);
+    CPes(void* handle);
     ~CPes(void);
 
     /**
@@ -84,6 +85,7 @@ public:
     int InputBuffer(char* pBuf, uint32_t nLen);
 
 private:
-    CLiveObj*   m_pObj;                  // 回调处理对象
+    void*             m_hUser;                  // 回调处理对象
+    PS_CALLBACK       m_fCB;
 };
 

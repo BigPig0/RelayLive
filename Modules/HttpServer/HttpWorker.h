@@ -1,5 +1,5 @@
 #pragma once
-#include "libLive.h"
+#include "LiveClient.h"
 
 namespace HttpWsServer
 {
@@ -11,11 +11,11 @@ namespace HttpWsServer
         int   nLen;
     };
 
-    class CLiveWorker : public IlibLiveCb
+    class CHttpWorker : public IlibLiveCb
     {
     public:
-        CLiveWorker(string strCode, int rtpPort);
-        ~CLiveWorker();
+        CHttpWorker(string strCode);
+        ~CHttpWorker();
 
         /** 客户端连接 */
         bool AddConnect(pss_http_ws_live* pss);
@@ -77,7 +77,6 @@ namespace HttpWsServer
 
         int                   m_nType;          //< 0:live直播；1:record历史视频
         IlibLive*             m_pLive;          //< 直播数据接收和解包装包
-        int                   m_nPort;          //< rtp接收端口
 
         uv_timer_t            m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
     };
@@ -86,9 +85,9 @@ namespace HttpWsServer
     void ipc_init();
 
     /** 直播 */
-    CLiveWorker* CreatLiveWorker(string strCode);
-    CLiveWorker* GetLiveWorker(string strCode);
-    bool DelLiveWorker(string strCode);
+    CHttpWorker* CreatHttpWorker(string strCode);
+    CHttpWorker* GetHttpWorker(string strCode);
+    bool DelHttpWorker(string strCode);
 
     /** 点播 */
 

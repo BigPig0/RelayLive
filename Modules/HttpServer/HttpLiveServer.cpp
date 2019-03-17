@@ -17,9 +17,9 @@ namespace HttpWsServer
             return g_strError_play_faild;
         }
 
-        CLiveWorker* pWorker = GetLiveWorker(devCode);
+        CHttpWorker* pWorker = GetHttpWorker(devCode);
         if (!pWorker) {
-            pWorker = CreatLiveWorker(devCode);
+            pWorker = CreatHttpWorker(devCode);
         }
         if(!pWorker) {
             Log::error("CreatFlvBuffer failed%s", devCode.c_str());
@@ -32,7 +32,7 @@ namespace HttpWsServer
     }
 
     static void SendLiveFlv(pss_http_ws_live *pss) {
-        CLiveWorker* pWorker = (CLiveWorker*)pss->m_pWorker;
+        CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
         LIVE_BUFF tag = pWorker->GetFlvVideo(&pss->tail);
         if(tag.pBuff == nullptr) return;
 
@@ -69,7 +69,7 @@ namespace HttpWsServer
 
     static void SendLiveMp4(pss_http_ws_live *pss)
     {
-        CLiveWorker* pWorker = (CLiveWorker*)pss->m_pWorker;
+        CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
         LIVE_BUFF tag = pWorker->GetMp4Video(&pss->tail);
         if(tag.pBuff == nullptr) return;
 

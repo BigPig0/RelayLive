@@ -6,6 +6,7 @@
 #include "liveObj.h"
 #include "h264.h"
 
+typedef void (*ES_CALLBACK)(char*, long, void*);
 
 /**
  * ES包解析类
@@ -13,7 +14,7 @@
 class CES
 {
 public:
-    CES(CLiveObj* pObj);
+    CES(void* handle);
     ~CES(void);
 
     /**
@@ -33,7 +34,9 @@ private:
     void CatchData(char* pBuf, uint32_t nLen);
 
 private:
-    CLiveObj*   m_pObj;                  // 回调处理对象
+    void*             m_hUser;                  // 回调处理对象
+    ES_CALLBACK       m_fCB;
+
     char*       m_pH264Buf;
     uint32_t    m_nH264BufLen;
     int         m_nH264DataLen;
