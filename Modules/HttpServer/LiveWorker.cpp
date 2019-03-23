@@ -43,6 +43,7 @@ namespace HttpWsServer
         else return string(p1);
     }
 
+	extern int dev_list_answer(int pss_num, string devlist);
     static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
         if (!strcmp(msg,"live_play_answer")) {
             // ssid=123&ret=0&error=XXXX
@@ -51,7 +52,12 @@ namespace HttpWsServer
             _ipc_task.ret = stoi(strfind(data, "ret=", "&"));
             _ipc_task.error = strfind(data, "error=", "&");
             _ipc_task.ipc_status = 0;
-        }
+        } else if (!strcmp(msg,"dev_list_answer")) {
+			string devjson(data, len);
+			int pss  = stoi(strfind(data, "ssid=", "&"));
+			string json = strfind(data, "devlist=", "&");
+			dev_list_answer(pss, json);
+		}
     }
 
     static int real_play(string dev_code, string rtp_ip, int rtp_port){
@@ -186,7 +192,8 @@ namespace HttpWsServer
         //        Log::error("stop play failed");
         //    }
         //}
-        if(stop_play(m_strCode)) {
+		string ssid = StringHandle::toStr<int>(m_nPort);
+        if(stop_play(ssid)) {
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pLive);
@@ -616,4 +623,25 @@ namespace HttpWsServer
         strResJson += "]}";
         return strResJson;
     }
+
+	int GetDevList(int pss)
+	{
+		string user = StringHandle::toStr<int>(pss);
+		int ret = uv_ipc_send(h, "liveSrc", "devices_list", (char*)user.c_str(), user.size());
+        if(ret) {
+            Log::error("ipc send devices_list error");
+            return ret;
+        }
+		return 0;
+	}
+
+	int QueryDirtionary()
+	{
+		int ret = uv_ipc_send(h, "liveSrc", "QueryDirtionary", NULL, 0);
+        if(ret) {
+            Log::error("ipc send devices_list error");
+            return ret;
+        }
+		return 0;
+	}
 }

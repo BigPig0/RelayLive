@@ -94,4 +94,8 @@ namespace HttpWsServer
 
     /** 获取播放信息，返回json */
     string GetClientsInfo();
+	/** 获取设备列表 */
+	int GetDevList(int pss);
+	/** 发送设备查询命令 */
+	int QueryDirtionary();
 };

@@ -106,3 +106,9 @@ bool SipInstance::DeviceControl(string strDev, int nInOut, int nUpDown, int nLef
 
     return true;
 }
+
+bool SipInstance::QueryDirtionary()
+{
+	PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
+    CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+}

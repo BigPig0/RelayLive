@@ -476,20 +476,38 @@ namespace HttpWsServer
                     *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
                 lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
+				pss->wsi = wsi;
                 Log::debug("new request: %s", pss->path);
 
                 pss->json = new string;
-                *pss->json = GetClientsInfo();
+				if(!strcmp(pss->path, "/clients")) {
+					*pss->json = GetClientsInfo();
 
-                if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-                    "text/html",
-                    pss->json->size(),
-                    &p, end))
-                    return 1;
-                if (lws_finalize_write_http_header(wsi, start, &p, end))
-                    return 1;
+					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+						"text/html",
+						pss->json->size(),
+						&p, end))
+						return 1;
+					if (lws_finalize_write_http_header(wsi, start, &p, end))
+						return 1;
 
-                lws_callback_on_writable(wsi);
+					lws_callback_on_writable(wsi);
+				} else if(!strcmp(pss->path, "/devlist")) {
+					GetDevList((int)pss);
+				}else if(!strcmp(pss->path, "/refresh")) {
+					QueryDirtionary();
+
+					*pss->json = "QueryDirtionary send";
+					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+						"text/html",
+						pss->json->size(),
+						&p, end))
+						return 1;
+					if (lws_finalize_write_http_header(wsi, start, &p, end))
+						return 1;
+
+					lws_callback_on_writable(wsi);
+				}
 
                 return 0;
             }
@@ -516,4 +534,28 @@ namespace HttpWsServer
         //return 1;
         return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
+
+	int dev_list_answer(int pss_num, string devlist) {
+		pss_device *pss = (pss_device*)pss_num;
+		struct lws *wsi = pss->wsi;
+
+		*pss->json = devlist;
+		
+        uint8_t buf[LWS_PRE + 2048], 
+            *start = &buf[LWS_PRE], 
+            *p = start,
+            *end = &buf[sizeof(buf) - LWS_PRE - 1];
+
+		if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+			"text/html",
+			pss->json->size(),
+			&p, end))
+			return 1;
+		if (lws_finalize_write_http_header(wsi, start, &p, end))
+			return 1;
+
+		lws_callback_on_writable(wsi);
+
+		return 0;
+	}
 };

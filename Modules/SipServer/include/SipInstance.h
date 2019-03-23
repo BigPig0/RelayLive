@@ -58,6 +58,8 @@ public:
     static bool DeviceControl(string strDev,
         int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
 
+	static bool QueryDirtionary();
+
 private:
     static void* m_pHandle;
 };

@@ -48,7 +48,233 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
     } else if(!strcmp(msg,"close")) {
         //关闭所有正在进行的播放
         SipInstance::StopPlayAll();
-    }
+    } else if(!strcmp(msg,"devices_list")) {
+		string user(data, len);
+		vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
+        string strResJson = "{\"root\":[";
+        for (auto dev:vecDev)
+        {
+            strResJson += "{";
+#if 1
+            if (!dev->strDevID.empty())
+            {
+                strResJson += "\"DeviceID\":\"";
+                strResJson += dev->strDevID;
+                strResJson += "\",";
+            }
+            if (!dev->strName.empty())
+            {
+                strResJson += "\"Name\":\"";
+                strResJson += dev->strName;
+                strResJson += "\",";
+            }
+            if (!dev->strManuf.empty())
+            {
+                strResJson += "\"Manufacturer\":\"";
+                strResJson += dev->strManuf;
+                strResJson += "\",";
+            }
+            if (!dev->strModel.empty())
+            {
+                strResJson += "\"Model\":\"";
+                strResJson += dev->strModel;
+                strResJson += "\",";
+            }
+            if (!dev->strOwner.empty())
+            {
+                strResJson += "\"Owner\":\"";
+                strResJson += dev->strOwner;
+                strResJson += "\",";
+            }
+            if (!dev->strCivilCode.empty())
+            {
+                strResJson += "\"CivilCode\":\"";
+                strResJson += dev->strCivilCode;
+                strResJson += "\",";
+            }
+            if (!dev->strBlock.empty())
+            {
+                strResJson += "\"Block\":\"";
+                strResJson += dev->strBlock;
+                strResJson += "\",";
+            }
+            if (!dev->strAddress.empty())
+            {
+                strResJson += "\"Address\":\"";
+                strResJson += dev->strAddress;
+                strResJson += "\",";
+            }
+            if (!dev->strParental.empty())
+            {
+                strResJson += "\"Parental\":\"";
+                strResJson += dev->strParental;
+                strResJson += "\",";
+            }
+            if (!dev->strParentID.empty())
+            {
+                strResJson += "\"ParentID\":\"";
+                strResJson += dev->strParentID;
+                strResJson += "\",";
+            }
+            if (!dev->strSafetyWay.empty())
+            {
+                strResJson += "\"SafetyWay\":\"";
+                strResJson += dev->strSafetyWay;
+                strResJson += "\",";
+            }
+            if (!dev->strRegisterWay.empty())
+            {
+                strResJson += "\"RegisterWay\":\"";
+                strResJson += dev->strRegisterWay;
+                strResJson += "\",";
+            }
+            if (!dev->strCertNum.empty())
+            {
+                strResJson += "\"CertNum\":\"";
+                strResJson += dev->strCertNum;
+                strResJson += "\",";
+            }
+            if (!dev->strCertifiable.empty())
+            {
+                strResJson += "\"Certifiable\":\"";
+                strResJson += dev->strCertifiable;
+                strResJson += "\",";
+            }
+            if (!dev->strErrCode.empty())
+            {
+                strResJson += "\"ErrCode\":\"";
+                strResJson += dev->strErrCode;
+                strResJson += "\",";
+            }
+            if (!dev->strEndTime.empty())
+            {
+                strResJson += "\"EndTime\":\"";
+                strResJson += dev->strEndTime;
+                strResJson += "\",";
+            }
+            if (!dev->strSecrecy.empty())
+            {
+                strResJson += "\"Secrecy\":\"";
+                strResJson += dev->strSecrecy;
+                strResJson += "\",";
+            }
+            if (!dev->strStatus.empty())
+            {
+                strResJson += "\"Status\":\"";
+                strResJson += dev->strStatus;
+                strResJson += "\",";
+            }
+            if (!dev->strIPAddress.empty())
+            {
+                strResJson += "\"IPAddress\":\"";
+                strResJson += dev->strIPAddress;
+                strResJson += "\",";
+            }
+            if (!dev->strPort.empty())
+            {
+                strResJson += "\"Port\":\"";
+                strResJson += dev->strPort;
+                strResJson += "\",";
+            }
+            if (!dev->strPassword.empty())
+            {
+                strResJson += "\"Password\":\"";
+                strResJson += dev->strPassword;
+                strResJson += "\",";
+            }
+            if (!dev->strLongitude.empty())
+            {
+                strResJson += "\"Longitude\":\"";
+                strResJson += dev->strLongitude;
+                strResJson += "\",";
+            }
+            if (!dev->strLatitude.empty())
+            {
+                strResJson += "\"Latitude\":\"";
+                strResJson += dev->strLatitude;
+                strResJson += "\",";
+            }
+            if (!dev->strPTZType.empty())
+            {
+                strResJson += "\"PTZType\":\"";
+                strResJson += dev->strPTZType;
+                strResJson += "\",";
+            }
+            if (!dev->strPositionType.empty())
+            {
+                strResJson += "\"PositionType\":\"";
+                strResJson += dev->strPositionType;
+                strResJson += "\",";
+            }
+            if (!dev->strRoomType.empty())
+            {
+                strResJson += "\"RoomType\":\"";
+                strResJson += dev->strRoomType;
+                strResJson += "\",";
+            }
+            if (!dev->strUseType.empty())
+            {
+                strResJson += "\"UseType\":\"";
+                strResJson += dev->strUseType;
+                strResJson += "\",";
+            }
+            if (!dev->strSupplyLightType.empty())
+            {
+                strResJson += "\"SupplyLightType\":\"";
+                strResJson += dev->strSupplyLightType;
+                strResJson += "\",";
+            }
+            if (!dev->strDirectionType.empty())
+            {
+                strResJson += "\"DirectionType\":\"";
+                strResJson += dev->strDirectionType;
+                strResJson += "\",";
+            }
+            if (!dev->strResolution.empty())
+            {
+                strResJson += "\"Resolution\":\"";
+                strResJson += dev->strResolution;
+                strResJson += "\",";
+            }
+            if (!dev->strBusinessGroupID.empty())
+            {
+                strResJson += "\"BusinessGroupID\":\"";
+                strResJson += dev->strBusinessGroupID;
+                strResJson += "\",";
+            }
+            if (!dev->strDownloadSpeed.empty())
+            {
+                strResJson += "\"DownloadSpeed\":\"";
+                strResJson += dev->strDownloadSpeed;
+                strResJson += "\",";
+            }
+            if (!dev->strSVCSpaceSupportType.empty())
+            {
+                strResJson += "\"SVCSpaceSupportMode\":\"";
+                strResJson += dev->strSVCSpaceSupportType;
+                strResJson += "\",";
+            }
+            if (!dev->strSVCTimeSupportType.empty())
+            {
+                strResJson += "\"SVCTimeSupportMode\":\"";
+                strResJson += dev->strSVCTimeSupportType;
+                strResJson += "\",";
+            }
+#endif
+            strResJson = StringHandle::StringTrimRight(strResJson,',');
+            strResJson += "},";
+        }
+        strResJson = StringHandle::StringTrimRight(strResJson,',');
+        strResJson += "]}";
+
+		stringstream ss;
+		ss << "ssid=" << user << "devlist=" << strResJson;
+		string str = ss.str();
+        uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)str.c_str(), str.size());
+	} else if(!strcmp(msg,"QueryDirtionary")) {
+        //查询设备
+        SipInstance::StopPlayAll();
+    } 
 }
 
 int main()

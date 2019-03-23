@@ -9,6 +9,7 @@ namespace HttpWsServer
     extern int callback_other_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
     struct pss_device {
+		struct lws *wsi;              //http/ws Á¬½Ó
         char path[128];
 		string* json;
     };
