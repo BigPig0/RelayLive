@@ -49,7 +49,7 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         //关闭所有正在进行的播放
         SipInstance::StopPlayAll();
     } else if(!strcmp(msg,"devices_list")) {
-		string user(data, len);
+		//string user(data, len);
 		vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
         string strResJson = "{\"root\":[";
         for (auto dev:vecDev)
@@ -267,10 +267,10 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         strResJson = StringHandle::StringTrimRight(strResJson,',');
         strResJson += "]}";
 
-		stringstream ss;
-		ss << "ssid=" << user << "devlist=" << strResJson;
-		string str = ss.str();
-        uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)str.c_str(), str.size());
+		//stringstream ss;
+		//ss << "ssid=" << user << "devlist=" << strResJson;
+		//string str = ss.str();
+        uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)strResJson.c_str(), strResJson.size());
 	} else if(!strcmp(msg,"QueryDirtionary")) {
         //查询设备
         SipInstance::QueryDirtionary();

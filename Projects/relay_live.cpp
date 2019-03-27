@@ -1,6 +1,7 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
 #include "common.h"
+#include "LiveClient.h"
 #include "HttpServer.h"
 #include "RtspServer.h"
 #include <windows.h>
@@ -43,6 +44,8 @@ int main()
 
     //全局loop
     p_loop_uv = uv_default_loop();
+
+    LiveClient::Init();
 
     /** 创建一个http服务器 */
     HttpWsServer::Init((void*)p_loop_uv);

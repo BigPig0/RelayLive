@@ -11,11 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Util\Util.vcxproj">
-      <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\Common\avformat\es.cpp" />
     <ClCompile Include="..\..\Common\avformat\flv.cpp" />
     <ClCompile Include="..\..\Common\avformat\h264.cpp" />
@@ -24,9 +19,13 @@
     <ClCompile Include="..\..\Common\avformat\ps.cpp" />
     <ClCompile Include="..\..\Common\avformat\rtp.cpp" />
     <ClCompile Include="..\..\Common\avformat\ts.cpp" />
+    <ClCompile Include="LiveClient.cpp" />
+    <ClCompile Include="LiveIpc.cpp" />
     <ClCompile Include="liveObj.cpp" />
     <ClCompile Include="LiveWorker.cpp" />
-    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\avformat\es.h" />
@@ -38,9 +37,21 @@
     <ClInclude Include="..\..\Common\avformat\rtp.h" />
     <ClInclude Include="..\..\Common\avformat\ts.h" />
     <ClInclude Include="LiveClient.h" />
+    <ClInclude Include="LiveIpc.h" />
     <ClInclude Include="liveObj.h" />
     <ClInclude Include="LiveWorker.h" />
     <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\utilc\utilc.vcxproj">
+      <Project>{5d8b3c31-2629-40a1-8c75-8e50224b60a7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Common\Util\Util.vcxproj">
+      <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ThirdParty\LibUV\libuv.vcxproj">
+      <Project>{6197738f-bb03-47b6-8685-677bc2c346bc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A84623A7-D5EB-4241-8468-7FB658A8A562}</ProjectGuid>

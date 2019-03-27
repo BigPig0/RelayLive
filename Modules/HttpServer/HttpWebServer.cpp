@@ -1,15 +1,21 @@
 #include "stdafx.h"
 #include "libwebsockets.h"
+#include "HttpWorker.h"
 #include "HttpWebServer.h"
 #include <string>
-//#include "DeviceMgr.h"
-#include "LiveWorker.h"
+#include <set>
 
 namespace HttpWsServer
 {
 #define G_BYTES (1024 * 1024 * 1024) // 1GB
 #define M_BYTES (1024 * 1024)		 // 1MB
 #define K_BYTES 1024				 // 1KB
+
+    static std::set<pss_device*>  setPssDevice;      // device请求的集合
+    static CriticalSection  csDevice;
+    static std::set<pss_device*>  setPssDevlist;     // 设备列表请求的集合
+    static CriticalSection  csDevList;
+    static bool bDevListQuering = false;
 
     static std::string mount_web_origin("./home");  //站点本地位置
 
@@ -475,6 +481,8 @@ namespace HttpWsServer
                     *p = start,
                     *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
+                setPssDevice.insert(pss);
+
                 lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 				pss->wsi = wsi;
                 Log::debug("new request: %s", pss->path);
@@ -493,9 +501,13 @@ namespace HttpWsServer
 
 					lws_callback_on_writable(wsi);
 				} else if(!strcmp(pss->path, "/devlist")) {
-					GetDevList((int)pss);
+                    setPssDevlist.insert(pss);
+                    if(!bDevListQuering){
+                        bDevListQuering = true;
+					    LiveClient::GetDevList();
+                    }
 				}else if(!strcmp(pss->path, "/refresh")) {
-					QueryDirtionary();
+					LiveClient::QueryDirtionary();
 
 					*pss->json = "QueryDirtionary send";
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
@@ -516,6 +528,10 @@ namespace HttpWsServer
                 if (!pss)
                     break;
 
+                auto it = setPssDevice.find(pss);
+                if(it != setPssDevice.end())
+                    setPssDevice.erase(it);
+
                 int len = pss->json->size();
                 int wlen = lws_write(wsi, (uint8_t *)pss->json->c_str(), len, LWS_WRITE_HTTP_FINAL);
                 SAFE_DELETE(pss->json)
@@ -535,27 +551,44 @@ namespace HttpWsServer
         return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
 
-	int dev_list_answer(int pss_num, string devlist) {
-		pss_device *pss = (pss_device*)pss_num;
-		struct lws *wsi = pss->wsi;
+    int dev_list_answer(string devlist) {
+        MutexLock lock(&csDevList);
+        for(auto pss : setPssDevlist) {
+            MutexLock lk(&csDevice);
+            auto it = setPssDevice.find(pss);
+            if(it == setPssDevice.end()){
+                Log::warning("get devlist http connect has removed");
+                continue;
+            }
+		    struct lws *wsi = pss->wsi;
 
-		*pss->json = devlist;
+		    *pss->json = devlist;
 		
-        uint8_t buf[LWS_PRE + 2048], 
-            *start = &buf[LWS_PRE], 
-            *p = start,
-            *end = &buf[sizeof(buf) - LWS_PRE - 1];
+            uint8_t buf[LWS_PRE + 2048], 
+                *start = &buf[LWS_PRE], 
+                *p = start,
+                *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
-		if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-			"text/html",
-			pss->json->size(),
-			&p, end))
-			return 1;
-		if (lws_finalize_write_http_header(wsi, start, &p, end))
-			return 1;
+		    if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+			    "text/html",
+			    pss->json->size(),
+			    &p, end))
+			    return 1;
+		    if (lws_finalize_write_http_header(wsi, start, &p, end))
+			    return 1;
 
-		lws_callback_on_writable(wsi);
+		    lws_callback_on_writable(wsi);
+        }
+        setPssDevlist.clear();
+        bDevListQuering = false;
 
 		return 0;
 	}
+
+    void live_client_cb(string type, string value) {
+        if(type == "devlist"){
+            dev_list_answer(value);
+        }
+    }
+
 };

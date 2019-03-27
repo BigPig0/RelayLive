@@ -10,6 +10,11 @@ enum flv_tag_type
     callback_key_video_tag,
     callback_video_tag
 };
+enum FLV_FRAG_TYPE
+{
+    FLV_HEAD,
+    FLV_FRAG
+};
 
 typedef void (*FLV_CALLBACK)(FLV_FRAG_TYPE, char*, int, void*);
 

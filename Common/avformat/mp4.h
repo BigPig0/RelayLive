@@ -33,7 +33,11 @@ mdat
 moof
 mdat...
  */
-
+enum MP4_FRAG_TYPE
+{
+    MP4_HEAD,
+    MP4_FRAG
+};
 typedef void (*MP4_CALLBACK)(MP4_FRAG_TYPE, char*, int, void*);
 
 class CMP4
