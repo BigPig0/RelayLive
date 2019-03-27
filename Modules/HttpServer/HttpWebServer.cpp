@@ -480,8 +480,9 @@ namespace HttpWsServer
                     *start = &buf[LWS_PRE], 
                     *p = start,
                     *end = &buf[sizeof(buf) - LWS_PRE - 1];
-
+                csDevice.lock();
                 setPssDevice.insert(pss);
+                csDevice.unlock();
 
                 lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 				pss->wsi = wsi;
@@ -528,10 +529,6 @@ namespace HttpWsServer
                 if (!pss)
                     break;
 
-                auto it = setPssDevice.find(pss);
-                if(it != setPssDevice.end())
-                    setPssDevice.erase(it);
-
                 int len = pss->json->size();
                 int wlen = lws_write(wsi, (uint8_t *)pss->json->c_str(), len, LWS_WRITE_HTTP_FINAL);
                 SAFE_DELETE(pss->json)
@@ -544,6 +541,14 @@ namespace HttpWsServer
 
                 return 0;
             }
+        case LWS_CALLBACK_CLOSED_HTTP:
+            {
+                MutexLock lock(&csDevice);
+                auto it = setPssDevice.find(pss);
+                if(it != setPssDevice.end())
+                    setPssDevice.erase(it);
+                break;
+            }
         default:
             break;
         }
@@ -551,7 +556,7 @@ namespace HttpWsServer
         return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
 
-    int dev_list_answer(string devlist) {
+    static int dev_list_answer(string devlist) {
         MutexLock lock(&csDevList);
         for(auto pss : setPssDevlist) {
             MutexLock lk(&csDevice);

@@ -28,6 +28,7 @@ namespace HttpWsServer
 
         virtual void push_video_stream(char* pBuff, int nLen);
         virtual void stop();
+        virtual string get_clients_info();
     private:
         void cull_lagging_clients();
 

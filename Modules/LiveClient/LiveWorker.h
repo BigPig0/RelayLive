@@ -22,7 +22,7 @@ namespace LiveClient
         bool m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
 
         /** 获取客户端信息 */
-        string GetClientInfo();
+        static string GetClientInfo();
 
         /**
         * 从源过来的视频数据，单线程输入 
