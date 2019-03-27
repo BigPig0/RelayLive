@@ -67,7 +67,7 @@ namespace LiveClient
     /**
     * liveclient初始化
     */
-    void LIVECLIENT_API Init();
+    void LIVECLIENT_API Init(void* uv);
 
     /**
     * 获取客户端内容json字符串
@@ -81,7 +81,7 @@ namespace LiveClient
     void LIVECLIENT_API GetDevList();
 
     /**
-     * 
+     * 通知sip模块订阅设备目录
      */
     void LIVECLIENT_API QueryDirtionary();
 
