@@ -378,9 +378,19 @@ namespace LiveClient
 
     string CLiveWorker::GetClientInfo()
     {
-        stringstream ss;
+        string strResJson = "{\"root\":[";
+        MutexLock lock(&m_cs);
+        for (auto w : m_workerMap)
+        {
+            CLiveWorker *worker = w.second;
+            for(auto h : worker->m_vecLiveFlv){
+                strResJson += h->get_clients_info();
+            }
+        }
 
-        return ss.str();
+        strResJson = StringHandle::StringTrimRight(strResJson,',');
+        strResJson += "]}";
+        return strResJson;
     }
 
 }

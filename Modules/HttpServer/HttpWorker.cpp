@@ -107,6 +107,32 @@ namespace HttpWsServer
         } lws_end_foreach_llp_safe(ppss);
     }
 
+    string CHttpWorker::get_clients_info()
+    {
+        stringstream ss;
+        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
+            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
+            if((*ppss)->isWs){
+                ss << "Web Socket";
+            } else {
+                ss << "Http";
+            }
+            ss << "\",\"Media\":\"";
+            if(m_type == HandleType::flv_handle)
+                ss << "flv";
+            else if(m_type == HandleType::fmp4_handle)
+                ss << "mp4";
+            else if(m_type == HandleType::h264_handle)
+                ss << "h264";
+            else if(m_type == HandleType::ts_handle)
+                ss << "hls";
+            else ss << "unknown";
+            ss << "\",\"ClientIP\":\"" 
+                << (*ppss)->clientIP << "\"},";
+        } lws_end_foreach_llp(ppss, pss_next);
+        return ss.str();
+    }
+
     LIVE_BUFF CHttpWorker::GetHeader()
     {
         return m_stHead;

@@ -31,11 +31,16 @@ namespace LiveClient
          * 视频数据发送回调
          */
         virtual void push_video_stream(char*, int) = 0;
+
         /**
         * rtp接收端结束，目前已知只有接收超时引起
         */
         virtual void stop() = 0;
- 
+
+        /**
+         * 获取客户端信息
+         */
+        virtual string get_clients_info() = 0;
     };
 
     struct ILiveHandleRtp : public ILiveHandle {
