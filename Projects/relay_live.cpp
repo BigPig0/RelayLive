@@ -45,7 +45,7 @@ int main()
     //全局loop
     p_loop_uv = uv_default_loop();
 
-    LiveClient::Init();
+    LiveClient::Init(p_loop_uv);
 
     /** 创建一个http服务器 */
     HttpWsServer::Init((void*)p_loop_uv);

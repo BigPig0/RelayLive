@@ -7,7 +7,7 @@
 
 namespace LiveClient
 {
-	extern uv_loop_t *g_uv_loop;
+	uv_loop_t *g_uv_loop = NULL;
 
     static map<string,CLiveWorker*>  m_workerMap;
     static CriticalSection           m_cs;
@@ -20,8 +20,6 @@ namespace LiveClient
 
     vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     CriticalSection m_csRTP;          //< RTP端口锁
-
-
 
     static int GetRtpPort()
     {

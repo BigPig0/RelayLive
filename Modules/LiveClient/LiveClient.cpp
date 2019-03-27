@@ -5,6 +5,8 @@
 
 namespace LiveClient
 {
+    extern uv_loop_t *g_uv_loop;
+
     extern string g_strRtpIP;            //< RTP服务IP
     extern int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
     extern int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
@@ -16,7 +18,9 @@ namespace LiveClient
 
     extern LIVECLIENT_CB ipc_cb;
 
-    void Init(){
+    void Init(void* uv){
+        g_uv_loop = (uv_loop_t *)uv;
+
         /** 进程间通信 */
         LiveIpc::Init();
 
@@ -42,17 +46,7 @@ namespace LiveClient
 
     string GetClientsInfo() 
     {
-        //MutexLock lock(&m_cs);
-        //auto it = m_workerMap.begin();
-        //auto end = m_workerMap.end();
-        string strResJson = "{\"root\":[";
-        //for (;it != end; ++it)
-        //{
-        //    strResJson += it->second->GetClientInfo();
-        //}
-        //strResJson = StringHandle::StringTrimRight(strResJson,',');
-        //strResJson += "]}";
-        return strResJson;
+        return CLiveWorker::GetClientInfo();
     }
 
     void GetDevList(){
