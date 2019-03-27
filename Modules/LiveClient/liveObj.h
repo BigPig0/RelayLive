@@ -4,16 +4,21 @@
 #include "uv.h"
 
 enum NalType;
+enum FLV_FRAG_TYPE;
+enum MP4_FRAG_TYPE;
+
+namespace LiveClient
+{
 enum STREAM_TYPE;
+class CLiveWorker;
 
 /**
- * RTSP功能模块接口
- * 使用前主程序必须先初始化<指UdpSocket必须初始化才能使用>
+ * 视频流rtp/rtcp接收处理模块
  */
-class CLiveObj : public IlibLive
+class CLiveObj
 {
 public:
-    CLiveObj(liblive_option opt);
+    CLiveObj(int nPort, CLiveWorker *worker);
     ~CLiveObj(void);
 
     /** 启动UDP端口监听 */
@@ -26,7 +31,7 @@ public:
     void RtpOverTime();
 
     /**
-     * RTP组包回调
+     * RTP组包回调，rtp包组成的帧可能是ps，也可能是h264
      * @param[in] pBuff PS帧数据
      * @param[in] nLen PS帧长度
      */
@@ -71,15 +76,6 @@ public:
     /** H264合成回调 */
     void H264Cb(char* pBuff, int nBuffSize);
 
-    /**
-     * 设置处理数据回调的对象
-     * @param[in] pHandle
-     */
-    void SetCallback(IlibLiveCb* pHandle)
-    {
-        m_pCallBack = pHandle;
-    }
-
     /** 结束时关闭loop */
     void AsyncClose();
 
@@ -104,10 +100,12 @@ private:
     void*       m_pTs;              // TS组包类
     void*       m_pFlv;             // FLV组包类
     void*       m_pMp4;             // MP4组包类
-    IlibLiveCb* m_pCallBack;        // 回调对象
+    CLiveWorker* m_pWorker;        // 回调对象
 
     uint64_t    m_pts;              // 记录PES中的pts
     uint64_t    m_dts;              // 记录PES中的dts
     NalType     m_nalu_type;        // h264片元类型
 };
+
+}
 

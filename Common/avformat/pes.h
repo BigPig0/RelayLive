@@ -86,6 +86,6 @@ public:
 
 private:
     void*             m_hUser;                  // 回调处理对象
-    PS_CALLBACK       m_fCB;
+    PES_CALLBACK      m_fCB;
 };
 

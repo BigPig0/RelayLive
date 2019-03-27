@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "libwebsockets.h"
 #include "HttpLiveServer.h"
-#include "LiveWorker.h"
+#include "HttpWorker.h"
 // 其他模块引用
 #include "SipInstance.h"
-#include "h264.h"
-#include "flv.h"
-#include "mp4.h"
+#include "LiveClient.h"
+//#include "h264.h"
+//#include "flv.h"
+//#include "mp4.h"
 
 namespace HttpWsServer
 {
@@ -17,12 +18,18 @@ namespace HttpWsServer
             return g_strError_play_faild;
         }
 
-        CHttpWorker* pWorker = GetHttpWorker(devCode);
+        HandleType t = HandleType::unknown_handle;
+        if(pss->media_type == media_flv) t = HandleType::flv_handle;
+        else if(pss->media_type == media_mp4) t = HandleType::fmp4_handle;
+        else if(pss->media_type == media_h264) t = HandleType::h264_handle;
+        else if(pss->media_type == media_hls) t = HandleType::ts_handle;
+
+        CHttpWorker* pWorker = GetHttpWorker(devCode, t);
         if (!pWorker) {
-            pWorker = CreatHttpWorker(devCode);
+            pWorker = CreatHttpWorker(devCode, t);
         }
         if(!pWorker) {
-            Log::error("CreatFlvBuffer failed%s", devCode.c_str());
+            Log::error("CreatHttpWorker failed%s", devCode.c_str());
             return g_strError_play_faild;
         }
         pWorker->AddConnect(pss);
@@ -33,11 +40,11 @@ namespace HttpWsServer
 
     static void SendLiveFlv(pss_http_ws_live *pss) {
         CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
-        LIVE_BUFF tag = pWorker->GetFlvVideo(&pss->tail);
+        LIVE_BUFF tag = pWorker->GetVideo(&pss->tail);
         if(tag.pBuff == nullptr) return;
 
         if (!pss->m_bSendHead) {
-            LIVE_BUFF flvheader = pWorker->GetFlvHeader();
+            LIVE_BUFF flvheader = pWorker->GetHeader();
             if(flvheader.pBuff == nullptr) return;
 
             Log::debug("first flv data with header: tail:%d",pss->tail);
@@ -59,7 +66,7 @@ namespace HttpWsServer
     }
 
     static void SendLiveH264(pss_http_ws_live *pss) {
-        LIVE_BUFF tag = pss->m_pWorker->GetH264Video(&pss->tail);
+        LIVE_BUFF tag = pss->m_pWorker->GetVideo(&pss->tail);
 		if(tag.pBuff == nullptr) return;
 
         Log::debug(" h264 data tail:%d", pss->tail);
@@ -70,11 +77,11 @@ namespace HttpWsServer
     static void SendLiveMp4(pss_http_ws_live *pss)
     {
         CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
-        LIVE_BUFF tag = pWorker->GetMp4Video(&pss->tail);
+        LIVE_BUFF tag = pWorker->GetVideo(&pss->tail);
         if(tag.pBuff == nullptr) return;
 
         if (!pss->m_bSendHead) {
-            LIVE_BUFF mp4_header = pWorker->GetMp4Header();
+            LIVE_BUFF mp4_header = pWorker->GetHeader();
             if(mp4_header.pBuff == nullptr) return;
 
             Log::debug("first mp4 data with header: tail:%d",pss->tail);
