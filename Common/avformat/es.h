@@ -14,7 +14,7 @@ typedef void (*ES_CALLBACK)(char*, long, void*);
 class CES
 {
 public:
-    CES(void* handle);
+    CES(void* handle, ES_CALLBACK cb);
     ~CES(void);
 
     /**

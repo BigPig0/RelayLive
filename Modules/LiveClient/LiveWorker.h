@@ -13,8 +13,9 @@ namespace LiveClient
         ~CLiveWorker();
 
         /** 客户端连接 */
-        bool AddHandle(ILiveHandle* h, HandleType t);
-        bool RemoveHandle(ILiveHandle* h);
+        virtual bool AddHandle(ILiveHandle* h, HandleType t);
+        virtual bool RemoveHandle(ILiveHandle* h);
+		virtual LIVE_BUFF GetHeader(HandleType t);
 
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
@@ -42,6 +43,8 @@ namespace LiveClient
         bool m_bH264;
         bool m_bTs;
         bool m_bRtp;
+		LIVE_BUFF               m_stFlvHead;    //
+		LIVE_BUFF               m_stMp4Head;
 
     private:
         string                   m_strCode;     // 播放媒体编号

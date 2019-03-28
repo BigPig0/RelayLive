@@ -28,7 +28,7 @@ public:
 class CFlv
 {
 public:
-    CFlv(void* handle);
+    CFlv(void* handle, FLV_CALLBACK cb);
     ~CFlv(void);
 
     int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
@@ -47,6 +47,9 @@ private:
      * 生成一个视频断并上抛
      */
     bool MakeVideo(char *data,int size,int bIsKeyFrame);
+
+	/**/
+	bool MakeKeyVideo();
 
 private:
     CFlvStreamMaker*        m_pSPS;            // 保存SPS内容的缓存

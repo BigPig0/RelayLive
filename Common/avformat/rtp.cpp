@@ -4,13 +4,13 @@
 #include "h264.h"
 
 
-CRtp::CRtp(void* handle)
+CRtp::CRtp(void* handle, RTP_CALLBACK cb)
     : m_frame_buf(nullptr)
     , m_nCatchPacketNum(5000)
     , m_nDoneSeq(0)
     , m_bBegin(false)
     , m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
     m_frame_buf = new char[FRAME_MAX_SIZE];
     memset(m_frame_buf, '\0', FRAME_MAX_SIZE);

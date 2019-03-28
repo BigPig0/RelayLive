@@ -103,7 +103,7 @@ void CFlvStreamMaker::append_amf_double(double d)
     append_double(d);
 }
 
-CFlv::CFlv(void* handle)
+CFlv::CFlv(void* handle, FLV_CALLBACK cb)
     : m_pSPS(nullptr)
     , m_pPPS(nullptr)
     , m_pData(nullptr)
@@ -115,7 +115,7 @@ CFlv::CFlv(void* handle)
     , m_bMakeScript(false)
     , m_bFirstKey(false)
     , m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
     m_pSPS = new CFlvStreamMaker();
     m_pPPS = new CFlvStreamMaker();
@@ -155,28 +155,11 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
         m_timestamp += m_tick_gap;
         break;
     case idr_Nal:
-        m_pKeyFrame->clear();
-        m_pKeyFrame->append_data(pBuf, nLen);
-        if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
-            // 第一个tag是scriptTag
-            //Log::debug("send scriptTag");
-            if(!m_bMakeScript)
-            {    
-                if(!MakeHeader())
-                    break;
-
-                m_bMakeScript = true;
-            }
-
-            // 发送关键帧
-            Log::debug("send key frame");
-            MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
-            m_pSPS->clear();
-            m_pPPS->clear();
-            m_pKeyFrame->clear();
-        }
-        m_timestamp += m_tick_gap;
-        m_bFirstKey = true;
+		{
+			m_pKeyFrame->clear();
+			m_pKeyFrame->append_data(pBuf, nLen);
+			MakeKeyVideo();
+		}
         break;
     case sei_Nal:
         break;
@@ -186,12 +169,7 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             CHECK_POINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
-            if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
-                MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
-                m_pSPS->clear();
-                m_pPPS->clear();
-                m_pKeyFrame->clear();
-            }
+            MakeKeyVideo();
         }
         break;
     case pps_Nal:
@@ -200,12 +178,7 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             CHECK_POINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
-            if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
-                MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
-                m_pSPS->clear();
-                m_pPPS->clear();
-                m_pKeyFrame->clear();
-            }
+            MakeKeyVideo();
         }
         break;
     case other:
@@ -388,4 +361,33 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
     //fwrite(c->data, c->d_cur, 1, fpflv);
     //fflush(fpflv);
     return true;
+}
+
+bool CFlv::MakeKeyVideo()
+{
+	if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
+		// 第一个tag是scriptTag
+		//Log::debug("send scriptTag");
+		if(!m_bMakeScript)
+		{    
+			if(!MakeHeader())
+				return false;
+
+			m_bMakeScript = true;
+		}
+
+		// 发送关键帧
+		Log::debug("send key frame");
+		MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
+
+		m_pSPS->clear();
+		m_pPPS->clear();
+		m_pKeyFrame->clear();
+
+		m_timestamp += m_tick_gap;
+		m_bFirstKey = true;
+
+		return true;
+	}
+	return false;
 }

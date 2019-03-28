@@ -80,9 +80,9 @@ static uint64_t get_dts(optional_pes_header* option)
 #endif
 
 
-CPes::CPes(void* handle)
+CPes::CPes(void* handle, PES_CALLBACK cb)
     : m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
 }
 

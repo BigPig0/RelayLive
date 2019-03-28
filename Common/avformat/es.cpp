@@ -2,11 +2,11 @@
 #include "es.h"
 
 
-CES::CES(void* handle)
+CES::CES(void* handle, ES_CALLBACK cb)
     : m_pH264Buf(NULL)
     , m_nH264DataLen(0)
     , m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
 }
 

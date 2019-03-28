@@ -212,7 +212,7 @@ struct mp4_mdat_box {
 #pragma pack()
 
 
-CMP4::CMP4(void* handle)
+CMP4::CMP4(void* handle, MP4_CALLBACK cb)
     : m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
@@ -224,7 +224,7 @@ CMP4::CMP4(void* handle)
     , m_bRun(true)
     , m_nSeq(1)
     , m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
     m_pSPS = new CNetStreamMaker();
     m_pPPS = new CNetStreamMaker();

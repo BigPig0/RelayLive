@@ -19,6 +19,11 @@ enum HandleType
     rtp_handle,
 };
 
+struct LIVE_BUFF {
+    char *pBuff;
+    int   nLen;
+};
+
 namespace LiveClient
 {
     /**
@@ -62,6 +67,8 @@ namespace LiveClient
         * 当liveworker中的handle全部移除时，liveworker将会自杀
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
+
+		virtual LIVE_BUFF GetHeader(HandleType t) = 0;
     };
 
     /**

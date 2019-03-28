@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "h264.h"
 
-CH264::CH264(void* handle)
+CH264::CH264(void* handle, H264SPS_CALLBACK spscb, H264_CALLBACK cb)
     : m_pNaluBuff(nullptr)
     , m_nBuffLen(0)
     , m_pDataBuff(nullptr)
@@ -13,8 +13,8 @@ CH264::CH264(void* handle)
     , m_bFirstKey(false)
     , m_bDecode(false)
     , m_hUser(handle)
-    , m_fCB(nullptr)
-    , m_fCBSPS(nullptr)
+    , m_fCB(cb)
+    , m_fCBSPS(spscb)
 {
     m_pSPS = new CNetStreamMaker();
     m_pPPS = new CNetStreamMaker();

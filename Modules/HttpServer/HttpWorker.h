@@ -6,11 +6,6 @@ namespace HttpWsServer
     struct pss_http_ws_live;
     enum MediaType;
 
-    struct LIVE_BUFF {
-        char *pBuff;
-        int   nLen;
-    };
-
     class CHttpWorker : public LiveClient::ILiveHandle
     {
     public:
@@ -54,11 +49,4 @@ namespace HttpWsServer
     bool DelHttpWorker(string strCode, HandleType t);
 
     /** 点播 */
-
-    /** 获取播放信息，返回json */
-    string GetClientsInfo();
-	/** 获取设备列表 */
-	int GetDevList(int pss);
-	/** 发送设备查询命令 */
-	int QueryDirtionary();
 };
