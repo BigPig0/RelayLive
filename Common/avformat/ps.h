@@ -126,7 +126,7 @@ typedef void(*PS_CALLBACK)(char*, long, void*);
 class CPs
 {
 public:
-    CPs(void* handle);
+    CPs(void* handle, PS_CALLBACK cb);
     ~CPs(void);
 
     /**

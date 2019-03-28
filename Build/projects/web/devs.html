@@ -15,7 +15,7 @@
 <body ng-app="myApp" ng-controller="myCtrl">
   <div style="width: 80%;margin: 20px auto;">
     <div class="row clearfix" style="margin-bottom: 20px;">
-        <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛选</button>
+        <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛�?/button>
     </div>
     
     <table class="table">
@@ -54,7 +54,7 @@
 <script src="lib/jquery-1.11.3.min.js"></script>
 <script>
   var _test = false;
-  var url = _test ? 'data/data.json' : 'http://172.31.7.88:81/device/infolist';
+  var url = _test ? 'data/data.json' : './device/devlist';
   var app = angular.module('myApp', []);
   app.controller('myCtrl', function($scope,$http) {
     $http({

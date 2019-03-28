@@ -76,7 +76,7 @@ namespace HttpWsServer
             cull_lagging_clients();
             n = (int)lws_ring_get_count_free_elements(m_pRing);
         }
-        Log::debug("mp4 ring free space %d\n", n);
+        Log::debug("ring free space %d\n", n);
         if (!n)
             return;
 
@@ -135,7 +135,7 @@ namespace HttpWsServer
 
     LIVE_BUFF CHttpWorker::GetHeader()
     {
-        return m_stHead;
+		return m_pLive->GetHeader(m_type);
     }
 
     LIVE_BUFF CHttpWorker::GetVideo(uint32_t *tail)
@@ -302,20 +302,4 @@ namespace HttpWsServer
         return false;
     }
 
-    string GetClientsInfo() 
-    {
-        MutexLock lock(&m_csFlv);
-        auto it = m_workerMapFlv.begin();
-        auto end = m_workerMapFlv.end();
-        string strResJson = "{\"root\":[";
-        for (;it != end; ++it)
-        {
-            //strResJson += it->second->GetClientInfo();
-        }
-        strResJson = StringHandle::StringTrimRight(strResJson,',');
-        strResJson += "]}";
-        return strResJson;
-    }
-
-	
 }

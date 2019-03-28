@@ -141,6 +141,9 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     net_stream_parser_t *s;
     uv_ipc_write_s_t *w;
 
+    recv_name = next_name = recvs = total = sender = msg = data = "";
+    recv_len = total_len= sender_len = msg_len = data_len = 0;
+
     if (nread < 0) {
         printf("Read error: %d(%s)\n", nread, uv_strerror(nread));
         if(c->pre) {

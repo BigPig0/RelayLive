@@ -131,7 +131,7 @@ typedef void(*RTP_CALLBACK)(char*, long, void*);
 class CRtp
 {
 public:
-    CRtp(void* handle);
+    CRtp(void* handle, RTP_CALLBACK cb);
     ~CRtp(void);
 
     /**

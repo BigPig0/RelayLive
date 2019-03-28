@@ -5,7 +5,7 @@
 
 const uint8_t nTsContentLength = TS_PACKET_SIZE - TS_PACKET_HEADER;
 
-CTS::CTS(void* handle)
+CTS::CTS(void* handle, TS_CALLBACK cb)
     : m_pTsBuff(nullptr)
     , m_nTsBuffLen(0)
     , m_nTsDataLen(0)
@@ -13,7 +13,7 @@ CTS::CTS(void* handle)
     , m_nNalType(0)
     , m_nVideoPts(0)
     , m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
 }
 

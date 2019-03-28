@@ -176,7 +176,7 @@ typedef void (*TS_CALLBACK)(char*, long, void*);
 class CTS
 {
 public:
-    CTS(void* handle);
+    CTS(void* handle, TS_CALLBACK cb);
     ~CTS(void);
 
     /**

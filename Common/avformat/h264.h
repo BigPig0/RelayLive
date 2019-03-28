@@ -120,7 +120,7 @@ typedef void (*H264_CALLBACK)(char*, int, void*);
 class CH264
 {
 public:
-    CH264(void* handle);
+    CH264(void* handle, H264SPS_CALLBACK spscb, H264_CALLBACK cb);
     ~CH264();
 
     /**

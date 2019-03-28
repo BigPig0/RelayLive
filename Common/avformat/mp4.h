@@ -43,7 +43,7 @@ typedef void (*MP4_CALLBACK)(MP4_FRAG_TYPE, char*, int, void*);
 class CMP4
 {
 public:
-    CMP4(void* handle);
+    CMP4(void* handle, MP4_CALLBACK cb);
     ~CMP4();
 
     int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);

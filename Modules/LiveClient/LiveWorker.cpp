@@ -147,22 +147,16 @@ namespace LiveClient
         , m_bTs(false)
         , m_bRtp(false)
     {
+		memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
+		memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
         m_pLive = new CLiveObj(rtpPort, this);
         m_pLive->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
     {
-        //if(m_nType == 0) {
-        //    if (!SipInstance::StopPlay(m_strCode)) {
-        //        Log::error("stop play failed");
-        //    }
-        //} else {
-        //    if (!SipInstance::StopRecordPlay(m_strCode, "")) {
-        //        Log::error("stop play failed");
-        //    }
-        //}
-        if(LiveIpc::StopPlay(m_strCode)) {
+        string ssid = StringHandle::toStr<int>(m_nPort);
+        if(LiveIpc::StopPlay(ssid)) {
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pLive);
@@ -287,6 +281,16 @@ namespace LiveClient
         return true;
     }
 
+	LIVE_BUFF CLiveWorker::GetHeader(HandleType t) {
+		if(t == HandleType::flv_handle)
+			return m_stFlvHead;
+		else if(t == HandleType::fmp4_handle)
+			return m_stMp4Head;
+
+		LIVE_BUFF ret = {0};
+		return ret;
+	}
+
 	void CLiveWorker::Clear2Stop() {
         if(m_vecLiveFlv.empty() && m_vecLiveMp4.empty() && m_vecLiveH264.empty()
             && m_vecLiveTs.empty() && m_vecLiveRtp.empty()) {
@@ -298,11 +302,18 @@ namespace LiveClient
 
     void CLiveWorker::push_flv_stream(int eType, char* pBuff, int nLen)
     {
-        MutexLock lock(&m_csFlv);
-        for (auto h : m_vecLiveFlv)
-        {
-            h->push_video_stream(pBuff, nLen);
-        }   
+		if (eType == 0) {
+            m_stFlvHead.pBuff = pBuff;
+            m_stFlvHead.nLen = nLen;
+            Log::debug("flv head ok");
+        } else {
+			MutexLock lock(&m_csFlv);
+			for (auto h : m_vecLiveFlv)
+			{
+				Log::debug("flv frag ok");
+				h->push_video_stream(pBuff, nLen);
+			}   
+		}
     }
 
     void CLiveWorker::push_h264_stream(char* pBuff, int nLen)
@@ -325,11 +336,17 @@ namespace LiveClient
 
     void CLiveWorker::push_fmp4_stream(int eType, char* pBuff, int nLen)
     {
-        MutexLock lock(&m_csMp4);
-        for (auto h : m_vecLiveMp4)
-        {
-            h->push_video_stream(pBuff, nLen);
-        } 
+		if(eType == 0) {
+            m_stMp4Head.pBuff = pBuff;
+            m_stMp4Head.nLen = nLen;
+            Log::debug("MP4 Head ok");
+        } else {
+			MutexLock lock(&m_csMp4);
+			for (auto h : m_vecLiveMp4)
+			{
+				h->push_video_stream(pBuff, nLen);
+			}
+		}
     }
 
     void CLiveWorker::push_rtp_stream(char* pBuff, int nLen)

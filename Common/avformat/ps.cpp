@@ -3,9 +3,9 @@
 #include "pes.h"
 
 
-CPs::CPs(void* handle)
+CPs::CPs(void* handle, PS_CALLBACK cb)
     : m_hUser(handle)
-    , m_fCB(nullptr)
+    , m_fCB(cb)
 {
 }
 

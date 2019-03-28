@@ -73,7 +73,7 @@ typedef void(*PES_CALLBACK)(char*, long, uint64_t, uint64_t, void*);
 class CPes
 {
 public:
-    CPes(void* handle);
+    CPes(void* handle, PES_CALLBACK cb);
     ~CPes(void);
 
     /**
