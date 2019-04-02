@@ -13,6 +13,14 @@
   <ItemGroup>
     <ClCompile Include="..\..\Projects\sip_server.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\DeviceManager\DeviceManager.vcxproj">
+      <Project>{6d6b65d6-58d0-4f74-9124-1cfb11fadcbc}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Modules\SipServer\sipServer.vcxproj">
+      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2262E19B-E22D-4003-98C9-A1F237B2FE85}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -65,7 +73,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;liboci.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;dbTool.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../thirdParty/ocilib/lib/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -88,7 +96,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../thirdParty/ocilib/lib/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;liboci.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;userenv.lib;psapi.lib;iphlpapi.lib;libuv.lib;Dnsapi.lib;delayimp.lib;Qwave.lib;exosip.lib;ociliba.lib;dbTool.lib;util.lib;utilc.lib;uvIpc.lib;DeviceManager.lib;SipServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

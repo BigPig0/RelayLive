@@ -11,6 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Common\dbTool\dbTool.vcxproj">
+      <Project>{3da4192a-e5bf-40c4-955d-3ecffe9f29ca}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\common\Util\Util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
     </ProjectReference>
@@ -76,7 +79,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libOci/include;$(SolutionDir)../thirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/dbTool;$(SolutionDir)../thirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -95,7 +98,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libOci/include;$(SolutionDir)../thirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/dbTool;$(SolutionDir)../thirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
