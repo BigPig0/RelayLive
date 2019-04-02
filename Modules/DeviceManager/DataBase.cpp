@@ -8,7 +8,6 @@ CDataBase::CDataBase(void)
 {
 }
 
-
 CDataBase::~CDataBase(void)
 {
 }
@@ -38,6 +37,25 @@ void CDataBase::init()
     dbset.inc_conns = 2;
     OracleClient* client = OracleClient::GetInstance();
     client->connect(m_strDB, dbset);
+
+    string tableName = Settings::getValue("DataBase","TableName");
+    string colCode = Settings::getValue("DataBase","ColumnCODE");
+    string colStat = Settings::getValue("DataBase","ColumnSTATUS");
+    string colLon = Settings::getValue("DataBase","ColumnLON");
+    string colLat = Settings::getValue("DataBase","ColumnLAT");
+
+    stringstream ss;
+    ss << "select " << colCode << "," << colStat << " from  " << tableName;
+    m_strGetDevsSql = ss.str();
+    ss.clear();
+    ss.str();
+    ss << "update " << tableName << " set " << colStat << " = :status where " << colCode << " = :code";
+    m_strUpdateStatSql = ss.str();
+    ss.clear();
+    ss.str();
+    ss << "update " << tableName << " set " << colLat << " = :lat, " 
+        << colLon << " = :lon where " << colCode << " = :code";
+    m_strUpdatePosSql == ss.str();
 }
 
 vector<DevInfo*> CDataBase::GetDevInfo()
@@ -55,8 +73,7 @@ vector<DevInfo*> CDataBase::GetDevInfo()
     }
     OCI_Connection *cn = pool->at(index);
     OCI_Statement *st = OCI_CreateStatement(cn);
-    const char *sql = "select t.RECORDER_CODE, t.STATUS from ENFORCEMENT_RECORDER t";
-    OCI_ExecuteStmt(st, sql);
+    OCI_ExecuteStmt(st, m_strGetDevsSql.c_str());
     OCI_Resultset *rs = OCI_GetResultset(st);
     while (OCI_FetchNext(rs)) 
     {
@@ -83,8 +100,7 @@ bool CDataBase::UpdateStatus(string code, bool online)
     int nStateValue = online?1:0;
     OCI_Connection *cn = pool->at(index);
     OCI_Statement *st = OCI_CreateStatement(cn);
-    const char *sql = "update ENFORCEMENT_RECORDER set STATUS = :status where RECORDER_CODE = :code";
-    OCI_Prepare(st, sql);
+    OCI_Prepare(st, m_strUpdateStatSql.c_str());
     OCI_BindInt(st, ":status",   &nStateValue);
     OCI_BindString(st, ":code", (char*)code.c_str(), 30);
     OCI_Execute(st);
@@ -111,8 +127,7 @@ bool CDataBase::UpdatePos(string code, string lat, string lon)
     if(lon.size() > 9) lon = lon.substr(0, 9);
     OCI_Connection *cn = pool->at(index);
     OCI_Statement *st = OCI_CreateStatement(cn);
-    const char *sql = "update ENFORCEMENT_RECORDER set LAT = :lat, LON = :lon where RECORDER_CODE = :code";
-    OCI_Prepare(st, sql);
+    OCI_Prepare(st, m_strUpdatePosSql.c_str());
     OCI_BindString(st, ":lat", (char*)lat.c_str(), 10);
     OCI_BindString(st, ":lon", (char*)lon.c_str(), 10);
     OCI_BindString(st, ":code", (char*)code.c_str(), 30);

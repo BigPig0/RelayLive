@@ -215,12 +215,6 @@ void CSipRegister::sendRegisterAnswer(sipRegisterInfo& info)
             Log::warning("注册应答 发送200报文");
 
             //注册成功的设备，添加到设备容器
-#if 0
-            CSipMgr::m_pDevMap->DevRegister(info.baseInfo.from.GetAddrCode(), 
-                                            info.baseInfo.from.GetRealName(), 
-                                            info.baseInfo.from.GetPort(),
-                                            info.baseInfo.expires);
-#endif
             PlatFormInfo pNewRegist;
             pNewRegist.strDevCode   = info.baseInfo.contact.GetAddrCode();
             pNewRegist.strAddrIP    = info.baseInfo.contact.GetRealName();

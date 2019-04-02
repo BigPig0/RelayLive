@@ -141,6 +141,9 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     net_stream_parser_t *s;
     uv_ipc_write_s_t *w;
 
+    recv_name = next_name = recvs = total = sender = msg = data = "";
+    recv_len = total_len= sender_len = msg_len = data_len = 0;
+
     if (nread < 0) {
         printf("Read error: %d(%s)\n", nread, uv_strerror(nread));
         if(c->pre) {
@@ -191,7 +194,10 @@ static void on_read_s(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     w->num = 0;
 
 	recvs[recv_len] = 0;
-	printf("sender:%s, recver:%s, msg:%s data:%s\n", c->name, recvs, msg, data);
+    if(data_len < 100)
+	    printf("sender:%s, recver:%s, msg:%s data:%s\n", c->name, recvs, msg, data);
+    else
+        printf("sender:%s, recver:%s, msg:%s data length:%d\n", c->name, recvs, msg, data_len);
 
     //分割接受者名字
     recv_name = strtok_r(recvs, ",", &next_name);
@@ -273,7 +279,10 @@ static void on_read_c(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf){
     sender[sender_len] = 0;
     msg[msg_len] = 0;
 
-	printf("ipc recv sender:%s, msg:%s, data:%s\n", sender, msg, data);
+    if(data_len < 100)
+	    printf("ipc recv sender:%s, msg:%s, data:%s\n", sender, msg, data);
+    else
+        printf("ipc recv sender:%s, msg:%s, data length:%d\n", sender, msg, data_len);
 
     if(ipc->cb)
         ipc->cb(ipc, ipc->data, sender, msg, data, data_len);

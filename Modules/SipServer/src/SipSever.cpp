@@ -7,7 +7,10 @@
 
 CSipSever::CSipSever(eXosip_t* pSip)
     : m_pExContext(pSip)
+    , m_bQueryDir(false)
 {
+    m_bSubStat = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
+    m_bSubPos  = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
 }
 
 CSipSever::~CSipSever(void)
@@ -162,17 +165,26 @@ void CSipSever::SubscribeThread()
     {
         PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
         CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+        m_bQueryDir = false;
     }
     m_nSubTime = 0;
     while(true)
     {
+        if(m_bQueryDir)
+        {
+            PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
+            CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+            m_bQueryDir = false;
+        }
         time_t nSystemTime = time(nullptr);
         if(difftime(nSystemTime,m_nSubTime) > 1800)
         {
             m_nSubTime = nSystemTime;
             PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
-            //CSipMgr::m_pSubscribe->Subscribe(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-            //CSipMgr::m_pSubscribe->SubscribeMobilepostion(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+            if(m_bSubStat)
+                CSipMgr::m_pSubscribe->Subscribe(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+            if(m_bSubPos)
+                CSipMgr::m_pSubscribe->SubscribeMobilepostion(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
             Log::debug(" Subscribe %s",platform->strDevCode.c_str());
         }
         Sleep(1000);
@@ -181,12 +193,13 @@ void CSipSever::SubscribeThread()
 
 void CSipSever::OnRegister(eXosip_event_t *osipEvent)
 {
-    auto run = [](eXosip_t* pSip, eXosip_event_t *osipEvent, bool bRegAuthor){
+    auto run = [&](eXosip_t* pSip, eXosip_event_t *osipEvent, bool bRegAuthor){
         Log::debug("OnRegister thread ID : %d", GetCurrentThreadId());
         CSipRegister Register(pSip);
         Register.SetAuthorization(bRegAuthor);
         Register.OnRegister(osipEvent);
         eXosip_event_free(osipEvent);
+        m_bQueryDir = true;
         //Log::debug("OnRegister thread finish\r\n");
     };
     std::thread t1(run,m_pExContext, osipEvent, CSipMgr::m_pConfig->bRegAuthor);
