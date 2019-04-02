@@ -1,0 +1,310 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include=".\lua\lapi.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lauxlib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lbaselib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lbitlib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lcode.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lcorolib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lctype.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ldblib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ldebug.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ldo.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ldump.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lfunc.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lgc.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\linit.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\liolib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\llex.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lmathlib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lmem.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\loadlib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lobject.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lopcodes.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\loslib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lparser.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lstate.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lstring.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lstrlib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ltable.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ltablib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\ltm.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lundump.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lutf8lib.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lvm.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include=".\lua\lzio.c">
+      <Filter>Src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Src">
+      <UniqueIdentifier>{4F6848E4-4B29-3FC0-B45E-23D90849C79B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{41b09499-dc3f-40ec-b1c4-8d69ac20df2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="luapp">
+      <UniqueIdentifier>{5d13a3cd-1a57-4b65-a8b7-7defe043c9a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="luapp\stl">
+      <UniqueIdentifier>{9d25ae00-935b-4ff2-b9c2-b70564f52007}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lua\lapi.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lauxlib.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lcode.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lctype.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\ldebug.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\ldo.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lfunc.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lgc.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\llex.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\llimits.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lmem.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lobject.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lopcodes.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lparser.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lprefix.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lstate.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lstring.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\ltable.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\ltm.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua.hpp">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\luaconf.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lualib.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lundump.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lvm.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lzio.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp.hpp" />
+    <ClInclude Include="luapp\WrapperProxy.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Adapter.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\AdapterProxy.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Auxiliary.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Config.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\CopyFromStack.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\DataType.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Environment.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Func.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\FuncReg.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Function.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\GlobalFunction.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Handle.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Log.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\LuaAPI.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Map.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\MorePushAndPull.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\PointerTypeFilter.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\PullArgs.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\PushToStack.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Register.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Searcher.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\ShortName.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Standard.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\State.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Table.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Tag.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Task.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\TypeString.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\User.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Var.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\VarBridgeExtra.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\Wrapper.hpp">
+      <Filter>luapp</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\stl\sharedptr.hpp">
+      <Filter>luapp\stl</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\stl\bind.hpp">
+      <Filter>luapp\stl</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\stl\functional.hpp">
+      <Filter>luapp\stl</Filter>
+    </ClInclude>
+    <ClInclude Include="luapp\stl\memory.hpp">
+      <Filter>luapp\stl</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
