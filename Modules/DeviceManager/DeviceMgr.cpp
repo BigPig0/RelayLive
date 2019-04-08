@@ -35,16 +35,16 @@ namespace DeviceMgr
 
     bool Init()
     {
-        _db.init();
         _platform.strDevCode = Settings::getValue("PlatFormInfo","Code");
         _platform.strAddrIP = Settings::getValue("PlatFormInfo","IP");
         _platform.strAddrPort = Settings::getValue("PlatFormInfo","Port");
         _platform.strStatus = "1";
         _platform.nExpire = 3600;
-
-        getDeviceFromDB();
         _bExpireRun = true;
         StartExpireTimer();
+
+        _db.Init();
+        getDeviceFromDB();
         return true;
     }
 
@@ -92,19 +92,24 @@ namespace DeviceMgr
         for (size_t i=0; i<nNum; ++i)
         {
             DevInfo* dev = vecDevInfo[i];
-            //数据库中信息更新
-            if(bUpdate)
-                _db.UpdateStatus(dev->strDevID, dev->strStatus=="ON"?true:false);
             //
             auto findDev = _mapDevInfo.find(vecDevInfo[i]->strDevID);
             if (findDev == _mapDevInfo.end())
             {
                 // 第一次添加该设备
                 _mapDevInfo.insert(make_pair(dev->strDevID,dev));
+
+                //也许需要将信息插入到数据库
+                if(bUpdate)
+                    _db.InsertDev(dev);
             }
             else
             {
                 // 如果已添加，不需要重复插入
+                //数据库中信息更新
+                if(bUpdate && dev->strStatus != findDev->second->strStatus)
+                    _db.UpdateStatus(dev->strDevID, dev->strStatus=="ON"?true:false);
+
                 delete dev;
             }
         }

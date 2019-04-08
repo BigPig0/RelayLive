@@ -185,7 +185,7 @@ bool OracleInsert::Insert(vector<vector<string>> rows)
     Log::debug("insert %d rows to db", nRowSize);
 
     // 获取数据库连接
-    OCI_Connection *cn = OCI_GET_CONNECT(m_strDataBase);
+    OCI_Connection *cn = DBTOOL_GET_CONNECT(m_strDataBase);
     if(!cn){
         Log::error("fail to get connection: %s", m_strDataBase.c_str());
         return false;

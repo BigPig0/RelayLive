@@ -68,13 +68,13 @@ static bool get_devs_from_db()
     while (OCI_FetchNext(rs))
     {
         RTSP_REQUEST dev;
-        dev.ssid      = OCI_GET_STRING(rs,1);
-        dev.dev_type  = (devType)stoi(OCI_GET_STRING(rs,2));
-        dev.ip        = OCI_GET_STRING(rs,3);
+        dev.ssid      = DBTOOL_GET_STRING(rs,1);
+        dev.dev_type  = (devType)stoi(DBTOOL_GET_STRING(rs,2));
+        dev.ip        = DBTOOL_GET_STRING(rs,3);
         dev.port      = 554;//stoi(OCI_GET_STRING(rs,4));
-        dev.user_name = OCI_GET_STRING(rs,5);
-        dev.password  = OCI_GET_STRING(rs,6);
-        dev.channel   = stoi(OCI_GET_STRING(rs,7));
+        dev.user_name = DBTOOL_GET_STRING(rs,5);
+        dev.password  = DBTOOL_GET_STRING(rs,6);
+        dev.channel   = stoi(DBTOOL_GET_STRING(rs,7));
         dev.stream    = stoi(Settings::getValue("DataBase","Mode"));
         _map_devs.insert(make_pair(dev.ssid, dev));
 

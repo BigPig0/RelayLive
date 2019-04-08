@@ -1,11 +1,151 @@
 #include "stdafx.h"
 #include "dbTool.h"
+#include "luapp.hpp"
 
 namespace dbTool
 {
     std::map<std::string, OCI_ConnPool*> conn_pools_;
 
-    bool Init(const char *path)
+    lua::Bool luaPoolConnect(lua::Table pra){
+        string tag = pra["tag"];
+        ConPool_Setting settings;
+        settings.database = pra["dbpath"];
+        settings.username = pra["user"];
+        settings.password = pra["pwd"];
+        settings.max_conns = pra.isExist("max")?pra["max"]:1;
+        settings.min_conns = pra.isExist("min")?pra["min"]:0;
+        settings.inc_conns = pra.isExist("inc")?pra["inc"]:1;
+        return Connect(tag, settings);
+    }
+    lua::Ptr luaGetConnect(lua::Str tag){
+        return (void*)GetConnection(tag);
+    }
+    lua::Bool luaFreeConnect(lua::Ptr con){
+        return OCI_ConnectionFree((OCI_Connection *)con);
+    }
+    lua::Ptr luaCreateStatement(lua::Ptr con){
+        return (void*)OCI_CreateStatement((OCI_Connection *)con);
+    }
+    lua::Bool luaFreeStatement(lua::Ptr stmt){
+        return OCI_FreeStatement((OCI_Statement *)stmt);
+    }
+    lua::Bool luaExecuteStmt(lua::Ptr stmt, lua::Str sql){
+        return OCI_ExecuteStmt((OCI_Statement *)stmt, sql.c_str());
+    }
+    lua::Bool luaPrepare(lua::Ptr stmt, lua::Str sql){
+        return OCI_Prepare((OCI_Statement *)stmt, sql.c_str());
+    }
+    lua::Bool luaBindInt(lua::Ptr stmt, lua::Str name, lua::Int &data){
+        return OCI_BindInt((OCI_Statement *)stmt, name.c_str(), &data);
+    }
+    lua::Bool luaBindString(lua::Ptr stmt, lua::Str name, lua::Str &data, lua::Int maxLen){
+        return OCI_BindString((OCI_Statement *)stmt, name.c_str(), (char*)data.c_str(), maxLen);
+    }
+    lua::Bool luaExecute(lua::Ptr stmt){
+        return OCI_Execute((OCI_Statement *)stmt);
+    }
+    lua::Int luaGetAffectedRows(lua::Ptr stmt){
+        return OCI_GetAffectedRows((OCI_Statement *)stmt);
+    }
+    lua::Int luaCommit(lua::Ptr con){
+        return OCI_Commit((OCI_Connection *)con);
+    }
+    lua::Ptr luaGetResultset(lua::Ptr stmt){
+        return OCI_GetResultset((OCI_Statement *)stmt);
+    }
+    lua::Bool luaFetchNext(lua::Ptr rs){
+        return OCI_FetchNext((OCI_Resultset *)rs);
+    }
+    lua::Str luaGetString(lua::Ptr rs, lua::Int i){
+        return oci_get_string((OCI_Resultset*)rs, i);
+    }
+    lua::Int luaGetInt(lua::Ptr rs, lua::Int i){
+        return oci_get_int((OCI_Resultset*)rs, i);
+    }
+    lua::Str luaGetOdt(lua::Ptr rs, lua::Int i){
+        return oci_get_date((OCI_Resultset*)rs, i);
+    }
+    lua::Str luaGetBlob(lua::Ptr rs, lua::Int i){
+        return oci_get_blob((OCI_Resultset*)rs, i);
+    }
+    lua::Ptr luaInsertInit(lua::Str tag, lua::Str tbl, lua::Int rnum, lua::Table columns) {
+        DBTOOL_INSERTER *dbInster = new DBTOOL_INSERTER(tag, tbl, rnum);
+        for(auto it = columns.getBegin(); !it.isEnd(); it++){
+            lua::Var k,v;
+            it.getKeyValue(&k, &v);
+            if(!lua::VarType<lua::Table>(v))
+                continue;
+            lua::Table col = lua::VarCast<lua::Table>(v);
+            if(!col.isExist("colname") || !col.isExist("coltype"))
+                continue;
+            uint32_t nMaxLength = col.isExist("maxlen")?col["maxlen"]:16;
+            bool bNullable =  col.isExist("nullable")?col["nullable"]:false;
+            string strDefault = col.isExist("def")?col["def"]:"";
+            dbInster->AddCloumn(col["colname"],col["coltype"],nMaxLength, bNullable,strDefault);
+        }
+        dbInster->Prepair();
+        return (void*)dbInster;
+    }
+    lua::Ptr luaRowInit(lua::Int rows, lua::Int interval){
+        RowCollector *ret = new RowCollector(rows, interval);
+        return ret;
+    }
+    lua::Bool luaRowInsertHandle(lua::Ptr ins, lua::Ptr row){
+        DBTOOL_INSERTER *dbInster = (DBTOOL_INSERTER*)ins;
+        RowCollector *rowList = (RowCollector*)row;
+        rowList->add_insertion_handler([&](vector<vector<string>> v){
+            dbInster->Insert(v);
+        });
+    }
+    lua::Bool luaAddRow(lua::Ptr rc, lua::Table row){
+        RowCollector *rowList = (RowCollector*)rc;
+        vector<string> values;
+        for(auto it = row.getBegin(); !it.isEnd(); it++){
+            lua::Var k,v;
+            it.getKeyValue(&k, &v);
+            lua::Str col = lua::VarCast<lua::Str>(v);
+            values.push_back(col);
+        }
+        rowList->add_row(values);
+        return true;
+    }
+
+    void InitLua(lua::State<> *lua) {
+        lua->setFunc("DBTOOL_POOL_CONN",     &luaPoolConnect);
+        lua->setFunc("DBTOOL_GET_CONN",     &luaGetConnect);
+        lua->setFunc("DBTOOL_FREE_CONN",    &luaFreeConnect);
+        lua->setFunc("DBTOOL_CREATE_STMT",  &luaCreateStatement);
+        lua->setFunc("DBTOOL_FREE_STMT",    &luaFreeStatement);
+        lua->setFunc("DBTOOL_EXECUTE_STMT", &luaExecuteStmt);
+        lua->setFunc("DBTOOL_PREPARE",      &luaPrepare);
+        lua->setFunc("DBTOOL_BIND_INT",     &luaBindInt);
+        lua->setFunc("DBTOOL_BIND_STRING",  &luaBindString);
+        lua->setFunc("DBTOOL_EXECUTE",      &luaExecute);
+        lua->setFunc("DBTOOL_GET_AFFECT",   &luaGetAffectedRows);
+        lua->setFunc("DBTOOL_COMMIT",       &luaCommit);
+        lua->setFunc("DBTOOL_GET_RES",      &luaGetResultset);
+        lua->setFunc("DBTOOL_FETCH_NEXT",   &luaFetchNext);
+
+        lua->setFunc("DBTOOL_GET_STR",     &luaGetString);
+        lua->setFunc("DBTOOL_GET_INT",     &luaGetInt);
+        lua->setFunc("DBTOOL_GET_ODT",     &luaGetOdt);
+        lua->setFunc("DBTOOL_GET_BLOB",    &luaGetBlob);
+
+        lua->setFunc("DBTOOL_INSERT_INIT", &luaInsertInit);
+        lua->setFunc("DBTOOL_ROWER_INIT", &luaRowInit);
+        lua->setFunc("DBTOOL_ROW_INS", &luaRowInsertHandle);
+        lua->setFunc("DBTOOL_ADD_ROW",     &luaAddRow);
+
+        lua->setGlobal("DBTOOL_TYPE_CHR", SQLT_CHR);
+        lua->setGlobal("DBTOOL_TYPE_INT", SQLT_INT);
+        lua->setGlobal("DBTOOL_TYPE_FLT", SQLT_FLT);
+        lua->setGlobal("DBTOOL_TYPE_LNG", SQLT_LNG);
+        lua->setGlobal("DBTOOL_TYPE_UIN", SQLT_UIN);
+        lua->setGlobal("DBTOOL_TYPE_BLOB", SQLT_BLOB);
+        lua->setGlobal("DBTOOL_TYPE_ODT", SQLT_ODT);
+    }
+
+    bool Init(const char *path, void *lua)
     {
         auto oci_error_handler = [](OCI_Error *err){
             OCI_Connection * conn = OCI_ErrorGetConnection(err);
@@ -19,6 +159,8 @@ namespace dbTool
 
         if(!OCI_Initialize(oci_error_handler, path, OCI_ENV_DEFAULT | OCI_ENV_THREADED))
             return false;
+
+        InitLua((lua::State<>*)lua);
 
         return true;
     }
@@ -71,6 +213,10 @@ namespace dbTool
         if (pTmp)
             return pTmp;
         return "";
+    }
+
+    int oci_get_int(OCI_Resultset* rs, unsigned int i){
+        return OCI_IsNull(rs, i)?0:OCI_GetInt(rs, i);
     }
 
     string oci_get_date(OCI_Resultset* rs,unsigned int i)

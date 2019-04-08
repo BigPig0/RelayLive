@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "DataBase.h"
 #include "dbTool.h"
+#include "luapp.hpp"
+
+DBTOOL_INSERTER             _inserter; 
+RowCollector                _rows;
 
 CDataBase::CDataBase(void)
     : m_strDB("DB")
@@ -9,13 +13,15 @@ CDataBase::CDataBase(void)
 
 CDataBase::~CDataBase(void)
 {
+    lua::GlobalFunction<lua::Nil()> luafCleanup;
+    m_lua.getFunc("Init",&luafCleanup);
+    luafCleanup();
 }
 
-void CDataBase::init()
+void CDataBase::Init()
 {
     string path = Settings::getValue("DataBase", "Path");
-
-    if(!dbTool::Init(path.c_str()))
+    if(!dbTool::Init(path.c_str(), &m_lua))
         return;
 
     dbTool::ConPool_Setting dbset;
@@ -23,10 +29,10 @@ void CDataBase::init()
     dbset.username = Settings::getValue("DataBase","User");
     dbset.password = Settings::getValue("DataBase","PassWord");
     dbset.max_conns = 5;
-    dbset.min_conns = 2;
+    dbset.min_conns = 0;
     dbset.inc_conns = 2;
 
-    OCI_CREATE_POOL(m_strDB, dbset);
+    DBTOOL_CREATE_POOL(m_strDB, dbset);
 
     string tableName = Settings::getValue("DataBase","TableName");
     string colCode = Settings::getValue("DataBase","ColumnCODE");
@@ -46,12 +52,28 @@ void CDataBase::init()
     ss << "update " << tableName << " set " << colLat << " = :lat, " 
         << colLon << " = :lon where " << colCode << " = :code";
     m_strUpdatePosSql == ss.str();
+
+    _inserter.Init(m_strDB, tableName, 10);
+    _inserter.AddCloumn(colCode, SQLT_CHR, 20);
+    _inserter.AddCloumn(colStat, SQLT_INT);
+    _inserter.AddCloumn(colLat,  SQLT_FLT);
+    _inserter.AddCloumn(colLon,  SQLT_FLT);
+    _inserter.Prepair();
+    _rows.set_info(50, 10);
+    _rows.add_insertion_handler([&](vector<vector<string>> v){
+        _inserter.Insert(v);
+    });
+
+    m_lua.run(".","DeviceMgr.lua");
+    lua::GlobalFunction<lua::Bool()> luafInit;
+    m_lua.getFunc("Init",&luafInit);
+    luafInit();
 }
 
 vector<DevInfo*> CDataBase::GetDevInfo()
 {
     vector<DevInfo*> vecRet;
-    OCI_Connection *cn = OCI_GET_CONNECT(m_strDB);
+    OCI_Connection *cn = DBTOOL_GET_CONNECT(m_strDB);
     if (!cn) {
         Log::error("fail to get connection: %s", m_strDB.c_str());
         return vecRet;
@@ -62,8 +84,8 @@ vector<DevInfo*> CDataBase::GetDevInfo()
     while (OCI_FetchNext(rs)) 
     {
         DevInfo* dev = new DevInfo;
-        dev->strDevID     = OCI_GET_STRING(rs,1);
-        dev->strStatus    = OCI_GET_INT(rs,2)>0?"ON":"OFF";
+        dev->strDevID     = DBTOOL_GET_STRING(rs,1);
+        dev->strStatus    = DBTOOL_GET_INT(rs,2)>0?"ON":"OFF";
         vecRet.push_back(dev);
     }
     OCI_FreeStatement(st);
@@ -74,7 +96,7 @@ vector<DevInfo*> CDataBase::GetDevInfo()
 bool CDataBase::UpdateStatus(string code, bool online)
 {
     int nStateValue = online?1:0;
-    OCI_Connection *cn = OCI_GET_CONNECT(m_strDB);
+    OCI_Connection *cn = DBTOOL_GET_CONNECT(m_strDB);
     if (!cn) {
         Log::error("fail to get connection: %s", m_strDB.c_str());
         return false;
@@ -95,7 +117,7 @@ bool CDataBase::UpdatePos(string code, string lat, string lon)
 {
     if(lat.size() > 9) lat = lat.substr(0, 9);
     if(lon.size() > 9) lon = lon.substr(0, 9);
-    OCI_Connection *cn = OCI_GET_CONNECT(m_strDB);
+    OCI_Connection *cn = DBTOOL_GET_CONNECT(m_strDB);
     if (!cn) {
         Log::error("fail to get connection: %s", m_strDB.c_str());
         return false;
@@ -111,4 +133,14 @@ bool CDataBase::UpdatePos(string code, string lat, string lon)
     OCI_FreeStatement(st);
     OCI_ConnectionFree(cn);
     return true;
+}
+
+bool CDataBase::InsertDev(DevInfo* dev)
+{
+    vector<string> values;
+    values.push_back(dev->strDevID);
+    values.push_back(dev->strStatus=="ON"?"1":"0");
+    values.push_back(dev->strLatitude);
+    values.push_back(dev->strLongitude);
+    _rows.add_row(values);
 }

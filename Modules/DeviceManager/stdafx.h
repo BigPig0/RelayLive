@@ -14,6 +14,7 @@
 
 // TODO: 在此处引用程序需要的其他头文件  
 #include "common.h"
+#include "luapp.hpp"
 
 #include <stdlib.h>   
 #include <iostream>

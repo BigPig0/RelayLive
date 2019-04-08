@@ -9,23 +9,23 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dbTool.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="OciDefine.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="OracleInsert.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="RowCollector.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="dbTool.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
