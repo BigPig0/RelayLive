@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -71,7 +71,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libLive/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -86,7 +86,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rtsp.h" />
+    <ClInclude Include="RtspLiveServer.h" />
     <ClInclude Include="RtspServer.h" />
+    <ClInclude Include="RtspWorker.h" />
     <ClInclude Include="rtsp_client.h" />
     <ClInclude Include="rtsp_hik.h" />
     <ClInclude Include="stdafx.h" />
@@ -94,7 +96,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rtsp.cpp" />
+    <ClCompile Include="RtspLiveServer.cpp" />
     <ClCompile Include="RtspServer.cpp" />
+    <ClCompile Include="RtspWorker.cpp" />
     <ClCompile Include="rtsp_client.cpp" />
     <ClCompile Include="rtsp_hik.cpp" />
     <ClCompile Include="stdafx.cpp">
