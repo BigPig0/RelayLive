@@ -1,15 +1,11 @@
 #include "stdafx.h"
+#include "uv.h"
 #include "HttpLiveServer.h"
 #include "HttpWorker.h"
-//ÆäËûÄ£¿é
 #include "LiveClient.h"
-#include "uvIpc.h"
-#include "uv.h"
 
 namespace HttpWsServer
 {
-	extern uv_loop_t *g_uv_loop;
-
     static map<string,CHttpWorker*>  m_workerMapFlv;
     static CriticalSection           m_csFlv;
     static map<string,CHttpWorker*>  m_workerMapMp4;
@@ -47,7 +43,7 @@ namespace HttpWsServer
         m_pLive->RemoveHandle(this);
 
         lws_ring_destroy(m_pRing);
-        Log::debug("CLiveWorker release");
+        Log::debug("CHttpWorker release");
     }
 
     bool CHttpWorker::AddConnect(pss_http_ws_live* pss)
@@ -67,6 +63,40 @@ namespace HttpWsServer
             DelHttpWorker(m_strCode, m_type);
         }
         return true;
+    }
+
+    LIVE_BUFF CHttpWorker::GetHeader()
+    {
+		return m_pLive->GetHeader(m_type);
+    }
+
+    LIVE_BUFF CHttpWorker::GetVideo(uint32_t *tail)
+    {
+        LIVE_BUFF ret = {nullptr,0};
+        LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pRing, tail);
+        if(tag) ret = *tag;
+
+        return ret;
+    }
+
+    void CHttpWorker::NextWork(pss_http_ws_live* pss)
+    {
+        //Log::debug("this work tail:%d\r\n", pss->tail);
+        lws_ring_consume_and_update_oldest_tail(
+            m_pRing,	          /* lws_ring object */
+            pss_http_ws_live, /* type of objects with tails */
+            &pss->tail,	      /* tail of guy doing the consuming */
+            1,		          /* number of payload objects being consumed */
+            m_pPssList,	      /* head of list of objects with tails */
+            tail,		      /* member name of tail in objects with tails */
+            pss_next	      /* member name of next object in objects with tails */
+            );
+        //Log::debug("next work tail:%d\r\n", pss->tail);
+
+        /* more to do for us? */
+        if (lws_ring_get_element(m_pRing, &pss->tail))
+            /* come back as soon as we can write more */
+                lws_callback_on_writable(pss->wsi);
     }
 
     void CHttpWorker::push_video_stream(char* pBuff, int nLen)
@@ -131,40 +161,6 @@ namespace HttpWsServer
                 << (*ppss)->clientIP << "\"},";
         } lws_end_foreach_llp(ppss, pss_next);
         return ss.str();
-    }
-
-    LIVE_BUFF CHttpWorker::GetHeader()
-    {
-		return m_pLive->GetHeader(m_type);
-    }
-
-    LIVE_BUFF CHttpWorker::GetVideo(uint32_t *tail)
-    {
-        LIVE_BUFF ret = {nullptr,0};
-        LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pRing, tail);
-        if(tag) ret = *tag;
-
-        return ret;
-    }
-
-    void CHttpWorker::NextWork(pss_http_ws_live* pss)
-    {
-        //Log::debug("this work tail:%d\r\n", pss->tail);
-        lws_ring_consume_and_update_oldest_tail(
-            m_pRing,	          /* lws_ring object */
-            pss_http_ws_live, /* type of objects with tails */
-            &pss->tail,	      /* tail of guy doing the consuming */
-            1,		          /* number of payload objects being consumed */
-            m_pPssList,	      /* head of list of objects with tails */
-            tail,		      /* member name of tail in objects with tails */
-            pss_next	      /* member name of next object in objects with tails */
-            );
-        //Log::debug("next work tail:%d\r\n", pss->tail);
-
-        /* more to do for us? */
-        if (lws_ring_get_element(m_pRing, &pss->tail))
-            /* come back as soon as we can write more */
-                lws_callback_on_writable(pss->wsi);
     }
 
     void CHttpWorker::cull_lagging_clients()

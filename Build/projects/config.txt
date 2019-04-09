@@ -1,6 +1,7 @@
 [SipSever]
+;开启的国标sip服务配置
 Code = 36030000042000000003
-;设备编码
+;本机平台编码
 IP = 192.168.1.235
 ;服务IP
 Port = 5060
@@ -9,6 +10,7 @@ RegAuthor = false
 ;注册是否需要鉴权
 
 [PlatFormInfo]
+;对接的国标下级平台配置
 Code = 
 ;对方下级平台的编码
 IP = 
@@ -17,6 +19,7 @@ Port =
 ;对方下级平台的端口
 
 [DataBase]
+;连接数据库设备信息的配置
 Path = C:\instantclient_11_2
 Addr = 172.31.7.7/pxzhjt
 User = basic
@@ -24,6 +27,7 @@ PassWord = 123
 
 
 [RtpClient]
+;国标接收rtp视频流的配置
 IP = 192.168.1.235
 ;rtp服务IP
 BeginPort = 50000
@@ -36,8 +40,9 @@ Filter = 1
 ;0-ps,1-h264
 
 [HttpServer]
+;开启http服务相关配置
 IP = 0.0.0.0
-;服务器IP，若为空表示本机所有IP
+;服务器IP
 Port = 80
 ;http端口
 wsPort = 8000
@@ -51,4 +56,9 @@ DefaultFile = index.html
 DirVisible = yes
 ;是否可以显示目录，yes表示可以，no或其他表示不能
 
-
+[RtspServer]
+;开启rtsp服务相关配置
+IP = 0.0.0.0
+Port = 524
+RtpPort = 80000
+RtpPortNum = 1000

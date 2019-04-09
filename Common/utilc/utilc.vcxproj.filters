@@ -30,6 +30,15 @@
     <ClInclude Include="utilc_export.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="linked_list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="doubly_linked_list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="buflist.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="memfile.c">
@@ -42,6 +51,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="utilc_api.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="doubly_linked_list.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="buflist.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

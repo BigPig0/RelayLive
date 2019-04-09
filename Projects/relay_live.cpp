@@ -51,8 +51,7 @@ int main()
     HttpWsServer::Init((void*)p_loop_uv);
 
     /** 创建一个rtsp服务器 */
-    CRtspServer rtsp;
-    rtsp.Init(p_loop_uv);
+    RtspServer::Init((void*)p_loop_uv);
 
     Log::debug("GB28181 Sever start success\r\n");
 
