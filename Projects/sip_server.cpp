@@ -65,19 +65,19 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
             if (!dev->strName.empty())
             {
                 strResJson += "\"Name\":\"";
-                strResJson += dev->strName;
+                strResJson += EncodeConvert::AtoUTF8(dev->strName);
                 strResJson += "\",";
             }
             if (!dev->strManuf.empty())
             {
                 strResJson += "\"Manufacturer\":\"";
-                strResJson += dev->strManuf;
+                strResJson += EncodeConvert::AtoUTF8(dev->strManuf);
                 strResJson += "\",";
             }
             if (!dev->strModel.empty())
             {
                 strResJson += "\"Model\":\"";
-                strResJson += dev->strModel;
+                strResJson += EncodeConvert::AtoUTF8(dev->strModel);
                 strResJson += "\",";
             }
             if (!dev->strOwner.empty())
@@ -101,7 +101,7 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
             if (!dev->strAddress.empty())
             {
                 strResJson += "\"Address\":\"";
-                strResJson += dev->strAddress;
+                strResJson += EncodeConvert::AtoUTF8(dev->strAddress);
                 strResJson += "\",";
             }
             if (!dev->strParental.empty())
@@ -273,7 +273,7 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)str.c_str(), str.size());
 	} else if(!strcmp(msg,"QueryDirtionary")) {
         //≤È—Ø…Ë±∏
-        SipInstance::StopPlayAll();
+        SipInstance::QueryDirtionary();
     } 
 }
 

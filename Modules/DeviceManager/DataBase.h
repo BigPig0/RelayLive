@@ -30,9 +30,9 @@ private:
     lua::State<>           m_lua;
     lua::GlobalFunction<lua::Table()> 
                            luafGetDevInfo;
-    lua::GlobalFunction<lua::Bool(lua::Ptr, lua::Ptr)> 
+    lua::GlobalFunction<lua::Bool(lua::Str, lua::Bool)> 
                            luafUpdateStatus;
-    lua::GlobalFunction<lua::Bool(lua::Ptr, lua::Ptr, lua::Ptr)> 
+    lua::GlobalFunction<lua::Bool(lua::Str, lua::Str, lua::Str)> 
                            luafUpdatePos;
     lua::GlobalFunction<lua::Bool(lua::Table)> 
                            luafInsertDev;

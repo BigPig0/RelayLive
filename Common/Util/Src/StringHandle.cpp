@@ -756,3 +756,15 @@ std::string StringHandle::dec2hex(int i)
     ioss >> s_temp; 
     return s_temp;
 }
+
+bool StringHandle::isSubStr(std::string str1, std::string str2)
+{
+	int a = str1.size();
+	if(a > str2.size()) a = str2.size();
+	for (int i=0; i<a; ++i)
+	{
+		if(str1[i] != str2[i])
+			return false;
+	}
+	return true;
+}

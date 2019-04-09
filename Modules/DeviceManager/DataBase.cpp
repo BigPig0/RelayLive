@@ -55,8 +55,14 @@ vector<DevInfo*> CDataBase::GetDevInfo()
                 dev->strName = value;
 			} else if(key == "Status"){
 				lua::Int value = lua::VarCast<lua::Int>(v2);
-                dev->strStatus = value?"OFF":"ON";
-            }
+                dev->strStatus = value?"ON":"OFF";
+			} else if(key == "Latitude"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strLatitude = value;
+			} else if(key == "Longitude"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strLongitude = value;
+			}
         }
         vecRet.push_back(dev);
     }
@@ -65,15 +71,14 @@ vector<DevInfo*> CDataBase::GetDevInfo()
 
 bool CDataBase::UpdateStatus(string code, bool online)
 {
-	int ret = online?1:0;
-    return luafUpdateStatus((void*)code.c_str(), (void*)&ret);
+    return luafUpdateStatus(code, online);
 }
 
 bool CDataBase::UpdatePos(string code, string lat, string lon)
 {
     if(lat.size() > 9) lat = lat.substr(0, 9);
     if(lon.size() > 9) lon = lon.substr(0, 9);
-    return luafUpdatePos((void*)code.c_str(), (void*)&lat, (void*)&lon);
+    return luafUpdatePos(code, lat, lon);
 }
 
 bool CDataBase::InsertDev(DevInfo* dev)

@@ -91,26 +91,38 @@ namespace DeviceMgr
         size_t nNum = vecDevInfo.size();
         for (size_t i=0; i<nNum; ++i)
         {
-            DevInfo* dev = vecDevInfo[i];
+            DevInfo* pDev = vecDevInfo[i];
             //
             auto findDev = _mapDevInfo.find(vecDevInfo[i]->strDevID);
             if (findDev == _mapDevInfo.end())
             {
                 // 第一次添加该设备
-                _mapDevInfo.insert(make_pair(dev->strDevID,dev));
+                _mapDevInfo.insert(make_pair(pDev->strDevID,pDev));
 
                 //也许需要将信息插入到数据库
                 if(bUpdate)
-                    _db.InsertDev(dev);
+                    _db.InsertDev(pDev);
             }
             else
             {
                 // 如果已添加，不需要重复插入
                 //数据库中信息更新
-                if(bUpdate && dev->strStatus != findDev->second->strStatus)
-                    _db.UpdateStatus(dev->strDevID, dev->strStatus=="ON"?true:false);
+				if(bUpdate){
+					if(!pDev->strStatus.empty() && pDev->strStatus != findDev->second->strStatus) {
+						findDev->second->strStatus = pDev->strStatus;
+						_db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
+					}
+					if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
+						&& (pDev->strLongitude != findDev->second->strLongitude
+						 || pDev->strLatitude != findDev->second->strLatitude))
+					{
+						findDev->second->strLongitude = pDev->strLongitude;
+						findDev->second->strLatitude = pDev->strLatitude;
+						_db.UpdatePos(pDev->strDevID, pDev->strLatitude, pDev->strLongitude);
+					}
+				}
 
-                delete dev;
+                delete pDev;
             }
         }
 
@@ -119,14 +131,32 @@ namespace DeviceMgr
 
     bool UpdateDevice(DevInfo* pDev)
     {
-        if (!pDev->strStatus.empty())
-        {
-            _db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
-        }
-        if (!pDev->strLongitude.empty() || !pDev->strLatitude.empty())
-        {
-            _db.UpdatePos(pDev->strDevID, pDev->strLatitude, pDev->strLongitude);
-        }
+		auto findDev = _mapDevInfo.find(pDev->strDevID);
+		if (findDev == _mapDevInfo.end())
+		{
+			// 第一次添加该设备
+			_mapDevInfo.insert(make_pair(pDev->strDevID,pDev));
+
+			//将信息插入到数据库
+			_db.InsertDev(pDev);
+		}
+		else
+		{
+			if (!pDev->strStatus.empty() && pDev->strStatus != findDev->second->strStatus)
+			{
+				findDev->second->strStatus = pDev->strStatus;
+				_db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
+			}
+			if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
+				&& (pDev->strLongitude != findDev->second->strLongitude
+				|| pDev->strLatitude != findDev->second->strLatitude))
+			{
+				findDev->second->strLongitude = pDev->strLongitude;
+				findDev->second->strLatitude = pDev->strLatitude;
+				_db.UpdatePos(pDev->strDevID, pDev->strLatitude, pDev->strLongitude);
+			}
+			delete pDev;
+		}
         return true;
     }
 

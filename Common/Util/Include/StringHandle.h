@@ -141,13 +141,13 @@ public:
 
 	/**
 	*@brief:判断字符串是否全是英文
-	*@return:bool:true:全为英文，false:不全为数字
+	*@return:bool:true:全为英文，false:不全为英文
 	*/
 	static bool IsEng(std::string strIn,int nLen);
 
 	/**
 	*@brief:判断字符串是否全是英文
-	*@return:bool:true:全为英文，false:不全为数字
+	*@return:bool:true:全为英文，false:不全为英文
 	*/
 	static bool IsEng2(std::string strIn,int nLen);
 
@@ -236,6 +236,11 @@ public:
      * 整数转成16进制字符串
      */
     static std::string dec2hex(int i);
+
+	/**
+	 *
+	 */
+	static bool isSubStr(std::string str1, std::string str2);
 
 private:
 	static char *utf8_find_prev_char(const char *str, const char *p);
