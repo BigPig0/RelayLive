@@ -39,7 +39,7 @@
 <script src="lib/jquery-1.11.3.min.js"></script>
 <script>
   var _test = false;
-  var url = _test ? 'data/data.json' : 'http://127.0.0.1:80/device/infolist';
+  var url = _test ? 'data/data.json' : './device/clients';
   var app = angular.module('myApp', []);
   app.controller('myCtrl', function($scope,$http) {
     $http({
