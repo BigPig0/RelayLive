@@ -181,10 +181,14 @@ void CSipSever::SubscribeThread()
         {
             m_nSubTime = nSystemTime;
             PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
-            if(m_bSubStat)
+            if(m_bSubStat) {
+				Sleep(10000);
                 CSipMgr::m_pSubscribe->Subscribe(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-            if(m_bSubPos)
+			}
+            if(m_bSubPos) {
+				Sleep(10000);
                 CSipMgr::m_pSubscribe->SubscribeMobilepostion(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+			}
             Log::debug(" Subscribe %s",platform->strDevCode.c_str());
         }
         Sleep(1000);

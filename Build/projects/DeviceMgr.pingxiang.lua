@@ -55,11 +55,12 @@ function UpdatePos(code, lat, lon)
 end
 
 function InsertDev(dev)
-    DBTOOL_ADD_ROW(rows, dev)
+    --DBTOOL_ADD_ROW(rows, dev)
     return true
 end
 
 function Init()
+    --[[
     DBTOOL_POOL_CONN({tag="DB", dbpath="172.31.7.7/pxzhjt", user="basic", pwd="123", max=5, min=1, inc=2})
     rows = DBTOOL_ROWER_INIT(50, 10)
     ins = DBTOOL_INSERT_INIT("DB", "ENFORCEMENT_RECORDER", 10, {
@@ -69,6 +70,7 @@ function Init()
         {colname = "LAT", coltype = DBTOOL_TYPE_FLT}
     })
     DBTOOL_ROW_INS(ins, rows)
+	]]--
     return true
 end
 

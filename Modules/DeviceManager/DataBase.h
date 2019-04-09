@@ -28,5 +28,13 @@ private:
     string                 m_strUpdatePosSql;
 
     lua::State<>           m_lua;
+    lua::GlobalFunction<lua::Table()> 
+                           luafGetDevInfo;
+    lua::GlobalFunction<lua::Bool(lua::Ptr, lua::Ptr)> 
+                           luafUpdateStatus;
+    lua::GlobalFunction<lua::Bool(lua::Ptr, lua::Ptr, lua::Ptr)> 
+                           luafUpdatePos;
+    lua::GlobalFunction<lua::Bool(lua::Table)> 
+                           luafInsertDev;
 };
 

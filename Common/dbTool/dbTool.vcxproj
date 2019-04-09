@@ -117,7 +117,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libIocp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libIocp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -155,7 +155,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>include;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libIocp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/libIocp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

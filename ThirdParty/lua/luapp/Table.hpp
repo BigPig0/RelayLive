@@ -377,7 +377,7 @@ class Table
 		{
 			std::map<lua::Int,lua::Var>::iterator it = _mapInt.find(key);
 
-			if ( it == _mapInt.end() )
+			if ( it != _mapInt.end() )
 			{
 				return true;
 			}
@@ -389,7 +389,7 @@ class Table
 		{
 			std::map<lua::Num,lua::Var>::iterator it = _mapNum.find(key);
 
-			if ( it == _mapNum.end() )
+			if ( it != _mapNum.end() )
 			{
 				return true;
 			}
@@ -401,7 +401,7 @@ class Table
 		{
 			std::map<lua::Str,lua::Var>::iterator it = _mapStr.find(key);
 
-			if ( it == _mapStr.end() )
+			if ( it != _mapStr.end() )
 			{
 				return true;
 			}
@@ -414,7 +414,7 @@ class Table
 		{
 			std::map<lua::Bool,lua::Var>::iterator it = _mapBool.find(key);
 
-			if ( it == _mapBool.end() )
+			if ( it != _mapBool.end() )
 			{
 				return true;
 			}

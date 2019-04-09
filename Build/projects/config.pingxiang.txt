@@ -1,39 +1,34 @@
 [SipSever]
-Code = 32040000002000000003
+Code = 36030000042000000003
 ;设备编码
-IP = 10.9.0.8
+IP = 172.31.7.88
 ;服务IP
-Port = 5050
+Port = 5060
 ;服务端口
 RegAuthor = false
 ;注册是否需要鉴权
 
 [PlatFormInfo]
-Code = 32040000002000000001
+Code = 36030100062000000000
 ;对方下级平台的编码
-IP = 10.9.0.24
+IP = 172.31.7.161
 ;对方下级平台的IP
-Port = 7100
+Port = 5800
 ;对方下级平台的端口
-SubscribeStatus = 0
+SubscribeStatus = 1
 ;是否订阅设备状态
-SubscribePos = 0
+SubscribePos = 1
 ;是否订阅设备位置
 
 [DataBase]
-Path = C:\instantclient_11_2
+Path = E:\instantclient_11_2
 Addr = 172.31.7.7/pxzhjt
 User = basic
 PassWord = 123
 
-TableName = ENFORCEMENT_RECORDER
-ColumnCODE = RECORDER_CODE
-ColumnSTATUS = STATUS
-ColumnLON = LON
-ColumnLAT = LAT
 
 [RtpClient]
-IP = 10.9.0.8
+IP = 172.31.7.88
 ;rtp服务IP
 BeginPort = 50000
 ;rtp起始端口
@@ -47,13 +42,13 @@ Filter = 0
 [HttpServer]
 IP = 0.0.0.0
 ;服务器IP，若为空表示本机所有IP
-Port = 8001
+Port = 81
 ;http端口
 wsPort = 8000
 ;websocket端口
-RootPath = D:\code\web
+RootPath = E:\code\RelayLive3\Build\projects\web
 ;根目录
-TmpPath = D:\code\Tmp
+TmpPath = C:\TmpPath
 ;临时目录
 DefaultFile = index.html
 ;默认文件名称

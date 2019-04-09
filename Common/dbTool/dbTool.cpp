@@ -12,9 +12,9 @@ namespace dbTool
         settings.database = pra["dbpath"];
         settings.username = pra["user"];
         settings.password = pra["pwd"];
-        settings.max_conns = pra.isExist("max")?pra["max"]:1;
-        settings.min_conns = pra.isExist("min")?pra["min"]:0;
-        settings.inc_conns = pra.isExist("inc")?pra["inc"]:1;
+        settings.max_conns = pra.isExist("max")?lua::VarCast<lua::Int>(pra["max"]):1;
+        settings.min_conns = pra.isExist("min")?lua::VarCast<lua::Int>(pra["min"]):0;
+        settings.inc_conns = pra.isExist("inc")?lua::VarCast<lua::Int>(pra["inc"]):1;
         return Connect(tag, settings);
     }
     lua::Ptr luaGetConnect(lua::Str tag){
@@ -35,11 +35,11 @@ namespace dbTool
     lua::Bool luaPrepare(lua::Ptr stmt, lua::Str sql){
         return OCI_Prepare((OCI_Statement *)stmt, sql.c_str());
     }
-    lua::Bool luaBindInt(lua::Ptr stmt, lua::Str name, lua::Int &data){
-        return OCI_BindInt((OCI_Statement *)stmt, name.c_str(), &data);
+    lua::Bool luaBindInt(lua::Ptr stmt, lua::Str name, lua::Ptr data){
+        return OCI_BindInt((OCI_Statement *)stmt, name.c_str(), (int*)data);
     }
-    lua::Bool luaBindString(lua::Ptr stmt, lua::Str name, lua::Str &data, lua::Int maxLen){
-        return OCI_BindString((OCI_Statement *)stmt, name.c_str(), (char*)data.c_str(), maxLen);
+    lua::Bool luaBindString(lua::Ptr stmt, lua::Str name, lua::Ptr data, lua::Int maxLen){
+        return OCI_BindString((OCI_Statement *)stmt, name.c_str(), (char*)data, maxLen);
     }
     lua::Bool luaExecute(lua::Ptr stmt){
         return OCI_Execute((OCI_Statement *)stmt);
@@ -76,12 +76,29 @@ namespace dbTool
             if(!lua::VarType<lua::Table>(v))
                 continue;
             lua::Table col = lua::VarCast<lua::Table>(v);
-            if(!col.isExist("colname") || !col.isExist("coltype"))
+            if(!col.isExist(lua::Str("colname")) || !col.isExist(lua::Str("coltype")))
+				continue;
+			if( !lua::VarType<lua::Str>(col["colname"])
+                || !lua::VarType<lua::Int>(col["coltype"]))
                 continue;
-            uint32_t nMaxLength = col.isExist("maxlen")?col["maxlen"]:16;
-            bool bNullable =  col.isExist("nullable")?col["nullable"]:false;
-            string strDefault = col.isExist("def")?col["def"]:"";
-            dbInster->AddCloumn(col["colname"],col["coltype"],nMaxLength, bNullable,strDefault);
+            string strColname = lua::VarCast<lua::Str>(col["colname"]);
+            int nColtype = lua::VarCast<lua::Int>(col["coltype"]);
+            uint32_t nMaxLength = 16;
+            if(col.isExist(lua::Str("maxlen"))){
+				if (lua::VarType<lua::Int>(col["maxlen"]))
+					nMaxLength = (uint32_t)lua::VarCast<lua::Int>(col["maxlen"]);
+			}
+            bool bNullable =  false;
+            if(col.isExist(lua::Str("nullable"))){
+				if(lua::VarType<lua::Bool>(col["nullable"]));
+					bNullable = lua::VarCast<lua::Bool>(col["nullable"]);
+			}
+            string strDefault;
+			if(col.isExist(lua::Str("def"))){
+				if(lua::VarType<lua::Str>(col["def"]))
+					strDefault = lua::VarCast<lua::Str>(col["def"]);
+			}
+            dbInster->AddCloumn(strColname,nColtype,nMaxLength, bNullable,strDefault);
         }
         dbInster->Prepair();
         return (void*)dbInster;
@@ -96,6 +113,7 @@ namespace dbTool
         rowList->add_insertion_handler([&](vector<vector<string>> v){
             dbInster->Insert(v);
         });
+        return true;
     }
     lua::Bool luaAddRow(lua::Ptr rc, lua::Table row){
         RowCollector *rowList = (RowCollector*)rc;
@@ -111,7 +129,7 @@ namespace dbTool
     }
 
     void InitLua(lua::State<> *lua) {
-        lua->setFunc("DBTOOL_POOL_CONN",     &luaPoolConnect);
+        lua->setFunc("DBTOOL_POOL_CONN",    &luaPoolConnect);
         lua->setFunc("DBTOOL_GET_CONN",     &luaGetConnect);
         lua->setFunc("DBTOOL_FREE_CONN",    &luaFreeConnect);
         lua->setFunc("DBTOOL_CREATE_STMT",  &luaCreateStatement);
@@ -132,8 +150,8 @@ namespace dbTool
         lua->setFunc("DBTOOL_GET_BLOB",    &luaGetBlob);
 
         lua->setFunc("DBTOOL_INSERT_INIT", &luaInsertInit);
-        lua->setFunc("DBTOOL_ROWER_INIT", &luaRowInit);
-        lua->setFunc("DBTOOL_ROW_INS", &luaRowInsertHandle);
+        lua->setFunc("DBTOOL_ROWER_INIT",  &luaRowInit);
+        lua->setFunc("DBTOOL_ROW_INS",     &luaRowInsertHandle);
         lua->setFunc("DBTOOL_ADD_ROW",     &luaAddRow);
 
         lua->setGlobal("DBTOOL_TYPE_CHR", SQLT_CHR);
