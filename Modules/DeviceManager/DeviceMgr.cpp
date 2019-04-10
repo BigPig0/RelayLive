@@ -107,19 +107,31 @@ namespace DeviceMgr
             {
                 // 如果已添加，不需要重复插入
                 //数据库中信息更新
-				if(bUpdate){
-					if(!pDev->strStatus.empty() && pDev->strStatus != findDev->second->strStatus) {
-						findDev->second->strStatus = pDev->strStatus;
+				if(!pDev->strStatus.empty() && pDev->strStatus != findDev->second->strStatus) {
+					findDev->second->strStatus = pDev->strStatus;
+					if(bUpdate)
 						_db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
-					}
-					if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
-						&& (pDev->strLongitude != findDev->second->strLongitude
-						 || pDev->strLatitude != findDev->second->strLatitude))
-					{
-						findDev->second->strLongitude = pDev->strLongitude;
-						findDev->second->strLatitude = pDev->strLatitude;
+				}
+				if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
+					&& (pDev->strLongitude != findDev->second->strLongitude
+						|| pDev->strLatitude != findDev->second->strLatitude))
+				{
+					findDev->second->strLongitude = pDev->strLongitude;
+					findDev->second->strLatitude = pDev->strLatitude;
+					if(bUpdate)
 						_db.UpdatePos(pDev->strDevID, pDev->strLatitude, pDev->strLongitude);
-					}
+				}
+				if(!pDev->strName.empty() && pDev->strName != findDev->second->strName){
+					findDev->second->strName = pDev->strName;
+				}
+				if(!pDev->strAddress.empty() && pDev->strAddress != findDev->second->strAddress){
+					findDev->second->strAddress = pDev->strAddress;
+				}
+				if(!pDev->strModel.empty() && pDev->strModel != findDev->second->strModel){
+					findDev->second->strModel = pDev->strModel;
+				}
+				if(!pDev->strModel.empty() && pDev->strModel != findDev->second->strModel){
+					findDev->second->strModel = pDev->strModel;
 				}
 
                 delete pDev;

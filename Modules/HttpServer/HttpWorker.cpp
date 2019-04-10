@@ -35,12 +35,14 @@ namespace HttpWsServer
         m_pRing  = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
-        m_pLive->AddHandle(this, t);
+		if(m_pLive)
+			m_pLive->AddHandle(this, t);
     }
 
     CHttpWorker::~CHttpWorker()
     {
-        m_pLive->RemoveHandle(this);
+		if(m_pLive)
+			m_pLive->RemoveHandle(this);
 
         lws_ring_destroy(m_pRing);
         Log::debug("CHttpWorker release");
