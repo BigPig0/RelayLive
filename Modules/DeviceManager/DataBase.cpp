@@ -29,6 +29,7 @@ void CDataBase::Init()
     m_lua.getFunc("UpdateStatus",&luafUpdateStatus);
     m_lua.getFunc("UpdatePos",   &luafUpdatePos);
     m_lua.getFunc("InsertDev",   &luafInsertDev);
+    m_lua.getFunc("DeleteDev",   &luafDeleteDev);
     luafInit();
 }
 
@@ -76,8 +77,6 @@ bool CDataBase::UpdateStatus(string code, bool online)
 
 bool CDataBase::UpdatePos(string code, string lat, string lon)
 {
-    if(lat.size() > 9) lat = lat.substr(0, 9);
-    if(lon.size() > 9) lon = lon.substr(0, 9);
     return luafUpdatePos(code, lat, lon);
 }
 
@@ -89,4 +88,9 @@ bool CDataBase::InsertDev(DevInfo* dev)
     tb[3] = dev->strLatitude;
     tb[4] = dev->strLongitude;
     return luafInsertDev(tb);
+}
+
+bool CDataBase::CleanDev()
+{
+    return luafDeleteDev();
 }

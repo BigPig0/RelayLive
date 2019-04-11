@@ -143,6 +143,7 @@ namespace DeviceMgr
 
     bool UpdateDevice(DevInfo* pDev)
     {
+        MutexLock lock(&_cs);
 		auto findDev = _mapDevInfo.find(pDev->strDevID);
 		if (findDev == _mapDevInfo.end())
 		{
@@ -205,6 +206,8 @@ namespace DeviceMgr
             SAFE_DELETE(itDev.second);
         }
         _mapDevInfo.clear();
+
+        _db.CleanDev();
 
         return true;
     }

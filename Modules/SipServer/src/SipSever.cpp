@@ -7,7 +7,6 @@
 
 CSipSever::CSipSever(eXosip_t* pSip)
     : m_pExContext(pSip)
-    , m_bQueryDir(false)
 {
     m_bSubStat = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
     m_bSubPos  = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
@@ -160,26 +159,29 @@ void CSipSever::SeverThread()
 
 void CSipSever::SubscribeThread()
 {
-    Sleep(10000);
-    if(1)
-    {
-        PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
-        CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-        m_bQueryDir = false;
-    }
-    m_nSubTime = 0;
+    Sleep(10000); //延时用来保证先收到注册
+    bool firstQuery = true; //启动后第一次查询目录
+    time_t lastQueryTime = 0; //上次查询目录的时间
+    time_t lastSubTime = 0; //订阅时间
     while(true)
     {
-        if(m_bQueryDir)
-        {
+        time_t now = time(nullptr);
+        struct tm * timeinfo = localtime(&now);
+        if(firstQuery) {
+            lastQueryTime = now;
             PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
             CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-            m_bQueryDir = false;
+            firstQuery = false;
+        } else if(difftime(now,lastQueryTime) > 3600 //距离上一次查询查过一小时
+            && timeinfo->tm_hour == 5  //夜里5点重新查询
+            ) {
+            lastQueryTime = now;
+            DeviceMgr::CleanPlatform(); //清空缓存中的数据和数据库设备表中的记录
+            PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
+            CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
         }
-        time_t nSystemTime = time(nullptr);
-        if(difftime(nSystemTime,m_nSubTime) > 1800)
-        {
-            m_nSubTime = nSystemTime;
+        if(difftime(now,lastSubTime) > 1800){ //30分重新订阅一次
+            lastSubTime = now;
             PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
             if(m_bSubStat) {
 				Sleep(10000);
@@ -203,7 +205,6 @@ void CSipSever::OnRegister(eXosip_event_t *osipEvent)
         Register.SetAuthorization(bRegAuthor);
         Register.OnRegister(osipEvent);
         eXosip_event_free(osipEvent);
-        m_bQueryDir = true;
         //Log::debug("OnRegister thread finish\r\n");
     };
     std::thread t1(run,m_pExContext, osipEvent, CSipMgr::m_pConfig->bRegAuthor);
