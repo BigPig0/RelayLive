@@ -83,10 +83,16 @@ bool CDataBase::UpdatePos(string code, string lat, string lon)
 bool CDataBase::InsertDev(DevInfo* dev)
 {
     lua::Table tb;
-    tb[1] = dev->strDevID;
-    tb[2] = dev->strStatus=="ON"?"1":"0";
-    tb[3] = dev->strLatitude;
-    tb[4] = dev->strLongitude;
+	if(dev->strDevID.empty())
+		return false;
+    tb["DevID"] = dev->strDevID;
+	tb["Name"] = dev->strName;
+	tb["ParentID"] = dev->strParentID;
+	if(!dev->strStatus.empty())
+		tb["Status"] = dev->strStatus=="ON"?"1":"0";
+	tb["Latitude"] = dev->strLatitude;
+	tb["Longitude"] = dev->strLongitude;
+	tb["PTZType"] = dev->strPTZType;
     return luafInsertDev(tb);
 }
 

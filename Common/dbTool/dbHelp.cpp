@@ -290,16 +290,17 @@ namespace dbTool
     helpHandle* CreateHelp(string tag, string sql, int rowNum, int interval, bindParam* binds){
         helpHandle* ret = new helpHandle;
         ret->tag        = tag;
+		ret->sql        = sql;
         ret->rowNum     = rowNum;
-        ret->instTime   = std::chrono::system_clock::now();
         ret->interval   = interval;
         ret->run        = true;
+        ret->instTime   = std::chrono::system_clock::now();
         ret->thrdRun    = thread(collect, ret);
 
         // 设置绑定的参数
         for (int i = 0; binds[i].bindName != NULL; i++)
         {
-            int maxlen = 0;
+            int maxlen = binds[i].maxLen;
             switch (binds[i].columnType)
             {
             case SQLT_CHR:
@@ -330,7 +331,7 @@ namespace dbTool
                 binds[i].columnType,//列类型
                 maxlen,             //列最大长度
                 binds[i].nullable,  //列允许为空
-                binds[i].default    //默认值
+                binds[i].default?binds[i].default:""    //默认值
             };
             ret->binds.push_back(info);
         }

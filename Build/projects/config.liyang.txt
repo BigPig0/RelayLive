@@ -24,7 +24,7 @@ SubscribePos = 1
 
 [DataBase]
 ;连接数据库设备信息的配置
-Path = C:\instantclient_11_2
+Path = C:\instantclient_12_1
 Addr = 10.9.0.7/ETL
 User = lyzhjt
 PassWord = zt123

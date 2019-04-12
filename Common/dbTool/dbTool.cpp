@@ -85,7 +85,9 @@ namespace dbTool
                 continue;
 
             string &bindName    = lua::VarCast<lua::Str>(col["bindname"]);
-            param[i].bindName   = (char*)bindName.c_str();
+			param[i].bindName   = (char*)malloc(bindName.size()+1);
+			memcpy(param[i].bindName, bindName.c_str(), bindName.size());
+			param[i].bindName[bindName.size()] = 0;
 
             param[i].columnType = lua::VarCast<lua::Int>(col["coltype"]);
 
@@ -105,13 +107,21 @@ namespace dbTool
 			if(col.isExist(lua::Str("def"))){
 				if(lua::VarType<lua::Str>(col["def"])) {
 					string &strDefault = lua::VarCast<lua::Str>(col["def"]);
-                    param[i].default = (char*)strDefault.c_str();
+					param[i].default = (char*)malloc(strDefault.size()+1);
+					memcpy(param[i].default, strDefault.c_str(), strDefault.size());
+					param[i].default[strDefault.size()] = 0;
                 }
 			}
         }
         param[i].bindName = NULL;
         helpHandle *dbInster = CreateHelp(tag, sql, rnum, interval, param);
 
+		for(int j=0; j<i; j++){
+			if(param[j].bindName)
+				free(param[j].bindName);
+			if(param[j].default)
+				free(param[j].default);
+		}
         SAFE_DELETE_ARRAY(param);
         return (void*)dbInster;
     }

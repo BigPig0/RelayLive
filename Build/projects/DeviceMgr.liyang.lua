@@ -17,9 +17,9 @@ function GetDevInfo()
     end
     DBTOOL_FREE_STMT(stmt)
     --设备
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE from VIDEODEVICE t")
-    local rs = DBTOOL_GET_RES(stmt)
+    local stmt2 = DBTOOL_CREATE_STMT(con)
+    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE from VIDEODEVICE t")
+    local rs = DBTOOL_GET_RES(stmt2)
     while (DBTOOL_FETCH_NEXT(rs)) do
         local row = {}
         row["DevID"]  = DBTOOL_GET_STR(rs, 1)
@@ -29,7 +29,7 @@ function GetDevInfo()
         row["Longitude"]= DBTOOL_GET_STR(rs, 5)
         table.insert(ret, row)
     end
-    DBTOOL_FREE_STMT(stmt)
+    DBTOOL_FREE_STMT(stmt2)
     DBTOOL_FREE_CONN(con)
     return ret
 end
@@ -116,7 +116,7 @@ function Init()
     DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.7/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
     --设备表插入工具
     local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, TYPE, STATUS, UPDATETIME) values (:GUID, :NAME, :SERVERGUID, :TYPE, :STATUS, :UPTIME)"
-    devHelp = luaHelpInit("DB", sql, 50, 10, {
+    devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
         {bindname = "GUID",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "SERVERGUID", coltype = DBTOOL_TYPE_CHR, maxlen = 64},
@@ -126,7 +126,7 @@ function Init()
     })
     --部门表插入工具
     local sql2 = "insert into VIDEODEPART (GUID, DEPARTMEN_ID, DEPARTMENT_NAME, PARENT_ID) values (:id, :id, :name, :pid)"
-    departHelp = luaHelpInit("DB", sql2, 50, 10, {
+    departHelp = DBTOOL_HELP_INIT("DB", sql2, 50, 10, {
         {bindname = "id",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "name",     coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "pid",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
