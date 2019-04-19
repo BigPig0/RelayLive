@@ -1,3 +1,5 @@
+dep = {}
+
 function GetDevInfo()
     local ret = {}
     local con = DBTOOL_GET_CONN("DB")
@@ -12,21 +14,29 @@ function GetDevInfo()
         local row = {}
         row["DevID"]  = DBTOOL_GET_STR(rs, 1)
         row["Name"]   = DBTOOL_GET_STR(rs, 2)
-        row["ParentID"]= DBTOOL_GET_STR(rs, 3)
+        row["BusinessGroupID"]= DBTOOL_GET_STR(rs, 3)
         table.insert(ret, row)
+		dep[row["DevID"]] = row["Name"];	--部门id与部门名称对应关系
     end
     DBTOOL_FREE_STMT(stmt)
     --设备
     local stmt2 = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE from VIDEODEVICE t")
-    local rs = DBTOOL_GET_RES(stmt2)
-    while (DBTOOL_FETCH_NEXT(rs)) do
+    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t")
+    local rs2 = DBTOOL_GET_RES(stmt2)
+    while (DBTOOL_FETCH_NEXT(rs2)) do
         local row = {}
         row["DevID"]  = DBTOOL_GET_STR(rs, 1)
         row["Name"]   = DBTOOL_GET_STR(rs, 2)
-        row["Status"] = DBTOOL_GET_INT(rs, 3)
-        row["Latitude"] = DBTOOL_GET_STR(rs, 4)
-        row["Longitude"]= DBTOOL_GET_STR(rs, 5)
+        local status  = DBTOOL_GET_INT(rs, 3)
+		if(status == 1) then
+			row["Status"] = "ON";
+		else
+			row["Status"] = "OFF";
+		end
+        row["Latitude"]   = DBTOOL_GET_STR(rs, 4)
+        row["Longitude"]  = DBTOOL_GET_STR(rs, 5)
+		row["ParentID"]   = DBTOOL_GET_STR(rs, 6)
+
         table.insert(ret, row)
     end
     DBTOOL_FREE_STMT(stmt2)
@@ -45,7 +55,7 @@ function UpdateStatus(code, status)
 		sta = 1 
     end
     local date=os.date("%Y%m%d%H%M%S")
-	local sql = string.format("update VIDEODEVICE set STATUS = %d, RESETTIME = '%s' where GUID = '%s'", sta, code, date)
+	local sql = string.format("update VIDEODEVICE set STATUS = %d, RESETTIME = '%s' where GUID = '%s'", sta, date, code)
 	print(sql)
     DBTOOL_EXECUTE_STMT(stmt, sql)
 	DBTOOL_COMMIT(con)
@@ -85,15 +95,27 @@ function checkTableKey(tbl, key)
 end
 
 function InsertDev(dev)
+	local dp = ""
     if checkTableKey(dev, "Status") then
         --记录插入设备表
+		if(dev["ParentID"] ~= nil) then
+			dp = dev["ParentID"]
+		end
         local date=os.date("%Y%m%d%H%M%S")
-        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["PTZType"], dev["Status"], date}
+		local status = "0"
+		if(dev["Status"] == "ON") then
+		    status = "1"
+		end
+        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["PTZType"], status, date, dp}
         DBTOOL_ADD_ROW(devHelp, row)
     else
         --记录插入部门表
-        local row = {dev["DevID"], dev["Name"], dev["ParentID"]}
+		if(dev["BusinessGroupID"] ~= nil) then
+			dp = dev["BusinessGroupID"]
+		end
+        local row = {dev["DevID"], dev["Name"], dp}
         DBTOOL_ADD_ROW(departHelp, row)
+		dep[dev["DevID"]] = dev["Name"];	--部门id与部门名称对应关系
     end
     return true
 end
@@ -115,14 +137,15 @@ end
 function Init()
     DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.7/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
     --设备表插入工具
-    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, TYPE, STATUS, UPDATETIME) values (:GUID, :NAME, :SERVERGUID, :TYPE, :STATUS, :UPTIME)"
+    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, TYPE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :TYPE, :STATUS, :UPTIME, :DPART)"
     devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
         {bindname = "GUID",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "SERVERGUID", coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "TYPE",       coltype = DBTOOL_TYPE_INT},
         {bindname = "STATUS",     coltype = DBTOOL_TYPE_INT},
-        {bindname = "UPTIME",     coltype = DBTOOL_TYPE_CHR, maxlen = 14}
+        {bindname = "UPTIME",     coltype = DBTOOL_TYPE_CHR, maxlen = 14},
+		{bindname = "DPART",      coltype = DBTOOL_TYPE_CHR, maxlen = 50}
     })
     --部门表插入工具
     local sql2 = "insert into VIDEODEPART (GUID, DEPARTMEN_ID, DEPARTMENT_NAME, PARENT_ID) values (:id, :id, :name, :pid)"
@@ -131,6 +154,8 @@ function Init()
         {bindname = "name",     coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "pid",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
     })
+	--更新操作执行工具
+	updateHelp = DBTOOL_HELP_INIT("DB", "", 50, 10, {})
     return true
 end
 

@@ -41,7 +41,7 @@ bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort, string &
         Log::error("WaiteInviteFinish failed");
         return false;
     }
-    strBody = m_strBody;
+    strBody = pNew->m_strBody;
     return true;
 }
 
