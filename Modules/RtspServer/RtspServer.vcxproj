@@ -85,6 +85,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="libRtsp.h" />
     <ClInclude Include="rtsp.h" />
     <ClInclude Include="RtspLiveServer.h" />
     <ClInclude Include="RtspServer.h" />
@@ -95,6 +96,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="libRtsp.cpp" />
     <ClCompile Include="rtsp.cpp" />
     <ClCompile Include="RtspLiveServer.cpp" />
     <ClCompile Include="RtspServer.cpp" />

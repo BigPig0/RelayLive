@@ -148,10 +148,10 @@ namespace DeviceMgr
 		if (findDev == _mapDevInfo.end())
 		{
 			// 第一次添加该设备
-			_mapDevInfo.insert(make_pair(pDev->strDevID,pDev));
+			//_mapDevInfo.insert(make_pair(pDev->strDevID,pDev));
 
 			//将信息插入到数据库
-			_db.InsertDev(pDev);
+			//_db.InsertDev(pDev);
 		}
 		else
 		{

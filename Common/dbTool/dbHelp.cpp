@@ -144,113 +144,123 @@ namespace dbTool
         }
         OCI_Statement *st = OCI_CreateStatement(cn);
 
-
-        //准备执行sql
-        OCI_SetBindAllocation(st, OCI_BAM_EXTERNAL);
-        OCI_Prepare(st, h->sql.c_str());
-        OCI_BindArraySetSize(st, nRowSize);
-
-        //绑定
-        int column_num = h->binds.size();
-        int nOffsetBind = 0;
-        char* pBindBegin = h->buff;
-        for (auto& col:h->binds)
-        {
-            switch (col.columnType)
+        if(h->binds.empty()){
+            for (int i=0; i<nRowSize; ++i)
             {
-            case SQLT_CHR:
+                for (auto sql:h->instRows[i])
                 {
-                    char* pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfStrings(st, col.bindName.c_str(), pBuff, col.maxLen, 0);
-                }
-                break;
-            case SQLT_INT:
-                {
-                    int32_t* pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfInts(st, col.bindName.c_str(), pBuff, 0);
-                }
-                break;
-            case SQLT_FLT:
-                {
-                    double* pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfDoubles(st, col.bindName.c_str(), pBuff, 0);
-                }
-                break;
-            case SQLT_LNG:
-                {
-                    big_int* pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfBigInts(st, col.bindName.c_str(), pBuff, 0);
-                }
-                break;
-            case SQLT_UIN:
-                {
-                    uint32_t* pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfUnsignedInts(st, col.bindName.c_str(), pBuff, 0);
-                }
-                break;
-            case SQLT_ODT:
-                {
-                    OCI_Date** pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfDates(st, col.bindName.c_str(),pBuff, 0);
-                }
-                break;
-            case SQLT_BLOB:
-                {
-                    OCI_Lob** pBuff;
-                    memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
-                    OCI_BindArrayOfLobs(st, col.bindName.c_str(), pBuff, OCI_BLOB, 0);
-                }
-                break;
-            }
-            nOffsetBind += pointLen;
-        }
-        for (int i=0; i<nRowSize; ++i)
-        {
-            vector<string>& row = h->instRows[i];
-            int nLineColumnSize = row.size();
-            for (int j=0; j<column_num; ++j)
-            {
-                string value = j<nLineColumnSize ? row[j] : h->binds[j].default;
-                bool isnull = h->binds[j].nullable ? value.empty() : false;
-
-                if(h->binds[j].columnType == SQLT_CHR)
-                {
-                    bind_set_data(OCI_GetBind(st, j+1), i, h->binds[j].maxLen, value, isnull);
-                }
-                else if (h->binds[j].columnType == SQLT_INT 
-                    || h->binds[j].columnType == SQLT_UIN)
-                {
-                    int32_t n = value.empty()?0:stoi(value);
-                    bind_set_data(OCI_GetBind(st, j+1), i, n, isnull);
-                }
-                else if (h->binds[j].columnType == SQLT_LNG)
-                {
-                    int64_t n = value.empty()?0:_atoi64(value.c_str());
-                    bind_set_data(OCI_GetBind(st, j+1), i, n, isnull);
-                }
-                else if (h->binds[j].columnType == SQLT_ODT)
-                {
-                    bind_set_data(OCI_GetBind(st, j+1), i, value, "yyyymmddhh24miss", isnull);
+                    OCI_ExecuteStmt(st, sql.c_str());
                 }
             }
-        }
+            OCI_Commit(cn);
+        } else {
+            //准备执行sql
+            OCI_SetBindAllocation(st, OCI_BAM_EXTERNAL);
+            OCI_Prepare(st, h->sql.c_str());
+            OCI_BindArraySetSize(st, nRowSize);
 
-        boolean bExcute = OCI_Execute(st);
-        boolean bCommit = OCI_Commit(cn);
-        unsigned int count = OCI_GetAffectedRows(st);    //某一行插入失败，不会回滚所有数据，但是出错后count为0，这是ocilib的一个bug
-        if (!bExcute || !bCommit || 0 == count)
-        {
-            Log::warning("Execute %s fail bExcute: %d; bCommit: %d; count: %d" ,h->tag.c_str(), bExcute, bCommit, count);
-        }
-        else
-        {
-            Log::warning("Execute %s sucess bExcute: %d; bCommit: %d; count: %d" ,h->tag.c_str(), bExcute, bCommit, count);
+            //绑定
+            int column_num = h->binds.size();
+            int nOffsetBind = 0;
+            char* pBindBegin = h->buff;
+            for (auto& col:h->binds)
+            {
+                switch (col.columnType)
+                {
+                case SQLT_CHR:
+                    {
+                        char* pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfStrings(st, col.bindName.c_str(), pBuff, col.maxLen, 0);
+                    }
+                    break;
+                case SQLT_INT:
+                    {
+                        int32_t* pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfInts(st, col.bindName.c_str(), pBuff, 0);
+                    }
+                    break;
+                case SQLT_FLT:
+                    {
+                        double* pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfDoubles(st, col.bindName.c_str(), pBuff, 0);
+                    }
+                    break;
+                case SQLT_LNG:
+                    {
+                        big_int* pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfBigInts(st, col.bindName.c_str(), pBuff, 0);
+                    }
+                    break;
+                case SQLT_UIN:
+                    {
+                        uint32_t* pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfUnsignedInts(st, col.bindName.c_str(), pBuff, 0);
+                    }
+                    break;
+                case SQLT_ODT:
+                    {
+                        OCI_Date** pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfDates(st, col.bindName.c_str(),pBuff, 0);
+                    }
+                    break;
+                case SQLT_BLOB:
+                    {
+                        OCI_Lob** pBuff;
+                        memcpy_s(&pBuff, pointLen, pBindBegin+nOffsetBind, pointLen);
+                        OCI_BindArrayOfLobs(st, col.bindName.c_str(), pBuff, OCI_BLOB, 0);
+                    }
+                    break;
+                }
+                nOffsetBind += pointLen;
+            }
+            for (int i=0; i<nRowSize; ++i)
+            {
+                vector<string>& row = h->instRows[i];
+                int nLineColumnSize = row.size();
+                for (int j=0; j<column_num; ++j)
+                {
+                    string value = j<nLineColumnSize ? row[j] : h->binds[j].default;
+                    bool isnull = h->binds[j].nullable ? value.empty() : false;
+
+                    if(h->binds[j].columnType == SQLT_CHR)
+                    {
+                        bind_set_data(OCI_GetBind(st, j+1), i, h->binds[j].maxLen, value, isnull);
+                    }
+                    else if (h->binds[j].columnType == SQLT_INT 
+                        || h->binds[j].columnType == SQLT_UIN)
+                    {
+                        int32_t n = value.empty()?0:stoi(value);
+                        bind_set_data(OCI_GetBind(st, j+1), i, n, isnull);
+                    }
+                    else if (h->binds[j].columnType == SQLT_LNG)
+                    {
+                        int64_t n = value.empty()?0:_atoi64(value.c_str());
+                        bind_set_data(OCI_GetBind(st, j+1), i, n, isnull);
+                    }
+                    else if (h->binds[j].columnType == SQLT_ODT)
+                    {
+                        bind_set_data(OCI_GetBind(st, j+1), i, value, "yyyymmddhh24miss", isnull);
+                    }
+                }
+            }
+
+            boolean bExcute = OCI_Execute(st);
+            boolean bCommit = OCI_Commit(cn);
+            unsigned int count = OCI_GetAffectedRows(st);    //某一行插入失败，不会回滚所有数据，但是出错后count为0，这是ocilib的一个bug
+            if (!bExcute || !bCommit || 0 == count)
+            {
+                Log::warning("Execute %s fail bExcute: %d; bCommit: %d; count: %d" ,h->tag.c_str(), bExcute, bCommit, count);
+            }
+            else
+            {
+                Log::warning("Execute %s sucess bExcute: %d; bCommit: %d; count: %d" ,h->tag.c_str(), bExcute, bCommit, count);
+            }
         }
         OCI_FreeStatement(st);
         OCI_ConnectionFree(cn);

@@ -149,7 +149,7 @@ void CSipSever::SeverThread()
         //    }
         //    break;
         default:
-            Log::warning("The sip event type that not be precessed.the event type is : %d\r\n",osipEventPtr->type);
+			Log::warning("The sip event type that not be precessed.the event type is : %d, %s",osipEventPtr->type, osipEventPtr->textinfo);
             break;
         }
         eXosip_event_free(osipEventPtr);
@@ -159,40 +159,45 @@ void CSipSever::SeverThread()
 
 void CSipSever::SubscribeThread()
 {
-    Sleep(10000); //延时用来保证先收到注册
-    bool firstQuery = true; //启动后第一次查询目录
-    time_t lastQueryTime = 0; //上次查询目录的时间
-    time_t lastSubTime = 0; //订阅时间
+    PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
+    CSipMgr::m_pSubscribe->SetPlatform(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+    time_t lastQueryTime, lastSubscribeStat, lastSubscribePos; //上次查询目录的时间
+
+    if(1){
+        Sleep(10000); //延时用来保证先收到注册
+        CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
+		lastQueryTime = time(NULL);
+        Log::debug(" Query dir %s",platform->strDevCode.c_str());
+        Sleep(60000); //延时保证查询接受结束再进行订阅
+    }
+    if(m_bSubStat) {
+        CSipMgr::m_pSubscribe->SubscribeDirectory(600);
+		lastSubscribeStat = time(NULL);
+        Log::debug(" Subscribe dir %s",platform->strDevCode.c_str());
+        Sleep(10000);
+    }
+    if(m_bSubPos) {
+        CSipMgr::m_pSubscribe->SubscribeMobilepostion(100);
+		lastSubscribePos = time(NULL);
+        Log::debug(" Subscribe mobile pos %s",platform->strDevCode.c_str());
+    }
+
     while(true)
     {
         time_t now = time(nullptr);
         struct tm * timeinfo = localtime(&now);
-        if(firstQuery) {
-            lastQueryTime = now;
-            PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
-            CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-            firstQuery = false;
-        } else if(difftime(now,lastQueryTime) > 3600 //距离上一次查询查过一小时
+        if(difftime(now,lastQueryTime) > 3600 //距离上一次查询查过一小时
             && timeinfo->tm_hour == 5  //夜里5点重新查询
-            ) {
+          ) {
             lastQueryTime = now;
             DeviceMgr::CleanPlatform(); //清空缓存中的数据和数据库设备表中的记录
-            PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
             CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
         }
-        if(difftime(now,lastSubTime) > 1800){ //30分重新订阅一次
-            lastSubTime = now;
-            PlatFormInfo* platform = DeviceMgr::GetPlatformInfo();
-            if(m_bSubStat) {
-				Sleep(10000);
-                CSipMgr::m_pSubscribe->Subscribe(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-			}
-            if(m_bSubPos) {
-				Sleep(10000);
-                CSipMgr::m_pSubscribe->SubscribeMobilepostion(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
-			}
-            Log::debug(" Subscribe %s",platform->strDevCode.c_str());
-        }
+		if(difftime(now,lastSubscribeStat) > 600){
+			 lastSubscribeStat = now;
+			 CSipMgr::m_pSubscribe->SubscribeDirectory(600);
+		}
+
         Sleep(1000);
     }
 }

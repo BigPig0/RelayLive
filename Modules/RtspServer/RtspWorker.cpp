@@ -23,13 +23,15 @@ namespace RtspServer
         m_pRing  = create_ring_buff(sizeof(LIVE_BUFF), 5000, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
-        m_pLive->AddHandle(this, HandleType::rtp_handle);
+        if(m_pLive)
+            m_pLive->AddHandle(this, HandleType::rtp_handle);
     }
 
 
     CRtspWorker::~CRtspWorker(void)
     {
-        m_pLive->RemoveHandle(this);
+        if(m_pLive)
+            m_pLive->RemoveHandle(this);
 
         destroy_ring_buff(m_pRing);
         Log::debug("CRtspWorker release");
@@ -80,8 +82,14 @@ namespace RtspServer
         /* more to do for us? */
         if (ring_get_element(m_pRing, &pss->tail))
             /* come back as soon as we can write more */
-                //lws_callback_on_writable(pss->wsi);
+                rtp_callback_on_writable(pss->rtspClient);
                     ;
+    }
+
+    string CRtspWorker::GetSDP(){
+        if(m_pLive)
+            return m_pLive->GetSDP();
+        return "";
     }
 
     void CRtspWorker::push_video_stream(char* pBuff, int nLen)
@@ -107,7 +115,7 @@ namespace RtspServer
 
         //向所有播放链接发送数据
         start_foreach_llp(pss_rtsp_client **, ppss, m_pPssList) {
-            //lws_callback_on_writable((*ppss)->wsi);
+            rtp_callback_on_writable((*ppss)->rtspClient);
         } end_foreach_llp(ppss, pss_next);
     }
 

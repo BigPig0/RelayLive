@@ -54,15 +54,102 @@ vector<DevInfo*> CDataBase::GetDevInfo()
 			} else if(key == "Name"){
 				lua::Str value = lua::VarCast<lua::Str>(v2);
                 dev->strName = value;
+			} else if(key == "Manuf"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strManuf = value;
+			} else if(key == "Model"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strModel = value;
+			} else if(key == "Owner"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strOwner = value;
+			} else if(key == "CivilCode"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strCivilCode = value;
+			} else if(key == "Block"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strBlock = value;
+			} else if(key == "Address"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strAddress = value;
+			} else if(key == "Parental"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strParental = value;
+			} else if(key == "ParentID"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strParentID = value;
+			} else if(key == "SafetyWay"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strSafetyWay = value;
+			} else if(key == "RegisterWay"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strRegisterWay = value;
+			} else if(key == "CertNum"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strCertNum = value;
+			} else if(key == "Certifiable"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strCertifiable = value;
+			} else if(key == "ErrCode"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strErrCode = value;
+			} else if(key == "EndTime"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strEndTime = value;
+			} else if(key == "Secrecy"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strSecrecy = value;
+			} else if(key == "IPAddress"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strIPAddress = value;
+			} else if(key == "Port"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strPort = value;
+			} else if(key == "Password"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strPassword = value;
 			} else if(key == "Status"){
-				lua::Int value = lua::VarCast<lua::Int>(v2);
-                dev->strStatus = value?"ON":"OFF";
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strStatus = value;
 			} else if(key == "Latitude"){
 				lua::Str value = lua::VarCast<lua::Str>(v2);
 				dev->strLatitude = value;
 			} else if(key == "Longitude"){
 				lua::Str value = lua::VarCast<lua::Str>(v2);
 				dev->strLongitude = value;
+			} else if(key == "PTZType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strPTZType = value;
+			} else if(key == "PositionType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strPositionType = value;
+			} else if(key == "RoomType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strRoomType = value;
+			} else if(key == "UseType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strUseType = value;
+			} else if(key == "SupplyLightType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strSupplyLightType = value;
+			} else if(key == "DirectionType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strDirectionType = value;
+			} else if(key == "Resolution"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strResolution = value;
+			} else if(key == "BusinessGroupID"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strBusinessGroupID = value;
+			} else if(key == "DownloadSpeed"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strDownloadSpeed = value;
+			} else if(key == "SVCSpaceSupportType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strSVCSpaceSupportType = value;
+			} else if(key == "SVCTimeSupportType"){
+				lua::Str value = lua::VarCast<lua::Str>(v2);
+				dev->strSVCTimeSupportType = value;
 			}
         }
         vecRet.push_back(dev);
@@ -86,13 +173,74 @@ bool CDataBase::InsertDev(DevInfo* dev)
 	if(dev->strDevID.empty())
 		return false;
     tb["DevID"] = dev->strDevID;
-	tb["Name"] = dev->strName;
-	tb["ParentID"] = dev->strParentID;
+	if(!dev->strName.empty())
+		tb["Name"] = dev->strName;
+	if(!dev->strManuf.empty())
+		tb["Manuf"] = dev->strManuf;
+	if(!dev->strModel.empty())
+		tb["Model"] = dev->strModel;
+	if(!dev->strOwner.empty())
+		tb["Owner"] = dev->strOwner;
+	if(!dev->strCivilCode.empty())
+		tb["CivilCode"] = dev->strCivilCode;
+	if(!dev->strBlock.empty())
+		tb["Block"] = dev->strBlock;
+	if(!dev->strAddress.empty())
+		tb["Address"] = dev->strAddress;
+	if(!dev->strParental.empty())
+		tb["Parental"] = dev->strParental;
+	if(!dev->strParentID.empty())
+		tb["ParentID"] = dev->strParentID;
+	if(!dev->strSafetyWay.empty())
+		tb["SafetyWay"] = dev->strSafetyWay;
+	if(!dev->strRegisterWay.empty())
+		tb["RegisterWay"] = dev->strRegisterWay;
+	if(!dev->strCertNum.empty())
+		tb["CertNum"] = dev->strCertNum;
+	if(!dev->strCertifiable.empty())
+		tb["Certifiable"] = dev->strCertifiable;
+	if(!dev->strErrCode.empty())
+		tb["ErrCode"] = dev->strErrCode;
+	if(!dev->strEndTime.empty())
+		tb["EndTime"] = dev->strEndTime;
+	if(!dev->strSecrecy.empty())
+		tb["Secrecy"] = dev->strSecrecy;
+	if(!dev->strIPAddress.empty())
+		tb["IPAddress"] = dev->strIPAddress;
+	if(!dev->strPort.empty())
+		tb["Port"] = dev->strPort;
+	if(!dev->strPassword.empty())
+		tb["Password"] = dev->strPassword;
 	if(!dev->strStatus.empty())
-		tb["Status"] = dev->strStatus=="ON"?"1":"0";
-	tb["Latitude"] = dev->strLatitude;
-	tb["Longitude"] = dev->strLongitude;
-	tb["PTZType"] = dev->strPTZType;
+		tb["Status"] = dev->strStatus;
+	if(!dev->strLatitude.empty())
+		tb["Latitude"] = dev->strLatitude;
+	if(!dev->strLongitude.empty())
+		tb["Longitude"] = dev->strLongitude;
+
+	if(!dev->strPTZType.empty())
+		tb["PTZType"] = dev->strPTZType;
+	if(!dev->strPositionType.empty())
+		tb["PositionType"] = dev->strPositionType;
+	if(!dev->strRoomType.empty())
+		tb["RoomType"] = dev->strRoomType;
+	if(!dev->strUseType.empty())
+		tb["UseType"] = dev->strUseType;
+	if(!dev->strSupplyLightType.empty())
+		tb["SupplyLightType"] = dev->strSupplyLightType;
+	if(!dev->strDirectionType.empty())
+		tb["DirectionType"] = dev->strDirectionType;
+	if(!dev->strResolution.empty())
+		tb["Resolution"] = dev->strResolution;
+	if(!dev->strBusinessGroupID.empty())
+		tb["BusinessGroupID"] = dev->strBusinessGroupID;
+	if(!dev->strDownloadSpeed.empty())
+		tb["DownloadSpeed"] = dev->strDownloadSpeed;
+	if(!dev->strSVCSpaceSupportType.empty())
+		tb["SVCSpaceSupportType"] = dev->strSVCSpaceSupportType;
+	if(!dev->strSVCTimeSupportType.empty())
+		tb["SVCTimeSupportType"] = dev->strSVCTimeSupportType;
+
     return luafInsertDev(tb);
 }
 

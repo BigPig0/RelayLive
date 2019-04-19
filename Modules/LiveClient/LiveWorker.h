@@ -16,6 +16,7 @@ namespace LiveClient
         virtual bool AddHandle(ILiveHandle* h, HandleType t);
         virtual bool RemoveHandle(ILiveHandle* h);
 		virtual LIVE_BUFF GetHeader(HandleType t);
+        virtual string GetSDP();
 
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
@@ -45,6 +46,8 @@ namespace LiveClient
         bool m_bRtp;
 		LIVE_BUFF               m_stFlvHead;    //
 		LIVE_BUFF               m_stMp4Head;
+
+        string                  m_strSDP;      // sip服务器返回的sdp
 
     private:
         string                   m_strCode;     // 播放媒体编号

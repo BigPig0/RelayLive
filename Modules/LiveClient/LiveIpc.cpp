@@ -52,7 +52,7 @@ namespace LiveIpc
         }
     }
 
-    int RealPlay(string dev_code, string rtp_ip, int rtp_port){
+    int RealPlay(string dev_code, string rtp_ip, int rtp_port, string &sdp){
         // ssid=123&rtpip=1.1.1.1&rtpport=50000
         _ipc_task.ssid = dev_code;
         _ipc_task.ret = 0;
@@ -68,6 +68,7 @@ namespace LiveIpc
         }
 
         while (_ipc_task.ipc_status) Sleep(100);
+        sdp = _ipc_task.error;
         return _ipc_task.ret;
     }
 

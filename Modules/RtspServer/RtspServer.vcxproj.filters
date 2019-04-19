@@ -42,6 +42,9 @@
     <ClInclude Include="RtspServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="libRtsp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RtspServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libRtsp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

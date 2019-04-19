@@ -21,7 +21,7 @@ CSipCall::~CSipCall(void)
     }
 }
 
-bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort)
+bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort, string &strBody)
 {
     CSipCall* pNew          = new CSipCall;
     pNew->m_strDevCode      = strDevCode;
@@ -41,6 +41,7 @@ bool CSipCall::CreatSipCall(string strDevCode, string strIP, int nPort)
         Log::error("WaiteInviteFinish failed");
         return false;
     }
+    strBody = m_strBody;
     return true;
 }
 
@@ -171,6 +172,7 @@ bool CSipCall::OnInviteOk(int nDID, char* szBody, int nLength)
     Log::debug("CSipCall::OnInviteOk nDID:%d,szBody:%s",nDID,szBody);
     m_nDialogID = nDID;
     m_nInvite   = 1;
+    m_strBody   = string(szBody, nLength);
 
     return true;
 }

@@ -17,6 +17,8 @@ namespace RtspServer
         o.port = Settings::getValue("RtspServer","Port", 524);
         o.rtp_port = Settings::getValue("RtspServer","RtpPort", 80000);
         o.rtp_port_num = Settings::getValue("RtspServer","RtpPort", 1000);
+        o.user_len = sizeof(pss_rtsp_client);
+        o.cb = callback_live_rtsp;
 
         g_rtsp = new CRtspServer(o);
         g_rtsp->Init(g_uv_loop);

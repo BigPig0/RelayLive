@@ -20,6 +20,8 @@ namespace RtspServer
         LIVE_BUFF GetVideo(uint32_t *tail);
         void NextWork(pss_rtsp_client* pss);
 
+        string GetSDP();
+
         virtual void push_video_stream(char* pBuff, int nLen);
         virtual void stop();
         virtual string get_clients_info();

@@ -83,7 +83,7 @@ namespace LiveClient
         CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
         //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
-        if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort))
+        if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort, pNew->m_strSDP))
         {
             uv_thread_t tid;
             uv_thread_create(&tid, live_worker_destory_thread, pNew);
@@ -290,6 +290,10 @@ namespace LiveClient
 		LIVE_BUFF ret = {0};
 		return ret;
 	}
+
+    string CLiveWorker::GetSDP(){
+        return m_strSDP;
+    }
 
 	void CLiveWorker::Clear2Stop() {
         if(m_vecLiveFlv.empty() && m_vecLiveMp4.empty() && m_vecLiveH264.empty()

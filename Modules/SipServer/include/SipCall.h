@@ -17,7 +17,7 @@ public:
      * @param nPort[in] rtp接收服务端口
      * @return 成功true,失败false
      */
-    static bool CreatSipCall(string strDevCode, string strIP, int nPort);
+    static bool CreatSipCall(string strDevCode, string strIP, int nPort, string &strBody);
     static bool CreatSipCall(string strDevCode, string strIP, int nPort, 
         string startTime, string endTime);
 
@@ -72,6 +72,7 @@ private:
     string          m_strDevCode;       //< 设备的编码
 
     int             m_nInvite;     //< 邀请状态标记，发送邀请置为0，收到邀请应答置为1
+    string          m_strBody;     //< 邀请成功收到的body，是一个sdp信息
 
     //历史视频点播
     bool            m_bRecord;

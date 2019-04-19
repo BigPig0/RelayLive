@@ -8,45 +8,44 @@ CSipSubscribe::CSipSubscribe(eXosip_t* pSip)
 {
 }
 
-
 CSipSubscribe::~CSipSubscribe(void)
 {
 }
 
-
-void CSipSubscribe::Subscribe(string strDevCode, string strAddrIP, string strAddrPort)
+void CSipSubscribe::SetPlatform(string strDevCode, string strAddrIP, string strAddrPort)
 {
-    CSipFromToHeader stFrom;
-    stFrom.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
-                   , CSipMgr::m_pConfig->strAddrIP.c_str()
-                   , CSipMgr::m_pConfig->strAddrPort.c_str());
-    CSipFromToHeader stTo;
-    stTo.SetHeader(strDevCode.c_str(), strAddrIP.c_str(), strAddrPort.c_str());
-    SendSubscribe(stFrom, stTo, 3600);
+    m_strCode = strDevCode;
+    m_strIP = strAddrIP;
+    m_strPort = strAddrPort;
 }
 
-int CSipSubscribe::SendSubscribe(CSipFromToHeader &from, 
-                              CSipFromToHeader &to,
-                              const int expires)
+void CSipSubscribe::SubscribeDirectory(const int expires)
 {
+    CSipFromToHeader from;
+    from.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
+                   , CSipMgr::m_pConfig->strAddrIP.c_str()
+                   , CSipMgr::m_pConfig->strAddrPort.c_str());
+    CSipFromToHeader to;
+    to.SetHeader(m_strCode.c_str(), m_strIP.c_str(), m_strPort.c_str());
+    
     static osip_message_t *subMsg = 0;
-    //static int eventID = 1;
-    //stringstream ssEvt;
-    //ssEvt << "Catalog;id=" << eventID++;
+    static int eventID = 1;
+    stringstream ssEvt;
+    ssEvt << "Catalog;id=" << eventID++;
     eXosip_lock(m_pExContext);
     int nSubID = eXosip_subscription_build_initial_subscribe( m_pExContext       // struct eXosip_t *excontext
                                                , &subMsg                         // osip_message_t ** subscribe
                                                , to.GetFormatHeader().c_str()    // const char *to
                                                , from.GetFormatHeader().c_str()  // const char *from
                                                , nullptr                         // const char *route
-                                               , "presence"                      // const char *event
-                                               //, ssEvt.str().c_str()
+                                               //, "presence"                      // const char *event
+                                               , ssEvt.str().c_str()
                                                , expires);                       // int expires
     if (nSubID != OSIP_SUCCESS)
     {
         Log::error("CSubscribe::SendSubscribe init msg failed");
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     static int sn = 1;
@@ -55,7 +54,7 @@ int CSipSubscribe::SendSubscribe(CSipFromToHeader &from,
        << "<Query>\r\n"
        << "<CmdType>Catalog</CmdType>\r\n"
        << "<SN>" << sn++ << "</SN>\r\n"
-       << "<DeviceID>" << to.GetAddrCode() << "</DeviceID>\r\n"
+       << "<DeviceID>" << m_strCode << "</DeviceID>\r\n"
        << "</Query>\r\n";
     string strBody = ss.str();
 
@@ -67,49 +66,40 @@ int CSipSubscribe::SendSubscribe(CSipFromToHeader &from,
     {
         Log::error("CSubscribe::SendSubscribe send failed:%d",ret);
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     eXosip_unlock(m_pExContext);
-    return 0;
+    return;
 }
 
-
-
-
-void CSipSubscribe::SubscribeAlarm(string strDevCode, string strAddrIP, string strAddrPort)
+void CSipSubscribe::SubscribeAlarm(const int expires)
 {
-    CSipFromToHeader stFrom;
-    stFrom.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
+    CSipFromToHeader from;
+    from.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
         , CSipMgr::m_pConfig->strAddrIP.c_str()
         , CSipMgr::m_pConfig->strAddrPort.c_str());
-    CSipFromToHeader stTo;
-    stTo.SetHeader(strDevCode.c_str(), strAddrIP.c_str(), strAddrPort.c_str());
-    SendSubscribeAlarm(stFrom, stTo, 3600);
-}
+    CSipFromToHeader to;
+    to.SetHeader(m_strCode.c_str(), m_strIP.c_str(), m_strPort.c_str());
 
-int CSipSubscribe::SendSubscribeAlarm(CSipFromToHeader &from, 
-                                 CSipFromToHeader &to,
-                                 const int expires)
-{
     static osip_message_t *subMsg = 0;
-    //static int eventID = 1;
-    //stringstream ssEvt;
-    //ssEvt << "Catalog;id=" << eventID++;
+    static int eventID = 1;
+    stringstream ssEvt;
+    ssEvt << "Catalog;id=" << eventID++;
     eXosip_lock(m_pExContext);
     int nSubID = eXosip_subscription_build_initial_subscribe( m_pExContext       // struct eXosip_t *excontext
         , &subMsg                         // osip_message_t ** subscribe
         , to.GetFormatHeader().c_str()    // const char *to
         , from.GetFormatHeader().c_str()  // const char *from
         , nullptr                         // const char *route
-        , "presence"                      // const char *event
-        //, ssEvt.str().c_str()
+        //, "presence"                      // const char *event
+        , ssEvt.str().c_str()
         , expires);                       // int expires
     if (nSubID != OSIP_SUCCESS)
     {
         Log::error("CSubscribe::SendSubscribeAlarm init msg failed");
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     static int sn = 1;
@@ -118,7 +108,7 @@ int CSipSubscribe::SendSubscribeAlarm(CSipFromToHeader &from,
         << "<Query>\r\n"
         << "<CmdType>Alarm</CmdType>\r\n"
         << "<SN>" << sn++ << "</SN>\r\n"
-        << "<DeviceID>" << to.GetAddrCode() << "</DeviceID>\r\n"
+        << "<DeviceID>" << m_strCode << "</DeviceID>\r\n"
 		<< "<StartAlarmPriority>1</StartAlarmPriority>\r\n"
 		<< "<EndAlarmPriority>4</EndAlarmPriority>\r\n"
 		<< "<AlarmMethod>0</AlarmMethod>\r\n"
@@ -133,48 +123,40 @@ int CSipSubscribe::SendSubscribeAlarm(CSipFromToHeader &from,
     {
         Log::error("CSubscribe::SendSubscribeAlarm send failed:%d",ret);
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     eXosip_unlock(m_pExContext);
-    return 0;
+    return;
 }
 
-
-
-void CSipSubscribe::SubscribeMobilepostion(string strDevCode, string strAddrIP, string strAddrPort)
+void CSipSubscribe::SubscribeMobilepostion(const int expires)
 {
-    CSipFromToHeader stFrom;
-    stFrom.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
+    CSipFromToHeader from;
+    from.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
         , CSipMgr::m_pConfig->strAddrIP.c_str()
         , CSipMgr::m_pConfig->strAddrPort.c_str());
-    CSipFromToHeader stTo;
-    stTo.SetHeader(strDevCode.c_str(), strAddrIP.c_str(), strAddrPort.c_str());
-    SendSubscribeMobilepostion(stFrom, stTo, 3600);
-}
+    CSipFromToHeader to;
+    to.SetHeader(m_strCode.c_str(), m_strIP.c_str(), m_strPort.c_str());
 
-int CSipSubscribe::SendSubscribeMobilepostion(CSipFromToHeader &from, 
-                                      CSipFromToHeader &to,
-                                      const int expires)
-{
     static osip_message_t *subMsg = 0;
-    //static int eventID = 1;
-    //stringstream ssEvt;
-    //ssEvt << "Catalog;id=" << eventID++;
+    static int eventID = 1;
+    stringstream ssEvt;
+    ssEvt << "Catalog;id=" << eventID++;
     eXosip_lock(m_pExContext);
     int nSubID = eXosip_subscription_build_initial_subscribe( m_pExContext       // struct eXosip_t *excontext
         , &subMsg                         // osip_message_t ** subscribe
         , to.GetFormatHeader().c_str()    // const char *to
         , from.GetFormatHeader().c_str()  // const char *from
         , nullptr                         // const char *route
-        , "presence"                      // const char *event
-        //, ssEvt.str().c_str()
+        //, "presence"                      // const char *event
+        , ssEvt.str().c_str()
         , expires);                       // int expires
     if (nSubID != OSIP_SUCCESS)
     {
         Log::error("CSubscribe::SendSubscribeMobilepostion init msg failed");
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     static int sn = 1;
@@ -183,7 +165,7 @@ int CSipSubscribe::SendSubscribeMobilepostion(CSipFromToHeader &from,
         << "<Query>\r\n"
         << "<CmdType>MobilePosition</CmdType>\r\n"
         << "<SN>" << sn++ << "</SN>\r\n"
-        << "<DeviceID>" << to.GetAddrCode() << "</DeviceID>\r\n"
+        << "<DeviceID>" << m_strCode << "</DeviceID>\r\n"
         << "</Query>\r\n";
     string strBody = ss.str();
 
@@ -195,9 +177,9 @@ int CSipSubscribe::SendSubscribeMobilepostion(CSipFromToHeader &from,
     {
         Log::error("CSubscribe::SendSubscribeMobilepostion send failed:%d",ret);
         eXosip_unlock(m_pExContext);
-        return -1;
+        return;
     }
 
     eXosip_unlock(m_pExContext);
-    return 0;
+    return;
 }

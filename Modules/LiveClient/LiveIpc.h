@@ -5,7 +5,7 @@ namespace LiveIpc
 {
     extern void Init();
 
-    extern int RealPlay(string dev_code, string rtp_ip, int rtp_port);
+    extern int RealPlay(string dev_code, string rtp_ip, int rtp_port, string &sdp);
 
     extern int StopPlay(string dev_code);
 

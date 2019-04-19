@@ -11,32 +11,22 @@ public:
     CSipSubscribe(eXosip_t* pSip);
     virtual ~CSipSubscribe(void);
 
-    // 生存订阅信息
-    void Subscribe(string strDevCode, string strAddrIP, string strAddrPort);
+    // 设置对方平台的信息
+    void SetPlatform(string strDevCode, string strAddrIP, string strAddrPort);
+
+    // 目录状态订阅
+    void SubscribeDirectory(const int expires);
 
     // 事件订阅
-    void SubscribeAlarm(string strDevCode, string strAddrIP, string strAddrPort);
+    void SubscribeAlarm(const int expires);
 
-    // 位置信息订阅
-    void SubscribeMobilepostion(string strDevCode, string strAddrIP, string strAddrPort);
-
-private:
-    //发送订阅信息
-    int SendSubscribe(CSipFromToHeader &from, 
-                      CSipFromToHeader &to,
-                      const int expires);
-
-    //发送事件订阅信息
-    int SendSubscribeAlarm(CSipFromToHeader &from, 
-                      CSipFromToHeader &to,
-                      const int expires);
-
-    //发送位置信息订阅
-    int SendSubscribeMobilepostion(CSipFromToHeader &from, 
-        CSipFromToHeader &to,
-        const int expires);
+    // 移动设备位置信息订阅
+    void SubscribeMobilepostion(const int expires);
 
 private:
     eXosip_t* m_pExContext;
+    string    m_strCode;    //对方平台的编码
+    string    m_strIP;      //对方平台的IP
+    string    m_strPort;    //对方平台的端口
 };
 

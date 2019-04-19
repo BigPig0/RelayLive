@@ -29,10 +29,11 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         string ip = strfind(data, "rtpip=", "&");
         string port = strfind(data, "rtpport=", "&");
 
-        bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port));
+        string sdp;
+        bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port), sdp);
         if(bplay) {
             stringstream ss;
-            ss << "ssid=" << port << "&ret=0&error=success";
+            ss << "ssid=" << port << "&ret=0&error=" << sdp;
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         } else {

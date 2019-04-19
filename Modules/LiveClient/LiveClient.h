@@ -69,6 +69,8 @@ namespace LiveClient
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
 
 		virtual LIVE_BUFF GetHeader(HandleType t) = 0;
+
+        virtual string GetSDP() = 0;
     };
 
     /**
