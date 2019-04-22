@@ -123,9 +123,10 @@ namespace RtspServer
         CRtspServer*    m_server;      //服务对象
         //CRtspWorker*    m_pWorker;     //业务对象
         string          m_strDevCode;  //设备编码
-        string          m_strRtpIP;    //客户端接收rtp数据的IP
+        string          m_strRtpIP;    //客户端IP
         int             m_nRtpPort;    //客户端接收rtp数据的端口
         int             m_nRtcpPort;   //客户端接收rtcp数据的端口
+		string          m_strLocalIP;  //本地IP
         int             m_nLocalPort;  //本地发送rtp的端口
         void*           m_user;        //用户数据
         struct sockaddr_in m_addrRtp;
@@ -134,7 +135,7 @@ namespace RtspServer
         rtsp_response*  m_Response;
     };
 
-    typedef int(*live_rtsp_cb)(CClient *client, rtsp_method reason, void *user, void *in, size_t len);
+    typedef int(*live_rtsp_cb)(CClient *client, rtsp_method reason, void *user);
     struct rtsp_options
     {
         string ip;         //监听IP
@@ -159,6 +160,11 @@ namespace RtspServer
         static volatile uint64_t m_nSession;
 
         rtsp_options    m_options;
+
+		int GetRtpPort();
+		void GiveBackRtpPort(int nPort);
+		vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+		CriticalSection m_csRTP;          //< RTP端口锁
     };
 
     /** 线程安全的方法，通知rtsploop执行一次RTP_WRITE回调 */

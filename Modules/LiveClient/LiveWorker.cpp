@@ -132,6 +132,19 @@ namespace LiveClient
         return false;
     }
 
+	string GetAllWorkerClientsInfo(){
+		string strResJson = "{\"root\":[";
+        MutexLock lock(&m_cs);
+        for (auto w : m_workerMap)
+        {
+            CLiveWorker *worker = w.second;
+			strResJson += worker->GetClientInfo();
+		}
+		strResJson = StringHandle::StringTrimRight(strResJson,',');
+        strResJson += "]}";
+        return strResJson;
+	}
+
     //////////////////////////////////////////////////////////////////////////
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort)
@@ -397,19 +410,43 @@ namespace LiveClient
 
     string CLiveWorker::GetClientInfo()
     {
-        string strResJson = "{\"root\":[";
-        MutexLock lock(&m_cs);
-        for (auto w : m_workerMap)
-        {
-            CLiveWorker *worker = w.second;
-            for(auto h : worker->m_vecLiveFlv){
+		string strResJson;
+		{
+			MutexLock lock(&m_csFlv);
+			for(auto h : m_vecLiveFlv){
                 strResJson += h->get_clients_info();
+				strResJson += ",";
             }
-        }
-
-        strResJson = StringHandle::StringTrimRight(strResJson,',');
-        strResJson += "]}";
-        return strResJson;
+		}
+		{
+			MutexLock lock(&m_csMp4);
+			for(auto h : m_vecLiveMp4){
+                strResJson += h->get_clients_info();
+				strResJson += ",";
+            }
+		}
+		{
+			MutexLock lock(&m_csH264);
+			for(auto h : m_vecLiveH264){
+                strResJson += h->get_clients_info();
+				strResJson += ",";
+            }
+		}
+		{
+			MutexLock lock(&m_csTs);
+			for(auto h : m_vecLiveTs){
+                strResJson += h->get_clients_info();
+				strResJson += ",";
+            }
+		}
+		{
+			MutexLock lock(&m_csRtp);
+			for(auto h : m_vecLiveRtp){
+                strResJson += h->get_clients_info();
+				strResJson += ",";
+            }
+		}
+		return strResJson;
     }
 
 }

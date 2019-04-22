@@ -65,7 +65,7 @@ char* response_status[] = {
     
 static void on_close(uv_handle_t* peer) {
     CClient* client = (CClient*)peer->data;
-    SAFE_DELETE(client);
+	client->m_server->m_options.cb(client, RTSP_CLOSE, client->m_user);
 }
 
 static void after_shutdown(uv_shutdown_t* req, int status) {
@@ -135,6 +135,9 @@ CClient::CClient()
 
 CClient::~CClient()
 {
+	SAFE_FREE(m_user);
+	 uv_mutex_destroy(&m_asyncMutex);
+	 m_server->GiveBackRtpPort(m_nLocalPort);
 }
 
 int CClient::Init(uv_loop_t* uv) {
@@ -147,6 +150,18 @@ int CClient::Init(uv_loop_t* uv) {
     r = uv_udp_init(m_ploop, &m_rtp);
     if(r < 0) {
         Log::error("client init rtp error %s", uv_strerror(r));
+        return r;
+    }
+	m_nLocalPort = m_server->GetRtpPort();
+	struct sockaddr_in addr;
+    r = uv_ip4_addr(m_server->m_options.ip.c_str(), m_nLocalPort, &addr);
+    if(r < 0) {
+        Log::error("make address err: %s",  uv_strerror(r));
+        return -1;
+    }
+	r = uv_udp_bind(&m_rtp, (struct sockaddr*)&addr, 0);
+    if(r < 0) {
+        Log::error("client init bind rtp error %s", uv_strerror(r));
         return r;
     }
     r = uv_udp_init(m_ploop, &m_rtcp);
@@ -169,6 +184,7 @@ int CClient::Init(uv_loop_t* uv) {
         Log::error("client init malloc error");
         return 1;
     }
+	memset(m_user, 0, m_server->m_options.user_len);
 
     m_rtsp.data  = (void*)this;
     m_rtp.data   = (void*)this;
@@ -303,27 +319,30 @@ int CClient::answer(rtsp_ruquest req)
         }
 
         if(req.method == rtsp_method::RTSP_OPTIONS) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
         } else if(req.method == rtsp_method::RTSP_DESCRIBE) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
         } else if(req.method == rtsp_method::RTSP_SETUP) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
+			
+			string session = StringHandle::toStr<uint64_t>(CRtspServer::m_nSession++);
+			res.headers.insert(make_pair("Session",session));
         } else if(req.method == rtsp_method::RTSP_PLAY) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
         } else if(req.method == rtsp_method::RTSP_PAUSE) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
         } else if(req.method == rtsp_method::RTSP_TEARDOWN) {
-            int ret = m_server->m_options.cb(this, req.method, m_user, (void*)req.uri.c_str(), req.uri.size());
+            int ret = m_server->m_options.cb(this, req.method, m_user);
             if(ret)
                 break;
         } else {
@@ -404,6 +423,19 @@ static void on_connection(uv_stream_t* server, int status) {
         return;
     }
 
+	// 客户端IP
+	struct sockaddr_in addr;
+	char ipv4addr[64];
+	int namelen = sizeof(addr);
+	uv_tcp_getpeername(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
+	uv_ip4_name(&addr, ipv4addr, 64);
+	client->m_strRtpIP = ipv4addr;
+
+	// 本地IP
+	uv_tcp_getsockname(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
+	uv_ip4_name(&addr, ipv4addr, 64);
+	client->m_strLocalIP = ipv4addr;
+
     r = client->Recv();
     if (r < 0)
     {
@@ -415,6 +447,10 @@ static void on_connection(uv_stream_t* server, int status) {
 CRtspServer::CRtspServer(rtsp_options options)
     : m_options(options)
 {
+	
+	for (int i=0; i<options.rtp_port_num; ++i) {
+        m_vecRtpPort.push_back(options.rtp_port+i*2);
+    }
 }
 
 CRtspServer::~CRtspServer(void)
@@ -446,7 +482,29 @@ int CRtspServer::Init(uv_loop_t* uv)
         Log::error("uv listen err:%s", uv_strerror(ret));
         return -1;
     }
+
+	Log::debug("rtsp server init success");
     return 0;
+}
+
+int  CRtspServer::GetRtpPort()
+{
+    MutexLock lock(&m_csRTP);
+
+    int nRet = -1;
+    auto it = m_vecRtpPort.begin();
+    if (it != m_vecRtpPort.end()) {
+        nRet = *it;
+        m_vecRtpPort.erase(it);
+    }
+
+    return nRet;
+}
+
+void  CRtspServer::GiveBackRtpPort(int nPort)
+{
+    MutexLock lock(&m_csRTP);
+    m_vecRtpPort.push_back(nPort);
 }
 
 //////////////////////////////////////////////////////////////////////////

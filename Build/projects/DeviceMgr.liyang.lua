@@ -106,7 +106,7 @@ function InsertDev(dev)
 		if(dev["Status"] == "ON") then
 		    status = "1"
 		end
-        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["PTZType"], status, date, dp}
+        local row = {dev["DevID"], dev["Name"], dev["DevID"], "5", status, date, dp}
         DBTOOL_ADD_ROW(devHelp, row)
     else
         --记录插入部门表

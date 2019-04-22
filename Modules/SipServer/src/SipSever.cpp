@@ -10,6 +10,7 @@ CSipSever::CSipSever(eXosip_t* pSip)
 {
     m_bSubStat = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
     m_bSubPos  = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
+	m_bSubPosDev  = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0?true:false;
 }
 
 CSipSever::~CSipSever(void)
@@ -177,10 +178,21 @@ void CSipSever::SubscribeThread()
         Sleep(10000);
     }
     if(m_bSubPos) {
-        CSipMgr::m_pSubscribe->SubscribeMobilepostion(100);
+        CSipMgr::m_pSubscribe->SubscribeMobilepostion(600);
 		lastSubscribePos = time(NULL);
         Log::debug(" Subscribe mobile pos %s",platform->strDevCode.c_str());
     }
+	if(m_bSubPosDev){
+		vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
+		vector<string> devs;
+		for(auto info:devInfo){
+			if(info->strStatus == "ON")
+				devs.push_back(info->strDevID);
+		}
+		 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);
+		lastSubscribePos = time(NULL);
+        Log::debug(" Subscribe all mobile pos %s",platform->strDevCode.c_str());
+	}
 
     while(true)
     {
@@ -193,9 +205,25 @@ void CSipSever::SubscribeThread()
             DeviceMgr::CleanPlatform(); //清空缓存中的数据和数据库设备表中的记录
             CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
         }
-		if(difftime(now,lastSubscribeStat) > 600){
+		if(m_bSubStat && difftime(now,lastSubscribeStat) > 600){
 			 lastSubscribeStat = now;
 			 CSipMgr::m_pSubscribe->SubscribeDirectory(600);
+		}
+		if(m_bSubPos  && difftime(now,lastSubscribePos) > 600) {
+			CSipMgr::m_pSubscribe->SubscribeMobilepostion(600);
+			lastSubscribePos = time(NULL);
+			Log::debug(" Subscribe mobile pos %s",platform->strDevCode.c_str());
+		}
+		if(m_bSubPosDev && difftime(now,lastSubscribePos) > 600){
+			vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
+			vector<string> devs;
+			for(auto info:devInfo){
+				if(!info->strStatus.empty())
+					devs.push_back(info->strDevID);
+			}
+			 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);
+			lastSubscribePos = time(NULL);
+			Log::debug(" Subscribe all mobile pos %s",platform->strDevCode.c_str());
 		}
 
         Sleep(1000);

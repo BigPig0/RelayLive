@@ -19,7 +19,29 @@ namespace RtspServer
         rtsp_ruquest req = *client->m_Request;
         rtsp_response res;
         res.code = Code_200_OK;
-        res.body = pWorker->GetSDP();
+
+        string origin = pWorker->GetSDP();
+		Log::debug("%s", origin.c_str());
+		size_t t1,t2,t3;
+		t1 = origin.find("IN IP4 ");
+		t1 += 7;
+		t2 = origin.find("\r\n", t1);
+		//string peerIP = origin.substr(t1, t2-t1);
+		origin.replace(t1, t2-t1, client->m_strRtpIP.c_str()); 
+		t1 = origin.find("c=IN IP4 ");
+		t1 += 9;
+		t2 = origin.find("\r\n", t1);
+		//string localIP = origin.substr(t1, t2-t1);
+		origin.replace(t1, t2-t1, client->m_strLocalIP.c_str()); 
+		t1 = origin.find("m=video ");
+		t1 += 8;
+		t2 = origin.find(" ", t1);
+		//string localPort = origin.substr(t1, t2-t1);
+		char localport[20]={0};
+		sprintf(localport, "%d", client->m_nLocalPort);
+		origin.replace(t1, t2-t1, localport); 
+
+		res.body = origin;
         res.headers.insert(make_pair("Content-Type","application/sdp"));
         res.headers.insert(make_pair("Content-Length",StringHandle::toStr<size_t>(res.body.size())));
         return res;
@@ -64,8 +86,6 @@ namespace RtspServer
                 }
             }
         }
-        string session = StringHandle::toStr<uint64_t>(CRtspServer::m_nSession++);
-        res.headers.insert(make_pair("Session",session));
         res.code = Code_200_OK;
         return res;
     }
@@ -94,6 +114,7 @@ namespace RtspServer
     {
         Log::debug("make_pause_answer");
         rtsp_response res;
+		res.code = Code_200_OK;
         return res;
     }
 
@@ -113,74 +134,73 @@ namespace RtspServer
         return res;
     }
 
-    int callback_live_rtsp(CClient *client, rtsp_method reason, void *user, void *in, size_t len)
+    int callback_live_rtsp(CClient *client, rtsp_method reason, void *user)
     {
         pss_rtsp_client *pss = (pss_rtsp_client*)user;
 
         switch (reason) {
         case RTSP_OPTIONS:
             {
-                pss->path = string((char*)in, len); //live/123456789
-                Log::debug("new request: %s", pss->path.c_str());
+				memcpy(pss->path, client->m_Request->uri.c_str(), client->m_Request->uri.size());
+                Log::debug("new options request: %s", pss->path);
+				
+				char *path = strstr(pss->path, "/live/"); //live/123456789
 
                 pss->rtspClient = client;
                 pss->pss_next = nullptr;
                 pss->m_pWorker = nullptr;
                 pss->playing = false;
 
-                if(!strncasecmp((char*)in, "live/", 5)){
-                    pss->code = string((char*)in+5, len-5);
+                if(path){
+                    memcpy(pss->code, path+6, client->m_Request->uri.size()-6);
                     CRtspWorker* pWorker = GetRtspWorker(pss->code);
                     if(!pWorker) {
                         pWorker = CreatRtspWorker(pss->code);
                     }
                     if(!pWorker){
-                        Log::error("CreatRtspWorker failed%s", pss->code.c_str());
+                        Log::error("CreatRtspWorker failed%s", pss->code);
                     } else {
                         pWorker->AddConnect(pss);
                         pss->m_pWorker = pWorker;
-                        *client->m_Response = make_option_answer(*client->m_Request);
-                        return 0;
                     }
                 }
-                client->m_Response->code = Code_400_BadRequest;
-                return 1;
+                *client->m_Response = make_option_answer(*client->m_Request);
             }
             break;
         case RTSP_DESCRIBE:
             {
-                 if (!pss || !pss->m_pWorker)
+                 if (!pss )
                     break;
-                string strPath = string((char*)in, len);
-                if(strPath != pss->path){
-                    client->m_Response->code = Code_400_BadRequest;
-                    return 1;
-                }
+				 if(!pss->m_pWorker){
+				 }
+
+				 //if(strcasecmp(client->m_Request->uri.c_str(), pss->path)){
+     //               client->m_Response->code = Code_400_BadRequest;
+     //               return 1;
+     //           }
 
                 *client->m_Response = make_describe_answer(pss->m_pWorker, client);
             }
             break;
         case RTSP_SETUP:
             {
-                if (!pss || !pss->m_pWorker)
+                if (!pss )
                     break;
-                string strPath = string((char*)in, len);
-                if(strPath != pss->path){
-                    client->m_Response->code = Code_400_BadRequest;
-                    return 1;
-                }
+				//if(strcasecmp(client->m_Request->uri.c_str(), pss->path)){
+    //                client->m_Response->code = Code_400_BadRequest;
+    //                return 1;
+    //            }
                 *client->m_Response = make_setup_answer(client);
             }
             break;
         case RTSP_PLAY:
             {
-                if (!pss || !pss->m_pWorker)
+                if (!pss)
                     break;
-                string strPath = string((char*)in, len);
-                if(strPath != pss->path){
-                    client->m_Response->code = Code_400_BadRequest;
-                    return 1;
-                }
+				//if(strcasecmp(client->m_Request->uri.c_str(), pss->path)){
+    //                client->m_Response->code = Code_400_BadRequest;
+    //                return 1;
+    //            }
                 *client->m_Response = make_play_answer(*client->m_Request);
                 if(client->m_Response->code == Code_200_OK){
                     pss->playing = true;
@@ -196,13 +216,12 @@ namespace RtspServer
             break;
         case RTSP_TEARDOWN:
             {
-                if (!pss || !pss->m_pWorker)
+                if (!pss)
                     break;
-                string strPath = string((char*)in, len);
-                if(strPath != pss->path){
-                    client->m_Response->code = Code_400_BadRequest;
-                    return 1;
-                }
+				//if(strcasecmp(client->m_Request->uri.c_str(), pss->path)){
+    //                client->m_Response->code = Code_400_BadRequest;
+    //                return 1;
+    //            }
                 *client->m_Response = make_teardown_answer(*client->m_Request);
                 if(client->m_Response->code == Code_200_OK){
                     pss->playing = false;

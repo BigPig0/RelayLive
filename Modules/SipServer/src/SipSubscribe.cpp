@@ -132,7 +132,17 @@ void CSipSubscribe::SubscribeAlarm(const int expires)
 
 void CSipSubscribe::SubscribeMobilepostion(const int expires)
 {
-    CSipFromToHeader from;
+    SubscribeMobilepostion(expires, m_strCode);
+}
+
+void CSipSubscribe::SubscribeMobilepostion(const int expires, vector<string> devs){
+	for(auto strDevCode: devs){
+		SubscribeMobilepostion(expires, strDevCode);
+	}
+}
+
+void CSipSubscribe::SubscribeMobilepostion(const int expires, string strDevCode){
+	CSipFromToHeader from;
     from.SetHeader(CSipMgr::m_pConfig->strDevCode.c_str()
         , CSipMgr::m_pConfig->strAddrIP.c_str()
         , CSipMgr::m_pConfig->strAddrPort.c_str());
@@ -165,7 +175,8 @@ void CSipSubscribe::SubscribeMobilepostion(const int expires)
         << "<Query>\r\n"
         << "<CmdType>MobilePosition</CmdType>\r\n"
         << "<SN>" << sn++ << "</SN>\r\n"
-        << "<DeviceID>" << m_strCode << "</DeviceID>\r\n"
+        << "<DeviceID>" << strDevCode << "</DeviceID>\r\n"
+		<< "<Interval>5</Interval>\r\n"
         << "</Query>\r\n";
     string strBody = ss.str();
 

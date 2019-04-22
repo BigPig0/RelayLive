@@ -220,12 +220,16 @@ void CLiveObj::RTPParseCb(char* pBuff, long nLen)
 {
     //Log::debug("RTPParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(pBuff);
-	if(g_stream_type == STREAM_PS) {
-		CPs* pPsParser = (CPs*)m_pPsParser;
-		CHECK_POINT_VOID(pPsParser)
-		pPsParser->InputBuffer(pBuff, nLen);
-	} else if(g_stream_type == STREAM_H264) {
-		ESParseCb(pBuff, nLen);
+	if(m_pWorker->m_bRtp){
+		m_pWorker->push_rtp_stream(pBuff, nLen);
+	} else if(m_pWorker->m_bFlv || m_pWorker->m_bMp4) {
+		if(g_stream_type == STREAM_PS) {
+			CPs* pPsParser = (CPs*)m_pPsParser;
+			CHECK_POINT_VOID(pPsParser)
+			pPsParser->InputBuffer(pBuff, nLen);
+		} else if(g_stream_type == STREAM_H264) {
+			ESParseCb(pBuff, nLen);
+		}
 	}
 }
 

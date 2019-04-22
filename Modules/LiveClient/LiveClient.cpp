@@ -46,7 +46,7 @@ namespace LiveClient
 
     string GetClientsInfo() 
     {
-        return CLiveWorker::GetClientInfo();
+        return GetAllWorkerClientsInfo();
     }
 
     void GetDevList(){

@@ -24,7 +24,7 @@ namespace LiveClient
         bool m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
 
         /** 获取客户端信息 */
-        static string GetClientInfo();
+        string GetClientInfo();
 
         /**
         * 从源过来的视频数据，单线程输入 
@@ -72,4 +72,5 @@ namespace LiveClient
     extern CLiveWorker* CreatLiveWorker(string strCode);
     extern CLiveWorker* GetLiveWorker(string strCode);
     extern bool DelLiveWorker(string strCode);
+	extern string GetAllWorkerClientsInfo();
 }

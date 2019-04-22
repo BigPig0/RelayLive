@@ -19,7 +19,9 @@ Port = 7100
 ;对方下级平台的端口
 SubscribeStatus = 1
 ;是否订阅设备状态
-SubscribePos = 1
+SubscribePos = 0
+;是否订阅设备位置
+SubscribePosDev = 1
 ;是否订阅设备位置
 
 [DataBase]
@@ -63,6 +65,6 @@ DirVisible = yes
 [RtspServer]
 ;开启rtsp服务相关配置
 IP = 0.0.0.0
-Port = 524
-RtpPort = 80000
+Port = 8002
+RtpPort = 51000
 RtpPortNum = 1000

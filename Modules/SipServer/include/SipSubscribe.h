@@ -23,6 +23,12 @@ public:
     // 移动设备位置信息订阅
     void SubscribeMobilepostion(const int expires);
 
+	// 移动设备位置信息订阅[订阅多个设备]
+    void SubscribeMobilepostion(const int expires, vector<string> devs);
+
+	// 移动设备位置信息订阅[订阅单个设备]
+    void SubscribeMobilepostion(const int expires, string strDevCode);
+
 private:
     eXosip_t* m_pExContext;
     string    m_strCode;    //对方平台的编码
