@@ -68,7 +68,7 @@ static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, con
 		return;
 
     CLiveObj* pLive = (CLiveObj*)handle->data;
-    pLive->RtpRecv(buf->base, nread);
+    pLive->RtpRecv(buf->base, nread, (struct sockaddr_in*)addr);
 }
 
 static void timer_cb(uv_timer_t* handle)
@@ -138,8 +138,12 @@ CLiveObj::~CLiveObj(void)
     //Sleep(2000);
 }
 
-void CLiveObj::StartListen()
+void CLiveObj::StartListen(string strRemoteIP, int nRemotePort)
 {
+    m_strRemoteIP = strRemoteIP;
+    m_nRemoteRTPPort = nRemotePort;
+    m_nRemoteRTCPPort = nRemotePort+1;
+
     m_uvLoop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
     uv_thread_t tid;
     uv_loop_init(m_uvLoop);
@@ -195,8 +199,15 @@ void CLiveObj::StartListen()
     uv_thread_create(&tid, run_loop_thread, this);
 }
 
-void CLiveObj::RtpRecv(char* pBuff, long nLen)
+void CLiveObj::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
 {
+    char ipv4addr[64]={0};
+    uv_ip4_name(addr_in, ipv4addr, 64);
+    int port = ntohs(addr_in->sin_port);
+    string ip = ipv4addr;
+    if(m_nRemoteRTPPort != port || m_strRemoteIP != ip)
+        return;
+
     int ret = uv_timer_again(&m_uvTimeOver);
     if(ret < 0) {
         Log::error("timer again error: %s", uv_strerror(ret));

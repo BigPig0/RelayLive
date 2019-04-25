@@ -82,15 +82,29 @@ namespace LiveClient
 
         CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
 
-        //if(!SipInstance::RealPlay(strCode, m_strRtpIP,  rtpPort))
-        if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort, pNew->m_strSDP))
+        string sdp;
+        if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort, sdp))
         {
             uv_thread_t tid;
             uv_thread_create(&tid, live_worker_destory_thread, pNew);
             Log::error("play failed %s",strCode.c_str());
             return nullptr;
         }
+        pNew->m_strSDP = sdp;
         Log::debug("RealPlay ok: %s",strCode.c_str());
+
+        //从sdp解析出视频源ip和端口
+        size_t t1,t2;
+        t1 = sdp.find("c=IN IP4 ");
+        t1 += 9;
+        t2 = sdp.find("\r\n", t1);
+        string rip = sdp.substr(t1, t2-t1);
+        t1 = sdp.find("m=video ");
+        t1 += 8;
+        t2 = sdp.find(" ", t1);
+        string rport = sdp.substr(t1, t2-t1);
+        //启动监听
+        pNew->StartListen(rip, stoi(rport));
 
         MutexLock lock(&m_cs);
         m_workerMap.insert(make_pair(strCode, pNew));
@@ -163,7 +177,6 @@ namespace LiveClient
 		memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
 		memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
         m_pLive = new CLiveObj(rtpPort, this);
-        m_pLive->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
@@ -306,6 +319,10 @@ namespace LiveClient
 
     string CLiveWorker::GetSDP(){
         return m_strSDP;
+    }
+
+    void CLiveWorker::StartListen(string strRemoteIP, int nRemotePort){
+        m_pLive->StartListen(strRemoteIP, nRemotePort);
     }
 
 	void CLiveWorker::Clear2Stop() {

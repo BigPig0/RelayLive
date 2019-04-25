@@ -22,10 +22,10 @@ public:
     ~CLiveObj(void);
 
     /** 启动UDP端口监听 */
-    void StartListen();
+    void StartListen(string strRemoteIP, int nRemotePort);
 
     /** 接收的rtp数据处理 */
-    void RtpRecv(char* pBuff, long nLen);
+    void RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in);
 
     /** 接收超时处理 */
     void RtpOverTime();

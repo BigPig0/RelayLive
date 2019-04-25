@@ -18,6 +18,8 @@ namespace LiveClient
 		virtual LIVE_BUFF GetHeader(HandleType t);
         virtual string GetSDP();
 
+        void StartListen(string strRemoteIP, int nRemotePort);
+
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
         bool m_bStop;          //< 进入定时器回调后设为true，close定时器回调中销毁对象
@@ -44,8 +46,8 @@ namespace LiveClient
         bool m_bH264;
         bool m_bTs;
         bool m_bRtp;
-		LIVE_BUFF               m_stFlvHead;    //
-		LIVE_BUFF               m_stMp4Head;
+		LIVE_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
+		LIVE_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
 
         string                  m_strSDP;      // sip服务器返回的sdp
 
