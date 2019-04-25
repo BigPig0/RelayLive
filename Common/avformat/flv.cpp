@@ -114,6 +114,9 @@ CFlv::CFlv(void* handle, FLV_CALLBACK cb)
     , m_nfps(25)
     , m_bMakeScript(false)
     , m_bFirstKey(false)
+    , m_bGotKey(false)
+    , m_bGotSPS(false)
+    , m_bGotPPS(false)
     , m_hUser(handle)
     , m_fCB(cb)
 {
@@ -151,6 +154,8 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
         if(!m_bFirstKey)
             break;
         //Log::debug("send frame");
+        if(m_bGotKey)
+            MakeKeyVideo();
         MakeVideo(pBuf,nLen,0);
         m_timestamp += m_tick_gap;
         break;
@@ -158,7 +163,9 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
 		{
 			m_pKeyFrame->clear();
 			m_pKeyFrame->append_data(pBuf, nLen);
-			MakeKeyVideo();
+            m_bGotKey = true;
+            if(m_bGotKey && m_bGotPPS && m_bGotSPS)
+			    MakeKeyVideo();
 		}
         break;
     case sei_Nal:
@@ -169,7 +176,9 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             CHECK_POINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
-            MakeKeyVideo();
+            m_bGotSPS = true;
+            //if(m_bGotKey && m_bGotPPS && m_bGotSPS)
+            //    MakeKeyVideo();
         }
         break;
     case pps_Nal:
@@ -178,7 +187,9 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             CHECK_POINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
-            MakeKeyVideo();
+            m_bGotPPS = true;
+            //if(m_bGotKey && m_bGotPPS && m_bGotSPS)
+            //    MakeKeyVideo();
         }
         break;
     case other:
@@ -380,9 +391,12 @@ bool CFlv::MakeKeyVideo()
 		Log::debug("send key frame");
 		MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
 
-		m_pSPS->clear();
-		m_pPPS->clear();
+		//m_pSPS->clear();
+		//m_pPPS->clear();
 		m_pKeyFrame->clear();
+        m_bGotKey = false;
+        m_bGotSPS = false;
+        m_bGotPPS = false;
 
 		m_timestamp += m_tick_gap;
 		m_bFirstKey = true;

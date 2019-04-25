@@ -73,6 +73,9 @@ private:
     bool               m_bMakeScript;     // 创建了scriptTag
     bool               m_bFirstKey;       // 已经处理第一个关键帧
     bool               m_bRun;            // 执行状态
+    bool               m_bGotKey;         // 接收到最新的关键帧，没有使用掉
+    bool               m_bGotSPS;
+    bool               m_bGotPPS;
 
     CriticalSection    m_cs;
 };
