@@ -119,7 +119,7 @@ static void on_async(uv_async_t* handle){
     uv_mutex_lock(&c->m_asyncMutex);
     while(!c->m_asyncList.empty()){
         rtsp_event e = c->m_asyncList.front();
-        c->m_server->m_options.cb(c, e.resaon, c->m_user, NULL, 0);
+        c->m_server->m_options.cb(c, e.resaon, c->m_user);
         c->m_asyncList.pop_front();
     }
     uv_mutex_unlock(&c->m_asyncMutex);
@@ -525,8 +525,10 @@ static void on_udp_send(uv_udp_send_t* req, int status){
 
 int rtp_write(CClient *client, char* buff, int len){
     SAFE_MALLOC(uv_udp_send_t, req);
-    uv_buf_t buf = uv_buf_init(buff, len);
-    req->data = buff;
+	char* cache = (char *)malloc(len);
+    memcpy(cache, buff, len);
+    uv_buf_t buf = uv_buf_init(cache, len);
+    req->data = cache;
     int ret = uv_udp_send(req, &client->m_rtp, &buf, 1, (const sockaddr*)&client->m_addrRtp, on_udp_send);
     if(ret != 0){
         Log::debug("udp send failed %d: %s", ret, uv_err_name((ret)));

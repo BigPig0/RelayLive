@@ -20,28 +20,44 @@ namespace RtspServer
         rtsp_response res;
         res.code = Code_200_OK;
 
-        string origin = pWorker->GetSDP();
-		Log::debug("%s", origin.c_str());
-		size_t t1,t2,t3;
-		t1 = origin.find("IN IP4 ");
-		t1 += 7;
-		t2 = origin.find("\r\n", t1);
-		//string peerIP = origin.substr(t1, t2-t1);
-		origin.replace(t1, t2-t1, client->m_strRtpIP.c_str()); 
-		t1 = origin.find("c=IN IP4 ");
-		t1 += 9;
-		t2 = origin.find("\r\n", t1);
-		//string localIP = origin.substr(t1, t2-t1);
-		origin.replace(t1, t2-t1, client->m_strLocalIP.c_str()); 
-		t1 = origin.find("m=video ");
-		t1 += 8;
-		t2 = origin.find(" ", t1);
-		//string localPort = origin.substr(t1, t2-t1);
-		char localport[20]={0};
-		sprintf(localport, "%d", client->m_nLocalPort);
-		origin.replace(t1, t2-t1, localport); 
+  //      string origin = pWorker->GetSDP();
+		//Log::debug("%s", origin.c_str());
+		//size_t t1,t2,t3;
+		//t1 = origin.find("IN IP4 ");
+		//t1 += 7;
+		//t2 = origin.find("\r\n", t1);
+		////string peerIP = origin.substr(t1, t2-t1);
+		//origin.replace(t1, t2-t1, client->m_strRtpIP.c_str()); 
+		//t1 = origin.find("c=IN IP4 ");
+		//t1 += 9;
+		//t2 = origin.find("\r\n", t1);
+		////string localIP = origin.substr(t1, t2-t1);
+		//origin.replace(t1, t2-t1, client->m_strLocalIP.c_str()); 
+		//t1 = origin.find("m=video ");
+		//t1 += 8;
+		//t2 = origin.find(" ", t1);
+		////string localPort = origin.substr(t1, t2-t1);
+		//char localport[20]={0};
+		//sprintf(localport, "%d", client->m_nLocalPort);
+		//origin.replace(t1, t2-t1, localport); 
 
-		res.body = origin;
+		stringstream ss;
+		ss << "v=0\r\n"
+			<< "o=" << client->m_strDevCode << " 0 0 IN IP4 " << client->m_strRtpIP << "\r\n"
+			<< "s=Play\r\n"
+			//"u=32040000002000000003:3\r\n"
+			<< "c=IN IP4 " << client->m_strLocalIP << "\r\n"
+			<< "t=0 0\r\n"
+			<< "a=sdplang:en\r\n"
+			<< "a=range:npt=0-\r\n"
+			<< "a=control:*\r\n"
+			<< "m=video " << client->m_nLocalPort << " RTP/AVP 96\r\n"
+			<< "a=rtpmap:96 MP2P/90000\r\n"
+			<< "a=recvonly\r\n"
+			//<< "y=0301000168\r\n"
+			;
+
+		res.body = ss.str();
         res.headers.insert(make_pair("Content-Type","application/sdp"));
         res.headers.insert(make_pair("Content-Length",StringHandle::toStr<size_t>(res.body.size())));
         return res;
