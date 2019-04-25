@@ -4,7 +4,7 @@
 #include "h264.h"
 
 
-CRtp::CRtp(void* handle, RTP_CALLBACK cb)
+CRtp::CRtp(AV_CALLBACK cb, void* handle)
     : m_frame_buf(nullptr)
     , m_nCatchPacketNum(5000)
     , m_nDoneSeq(0)
@@ -21,7 +21,7 @@ CRtp::~CRtp(void)
     SAFE_DELETE(m_frame_buf);
 }
 
-int CRtp::InputBuffer(char* pBuf, uint32_t nLen)
+int CRtp::DeCode(char* pBuf, uint32_t nLen)
 {
     if (NULL == pBuf || RTP_HEADER_SIZE > nLen)
     {
@@ -293,7 +293,13 @@ int CRtp::ComposePsFrame()
     // PS帧组合完毕，回调处理PS帧
     if (m_fCB != nullptr)
     {
-        m_fCB(m_frame_buf, nPsLen, m_hUser);
+        if(g_stream_type == STREAM_PS) {
+            AV_BUFF buff = {AV_TYPE::PS, m_frame_buf, nPsLen};
+            m_fCB(buff, m_hUser);
+        } else if(g_stream_type == STREAM_H264) {
+            AV_BUFF buff = {AV_TYPE::H264_NALU, m_frame_buf, nPsLen};
+            m_fCB(buff, m_hUser);
+        }
     }
     return 0;
 }

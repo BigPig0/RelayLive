@@ -35,64 +35,64 @@ namespace HttpWsServer
 
     static void SendLiveFlv(pss_http_ws_live *pss) {
         CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
-        LIVE_BUFF tag = pWorker->GetVideo(&pss->tail);
-        if(tag.pBuff == nullptr) return;
+        AV_BUFF tag = pWorker->GetVideo(&pss->tail);
+        if(tag.pData == nullptr) return;
 
         if (!pss->m_bSendHead) {
-            LIVE_BUFF flvheader = pWorker->GetHeader();
-            if(flvheader.pBuff == nullptr) return;
+            AV_BUFF flvheader = pWorker->GetHeader();
+            if(flvheader.pData == nullptr) return;
 
             Log::debug("first flv data with header: tail:%d",pss->tail);
             int len = flvheader.nLen + tag.nLen;
             uint8_t* buff = (uint8_t *)malloc(len + LWS_PRE);
             int nPos = LWS_PRE;
-            memcpy(buff + nPos, flvheader.pBuff, flvheader.nLen);
+            memcpy(buff + nPos, flvheader.pData, flvheader.nLen);
             nPos += flvheader.nLen;
-            memcpy(buff + nPos, tag.pBuff + LWS_PRE, tag.nLen);
+            memcpy(buff + nPos, tag.pData + LWS_PRE, tag.nLen);
             int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, len, LWS_WRITE_BINARY);
             pss->m_bSendHead = true;
             free(buff);
             pWorker->NextWork(pss);
         } else {
             Log::debug(" flv data tail:%d", pss->tail);
-            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pBuff + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
+            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
             pWorker->NextWork(pss);
         }
     }
 
     static void SendLiveH264(pss_http_ws_live *pss) {
-        LIVE_BUFF tag = pss->m_pWorker->GetVideo(&pss->tail);
-		if(tag.pBuff == nullptr) return;
+        AV_BUFF tag = pss->m_pWorker->GetVideo(&pss->tail);
+		if(tag.pData == nullptr) return;
 
         Log::debug(" h264 data tail:%d", pss->tail);
-        int wlen = lws_write(pss->wsi, (uint8_t *)tag.pBuff + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
+        int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
         pss->m_pWorker->NextWork(pss);
     }
 
     static void SendLiveMp4(pss_http_ws_live *pss)
     {
         CHttpWorker* pWorker = (CHttpWorker*)pss->m_pWorker;
-        LIVE_BUFF tag = pWorker->GetVideo(&pss->tail);
-        if(tag.pBuff == nullptr) return;
+        AV_BUFF tag = pWorker->GetVideo(&pss->tail);
+        if(tag.pData == nullptr) return;
 
         if (!pss->m_bSendHead) {
-            LIVE_BUFF mp4_header = pWorker->GetHeader();
-            if(mp4_header.pBuff == nullptr) return;
+            AV_BUFF mp4_header = pWorker->GetHeader();
+            if(mp4_header.pData == nullptr) return;
 
             Log::debug("first mp4 data with header: tail:%d",pss->tail);
             int len = mp4_header.nLen + tag.nLen;
             uint8_t* buff = (uint8_t *)malloc(len + LWS_PRE);
             int nPos = LWS_PRE;
-            memcpy(buff + nPos, mp4_header.pBuff, mp4_header.nLen);
+            memcpy(buff + nPos, mp4_header.pData, mp4_header.nLen);
             nPos += mp4_header.nLen;
-            memcpy(buff + nPos, tag.pBuff + LWS_PRE, tag.nLen);
+            memcpy(buff + nPos, tag.pData + LWS_PRE, tag.nLen);
             int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, len, LWS_WRITE_BINARY);
             pss->m_bSendHead = true;
             free(buff);
             pWorker->NextWork(pss);
         } else {
             Log::debug(" mp4 data tail:%d", pss->tail);
-            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pBuff + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
+            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
             pWorker->NextWork(pss);
         }
     }

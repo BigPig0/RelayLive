@@ -3,7 +3,7 @@
  * 输出PES包
  */
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 
 #pragma pack(1)
 //ps header
@@ -121,21 +121,19 @@ bool inline is_psm_header(psm_header_t* psm)
     return false;
 }
 
-typedef void(*PS_CALLBACK)(char*, long, void*);
-
 class CPs
 {
 public:
-    CPs(void* handle, PS_CALLBACK cb);
+    CPs(AV_CALLBACK cb, void* handle=NULL);
     ~CPs(void);
 
     /**
      * 插入一个PS帧
-     * @param[in] pBuf PS帧
-     * @param[in] nLen PS帧长度
+     * @param[in] buff.pBuf PS帧
+     * @param[in] buff.nLen PS帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, uint32_t nLen);
+    int DeCode(AV_BUFF buff);
 
 private:
     /**
@@ -145,7 +143,7 @@ private:
      * @param[out] nHeadLen 头的长度
      * @return 0成功 -1失败
      */
-    int ParseHeader(char* pBuf, long nLen, long& nHeadLen);
+    int ParseHeader(char* pBuf, uint32_t nLen, uint32_t& nHeadLen);
 
     /**
      * 从报文中解析PES
@@ -153,10 +151,10 @@ private:
      * @param[in] nLen 除去头部以后的长度
      * @return 0成功 -1失败
      */
-    int ParsePES(char* pBuf, long nLen);
+    int ParsePES(char* pBuf, uint32_t nLen);
 
 private:
     void*             m_hUser;                  // 回调处理对象
-    PS_CALLBACK       m_fCB;
+    AV_CALLBACK       m_fCB;
 };
 

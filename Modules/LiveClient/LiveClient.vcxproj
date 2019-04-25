@@ -28,6 +28,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Common\avformat\avtypes.h" />
     <ClInclude Include="..\..\Common\avformat\es.h" />
     <ClInclude Include="..\..\Common\avformat\flv.h" />
     <ClInclude Include="..\..\Common\avformat\h264.h" />

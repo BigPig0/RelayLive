@@ -103,7 +103,7 @@ void CFlvStreamMaker::append_amf_double(double d)
     append_double(d);
 }
 
-CFlv::CFlv(void* handle, FLV_CALLBACK cb)
+CFlv::CFlv(AV_CALLBACK cb, void* handle)
     : m_pSPS(nullptr)
     , m_pPPS(nullptr)
     , m_pData(nullptr)
@@ -114,7 +114,6 @@ CFlv::CFlv(void* handle, FLV_CALLBACK cb)
     , m_nfps(25)
     , m_bMakeScript(false)
     , m_bFirstKey(false)
-    , m_bGotKey(false)
     , m_bGotSPS(false)
     , m_bGotPPS(false)
     , m_hUser(handle)
@@ -138,33 +137,35 @@ CFlv::~CFlv(void)
     SAFE_DELETE(m_pData);
 }
 
-int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
+int CFlv::Code(NalType eType, char* pBuf, uint32_t nLen)
 {
     if(!m_bRun)
     {
         Log::error("already stop");
         return false;
     }
-    MutexLock lock(&m_cs);
+    // MutexLock lock(&m_cs); //由于能保证是单线程调用，因此不需要该锁
 
     switch (eType)
     {
-    case b_Nal:
-        // 发送非关键帧
-        if(!m_bFirstKey)
-            break;
-        //Log::debug("send frame");
-        if(m_bGotKey)
-            MakeKeyVideo();
-        MakeVideo(pBuf,nLen,0);
-        m_timestamp += m_tick_gap;
+    case b_Nal:  // 非关键帧
+        {
+            if(!m_bFirstKey)
+                break;
+            //如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
+            //sps或pps丢失，可以使用上一次的。
+            MakeKeyVideo(); 
+            //Log::debug("send frame");
+            MakeVideo(pBuf,nLen,0);
+            m_timestamp += m_tick_gap;
+        }
         break;
-    case idr_Nal:
+    case idr_Nal: // 关键帧
 		{
 			m_pKeyFrame->clear();
 			m_pKeyFrame->append_data(pBuf, nLen);
-            m_bGotKey = true;
-            if(m_bGotKey && m_bGotPPS && m_bGotSPS)
+            //一般sps或pps都在关键帧前面，但有时会在关键帧后面。
+            if(m_bGotPPS && m_bGotSPS)
 			    MakeKeyVideo();
 		}
         break;
@@ -177,8 +178,6 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
             m_bGotSPS = true;
-            //if(m_bGotKey && m_bGotPPS && m_bGotSPS)
-            //    MakeKeyVideo();
         }
         break;
     case pps_Nal:
@@ -188,8 +187,6 @@ int CFlv::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
             m_bGotPPS = true;
-            //if(m_bGotKey && m_bGotPPS && m_bGotSPS)
-            //    MakeKeyVideo();
         }
         break;
     case other:
@@ -312,8 +309,10 @@ bool CFlv::MakeHeader()
     m_pHeader->append_be32( length + 11 );      // PreviousTagSize
 
     /** call back */
-    if(m_fCB != nullptr)
-        m_fCB(FLV_HEAD, m_pHeader->get(), m_pHeader->size(), m_hUser);
+    if(m_fCB != nullptr){
+        AV_BUFF buff = {FLV_HEAD, m_pHeader->get(), m_pHeader->size()};
+        m_fCB(buff, m_hUser);
+    }
     return true;
 }
 
@@ -322,8 +321,10 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
     CHECK_POINT(m_pData);
 
     if(bIsKeyFrame && m_pData->size() > 0) {
-        if(m_fCB != nullptr)
-            m_fCB(FLV_FRAG, (char*)m_pData->get(), m_pData->size(), m_hUser);
+        if(m_fCB != nullptr){
+            AV_BUFF buff = {FLV_FRAG, m_pData->get(), m_pData->size()};
+            m_fCB(buff, m_hUser);
+        }
         m_pData->clear();
     }
 
@@ -391,10 +392,7 @@ bool CFlv::MakeKeyVideo()
 		Log::debug("send key frame");
 		MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
 
-		//m_pSPS->clear();
-		//m_pPPS->clear();
 		m_pKeyFrame->clear();
-        m_bGotKey = false;
         m_bGotSPS = false;
         m_bGotPPS = false;
 

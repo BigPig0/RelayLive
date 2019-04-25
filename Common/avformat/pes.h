@@ -3,7 +3,7 @@
  * 输出ES包
  */
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 
 /** PES包类型 */
 enum PESType
@@ -65,7 +65,7 @@ bool inline is_pes_header(pes_header_t* pes)
     return false;
 }
 
-typedef void(*PES_CALLBACK)(char*, long, uint64_t, uint64_t, void*);
+typedef void (*PES_CALLBACK)(AV_BUFF, void*, uint64_t, uint64_t);
 
 /**
  * PES包解析类
@@ -73,19 +73,19 @@ typedef void(*PES_CALLBACK)(char*, long, uint64_t, uint64_t, void*);
 class CPes
 {
 public:
-    CPes(void* handle, PES_CALLBACK cb);
+    CPes(PES_CALLBACK cb, void* handle=NULL);
     ~CPes(void);
 
     /**
-     * 插入一个PES包
-     * @param[in] pBuf PES帧
-     * @param[in] nLen PES帧长度
+     * PES解码
+     * @param[in] buff.pData PES帧
+     * @param[in] buff.nLen PES帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, uint32_t nLen);
+    int Decode(AV_BUFF buff);
 
 private:
     void*             m_hUser;                  // 回调处理对象
-    PES_CALLBACK      m_fCB;
+    PES_CALLBACK       m_fCB;
 };
 

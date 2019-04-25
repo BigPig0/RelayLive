@@ -307,13 +307,13 @@ namespace LiveClient
         return true;
     }
 
-	LIVE_BUFF CLiveWorker::GetHeader(HandleType t) {
+	AV_BUFF CLiveWorker::GetHeader(HandleType t) {
 		if(t == HandleType::flv_handle)
 			return m_stFlvHead;
 		else if(t == HandleType::fmp4_handle)
 			return m_stMp4Head;
 
-		LIVE_BUFF ret = {0};
+		AV_BUFF ret = {AV_TYPE::NONE, NULL, 0};
 		return ret;
 	}
 
@@ -334,70 +334,70 @@ namespace LiveClient
 		}
 	}
 
-    void CLiveWorker::push_flv_stream(int eType, char* pBuff, int nLen)
+    void CLiveWorker::push_flv_stream(AV_BUFF buff)
     {
-		if (eType == 0) {
-            m_stFlvHead.pBuff = pBuff;
-            m_stFlvHead.nLen = nLen;
+		if (buff.eType == FLV_HEAD) {
+            m_stFlvHead.pData = buff.pData;
+            m_stFlvHead.nLen = buff.nLen;
             Log::debug("flv head ok");
         } else {
 			MutexLock lock(&m_csFlv);
 			for (auto h : m_vecLiveFlv)
 			{
 				Log::debug("flv frag ok");
-				h->push_video_stream(pBuff, nLen);
+				h->push_video_stream(buff);
 			}   
 		}
     }
 
-    void CLiveWorker::push_h264_stream(char* pBuff, int nLen)
+    void CLiveWorker::push_h264_stream(AV_BUFF buff)
     {
         MutexLock lock(&m_csH264);
         for (auto h : m_vecLiveH264)
         {
-            h->push_video_stream(pBuff, nLen);
+            h->push_video_stream(buff);
         } 
     }
 
-    void CLiveWorker::push_ts_stream(char* pBuff, int nLen)
+    void CLiveWorker::push_ts_stream(AV_BUFF buff)
     {
         MutexLock lock(&m_csTs);
         for (auto h : m_vecLiveTs)
         {
-            h->push_video_stream(pBuff, nLen);
+            h->push_video_stream(buff);
         } 
     }
 
-    void CLiveWorker::push_fmp4_stream(int eType, char* pBuff, int nLen)
+    void CLiveWorker::push_fmp4_stream(AV_BUFF buff)
     {
-		if(eType == 0) {
-            m_stMp4Head.pBuff = pBuff;
-            m_stMp4Head.nLen = nLen;
+		if(buff.eType == MP4_HEAD) {
+            m_stMp4Head.pData = buff.pData;
+            m_stMp4Head.nLen = buff.nLen;
             Log::debug("MP4 Head ok");
         } else {
 			MutexLock lock(&m_csMp4);
 			for (auto h : m_vecLiveMp4)
 			{
-				h->push_video_stream(pBuff, nLen);
+				h->push_video_stream(buff);
 			}
 		}
     }
 
-    void CLiveWorker::push_rtp_stream(char* pBuff, int nLen)
+    void CLiveWorker::push_rtp_stream(AV_BUFF buff)
     {
         MutexLock lock(&m_csRtp);
         for (auto h : m_vecLiveRtp)
         {
-            h->push_video_stream(pBuff, nLen);
+            h->push_video_stream(buff);
         } 
     }
 
-    void CLiveWorker::push_rtcp_stream(char* pBuff, int nLen)
+    void CLiveWorker::push_rtcp_stream(AV_BUFF buff)
     {
         MutexLock lock(&m_csRtp);
         for (auto h : m_vecLiveRtp)
         {
-            h->push_rtcp_stream(pBuff, nLen);
+            h->push_rtcp_stream(buff.pData, buff.nLen);
         } 
     }
 

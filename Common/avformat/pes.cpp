@@ -80,7 +80,7 @@ static uint64_t get_dts(optional_pes_header* option)
 #endif
 
 
-CPes::CPes(void* handle, PES_CALLBACK cb)
+CPes::CPes(PES_CALLBACK cb, void* handle)
     : m_hUser(handle)
     , m_fCB(cb)
 {
@@ -91,10 +91,9 @@ CPes::~CPes(void)
 {
 }
 
-int CPes::InputBuffer(char* pBuf, uint32_t nLen)
+int CPes::Decode(AV_BUFF buff)
 {
-    UNUSED(nLen);
-    pes_header_t* pes = (pes_header_t*)pBuf;
+    pes_header_t* pes = (pes_header_t*)buff.pData;
     if (!is_pes_header(pes))
     {
         Log::error("CPesAnalyzer::InsertPacket this is not a pes packet");
@@ -129,7 +128,8 @@ int CPes::InputBuffer(char* pBuf, uint32_t nLen)
     // 回调处理ES包
     if (m_fCB != nullptr)
     {
-        m_fCB(pESBuffer, nESLength, pts, dts, m_hUser);
+        AV_BUFF es = {AV_TYPE::ES, pESBuffer, nESLength};
+        m_fCB(es, m_hUser, pts, dts);
     }
 
     return 0;

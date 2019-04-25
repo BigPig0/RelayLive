@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "h264.h"
 
-CH264::CH264(void* handle, H264SPS_CALLBACK spscb, H264_CALLBACK cb)
+CH264::CH264(H264SPS_CALLBACK spscb, AV_CALLBACK cb, void* handle)
     : m_pNaluBuff(nullptr)
     , m_nBuffLen(0)
     , m_pDataBuff(nullptr)
@@ -47,7 +47,8 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
         // ·¢ËÍ¹Ø¼üÖ¡
         Log::debug("h264 key frame");
         if(m_pFullBuff->size() > 0) {
-            m_fCB(m_pFullBuff->get(), m_pFullBuff->size(), m_hUser);
+            AV_BUFF buff = {H264_NALU, m_pFullBuff->get(), m_pFullBuff->size()};
+            m_fCB(buff, m_hUser);
             m_pFullBuff->clear();
         }
         m_pFullBuff->append_data(m_pSPS->get(), m_pSPS->size());

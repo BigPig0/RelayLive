@@ -1,5 +1,5 @@
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 
 #define TS_PACKET_HEADER               4
 #define TS_PACKET_SIZE                 188
@@ -167,8 +167,6 @@ typedef struct ts_adaptation_field_pcr
 }ts_adaptation_field_pcr;
 #pragma pack()
 
-typedef void (*TS_CALLBACK)(char*, long, void*);
-
 
 /**
  * TS流处理，用来解析ts流或生成ts流
@@ -176,7 +174,7 @@ typedef void (*TS_CALLBACK)(char*, long, void*);
 class CTS
 {
 public:
-    CTS(void* handle, TS_CALLBACK cb);
+    CTS(AV_CALLBACK cb, void* handle=NULL);
     ~CTS(void);
 
     /**
@@ -184,7 +182,7 @@ public:
      * @param pBuf[in] PES数据
      * @param nLen[in] PES数据长度
      */
-    int InputBuffer(char* pBuf, uint32_t nLen);
+    int Code(char* pBuf, uint32_t nLen);
 
     /**
      * 设置下一次输入pes的参数信息
@@ -251,6 +249,6 @@ private:
     uint64_t       m_nVideoPts;     // 添加进来的pes的时间基准
     
     void*              m_hUser;                  // 回调处理对象
-    TS_CALLBACK        m_fCB;
+    AV_CALLBACK        m_fCB;
 };
 

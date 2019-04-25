@@ -2,7 +2,7 @@
 #include "es.h"
 
 
-CES::CES(void* handle, ES_CALLBACK cb)
+CES::CES(AV_CALLBACK cb, void* handle)
     : m_pH264Buf(NULL)
     , m_nH264DataLen(0)
     , m_hUser(handle)
@@ -15,17 +15,17 @@ CES::~CES(void)
 {
 }
 
-int CES::InputBuffer(char* pBuf, uint32_t nLen)
+int CES::DeCode(AV_BUFF buff)
 {
     // ES包没有es头，由h264片组成
     //nal_unit_header_t* nalUnit = nullptr;
     //uint8_t nNalType = 0;
     uint32_t pos = 0;
     uint32_t begin_pos = 0;
-    char* begin_buff = pBuf;
-    while (pos < nLen)
+    char* begin_buff = buff.pData;
+    while (pos < buff.nLen)
     {
-        char* pPos = pBuf + pos;
+        char* pPos = buff.pData + pos;
         if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 1)
         {
             //if(pos > 0) Log::debug("nal3 begin width 001 pos:%d",pos);
@@ -71,7 +71,7 @@ int CES::InputBuffer(char* pBuf, uint32_t nLen)
         }
     }
     // 最后一帧
-    if (nLen > begin_pos)
+    if (buff.nLen > begin_pos)
     {
         // 回调处理H264帧
         //if (m_pObj != nullptr)
@@ -104,7 +104,8 @@ void CES::CatchData(char* pBuf, uint32_t nLen)
         if(m_nH264DataLen > 0) {
             if (m_fCB != nullptr)
             {
-                m_fCB(m_pH264Buf, m_nH264DataLen, m_hUser);
+                AV_BUFF h264 = {AV_TYPE::H264_NALU,m_pH264Buf, m_nH264DataLen};
+                m_fCB(h264, m_hUser);
             }
             m_nH264DataLen = 0;
         }

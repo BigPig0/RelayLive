@@ -17,9 +17,9 @@ namespace HttpWsServer
 
     static void destroy_ring_node(void *_msg)
     {
-        LIVE_BUFF *msg = (LIVE_BUFF*)_msg;
-        free(msg->pBuff);
-        msg->pBuff = NULL;
+        AV_BUFF *msg = (AV_BUFF*)_msg;
+        free(msg->pData);
+        msg->pData = NULL;
         msg->nLen = 0;
     }
 
@@ -32,7 +32,7 @@ namespace HttpWsServer
         , m_type(t)
     {
         memset(&m_stHead, 0, sizeof(m_stHead));
-        m_pRing  = lws_ring_create(sizeof(LIVE_BUFF), 100, destroy_ring_node);
+        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
 		if(m_pLive)
@@ -67,15 +67,15 @@ namespace HttpWsServer
         return true;
     }
 
-    LIVE_BUFF CHttpWorker::GetHeader()
+    AV_BUFF CHttpWorker::GetHeader()
     {
 		return m_pLive->GetHeader(m_type);
     }
 
-    LIVE_BUFF CHttpWorker::GetVideo(uint32_t *tail)
+    AV_BUFF CHttpWorker::GetVideo(uint32_t *tail)
     {
-        LIVE_BUFF ret = {nullptr,0};
-        LIVE_BUFF* tag = (LIVE_BUFF*)lws_ring_get_element(m_pRing, tail);
+        AV_BUFF ret = {AV_TYPE::NONE,nullptr,0};
+        AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, tail);
         if(tag) ret = *tag;
 
         return ret;
@@ -101,7 +101,7 @@ namespace HttpWsServer
                 lws_callback_on_writable(pss->wsi);
     }
 
-    void CHttpWorker::push_video_stream(char* pBuff, int nLen)
+    void CHttpWorker::push_video_stream(AV_BUFF buff)
     {
         int n = (int)lws_ring_get_count_free_elements(m_pRing);
         if (!n) {
@@ -113,9 +113,9 @@ namespace HttpWsServer
             return;
 
         // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
-        memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
-        LIVE_BUFF newTag = {pSaveBuff, nLen};
+        char* pSaveBuff = (char*)malloc(buff.nLen + LWS_PRE);
+        memcpy(pSaveBuff + LWS_PRE, buff.pData, buff.nLen);
+        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen};
         if (!lws_ring_insert(m_pRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
             Log::error("dropping!");

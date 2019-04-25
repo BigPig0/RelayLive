@@ -3,7 +3,7 @@
  * 输出PS包
  */
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 
 //error code
 #define ERR_RTP_SUCCESS            0
@@ -126,18 +126,16 @@ struct Sequence
 typedef map<Sequence,rtp_list_node*> MapRtpList;
 typedef list<rtp_list_node*> ListRtpFrame;
 
-typedef void(*RTP_CALLBACK)(char*, long, void*);
-
 class CRtp
 {
 public:
-    CRtp(void* handle, RTP_CALLBACK cb);
+    CRtp(AV_CALLBACK cb, void* handle=NULL);
     ~CRtp(void);
 
     /**
      * 插入一个rtp包
      */
-    int InputBuffer(char* pBuf, uint32_t nLen);
+    int DeCode(char* pBuf, uint32_t nLen);
 
     /**
      * 设置缓存帧数量
@@ -195,6 +193,6 @@ private:
 
 
     void*             m_hUser;                  // 回调处理对象
-    RTP_CALLBACK      m_fCB;
+    AV_CALLBACK      m_fCB;
 };
 

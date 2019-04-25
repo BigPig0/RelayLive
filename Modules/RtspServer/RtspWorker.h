@@ -17,12 +17,12 @@ namespace RtspServer
         bool DelConnect(pss_rtsp_client* pss);
 
         /** 请求端获取视频数据 */
-        LIVE_BUFF GetVideo(uint32_t *tail);
+        AV_BUFF GetVideo(uint32_t *tail);
         void NextWork(pss_rtsp_client* pss);
 
         string GetSDP();
 
-        virtual void push_video_stream(char* pBuff, int nLen);
+        virtual void push_video_stream(AV_BUFF buff);
         virtual void stop();
         virtual string get_clients_info();
     private:
@@ -35,7 +35,7 @@ namespace RtspServer
         * lws_ring无锁环形缓冲区，只能一个线程写入，一个线程读取
         * m_pRing由liveworker中的uv_loop线程写入，http服务所在的uv_loop线程读取
         */
-        LIVE_BUFF             m_stHead;
+        AV_BUFF               m_stHead;
         ring_buff_t           *m_pRing;
         pss_rtsp_client       *m_pPssList;
 

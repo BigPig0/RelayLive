@@ -31,50 +31,45 @@ public:
     void RtpOverTime();
 
     /**
-     * RTP组包回调，rtp包组成的帧可能是ps，也可能是h264
-     * @param[in] pBuff PS帧数据
-     * @param[in] nLen PS帧长度
+     * 添加PS数据内容
+     * @param[in] buff PS数据
      */
-    void RTPParseCb(char* pBuff, long nLen);
+    void push_ps_stream(AV_BUFF buff);
 
     /**
-     * PS帧解析回调
-     * @param[in] pBuff PES包数据
-     * @param[in] nLen PES包长度
+     * 添加PES数据内容
+     * @param[in] buff PES包数据
      */
-    void PSParseCb(char* pBuff, long nLen);
+    void push_pes_stream(AV_BUFF buff);
 
     /**
-     * PES帧解析回调
-     * @param[in] pBuff ES包数据
-     * @param[in] nLen ES包长度
+     * 添加ES数据内容
+     * @param[in] buff ES包数据
      * @param[in] pts 展现时间戳字段
      * @param[in] dts 解码时间戳字段
      */
-    void PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dts);
+    void push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts);
 
     /**
-     * ES帧解析回调
-     * @param[in] pBuff H264帧数据
-     * @param[in] nLen H264帧长度
-     * @param[in] nNalType Nalu的类型
+     * 添加h264数据内容
+     * @param[in] buff H264帧数据
      */
-    void ESParseCb(char* pBuff, long nLen/*, uint8_t nNalType*/);
+    void push_h264_stream(AV_BUFF buff);
 
     /** H264中sps解析回调 */
-    void H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps);
+    void set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps);
 
     /** FLV合成回调 */
-    void FlvCb(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize);
+    void FlvCb(AV_BUFF buff);
 
     /** MP4合成回调 */
-    void Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize);
+    void Mp4Cb(AV_BUFF buff);
 
     /** TS合成回调 */
-    void TsCb(char* pBuff, int nBuffSize);
+    void TsCb(AV_BUFF buff);
 
     /** H264合成回调 */
-    void H264Cb(char* pBuff, int nBuffSize);
+    void H264Cb(AV_BUFF buff);
 
     /** 结束时关闭loop */
     void AsyncClose();

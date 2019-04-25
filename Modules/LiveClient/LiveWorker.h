@@ -1,5 +1,6 @@
 #pragma once
 #include "LiveClient.h"
+#include "avtypes.h"
 #include "uv.h"
 
 namespace LiveClient
@@ -15,7 +16,7 @@ namespace LiveClient
         /** 客户端连接 */
         virtual bool AddHandle(ILiveHandle* h, HandleType t);
         virtual bool RemoveHandle(ILiveHandle* h);
-		virtual LIVE_BUFF GetHeader(HandleType t);
+		virtual AV_BUFF GetHeader(HandleType t);
         virtual string GetSDP();
 
         void StartListen(string strRemoteIP, int nRemotePort);
@@ -33,12 +34,12 @@ namespace LiveClient
         * 以下方法由rtp接收所在的loop线程调用
         * 类中其他方法包括构造、析构都由http所在的loop线程调用
         */
-        void push_flv_stream (int eType, char* pBuff, int nLen);
-        void push_h264_stream(char* pBuff, int nLen);
-        void push_ts_stream  (char* pBuff, int nLen);
-        void push_fmp4_stream(int eType, char* pBuff, int nBuffSize);
-        void push_rtp_stream (char* pBuff, int nBuffSize);
-        void push_rtcp_stream(char* pBuff, int nBuffSize);
+        void push_flv_stream (AV_BUFF buff);
+        void push_h264_stream(AV_BUFF buff);
+        void push_ts_stream  (AV_BUFF buff);
+        void push_fmp4_stream(AV_BUFF buff);
+        void push_rtp_stream (AV_BUFF buff);
+        void push_rtcp_stream(AV_BUFF buff);
         void stop();
 
         bool m_bFlv;
@@ -46,8 +47,8 @@ namespace LiveClient
         bool m_bH264;
         bool m_bTs;
         bool m_bRtp;
-		LIVE_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
-		LIVE_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
+		AV_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
+		AV_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
 
         string                  m_strSDP;      // sip服务器返回的sdp
 

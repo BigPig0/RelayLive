@@ -1,7 +1,8 @@
 #pragma once
 #include "commonDefine.h"
-#include "liveObj.h"
+#include "avtypes.h"
 #include "NetStreamMaker.h"
+#include "h264.h"
 
 /** 直播时用的fmp4格式
 ---------------fmp4-head-----------------------------
@@ -33,20 +34,14 @@ mdat
 moof
 mdat...
  */
-enum MP4_FRAG_TYPE
-{
-    MP4_HEAD,
-    MP4_FRAG
-};
-typedef void (*MP4_CALLBACK)(MP4_FRAG_TYPE, char*, int, void*);
 
 class CMP4
 {
 public:
-    CMP4(void* handle, MP4_CALLBACK cb);
+    CMP4(AV_CALLBACK cb, void* handle=NULL);
     ~CMP4();
 
-    int InputBuffer(NalType eType, char* pBuf, uint32_t nLen);
+    int Code(NalType eType, char* pBuf, uint32_t nLen);
 
     void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 
@@ -67,8 +62,8 @@ private:
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
 
-    void*              m_hUser;                  // 回调处理对象
-    MP4_CALLBACK       m_fCB;
+    void*              m_hUser;           // 回调处理对象
+    AV_CALLBACK        m_fCB;
 
     // SPS解析出的信息
     uint32_t           m_nWidth;          // 视频宽

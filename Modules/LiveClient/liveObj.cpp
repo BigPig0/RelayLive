@@ -15,41 +15,49 @@ namespace LiveClient
 {
     extern int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
 
-static void RTPParseCbfun(char* pBuff, long nLen, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->RTPParseCb(pBuff, nLen);
-}
-static void PSParseCbfun(char* pBuff, long nLen, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->PSParseCb(pBuff, nLen);
-}
-static void PESParseCbfun(char* pBuff, long nLen, uint64_t pts, uint64_t dts, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->PESParseCb(pBuff, nLen, pts, dts);
-}
-static void ESParseCbfun(char* pBuff, long nLen, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->ESParseCb(pBuff, nLen);
-}
+
 static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
     CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->H264SpsCb(nWidth, nHeight, fFps);
+    pLive->set_h264_param(nWidth, nHeight, fFps);
 }
-static void FlvCbfun(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize, void* pUser){
+
+static void PESCallBack(AV_BUFF buff, void* pUser, uint64_t  pts, uint64_t  dts) {
     CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->FlvCb(eType, pBuff, nBuffSize);
+    pLive->push_es_stream(buff, pts, dts);
 }
-static void Mp4Cbfun(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize, void* pUser){
+
+static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->Mp4Cb(eType, pBuff, nBuffSize);
-}
-static void TsCbfun(char* pBuff, long nBuffSize, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->TsCb(pBuff, nBuffSize);
-}
-static void H264Cbfun(char* pBuff, int nBuffSize, void* pUser){
-    CLiveObj* pLive = (CLiveObj*)pUser;
-    pLive->H264Cb(pBuff, nBuffSize);
+    switch (buff.eType)
+    {
+    case AV_TYPE::PS:
+        pLive->push_ps_stream(buff);
+        break;
+    case AV_TYPE::PES:
+        pLive->push_pes_stream(buff);
+        break;
+    case AV_TYPE::ES:
+        pLive->push_es_stream(buff, 0, 0);
+        break;
+    case AV_TYPE::H264_NALU:
+        pLive->push_h264_stream(buff);
+        break;
+    case AV_TYPE::FLV_HEAD:
+    case AV_TYPE::FLV_FRAG_KEY:
+    case AV_TYPE::FLV_FRAG:
+        pLive->FlvCb(buff);
+        break;
+    case AV_TYPE::MP4_HEAD:
+    case AV_TYPE::MP4_FRAG_KEY:
+    case AV_TYPE::MP4_FRAG:
+        pLive->Mp4Cb(buff);
+        break;
+    case AV_TYPE::TS:
+        pLive->TsCb(buff);
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -107,14 +115,14 @@ CLiveObj::CLiveObj(int nPort, CLiveWorker *worker)
     , m_dts(0)
     , m_nalu_type(unknow)
 {
-    m_pRtpParser     = new CRtp(this, RTPParseCbfun);
-    m_pPsParser      = new CPs(this, PSParseCbfun);
-    m_pPesParser     = new CPes(this, PESParseCbfun);
-    m_pEsParser      = new CES(this, ESParseCbfun);
-    m_pH264          = new CH264(this, H264SpsCbfun, H264Cbfun);
-    m_pTs            = new CTS(this, TsCbfun);
-    m_pFlv           = new CFlv(this, FlvCbfun);
-    m_pMp4           = new CMP4(this, Mp4Cbfun);
+    m_pRtpParser     = new CRtp(AVCallback, this);
+    m_pPsParser      = new CPs(AVCallback, this);
+    m_pPesParser     = new CPes(PESCallBack, this);
+    m_pEsParser      = new CES(AVCallback, this);
+    m_pH264          = new CH264(H264SpsCbfun, AVCallback, this);
+    m_pTs            = new CTS(AVCallback, this);
+    m_pFlv           = new CFlv(AVCallback, this);
+    m_pMp4           = new CMP4(AVCallback, this);
 
 	CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
 	rtpAnalyzer->SetCatchFrameNum(g_nRtpCatchPacketNum);
@@ -214,7 +222,7 @@ void CLiveObj::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
         return;
     }
     CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
-    rtpAnalyzer->InputBuffer(pBuff, nLen);
+    rtpAnalyzer->DeCode(pBuff, nLen);
 }
 
 void CLiveObj::RtpOverTime()
@@ -227,57 +235,57 @@ void CLiveObj::RtpOverTime()
     }
 }
 
-void CLiveObj::RTPParseCb(char* pBuff, long nLen)
+void CLiveObj::push_ps_stream(AV_BUFF buff)
 {
     //Log::debug("RTPParseCb nlen:%ld", nLen);
-    CHECK_POINT_VOID(pBuff);
+    CHECK_POINT_VOID(buff.pData);
 	if(m_pWorker->m_bRtp){
-		m_pWorker->push_rtp_stream(pBuff, nLen);
+		m_pWorker->push_rtp_stream(buff);
 	} else if(m_pWorker->m_bFlv || m_pWorker->m_bMp4) {
 		if(g_stream_type == STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)
-			pPsParser->InputBuffer(pBuff, nLen);
+			pPsParser->DeCode(buff);
 		} else if(g_stream_type == STREAM_H264) {
-			ESParseCb(pBuff, nLen);
+			push_h264_stream(buff);
 		}
 	}
 }
 
-void CLiveObj::PSParseCb(char* pBuff, long nLen)
+void CLiveObj::push_pes_stream(AV_BUFF buff)
 {
     //Log::debug("PSParseCb nlen:%ld", nLen);
-    CHECK_POINT_VOID(pBuff)
+    CHECK_POINT_VOID(buff.pData)
     CPes* pPesParser = (CPes*)m_pPesParser;
     CHECK_POINT_VOID(pPesParser)
-    pPesParser->InputBuffer(pBuff, nLen);
+    pPesParser->Decode(buff);
     //需要回调TS
     if(m_pWorker->m_bTs && nullptr != m_pTs)
     {
         CTS* ts = (CTS*)m_pTs;
         ts->SetParam(m_nalu_type, m_pts);
-        ts->InputBuffer(pBuff, nLen);
+        ts->Code(buff.pData, buff.nLen);
     }
 }
 
-void CLiveObj::PESParseCb(char* pBuff, long nLen, uint64_t pts, uint64_t dts)
+void CLiveObj::push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts)
 {
     //Log::debug("PESParseCb nlen:%ld,pts:%lld,dts:%lld", nLen,pts,dts);
-    CHECK_POINT_VOID(pBuff)
+    CHECK_POINT_VOID(buff.pData)
     CES* pEsParser = (CES*)m_pEsParser;
     CHECK_POINT_VOID(pEsParser)
     m_pts = pts;
     m_dts = dts;
-	pEsParser->InputBuffer(pBuff, nLen);
+	pEsParser->DeCode(buff);
 }
 
-void CLiveObj::ESParseCb(char* pBuff, long nLen/*, uint8_t nNalType*/)
+void CLiveObj::push_h264_stream(AV_BUFF buff)
 {
     //nal_unit_header4* nalu = (nal_unit_header4*)pBuff;
     //Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", nLen,pBuff[0],pBuff[1],pBuff[2],pBuff[3],pBuff[4]);
-    CHECK_POINT_VOID(pBuff);
+    CHECK_POINT_VOID(buff.pData);
     CH264* pH264 = (CH264*)m_pH264;
-    pH264->InputBuffer(pBuff, nLen);
+    pH264->InputBuffer(buff.pData, buff.nLen);
     m_nalu_type = pH264->NaluType();
     uint32_t nDataLen = 0;
     char* pData = pH264->DataBuff(nDataLen);
@@ -288,18 +296,18 @@ void CLiveObj::ESParseCb(char* pBuff, long nLen/*, uint8_t nNalType*/)
     if(m_pWorker->m_bFlv && nullptr != m_pFlv)
     {
         CFlv* flv = (CFlv*)m_pFlv;
-        flv->InputBuffer(m_nalu_type, pData, nDataLen);
+        flv->Code(m_nalu_type, pData, nDataLen);
     }
 
     //需要回调mp4
     if (m_pWorker->m_bMp4 && nullptr != m_pMp4)
     {
         CMP4* mp4 = (CMP4*)m_pMp4;
-        mp4->InputBuffer(m_nalu_type, pData, nDataLen);
+        mp4->Code(m_nalu_type, pData, nDataLen);
     }
 }
 
-void CLiveObj::H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps)
+void CLiveObj::set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps)
 {
 	Log::debug("H264SpsCb width:%d, height:%d, fps:%lf", nWidth, nHeight, fFps);
     if(nullptr != m_pFlv)
@@ -314,34 +322,34 @@ void CLiveObj::H264SpsCb(uint32_t nWidth, uint32_t nHeight, double fFps)
     }
 }
 
-void CLiveObj::FlvCb(FLV_FRAG_TYPE eType, char* pBuff, int nBuffSize)
+void CLiveObj::FlvCb(AV_BUFF buff)
 {
 	//Log::debug("Flvcb type:%d, buffsize:%d", eType, nBuffSize);
     CHECK_POINT_VOID(m_pWorker);
     if(m_pWorker->m_bFlv)
-        m_pWorker->push_flv_stream(eType, pBuff, nBuffSize);
+        m_pWorker->push_flv_stream(buff);
 }
 
-void CLiveObj::Mp4Cb(MP4_FRAG_TYPE eType, char* pBuff, int nBuffSize)
+void CLiveObj::Mp4Cb(AV_BUFF buff)
 {
     CHECK_POINT_VOID(m_pWorker);
     if(m_pWorker->m_bMp4)
-        m_pWorker->push_fmp4_stream(eType, pBuff, nBuffSize);
+        m_pWorker->push_fmp4_stream(buff);
 }
 
-void CLiveObj::TsCb(char* pBuff, int nBuffSize)
+void CLiveObj::TsCb(AV_BUFF buff)
 {
     CHECK_POINT_VOID(m_pWorker);
     if(m_pWorker->m_bTs)
-        m_pWorker->push_ts_stream(pBuff, nBuffSize);
+        m_pWorker->push_ts_stream(buff);
 }
 
-void CLiveObj::H264Cb(char* pBuff, int nBuffSize)
+void CLiveObj::H264Cb(AV_BUFF buff)
 {
 	//Log::debug("H264Cb buffsize:%d", nBuffSize);
     CHECK_POINT_VOID(m_pWorker);
 	if (m_pWorker->m_bH264)
-		m_pWorker->push_h264_stream(pBuff, nBuffSize);
+		m_pWorker->push_h264_stream(buff);
 }
 
 void CLiveObj::AsyncClose()

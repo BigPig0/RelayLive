@@ -258,9 +258,9 @@ namespace RtspServer
                 if (!pss || !pss->m_pWorker)
                     break;
 
-                LIVE_BUFF pkg = pss->m_pWorker->GetVideo(&pss->tail);
+                AV_BUFF pkg = pss->m_pWorker->GetVideo(&pss->tail);
                 char* buff = (char *)malloc(pkg.nLen);
-                memcpy(buff, pkg.pBuff, pkg.nLen);
+                memcpy(buff, pkg.pData, pkg.nLen);
                 rtp_write(client, buff, pkg.nLen);
                 pss->m_pWorker->NextWork(pss);
             }

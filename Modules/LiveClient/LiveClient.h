@@ -3,6 +3,8 @@
 */
 #pragma once
 
+#include "avtypes.h"
+
 #ifdef LIVECLIENT_EXPORTS
 #define LIVECLIENT_API __declspec(dllexport)
 #else
@@ -19,23 +21,20 @@ enum HandleType
     rtp_handle,
 };
 
-struct LIVE_BUFF {
-    char *pBuff;
-    int   nLen;
-};
+
 
 namespace LiveClient
 {
     /**
     * 数据回调处理接口
-    * 由上层实现一个继承该接口的类来处理RTP解析后的数据
+    * 由上层实现一个继承该接口的类，live worker通过该接口访问其实例的方法
     */
     struct ILiveHandle
     {
         /**
          * 视频数据发送回调
          */
-        virtual void push_video_stream(char*, int) = 0;
+        virtual void push_video_stream(AV_BUFF buff) = 0;
 
         /**
         * rtp接收端结束，目前已知只有接收超时引起
@@ -52,6 +51,9 @@ namespace LiveClient
         virtual void push_rtcp_stream(char*, int) = 0;
     };
 
+    /**
+     * 对上层导出live worker的接口
+     */
     struct ILiveWorker
     {
         /**
@@ -68,7 +70,7 @@ namespace LiveClient
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
 
-		virtual LIVE_BUFF GetHeader(HandleType t) = 0;
+		virtual AV_BUFF GetHeader(HandleType t) = 0;
 
         virtual string GetSDP() = 0;
     };

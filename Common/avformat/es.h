@@ -3,10 +3,8 @@
  * 输出H264片(帧)
  */
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 #include "h264.h"
-
-typedef void (*ES_CALLBACK)(char*, long, void*);
 
 /**
  * ES包解析类
@@ -14,16 +12,16 @@ typedef void (*ES_CALLBACK)(char*, long, void*);
 class CES
 {
 public:
-    CES(void* handle, ES_CALLBACK cb);
+    CES(AV_CALLBACK cb, void* handle=NULL);
     ~CES(void);
 
     /**
-     * 插入一个PES包
-     * @param[in] pBuf PES帧
-     * @param[in] nLen PES帧长度
+     * PES包解码
+     * @param[in] buff.pData PES帧
+     * @param[in] buff.nLen PES帧长度
      * @return 0成功 -1失败
      */
-    int InputBuffer(char* pBuf, uint32_t nLen);
+    int DeCode(AV_BUFF buff);
 
 private:
     /**
@@ -35,7 +33,7 @@ private:
 
 private:
     void*             m_hUser;                  // 回调处理对象
-    ES_CALLBACK       m_fCB;
+    AV_CALLBACK       m_fCB;
 
     char*       m_pH264Buf;
     uint32_t    m_nH264BufLen;

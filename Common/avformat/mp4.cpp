@@ -212,7 +212,7 @@ struct mp4_mdat_box {
 #pragma pack()
 
 
-CMP4::CMP4(void* handle, MP4_CALLBACK cb)
+CMP4::CMP4(AV_CALLBACK cb, void* handle)
     : m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
@@ -245,7 +245,7 @@ CMP4::~CMP4()
     m_bRun = false;
 }
 
-int CMP4::InputBuffer(NalType eType, char* pBuf, uint32_t nLen)
+int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
 {
     if(!m_bRun)
     {
@@ -539,8 +539,10 @@ bool CMP4::MakeHeader()
     m_pHeader->rewrite_be32((char*)moov - pPos, m_pHeader->size() - ((char*)moov - pPos));
     // moov end
 
-    if(m_fCB != nullptr)
-        m_fCB(MP4_HEAD, m_pHeader->get(), m_pHeader->size(), m_hUser);
+    if(m_fCB != nullptr){
+        AV_BUFF buff= {MP4_HEAD, m_pHeader->get(), m_pHeader->size()};
+        m_fCB(buff, m_hUser);
+    }
     return true;
 }
 
@@ -611,7 +613,9 @@ bool CMP4::MakeVideo()
     m_pFragment->append_data(m_pMdat->get(), m_pMdat->size());        //mdat->data
     // mdat end
 
-    if(m_fCB != nullptr)
-        m_fCB(MP4_FRAG, m_pFragment->get(), m_pFragment->size(), m_hUser);
+    if(m_fCB != nullptr){
+        AV_BUFF buff ={MP4_FRAG, m_pFragment->get(), m_pFragment->size()};
+        m_fCB(buff, m_hUser);
+    }
     return true;
 }

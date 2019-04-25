@@ -8,9 +8,9 @@ namespace RtspServer
 
     static void destroy_ring_node(void *_msg)
     {
-        LIVE_BUFF *msg = (LIVE_BUFF*)_msg;
-        free(msg->pBuff);
-        msg->pBuff = NULL;
+        AV_BUFF *msg = (AV_BUFF*)_msg;
+        free(msg->pData);
+        msg->pData = NULL;
         msg->nLen = 0;
     }
 
@@ -20,7 +20,7 @@ namespace RtspServer
         , m_pLive(nullptr)
         , m_type(HandleType::rtp_handle)
     {
-        m_pRing  = create_ring_buff(sizeof(LIVE_BUFF), 5000, destroy_ring_node);
+        m_pRing  = create_ring_buff(sizeof(AV_BUFF), 5000, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
         if(m_pLive)
@@ -56,10 +56,10 @@ namespace RtspServer
         return true;
     }
 
-    LIVE_BUFF CRtspWorker::GetVideo(uint32_t *tail)
+    AV_BUFF CRtspWorker::GetVideo(uint32_t *tail)
     {
-        LIVE_BUFF ret = {nullptr,0};
-        LIVE_BUFF* tag = (LIVE_BUFF*)ring_get_element(m_pRing, tail);
+        AV_BUFF ret = {AV_TYPE::NONE, nullptr,0};
+        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pRing, tail);
         if(tag) ret = *tag;
 
         return ret;
@@ -94,7 +94,7 @@ namespace RtspServer
 		return origin;
     }
 
-    void CRtspWorker::push_video_stream(char* pBuff, int nLen)
+    void CRtspWorker::push_video_stream(AV_BUFF buff)
     {
         int n = (int)ring_get_count_free_elements(m_pRing);
         if (!n) {
@@ -106,9 +106,9 @@ namespace RtspServer
             return;
 
         // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(nLen);
-        memcpy(pSaveBuff, pBuff, nLen);
-        LIVE_BUFF newTag = {pSaveBuff, nLen};
+        char* pSaveBuff = (char*)malloc(buff.nLen);
+        memcpy(pSaveBuff, buff.pData, buff.nLen);
+        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen};
         if (!ring_insert(m_pRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
             Log::error("dropping!");

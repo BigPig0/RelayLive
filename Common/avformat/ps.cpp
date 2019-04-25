@@ -3,7 +3,7 @@
 #include "pes.h"
 
 
-CPs::CPs(void* handle, PS_CALLBACK cb)
+CPs::CPs(AV_CALLBACK cb, void* handle)
     : m_hUser(handle)
     , m_fCB(cb)
 {
@@ -14,22 +14,22 @@ CPs::~CPs(void)
 {
 }
 
-int CPs::InputBuffer(char* pBuf, uint32_t nLen)
+int CPs::DeCode(AV_BUFF buff)
 {
-    long nHeadLen = 0;
-    if(0 != ParseHeader(pBuf, nLen, nHeadLen))
+    uint32_t nHeadLen = 0;
+    if(0 != ParseHeader(buff.pData, buff.nLen, nHeadLen))
     {
         Log::error("CPsAnalyzer::InsertPacket ParseHeader failed");
         return -1;
     }
-    if (nLen < nHeadLen)
+    if (buff.nLen < nHeadLen)
     {
-        Log::error("CPsAnalyzer::InsertPacket nLen:%ld,nHeadLen:%ld",nLen,nHeadLen);
+        Log::error("CPsAnalyzer::InsertPacket nLen:%ld,nHeadLen:%ld",buff.nLen,nHeadLen);
         return -1;
     }
     //Log::debug("CPs::InputBuffer HeadLen:%ld",nHeadLen);
 
-    if (0 != ParsePES(pBuf+nHeadLen, nLen-nHeadLen))
+    if (0 != ParsePES(buff.pData+nHeadLen, buff.nLen-nHeadLen))
     {
         Log::error("CPsAnalyzer::InsertPacket ParsePES failed");
         return -1;
@@ -37,9 +37,9 @@ int CPs::InputBuffer(char* pBuf, uint32_t nLen)
     return 0;
 }
 
-int CPs::ParseHeader(char* pBuf, long nLen, long& nHeadLen)
+int CPs::ParseHeader(char* pBuf, uint32_t nLen, uint32_t& nHeadLen)
 {
-    int nPos = 0;
+    uint32_t nPos = 0;
     ps_header_t* ps = (ps_header_t*)pBuf;
     if(!is_ps_header(ps))
     {
@@ -118,7 +118,7 @@ int CPs::ParseHeader(char* pBuf, long nLen, long& nHeadLen)
     return 0;
 }
 
-int CPs::ParsePES(char* pBuf, long nLen)
+int CPs::ParsePES(char* pBuf, uint32_t nLen)
 {
     long nPos = 0;
     for (; nPos<nLen-6;)
@@ -138,7 +138,8 @@ int CPs::ParsePES(char* pBuf, long nLen)
         // 回调解析PES包
         if (m_fCB != nullptr)
         {
-            m_fCB((char*)pes, pesLen+6, m_hUser);
+            AV_BUFF buff = {AV_TYPE::PES, (char*)pes, pesLen+6};
+            m_fCB(buff, m_hUser);
         }
 
         nPos += (6+pesLen);

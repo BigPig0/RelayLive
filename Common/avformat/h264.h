@@ -1,5 +1,5 @@
 #pragma once
-#include "liveObj.h"
+#include "avtypes.h"
 #include "NetStreamMaker.h"
 
 /**
@@ -115,12 +115,11 @@ NalType inline h264_naltype(char* buff) {
 }
 
 typedef void (*H264SPS_CALLBACK)(uint32_t, uint32_t, double, void*);
-typedef void (*H264_CALLBACK)(char*, int, void*);
 
 class CH264
 {
 public:
-    CH264(void* handle, H264SPS_CALLBACK spscb, H264_CALLBACK cb);
+    CH264(H264SPS_CALLBACK spscb, AV_CALLBACK cb, void* handle=NULL);
     ~CH264();
 
     /**
@@ -184,7 +183,7 @@ private:
     
     void*             m_hUser;                  // 回调处理对象
     H264SPS_CALLBACK  m_fCBSPS;
-    H264_CALLBACK     m_fCB;
+    AV_CALLBACK       m_fCB;
 
     /** sps中的数据 */
     int32_t     m_nWidth;

@@ -89,5 +89,8 @@
     <ClInclude Include="LiveIpc.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\avtypes.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
