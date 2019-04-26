@@ -47,7 +47,7 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
         // ·¢ËÍ¹Ø¼üÖ¡
         Log::debug("h264 key frame");
         if(m_pFullBuff->size() > 0) {
-            AV_BUFF buff = {H264_NALU, m_pFullBuff->get(), m_pFullBuff->size()};
+            AV_BUFF buff = {H264_IDR, m_pFullBuff->get(), m_pFullBuff->size()};
             m_fCB(buff, m_hUser);
             m_pFullBuff->clear();
         }

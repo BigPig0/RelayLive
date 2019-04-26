@@ -39,8 +39,11 @@ namespace HttpWsServer
         if(tag.pData == nullptr) return;
 
         if (!pss->m_bSendHead) {
+            if(tag.eType != AV_TYPE::FLV_FRAG_KEY) // 第一个包必须是关键帧
+                return;
             AV_BUFF flvheader = pWorker->GetHeader();
-            if(flvheader.pData == nullptr) return;
+            if(flvheader.pData == nullptr)
+                return;
 
             Log::debug("first flv data with header: tail:%d",pss->tail);
             int len = flvheader.nLen + tag.nLen;
@@ -54,7 +57,7 @@ namespace HttpWsServer
             free(buff);
             pWorker->NextWork(pss);
         } else {
-            Log::debug(" flv data tail:%d", pss->tail);
+            //Log::debug(" flv data tail:%d", pss->tail);
             int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
             pWorker->NextWork(pss);
         }

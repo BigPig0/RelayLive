@@ -10,6 +10,8 @@ typedef enum _AV_TYPE_
     PES,
     ES,
     H264_NALU,
+	H264_IDR,
+	H264_NDR,
     FLV_HEAD,
     FLV_FRAG_KEY,
     FLV_FRAG,

@@ -174,11 +174,29 @@ namespace HttpWsServer
         lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
             if ((*ppss)->tail == oldest_tail) {
                 //连接超时
-                old_pss = *ppss;
-                Log::debug("Killing lagging client %p", (*ppss)->wsi);
-                lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
-                (*ppss)->culled = 1;
-                lws_ll_fwd_remove(pss_http_ws_live, pss_next, (*ppss), m_pPssList);
+                // 20190425 发送速度比插入速度慢，不要断开连接，将该连接的标志移动到后面的第一个关键帧
+                //old_pss = *ppss;
+                //Log::debug("Killing lagging client %p", (*ppss)->wsi);
+                //lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
+                //(*ppss)->culled = 1;
+                //lws_ll_fwd_remove(pss_http_ws_live, pss_next, (*ppss), m_pPssList);
+				if(!old_pss){ //只查一次，后面直接改tail的值
+					old_pss = *ppss;
+					while(true){
+						lws_ring_consume(m_pRing, &(*ppss)->tail, NULL, 1);
+						AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, &(*ppss)->tail);
+						if ((*ppss)->media_type == media_flv){
+							if(tag->eType == AV_TYPE::FLV_FRAG_KEY || !tag){ //找到关键帧或跳过所有数据
+								m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
+								if (m > most)
+									most = m;
+								break;
+							}
+						}
+					}
+				} else {
+				    (*ppss)->tail = old_pss->tail;	//
+                }
                 continue;
             } else {
                 m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
@@ -191,7 +209,7 @@ namespace HttpWsServer
             return;
 
         lws_ring_consume_and_update_oldest_tail(m_pRing,
-            pss_http_ws_live, &old_pss->tail, before - most,
+            pss_http_ws_live, &oldest_tail, before - most,
             m_pPssList, tail, pss_next);
 
         Log::debug("shrunk ring from %d to %d", before, most);

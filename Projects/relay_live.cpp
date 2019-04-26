@@ -36,11 +36,14 @@ int main()
     if (err) {
         Log::warning("fail get cpu info: %s",uv_strerror(err));
     } else {
-        wchar_t szCpuNum[10] = {0};
-        swprintf_s(szCpuNum,L"%d", count);
+        char szThreadNum[10] = {0};
+        sprintf(szThreadNum, "%d", count*2+1);
+        Log::debug("thread pool size is %s", szThreadNum);
         //设置环境变量的值
-        ::SetEnvironmentVariableW(L"UV_THREADPOOL_SIZE",szCpuNum); 
+        //::SetEnvironmentVariableW(L"UV_THREADPOOL_SIZE",szCpuNum); 
+        uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
     }
+    uv_free_cpu_info(cpu_infos, count);
 
     //全局loop
     p_loop_uv = uv_default_loop();
