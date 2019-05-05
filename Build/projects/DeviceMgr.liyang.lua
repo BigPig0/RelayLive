@@ -1,5 +1,3 @@
-dep = {}
-
 function GetDevInfo()
     local ret = {}
     local con = DBTOOL_GET_CONN("DB")
@@ -16,7 +14,6 @@ function GetDevInfo()
         row["Name"]   = DBTOOL_GET_STR(rs, 2)
         row["BusinessGroupID"]= DBTOOL_GET_STR(rs, 3)
         table.insert(ret, row)
-		dep[row["DevID"]] = row["Name"];	--部门id与部门名称对应关系
     end
     DBTOOL_FREE_STMT(stmt)
     --设备
@@ -36,7 +33,6 @@ function GetDevInfo()
         row["Latitude"]   = DBTOOL_GET_STR(rs, 4)
         row["Longitude"]  = DBTOOL_GET_STR(rs, 5)
 		row["ParentID"]   = DBTOOL_GET_STR(rs, 6)
-
         table.insert(ret, row)
     end
     DBTOOL_FREE_STMT(stmt2)
@@ -115,7 +111,6 @@ function InsertDev(dev)
 		end
         local row = {dev["DevID"], dev["Name"], dp}
         DBTOOL_ADD_ROW(departHelp, row)
-		dep[dev["DevID"]] = dev["Name"];	--部门id与部门名称对应关系
     end
     return true
 end
