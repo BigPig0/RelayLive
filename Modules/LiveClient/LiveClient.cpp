@@ -5,16 +5,16 @@
 
 namespace LiveClient
 {
-    extern uv_loop_t *g_uv_loop;
+    uv_loop_t *g_uv_loop = NULL;
 
-    extern string g_strRtpIP;            //< RTP服务IP
-    extern int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
-    extern int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-    extern int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-    extern int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
+    string g_strRtpIP;            //< RTP服务IP
+    int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
+    int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
+    int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
+    int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
 
-    extern vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
-    extern CriticalSection m_csRTP;          //< RTP端口锁
+    vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+    CriticalSection m_csRTP;          //< RTP端口锁
 
     extern LIVECLIENT_CB ipc_cb;
 

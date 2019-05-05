@@ -32,7 +32,7 @@ namespace HttpWsServer
         , m_type(t)
     {
         memset(&m_stHead, 0, sizeof(m_stHead));
-        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 200, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
 		if(m_pLive)
@@ -185,6 +185,7 @@ namespace HttpWsServer
 					while(true){
 						lws_ring_consume(m_pRing, &(*ppss)->tail, NULL, 1);
 						AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, &(*ppss)->tail);
+						if(!tag) break;
 						if ((*ppss)->media_type == media_flv){
 							if(tag->eType == AV_TYPE::FLV_FRAG_KEY || !tag){ //找到关键帧或跳过所有数据
 								m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));

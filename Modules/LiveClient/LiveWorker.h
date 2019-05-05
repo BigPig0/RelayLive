@@ -5,12 +5,12 @@
 
 namespace LiveClient
 {
-    class CLiveObj;
+    class CLiveReceiver;
 
     class CLiveWorker : public ILiveWorker
     {
     public:
-        CLiveWorker(string strCode, int rtpPort);
+        CLiveWorker(string strCode, int rtpPort, string sdp);
         ~CLiveWorker();
 
         /** 客户端连接 */
@@ -18,8 +18,6 @@ namespace LiveClient
         virtual bool RemoveHandle(ILiveHandle* h);
 		virtual AV_BUFF GetHeader(HandleType t);
         virtual string GetSDP();
-
-        void StartListen(string strRemoteIP, int nRemotePort);
 
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
@@ -50,10 +48,11 @@ namespace LiveClient
 		AV_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
 		AV_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
 
-        string                  m_strSDP;      // sip服务器返回的sdp
-
     private:
         string                   m_strCode;     // 播放媒体编号
+        string                   m_strSDP;      // sip服务器返回的sdp
+        CLiveReceiver*           m_pLive;       // 直播数据接收和解包装包
+
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
         CriticalSection          m_csFlv;
         vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 
@@ -66,7 +65,6 @@ namespace LiveClient
         CriticalSection          m_csRtp;
 
         int                      m_nType;          //< 0:live直播；1:record历史视频
-        CLiveObj*                m_pLive;          //< 直播数据接收和解包装包
         int                      m_nPort;          //< rtp接收端口
 
         uv_timer_t               m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放

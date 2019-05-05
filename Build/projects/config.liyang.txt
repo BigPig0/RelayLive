@@ -40,7 +40,7 @@ BeginPort = 50000
 ;rtp起始端口
 PortNum = 1000
 ;rtp端口数量
-CatchPacketNum = 5000
+CatchPacketNum = 1000
 ;rtp包缓存数量
 Filter = 0
 ;0-ps,1-h264
@@ -65,6 +65,6 @@ DirVisible = yes
 [RtspServer]
 ;开启rtsp服务相关配置
 IP = 0.0.0.0
-Port = 8002
+Port = 554
 RtpPort = 51000
 RtpPortNum = 1000

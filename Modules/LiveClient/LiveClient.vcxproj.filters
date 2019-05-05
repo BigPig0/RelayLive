@@ -33,9 +33,6 @@
     <ClCompile Include="..\..\Common\avformat\ts.cpp">
       <Filter>avformat</Filter>
     </ClCompile>
-    <ClCompile Include="liveObj.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -46,6 +43,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="LiveClient.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="liveReceiver.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,9 +77,6 @@
     <ClInclude Include="LiveClient.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="liveObj.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -91,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Common\avformat\avtypes.h">
       <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="liveReceiver.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

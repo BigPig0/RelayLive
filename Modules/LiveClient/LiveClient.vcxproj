@@ -21,7 +21,7 @@
     <ClCompile Include="..\..\Common\avformat\ts.cpp" />
     <ClCompile Include="LiveClient.cpp" />
     <ClCompile Include="LiveIpc.cpp" />
-    <ClCompile Include="liveObj.cpp" />
+    <ClCompile Include="liveReceiver.cpp" />
     <ClCompile Include="LiveWorker.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -39,7 +39,7 @@
     <ClInclude Include="..\..\Common\avformat\ts.h" />
     <ClInclude Include="LiveClient.h" />
     <ClInclude Include="LiveIpc.h" />
-    <ClInclude Include="liveObj.h" />
+    <ClInclude Include="liveReceiver.h" />
     <ClInclude Include="LiveWorker.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

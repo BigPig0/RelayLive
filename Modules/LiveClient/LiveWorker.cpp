@@ -2,28 +2,28 @@
 #include "uv.h"
 #include "LiveWorker.h"
 #include "LiveClient.h"
-#include "liveObj.h"
+#include "liveReceiver.h"
 #include "LiveIpc.h"
 
 namespace LiveClient
 {
-	uv_loop_t *g_uv_loop = NULL;
+	extern uv_loop_t *g_uv_loop;
+
+    extern string g_strRtpIP;            //< RTP服务IP
+    extern int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
+    extern int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
+    extern int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
+	extern int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
+
+    extern vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+    //extern CriticalSection m_csRTP;          //< RTP端口锁
 
     static map<string,CLiveWorker*>  m_workerMap;
-    static CriticalSection           m_cs;
-
-    string g_strRtpIP;            //< RTP服务IP
-    int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
-    int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-    int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-	int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
-
-    vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
-    CriticalSection m_csRTP;          //< RTP端口锁
+    //static CriticalSection           m_cs;
 
     static int GetRtpPort()
     {
-        MutexLock lock(&m_csRTP);
+        //MutexLock lock(&m_csRTP);
 
         int nRet = -1;
         auto it = m_vecRtpPort.begin();
@@ -37,7 +37,7 @@ namespace LiveClient
 
     static void GiveBackRtpPort(int nPort)
     {
-        MutexLock lock(&m_csRTP);
+        //MutexLock lock(&m_csRTP);
         m_vecRtpPort.push_back(nPort);
     }
 
@@ -80,33 +80,19 @@ namespace LiveClient
             return nullptr;
         }
 
-        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
-
         string sdp;
         if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort, sdp))
         {
-            uv_thread_t tid;
-            uv_thread_create(&tid, live_worker_destory_thread, pNew);
+            //uv_thread_t tid;
+            //uv_thread_create(&tid, live_worker_destory_thread, pNew);
             Log::error("play failed %s",strCode.c_str());
             return nullptr;
         }
-        pNew->m_strSDP = sdp;
+
         Log::debug("RealPlay ok: %s",strCode.c_str());
+        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort, sdp);
 
-        //从sdp解析出视频源ip和端口
-        size_t t1,t2;
-        t1 = sdp.find("c=IN IP4 ");
-        t1 += 9;
-        t2 = sdp.find("\r\n", t1);
-        string rip = sdp.substr(t1, t2-t1);
-        t1 = sdp.find("m=video ");
-        t1 += 8;
-        t2 = sdp.find(" ", t1);
-        string rport = sdp.substr(t1, t2-t1);
-        //启动监听
-        pNew->StartListen(rip, stoi(rport));
-
-        MutexLock lock(&m_cs);
+        //MutexLock lock(&m_cs);
         m_workerMap.insert(make_pair(strCode, pNew));
 
         return pNew;
@@ -116,7 +102,7 @@ namespace LiveClient
     {
         //Log::debug("GetWorker begin");
 
-        MutexLock lock(&m_cs);
+        //MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
@@ -130,7 +116,7 @@ namespace LiveClient
 
     bool DelLiveWorker(string strCode)
     {
-        MutexLock lock(&m_cs);
+        //MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
@@ -148,7 +134,7 @@ namespace LiveClient
 
 	string GetAllWorkerClientsInfo(){
 		string strResJson = "{\"root\":[";
-        MutexLock lock(&m_cs);
+        //MutexLock lock(&m_cs);
         for (auto w : m_workerMap)
         {
             CLiveWorker *worker = w.second;
@@ -161,9 +147,10 @@ namespace LiveClient
 
     //////////////////////////////////////////////////////////////////////////
 
-    CLiveWorker::CLiveWorker(string strCode, int rtpPort)
+    CLiveWorker::CLiveWorker(string strCode, int rtpPort, string sdp)
         : m_strCode(strCode)
         , m_nPort(rtpPort)
+        , m_strSDP(sdp)
         , m_nType(0)
         , m_pLive(nullptr)
         , m_bStop(false)
@@ -176,7 +163,25 @@ namespace LiveClient
     {
 		memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
 		memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
-        m_pLive = new CLiveObj(rtpPort, this);
+
+        //从sdp解析出视频源ip和端口
+        size_t t1,t2;
+        t1 = sdp.find("c=IN IP4 ");
+        t1 += 9;
+        t2 = sdp.find("\r\n", t1);
+        string rip = sdp.substr(t1, t2-t1);
+        t1 = sdp.find("m=video ");
+        t1 += 8;
+        t2 = sdp.find(" ", t1);
+        string rport = sdp.substr(t1, t2-t1);
+        int nport = stoi(rport);
+
+        //启动监听
+        m_pLive = new CLiveReceiver(rtpPort, this);
+        m_pLive->m_strRemoteIP = rip;
+        m_pLive->m_nRemoteRTPPort = nport;
+        m_pLive->m_nRemoteRTCPPort = nport+1;
+        m_pLive->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
@@ -319,10 +324,6 @@ namespace LiveClient
 
     string CLiveWorker::GetSDP(){
         return m_strSDP;
-    }
-
-    void CLiveWorker::StartListen(string strRemoteIP, int nRemotePort){
-        m_pLive->StartListen(strRemoteIP, nRemotePort);
     }
 
 	void CLiveWorker::Clear2Stop() {
