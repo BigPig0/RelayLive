@@ -6,9 +6,7 @@
 #include "RtspServer.h"
 #include <windows.h>
 #include "MiniDump.h"
-//#include "uvIpc.h"
 #include "uv.h"
-//#include <thread>
 
 int main()
 {
@@ -19,6 +17,7 @@ int main()
     char path[MAX_PATH];
     sprintf_s(path, MAX_PATH, ".\\log\\relayLive.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** º”‘ÿ≈‰÷√Œƒº˛ */
     if (!Settings::loadFromProfile(".\\config.txt"))

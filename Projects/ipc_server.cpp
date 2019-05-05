@@ -6,6 +6,11 @@
 
 int main()
 {
+    printf("version: " );
+    printf(__DATE__);
+    printf(" ");
+    printf(__TIME__);
+    printf("\r\n");
     uv_ipc_handle_t* h = NULL;
     int ret = uv_ipc_server(&h, "relay_live", NULL);
     if(ret < 0) {
