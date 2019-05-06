@@ -18,7 +18,7 @@ function GetDevInfo()
     DBTOOL_FREE_STMT(stmt)
     --设备
     local stmt2 = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t")
+    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t where t.TYPE = 5")
     local rs2 = DBTOOL_GET_RES(stmt2)
     while (DBTOOL_FETCH_NEXT(rs2)) do
         local row = {}
@@ -102,7 +102,7 @@ function InsertDev(dev)
 		if(dev["Status"] == "ON") then
 		    status = "1"
 		end
-        local row = {dev["DevID"], dev["Name"], dev["DevID"], "5", status, date, dp}
+        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["DevID"], "5", status, date, dp}
         DBTOOL_ADD_ROW(devHelp, row)
     else
         --记录插入部门表
@@ -121,7 +121,7 @@ function DeleteDev()
         return false
     end
     local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "TRUNCATE TABLE VIDEODEVICE")
+    DBTOOL_EXECUTE_STMT(stmt, "DELETE FROM VIDEODEVICE WHERE TYPE = 5")
     DBTOOL_EXECUTE_STMT(stmt, "TRUNCATE TABLE VIDEODEPART")
 	DBTOOL_COMMIT(con)
     DBTOOL_FREE_STMT(stmt)
@@ -130,13 +130,14 @@ function DeleteDev()
 end
 
 function Init()
-    DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.7/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
+    DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.10/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
     --设备表插入工具
-    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, TYPE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :TYPE, :STATUS, :UPTIME, :DPART)"
+    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, OBJID, TYPE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :OBJID, :TYPE, :STATUS, :UPTIME, :DPART)"
     devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
         {bindname = "GUID",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "SERVERGUID", coltype = DBTOOL_TYPE_CHR, maxlen = 64},
+        {bindname = "OBJID",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "TYPE",       coltype = DBTOOL_TYPE_INT},
         {bindname = "STATUS",     coltype = DBTOOL_TYPE_INT},
         {bindname = "UPTIME",     coltype = DBTOOL_TYPE_CHR, maxlen = 14},

@@ -17,8 +17,6 @@
          */
         // NodePlayer.debug(false);
 
-        var urls = ['ws://172.31.7.88:8000/36030100061320000026.h264', 'ws://172.31.7.88:8000/36030100061320000026.h264'];
-        var index = 0;
         var player = new NodePlayer();
 
         /**
@@ -81,9 +79,9 @@
         player.on('stop', () => {
             console.log("player on stop");
         });
-		
-		player.start("ws://192.200.200.144:8000/125.flv");
 
+        var playaddr = "ws://" + window.location.hostname + ":8000/" + window.location.hash.substr(1) + ".flv"
+        player.start(playaddr);
     </script>
 </body>
 
