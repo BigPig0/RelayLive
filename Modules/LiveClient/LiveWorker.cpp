@@ -152,7 +152,7 @@ namespace LiveClient
         , m_nPort(rtpPort)
         , m_strSDP(sdp)
         , m_nType(0)
-        , m_pLive(nullptr)
+        , m_pLiveReceiver(nullptr)
         , m_bStop(false)
         , m_bOver(false)
         , m_bFlv(false)
@@ -177,11 +177,11 @@ namespace LiveClient
         int nport = stoi(rport);
 
         //Æô¶¯¼àÌý
-        m_pLive = new CLiveReceiver(rtpPort, this);
-        m_pLive->m_strRemoteIP = rip;
-        m_pLive->m_nRemoteRTPPort = nport;
-        m_pLive->m_nRemoteRTCPPort = nport+1;
-        m_pLive->StartListen();
+        m_pLiveReceiver = new CLiveReceiver(rtpPort, this);
+        m_pLiveReceiver->m_strRemoteIP = rip;
+        m_pLiveReceiver->m_nRemoteRTPPort = nport;
+        m_pLiveReceiver->m_nRemoteRTCPPort = nport+1;
+        m_pLiveReceiver->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
@@ -190,7 +190,7 @@ namespace LiveClient
         if(LiveIpc::StopPlay(ssid)) {
             Log::error("stop play failed");
         }
-        SAFE_DELETE(m_pLive);
+        SAFE_DELETE(m_pLiveReceiver);
         GiveBackRtpPort(m_nPort);
         Log::debug("CLiveWorker release");
     }

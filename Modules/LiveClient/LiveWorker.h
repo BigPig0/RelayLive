@@ -51,7 +51,7 @@ namespace LiveClient
     private:
         string                   m_strCode;     // 播放媒体编号
         string                   m_strSDP;      // sip服务器返回的sdp
-        CLiveReceiver*           m_pLive;       // 直播数据接收和解包装包
+        CLiveReceiver*           m_pLiveReceiver;  // 直播数据接收和解包装包
 
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
         CriticalSection          m_csFlv;

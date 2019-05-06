@@ -70,8 +70,9 @@ public:
     /** H264合成回调 */
     void H264Cb(AV_BUFF buff);
 
-    /** 结束时关闭loop */
-    void AsyncClose();
+public:
+    bool        m_bRtpRun;
+    bool        m_bTimeOverRun;
 
 private:
     int         m_nLocalRTPPort;    // 本地RTP接收端口
@@ -82,7 +83,6 @@ private:
 
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器
-    uv_async_t  m_uvAsync;          // 异步操作句柄
 
     void*       m_pRtpParser;       // rtp报文解析类
     void*       m_pPsParser;        // PS帧解析类

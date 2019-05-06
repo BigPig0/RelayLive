@@ -89,9 +89,21 @@ static void timer_cb(uv_timer_t* handle)
     pLive->RtpOverTime();
 }
 
+static void rtp_udp_close_cb(uv_handle_t* handle){
+    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
+    pLive->m_bRtpRun = false;
+}
+
+static void timer_over_close_cb(uv_handle_t* handle){
+    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
+    pLive->m_bTimeOverRun = false;
+}
+
 CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
 	: m_nLocalRTPPort(nPort)
 	, m_nLocalRTCPPort(nPort+1)
+    , m_bRtpRun(false)
+    , m_bTimeOverRun(false)
 	, m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
@@ -118,7 +130,21 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
 
 CLiveReceiver::~CLiveReceiver(void)
 {
-    AsyncClose();
+    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
+    if(ret < 0) {
+        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&m_uvRtpSocket, rtp_udp_close_cb);
+
+    ret = uv_timer_stop(&m_uvTimeOver);
+    if(ret < 0) {
+        Log::error("stop timer error: %s",uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&m_uvTimeOver, timer_over_close_cb);
+
+    while (m_bRtpRun || m_bTimeOverRun){
+        Sleep(500);
+    }
 
     m_pWorker = nullptr;
     SAFE_DELETE(m_pRtpParser);
@@ -162,6 +188,7 @@ void CLiveReceiver::StartListen()
 
     m_uvRtpSocket.data = (void*)this;
     uv_udp_recv_start(&m_uvRtpSocket, echo_alloc, after_read);
+    m_bRtpRun = true;
 
     //开启udp接收超时判断
     ret = uv_timer_init(g_uv_loop, &m_uvTimeOver);
@@ -176,6 +203,7 @@ void CLiveReceiver::StartListen()
         Log::error("timer start error: %s", uv_strerror(ret));
         return;
     }
+    m_bTimeOverRun = true;
 }
 
 void CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
@@ -323,18 +351,6 @@ void CLiveReceiver::H264Cb(AV_BUFF buff)
     CHECK_POINT_VOID(m_pWorker);
 	if (m_pWorker->m_bH264)
 		m_pWorker->push_h264_stream(buff);
-}
-
-void CLiveReceiver::AsyncClose()
-{
-    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
-    if(ret < 0) {
-        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
-    }
-    ret = uv_timer_stop(&m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("stop timer error: %s",uv_strerror(ret));
-    }
 }
 
 }
