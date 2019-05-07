@@ -10,6 +10,18 @@ namespace DeviceMgr
     bool                 _bExpireRun; //< 超时线程是否开启
     CDataBase            _db;         //< 数据库对象
 
+	static bool checkStringDouble(string val1, string val2) {
+		double d1 = 0;
+		if(!val1.empty())
+			atof(val1.c_str());
+		double d2 = 0;
+		if(!val2.empty())
+			atof(val2.c_str());
+		if (abs(d1-d2) <= 0.000001)
+			return true;
+		return false;
+	}
+
     static void StartExpireTimer()
     {
         _bExpireRun = true;
@@ -112,9 +124,9 @@ namespace DeviceMgr
 					if(bUpdate)
 						_db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
 				}
-				if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
-					&& (pDev->strLongitude != findDev->second->strLongitude
-						|| pDev->strLatitude != findDev->second->strLatitude))
+				if ( (!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
+					&& ( !checkStringDouble(pDev->strLongitude, findDev->second->strLongitude)
+					  || !checkStringDouble(pDev->strLatitude, findDev->second->strLatitude) ) )
 				{
 					findDev->second->strLongitude = pDev->strLongitude;
 					findDev->second->strLatitude = pDev->strLatitude;
@@ -160,9 +172,9 @@ namespace DeviceMgr
 				findDev->second->strStatus = pDev->strStatus;
 				_db.UpdateStatus(pDev->strDevID, pDev->strStatus=="ON"?true:false);
 			}
-			if ((!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
-				&& (pDev->strLongitude != findDev->second->strLongitude
-				|| pDev->strLatitude != findDev->second->strLatitude))
+			if ( (!pDev->strLongitude.empty() || !pDev->strLatitude.empty()) 
+				&& ( !checkStringDouble(pDev->strLongitude, findDev->second->strLongitude)
+				  || !checkStringDouble(pDev->strLatitude, findDev->second->strLatitude) ) )
 			{
 				findDev->second->strLongitude = pDev->strLongitude;
 				findDev->second->strLatitude = pDev->strLatitude;

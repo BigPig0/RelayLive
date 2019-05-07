@@ -102,12 +102,24 @@ function InsertDev(dev)
 		if(dev["Status"] == "ON") then
 		    status = "1"
 		end
-        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["DevID"], "5", status, date, dp}
+		local lat = ""
+		if(dev["Latitude"] ~= nil) then
+		    lat = dev["Latitude"]
+		end
+		local lon = ""
+		if(dev["Longitude"] ~= nil) then
+		    lon = dev["Longitude"]
+		end
+        local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["DevID"], "5", lat, lon, status, date, dp}
         DBTOOL_ADD_ROW(devHelp, row)
     else
         --记录插入部门表
 		if(dev["BusinessGroupID"] ~= nil) then
-			dp = dev["BusinessGroupID"]
+			if(dev["ParentID"] ~= nil) then
+				dp = dev["ParentID"]
+			else
+				dp = dev["BusinessGroupID"]
+			end
 		end
         local row = {dev["DevID"], dev["Name"], dp}
         DBTOOL_ADD_ROW(departHelp, row)
@@ -132,13 +144,15 @@ end
 function Init()
     DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.10/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
     --设备表插入工具
-    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, OBJID, TYPE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :OBJID, :TYPE, :STATUS, :UPTIME, :DPART)"
+    local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, OBJID, TYPE, LATITUDE, LONGITUDE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :OBJID, :TYPE, :LAT, :LON, :STATUS, :UPTIME, :DPART)"
     devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
         {bindname = "GUID",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "SERVERGUID", coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "OBJID",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
         {bindname = "TYPE",       coltype = DBTOOL_TYPE_INT},
+		{bindname = "LAT",        coltype = DBTOOL_TYPE_CHR, 10},
+		{bindname = "LON",        coltype = DBTOOL_TYPE_CHR, 10},
         {bindname = "STATUS",     coltype = DBTOOL_TYPE_INT},
         {bindname = "UPTIME",     coltype = DBTOOL_TYPE_CHR, maxlen = 14},
 		{bindname = "DPART",      coltype = DBTOOL_TYPE_CHR, maxlen = 50}
