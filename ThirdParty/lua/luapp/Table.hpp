@@ -443,6 +443,15 @@ class Table
 			#endif
 		}
 
+        size_t size()
+        {
+            return _mapInt.size() + _mapNum.size() + _mapStr.size()
+#ifdef _LUAPP_ENABLE_BOOLEAN_INDEX_OF_TABLE_
+                + _mapBool.size()
+#endif
+                ;
+        }
+
 	private:
 
 		void copy_my_kind(const Table& _bro)

@@ -317,6 +317,10 @@ msgPublic* CSipMsgParser::ParseCatalog(pugi::xml_node& root)
                     {
                         dev.strLatitude = devNode.child_value();
                     }
+                    else if (nodeName == "BusinessGroupID")
+                    {
+                        dev.strBusinessGroupID = devNode.child_value();
+                    }
                     else if (nodeName == "Info")
                     {
                         LogDebug("<Info>");

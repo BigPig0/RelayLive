@@ -21,6 +21,11 @@ public:
     /** 向库中插入新的设备 */
     bool InsertDev(DevInfo* dev);
 
+    /** 清空数据库设备表 */
+    bool CleanDev();
+
+	bool UpdateDevPos(DevInfo* dev);
+
 private:
     string                 m_strDB;
     string                 m_strGetDevsSql;
@@ -36,5 +41,9 @@ private:
                            luafUpdatePos;
     lua::GlobalFunction<lua::Bool(lua::Table)> 
                            luafInsertDev;
+    lua::GlobalFunction<lua::Bool()>
+                           luafDeleteDev;
+	lua::GlobalFunction<lua::Table(lua::Table)>
+		                   luafTransDevPos;
 };
 

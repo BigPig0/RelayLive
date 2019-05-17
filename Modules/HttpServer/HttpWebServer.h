@@ -14,5 +14,7 @@ namespace HttpWsServer
 		string* json;
     };
     extern int callback_device_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+    extern void live_client_cb(string type, string value);
 };
 

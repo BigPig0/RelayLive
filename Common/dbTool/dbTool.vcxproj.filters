@@ -12,16 +12,10 @@
     <ClInclude Include="dbTool.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="OciDefine.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="OracleInsert.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="RowCollector.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="dbHelp.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
@@ -29,16 +23,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OracleInsert.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="RowCollector.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="dbTool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="dbHelp.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

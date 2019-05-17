@@ -3,7 +3,8 @@
 #include "pugixml.hpp"
 #include "HttpWebServer.h"
 #include "HttpLiveServer.h"
-#include "LiveWorker.h"
+#include "HttpWorker.h"
+#include "LiveClient.h"
 
 namespace HttpWsServer
 {
@@ -95,6 +96,8 @@ namespace HttpWsServer
 
         serverInit();
 
+        LiveClient::SetCallBack(live_client_cb);
+
         //创建libwebsockets环境
         memset(&info, 0, sizeof info);
         info.pcontext = &context;
@@ -132,9 +135,6 @@ namespace HttpWsServer
             Log::error("Failed to create websocket vhost\n");
             return -1;
         }
-
-        //IPC初始化
-        ipc_init();
 
         return 0;
     }

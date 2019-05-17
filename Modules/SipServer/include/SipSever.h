@@ -59,9 +59,9 @@ private:
 
 private:
     eXosip_t*   m_pExContext;
-    time_t      m_nSubTime; //订阅时间
     bool        m_bSubStat; //是否订阅设备状态
     bool        m_bSubPos;  //是否订阅设备位置
-    bool        m_bQueryDir;//是否需要订阅设备
+	bool        m_bSubPosDev; //按设备订阅移动设备位置
+	string      m_strMobile; //移动设备部门
 };
 

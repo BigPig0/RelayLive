@@ -1,8 +1,6 @@
 #pragma once
 
 #include "ocilib.h"
-#include "RowCollector.h"
-#include "OracleInsert.h"
 
 //获取连接
 #define DBTOOL_CREATE_POOL(t,s) dbTool::Connect(t,s)
@@ -13,9 +11,6 @@
 #define DBTOOL_GET_INT(rs,i)    dbTool::oci_get_int(rs, i)
 #define DBTOOL_GET_ODT(rs,i)    dbTool::oci_get_date(rs, i)
 #define DBTOOL_GET_BLOB(rs,i)   dbTool::oci_get_blob(rs,i)
-
-//插入
-#define DBTOOL_INSERTER         OracleInsert
 
 namespace dbTool
 {

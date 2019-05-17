@@ -29,10 +29,11 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         string ip = strfind(data, "rtpip=", "&");
         string port = strfind(data, "rtpport=", "&");
 
-        bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port));
+        string sdp;
+        bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port), sdp);
         if(bplay) {
             stringstream ss;
-            ss << "ssid=" << port << "&ret=0&error=success";
+            ss << "ssid=" << port << "&ret=0&error=" << sdp;
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         } else {
@@ -49,7 +50,7 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         //关闭所有正在进行的播放
         SipInstance::StopPlayAll();
     } else if(!strcmp(msg,"devices_list")) {
-		string user(data, len);
+		//string user(data, len);
 		vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
         string strResJson = "{\"root\":[";
         for (auto dev:vecDev)
@@ -267,10 +268,10 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         strResJson = StringHandle::StringTrimRight(strResJson,',');
         strResJson += "]}";
 
-		stringstream ss;
-		ss << "ssid=" << user << "devlist=" << strResJson;
-		string str = ss.str();
-        uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)str.c_str(), str.size());
+		//stringstream ss;
+		//ss << "ssid=" << user << "devlist=" << strResJson;
+		//string str = ss.str();
+        uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)strResJson.c_str(), strResJson.size());
 	} else if(!strcmp(msg,"QueryDirtionary")) {
         //查询设备
         SipInstance::QueryDirtionary();
@@ -292,6 +293,7 @@ int main()
     char path[MAX_PATH];
     sprintf_s(path, MAX_PATH, ".\\log\\sipServer.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
     if (!Settings::loadFromProfile(".\\config.txt"))

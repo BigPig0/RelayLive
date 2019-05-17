@@ -56,7 +56,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/libLive;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -73,7 +73,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPSERVER2_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./include;$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/libLive;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/sipServer/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/LibWebSockets;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -87,24 +87,23 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="LiveWorker.cpp" />
+    <ClCompile Include="HlsWorker.cpp" />
     <ClCompile Include="HttpServer.cpp" />
     <ClCompile Include="HttpWebServer.cpp" />
+    <ClCompile Include="HttpWorker.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="HttpLiveServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LiveWorker.h" />
+    <ClInclude Include="HlsWorker.h" />
     <ClInclude Include="HttpServer.h" />
     <ClInclude Include="HttpWebServer.h" />
+    <ClInclude Include="HttpWorker.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="HttpLiveServer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\LibLive\libLive.vcxproj">
-      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\common\Util\Util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
     </ProjectReference>

@@ -5,13 +5,14 @@
 #include "uvIpc.h"
 #include "utilc_api.h"
 #include "rtsp.h"
-#include "libOci.h"
+#include "dbTool.h"
 #include <stdio.h>
+
+using namespace dbTool;
 
 //////////////////////////////////////////////////////////////////////////
 // 数据库获取设备列表
 
-static OracleClient* client;
 static string _db_connect_name = "DB";
 static map<string,RTSP_REQUEST> _map_devs;
 
@@ -37,24 +38,17 @@ static void init_db(){
     dbset.max_conns = 5;
     dbset.min_conns = 2;
     dbset.inc_conns = 2;
-    client = OracleClient::GetInstance();
-    client->connect(_db_connect_name, dbset);
+    Connect(_db_connect_name, dbset);
 }
 
 static bool get_devs_from_db()
 {
     Log::debug("loadDevicesFromOracle begin");
-    conn_pool_ptr pool = OracleClient::GetInstance()->get_conn_pool(_db_connect_name);
-    if (pool == NULL) {
-        Log::error("fail to get pool: basic");
-        return false;
-    }
-    int index = pool->getConnection();
-    if (index == -1) {
+    OCI_Connection *cn = DBTOOL_GET_CONNECT(_db_connect_name);
+    if (cn == NULL) {
         Log::error("fail to get connection: basic");
         return false;
     }
-    OCI_Connection *cn = pool->at(index);
     OCI_Statement *st = OCI_CreateStatement(cn);
 
     //查询设备信息
@@ -86,7 +80,7 @@ static bool get_devs_from_db()
     }
 
     OCI_FreeStatement(st);
-    pool->releaseConnection(index);
+    OCI_FreeConnection(cn);
     Log::debug("get devs from db finish successful");
     return true;
 }
@@ -189,7 +183,6 @@ int main()
     /** 数据库模块 */
     init_db();
     get_devs_from_db();
-    SAFE_DELETE(client);
 
 	set_uv(NULL);
 

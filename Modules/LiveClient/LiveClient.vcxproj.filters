@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="avformat">
+      <UniqueIdentifier>{e1be21b5-e0d0-4a69-9c81-2fe45f034020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{75ae4239-2153-4326-8935-d2a9e5908329}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Common\avformat\es.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\flv.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\h264.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\mp4.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\pes.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\ps.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\rtp.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\ts.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="LiveWorker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="LiveIpc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="LiveClient.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="liveReceiver.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\avformat\es.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\flv.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\h264.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\mp4.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\pes.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\ps.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\rtp.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\ts.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="LiveClient.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="LiveWorker.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="LiveIpc.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\avtypes.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="liveReceiver.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

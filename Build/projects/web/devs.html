@@ -27,6 +27,7 @@
         <th>Longitude</th>
         <th>Latitude</th>
         <th>Status</th>
+        <th>Video</th>
       </tr>
       <tbody ng-repeat="item in data track by $index" ng-show="!isFilter || item.FlvClient">
           <tr ng-class="{'success':item.FlvClient && item.FlvClient.length > 0}"  ng-click="item.showSub = !item.showSub">
@@ -37,6 +38,7 @@
             <td>{{item.Longitude}}</td>
             <td>{{item.Latitude}}</td>
             <td>{{item.Status}}</td>
+            <td><a href="{{'./nodeplayflv.html#'+item.DeviceID}}" target="_blank">Play</a></td>
           </tr>
           <tr class="warning" ng-repeat="subItem in item.FlvClient" ng-show="!item.showSub">
               <td colspan="5"></td>
@@ -66,8 +68,6 @@
       
     }, function errorCallback(response) {
     });
-
-    
   });
 
   

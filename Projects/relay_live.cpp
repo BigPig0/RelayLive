@@ -1,13 +1,12 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
 #include "common.h"
+#include "LiveClient.h"
 #include "HttpServer.h"
 #include "RtspServer.h"
 #include <windows.h>
 #include "MiniDump.h"
-//#include "uvIpc.h"
 #include "uv.h"
-//#include <thread>
 
 int main()
 {
@@ -18,6 +17,7 @@ int main()
     char path[MAX_PATH];
     sprintf_s(path, MAX_PATH, ".\\log\\relayLive.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
     if (!Settings::loadFromProfile(".\\config.txt"))
@@ -35,21 +35,25 @@ int main()
     if (err) {
         Log::warning("fail get cpu info: %s",uv_strerror(err));
     } else {
-        wchar_t szCpuNum[10] = {0};
-        swprintf_s(szCpuNum,L"%d", count);
+        char szThreadNum[10] = {0};
+        sprintf(szThreadNum, "%d", count*2+1);
+        Log::debug("thread pool size is %s", szThreadNum);
         //设置环境变量的值
-        ::SetEnvironmentVariableW(L"UV_THREADPOOL_SIZE",szCpuNum); 
+        //::SetEnvironmentVariableW(L"UV_THREADPOOL_SIZE",szCpuNum); 
+        uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
     }
+    uv_free_cpu_info(cpu_infos, count);
 
     //全局loop
     p_loop_uv = uv_default_loop();
+
+    LiveClient::Init(p_loop_uv);
 
     /** 创建一个http服务器 */
     HttpWsServer::Init((void*)p_loop_uv);
 
     /** 创建一个rtsp服务器 */
-    CRtspServer rtsp;
-    rtsp.Init(p_loop_uv);
+    RtspServer::Init((void*)p_loop_uv);
 
     Log::debug("GB28181 Sever start success\r\n");
 

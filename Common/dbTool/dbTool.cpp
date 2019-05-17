@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "dbTool.h"
+#include "dbHelp.h"
 #include "luapp.hpp"
 
 namespace dbTool
@@ -68,55 +69,65 @@ namespace dbTool
     lua::Str luaGetBlob(lua::Ptr rs, lua::Int i){
         return oci_get_blob((OCI_Resultset*)rs, i);
     }
-    lua::Ptr luaInsertInit(lua::Str tag, lua::Str tbl, lua::Int rnum, lua::Table columns) {
-        DBTOOL_INSERTER *dbInster = new DBTOOL_INSERTER(tag, tbl, rnum);
-        for(auto it = columns.getBegin(); !it.isEnd(); it++){
+    lua::Ptr luaHelpInit(lua::Str tag, lua::Str sql, lua::Int rnum, lua::Int interval, lua::Table binds) {
+        bindParam *param = new bindParam[binds.size() + 1];
+        memset(param, 0, sizeof(bindParam)*binds.size() + 1);
+        int i = 0;
+        for(auto it = binds.getBegin(); !it.isEnd(); it++,i++){
             lua::Var k,v;
             it.getKeyValue(&k, &v);
             if(!lua::VarType<lua::Table>(v))
                 continue;
             lua::Table col = lua::VarCast<lua::Table>(v);
-            if(!col.isExist(lua::Str("colname")) || !col.isExist(lua::Str("coltype")))
+            if(!col.isExist(lua::Str("bindname")) || !lua::VarType<lua::Str>(col["bindname"]))
 				continue;
-			if( !lua::VarType<lua::Str>(col["colname"])
-                || !lua::VarType<lua::Int>(col["coltype"]))
+			if(!col.isExist(lua::Str("coltype")) || !lua::VarType<lua::Int>(col["coltype"]))
                 continue;
-            string strColname = lua::VarCast<lua::Str>(col["colname"]);
-            int nColtype = lua::VarCast<lua::Int>(col["coltype"]);
-            uint32_t nMaxLength = 16;
+
+            string &bindName    = lua::VarCast<lua::Str>(col["bindname"]);
+			param[i].bindName   = (char*)malloc(bindName.size()+1);
+			memcpy(param[i].bindName, bindName.c_str(), bindName.size());
+			param[i].bindName[bindName.size()] = 0;
+
+            param[i].columnType = lua::VarCast<lua::Int>(col["coltype"]);
+
+            param[i].maxLen     = 16;
             if(col.isExist(lua::Str("maxlen"))){
 				if (lua::VarType<lua::Int>(col["maxlen"]))
-					nMaxLength = (uint32_t)lua::VarCast<lua::Int>(col["maxlen"]);
+					param[i].maxLen = (uint32_t)lua::VarCast<lua::Int>(col["maxlen"]);
 			}
-            bool bNullable =  false;
+
+            param[i].nullable =  false;
             if(col.isExist(lua::Str("nullable"))){
-				if(lua::VarType<lua::Bool>(col["nullable"]));
-					bNullable = lua::VarCast<lua::Bool>(col["nullable"]);
+				if(lua::VarType<lua::Bool>(col["nullable"]))
+					param[i].nullable = lua::VarCast<lua::Bool>(col["nullable"]);
 			}
-            string strDefault;
+
+            param[i].default = NULL;
 			if(col.isExist(lua::Str("def"))){
-				if(lua::VarType<lua::Str>(col["def"]))
-					strDefault = lua::VarCast<lua::Str>(col["def"]);
+				if(lua::VarType<lua::Str>(col["def"])) {
+					string &strDefault = lua::VarCast<lua::Str>(col["def"]);
+					param[i].default = (char*)malloc(strDefault.size()+1);
+					memcpy(param[i].default, strDefault.c_str(), strDefault.size());
+					param[i].default[strDefault.size()] = 0;
+                }
 			}
-            dbInster->AddCloumn(strColname,nColtype,nMaxLength, bNullable,strDefault);
         }
-        dbInster->Prepair();
+        param[i].bindName = NULL;
+        helpHandle *dbInster = CreateHelp(tag, sql, rnum, interval, param);
+
+		for(int j=0; j<i; j++){
+			if(param[j].bindName)
+				free(param[j].bindName);
+			if(param[j].default)
+				free(param[j].default);
+		}
+        SAFE_DELETE_ARRAY(param);
         return (void*)dbInster;
     }
-    lua::Ptr luaRowInit(lua::Int rows, lua::Int interval){
-        RowCollector *ret = new RowCollector(rows, interval);
-        return ret;
-    }
-    lua::Bool luaRowInsertHandle(lua::Ptr ins, lua::Ptr row){
-        DBTOOL_INSERTER *dbInster = (DBTOOL_INSERTER*)ins;
-        RowCollector *rowList = (RowCollector*)row;
-        rowList->add_insertion_handler([&](vector<vector<string>> v){
-            dbInster->Insert(v);
-        });
-        return true;
-    }
+    
     lua::Bool luaAddRow(lua::Ptr rc, lua::Table row){
-        RowCollector *rowList = (RowCollector*)rc;
+        helpHandle *h = (helpHandle*)rc;
         vector<string> values;
         for(auto it = row.getBegin(); !it.isEnd(); it++){
             lua::Var k,v;
@@ -124,7 +135,7 @@ namespace dbTool
             lua::Str col = lua::VarCast<lua::Str>(v);
             values.push_back(col);
         }
-        rowList->add_row(values);
+        AddRow(h, values);
         return true;
     }
 
@@ -149,9 +160,7 @@ namespace dbTool
         lua->setFunc("DBTOOL_GET_ODT",     &luaGetOdt);
         lua->setFunc("DBTOOL_GET_BLOB",    &luaGetBlob);
 
-        lua->setFunc("DBTOOL_INSERT_INIT", &luaInsertInit);
-        lua->setFunc("DBTOOL_ROWER_INIT",  &luaRowInit);
-        lua->setFunc("DBTOOL_ROW_INS",     &luaRowInsertHandle);
+        lua->setFunc("DBTOOL_HELP_INIT",   &luaHelpInit);
         lua->setFunc("DBTOOL_ADD_ROW",     &luaAddRow);
 
         lua->setGlobal("DBTOOL_TYPE_CHR", SQLT_CHR);

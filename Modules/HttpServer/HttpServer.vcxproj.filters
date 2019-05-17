@@ -30,7 +30,10 @@
     <ClCompile Include="HttpLiveServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="LiveWorker.cpp">
+    <ClCompile Include="HttpWorker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HlsWorker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,7 +53,10 @@
     <ClInclude Include="HttpLiveServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="LiveWorker.h">
+    <ClInclude Include="HttpWorker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HlsWorker.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

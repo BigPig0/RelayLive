@@ -5,7 +5,7 @@ struct lws_ring;
 
 namespace HttpWsServer
 {
-    class CLiveWorker;
+    class CHttpWorker;
 
     enum MediaType
     {
@@ -13,7 +13,9 @@ namespace HttpWsServer
         media_flv,
         media_hls,
         media_h264,
-        media_mp4
+        media_mp4,
+        media_m3u8,
+        media_ts
     };
 
     /** per session structure */
@@ -27,7 +29,7 @@ namespace HttpWsServer
         char                  clientName[50];    //播放端的名称
         char                  clientIP[50];      //播放端的ip
         char                  strErrInfo[128];   //不能播放时的错误信息
-        CLiveWorker           *m_pWorker;        //CFlvWorker对象
+        CHttpWorker           *m_pWorker;        //CFlvWorker对象
         struct lws_ring       *ring;             //接收数据缓冲区
         uint32_t              tail;              //ringbuff中的位置
         bool                  culled;

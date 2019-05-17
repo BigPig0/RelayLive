@@ -1,15 +1,21 @@
 #include "stdafx.h"
 #include "libwebsockets.h"
+#include "HttpWorker.h"
 #include "HttpWebServer.h"
 #include <string>
-//#include "DeviceMgr.h"
-#include "LiveWorker.h"
+#include <set>
 
 namespace HttpWsServer
 {
 #define G_BYTES (1024 * 1024 * 1024) // 1GB
 #define M_BYTES (1024 * 1024)		 // 1MB
 #define K_BYTES 1024				 // 1KB
+
+    static std::set<pss_device*>  setPssDevice;      // device请求的集合
+    static CriticalSection  csDevice;
+    static std::set<pss_device*>  setPssDevlist;     // 设备列表请求的集合
+    static CriticalSection  csDevList;
+    static bool bDevListQuering = false;
 
     static std::string mount_web_origin("./home");  //站点本地位置
 
@@ -224,245 +230,6 @@ namespace HttpWsServer
         return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
 
-
-    static string GetDevInfo()
-    {
-        return "";
-        /*
-        vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
-        if (vecDev.size() == 0)
-        {
-            return g_strError_no_device;
-        }
-
-        string strResJson = "{\"root\":[";
-        for (auto dev:vecDev)
-        {
-            strResJson += "{";
-#if 1
-            if (!dev->strDevID.empty())
-            {
-                strResJson += "\"DeviceID\":\"";
-                strResJson += dev->strDevID;
-                strResJson += "\",";
-            }
-            if (!dev->strName.empty())
-            {
-                strResJson += "\"Name\":\"";
-                strResJson += dev->strName;
-                strResJson += "\",";
-            }
-            if (!dev->strManuf.empty())
-            {
-                strResJson += "\"Manufacturer\":\"";
-                strResJson += dev->strManuf;
-                strResJson += "\",";
-            }
-            if (!dev->strModel.empty())
-            {
-                strResJson += "\"Model\":\"";
-                strResJson += dev->strModel;
-                strResJson += "\",";
-            }
-            if (!dev->strOwner.empty())
-            {
-                strResJson += "\"Owner\":\"";
-                strResJson += dev->strOwner;
-                strResJson += "\",";
-            }
-            if (!dev->strCivilCode.empty())
-            {
-                strResJson += "\"CivilCode\":\"";
-                strResJson += dev->strCivilCode;
-                strResJson += "\",";
-            }
-            if (!dev->strBlock.empty())
-            {
-                strResJson += "\"Block\":\"";
-                strResJson += dev->strBlock;
-                strResJson += "\",";
-            }
-            if (!dev->strAddress.empty())
-            {
-                strResJson += "\"Address\":\"";
-                strResJson += dev->strAddress;
-                strResJson += "\",";
-            }
-            if (!dev->strParental.empty())
-            {
-                strResJson += "\"Parental\":\"";
-                strResJson += dev->strParental;
-                strResJson += "\",";
-            }
-            if (!dev->strParentID.empty())
-            {
-                strResJson += "\"ParentID\":\"";
-                strResJson += dev->strParentID;
-                strResJson += "\",";
-            }
-            if (!dev->strSafetyWay.empty())
-            {
-                strResJson += "\"SafetyWay\":\"";
-                strResJson += dev->strSafetyWay;
-                strResJson += "\",";
-            }
-            if (!dev->strRegisterWay.empty())
-            {
-                strResJson += "\"RegisterWay\":\"";
-                strResJson += dev->strRegisterWay;
-                strResJson += "\",";
-            }
-            if (!dev->strCertNum.empty())
-            {
-                strResJson += "\"CertNum\":\"";
-                strResJson += dev->strCertNum;
-                strResJson += "\",";
-            }
-            if (!dev->strCertifiable.empty())
-            {
-                strResJson += "\"Certifiable\":\"";
-                strResJson += dev->strCertifiable;
-                strResJson += "\",";
-            }
-            if (!dev->strErrCode.empty())
-            {
-                strResJson += "\"ErrCode\":\"";
-                strResJson += dev->strErrCode;
-                strResJson += "\",";
-            }
-            if (!dev->strEndTime.empty())
-            {
-                strResJson += "\"EndTime\":\"";
-                strResJson += dev->strEndTime;
-                strResJson += "\",";
-            }
-            if (!dev->strSecrecy.empty())
-            {
-                strResJson += "\"Secrecy\":\"";
-                strResJson += dev->strSecrecy;
-                strResJson += "\",";
-            }
-            if (!dev->strStatus.empty())
-            {
-                strResJson += "\"Status\":\"";
-                strResJson += dev->strStatus;
-                strResJson += "\",";
-            }
-            if (!dev->strIPAddress.empty())
-            {
-                strResJson += "\"IPAddress\":\"";
-                strResJson += dev->strIPAddress;
-                strResJson += "\",";
-            }
-            if (!dev->strPort.empty())
-            {
-                strResJson += "\"Port\":\"";
-                strResJson += dev->strPort;
-                strResJson += "\",";
-            }
-            if (!dev->strPassword.empty())
-            {
-                strResJson += "\"Password\":\"";
-                strResJson += dev->strPassword;
-                strResJson += "\",";
-            }
-            if (!dev->strLongitude.empty())
-            {
-                strResJson += "\"Longitude\":\"";
-                strResJson += dev->strLongitude;
-                strResJson += "\",";
-            }
-            if (!dev->strLatitude.empty())
-            {
-                strResJson += "\"Latitude\":\"";
-                strResJson += dev->strLatitude;
-                strResJson += "\",";
-            }
-            if (!dev->strPTZType.empty())
-            {
-                strResJson += "\"PTZType\":\"";
-                strResJson += dev->strPTZType;
-                strResJson += "\",";
-            }
-            if (!dev->strPositionType.empty())
-            {
-                strResJson += "\"PositionType\":\"";
-                strResJson += dev->strPositionType;
-                strResJson += "\",";
-            }
-            if (!dev->strRoomType.empty())
-            {
-                strResJson += "\"RoomType\":\"";
-                strResJson += dev->strRoomType;
-                strResJson += "\",";
-            }
-            if (!dev->strUseType.empty())
-            {
-                strResJson += "\"UseType\":\"";
-                strResJson += dev->strUseType;
-                strResJson += "\",";
-            }
-            if (!dev->strSupplyLightType.empty())
-            {
-                strResJson += "\"SupplyLightType\":\"";
-                strResJson += dev->strSupplyLightType;
-                strResJson += "\",";
-            }
-            if (!dev->strDirectionType.empty())
-            {
-                strResJson += "\"DirectionType\":\"";
-                strResJson += dev->strDirectionType;
-                strResJson += "\",";
-            }
-            if (!dev->strResolution.empty())
-            {
-                strResJson += "\"Resolution\":\"";
-                strResJson += dev->strResolution;
-                strResJson += "\",";
-            }
-            if (!dev->strBusinessGroupID.empty())
-            {
-                strResJson += "\"BusinessGroupID\":\"";
-                strResJson += dev->strBusinessGroupID;
-                strResJson += "\",";
-            }
-            if (!dev->strDownloadSpeed.empty())
-            {
-                strResJson += "\"DownloadSpeed\":\"";
-                strResJson += dev->strDownloadSpeed;
-                strResJson += "\",";
-            }
-            if (!dev->strSVCSpaceSupportType.empty())
-            {
-                strResJson += "\"SVCSpaceSupportMode\":\"";
-                strResJson += dev->strSVCSpaceSupportType;
-                strResJson += "\",";
-            }
-            if (!dev->strSVCTimeSupportType.empty())
-            {
-                strResJson += "\"SVCTimeSupportMode\":\"";
-                strResJson += dev->strSVCTimeSupportType;
-                strResJson += "\",";
-            }
-#endif
-            //根据设备ID，查看是否在播放FLV
-            CLiveWorker* pWorker = GetLiveWorker(dev->strDevID);
-            if(pWorker != nullptr)
-            {
-                strResJson += "\"FlvClient\":";
-                strResJson += pWorker->GetClientInfo();
-                strResJson += ",";
-            }
-
-            strResJson = StringHandle::StringTrimRight(strResJson,',');
-            strResJson += "},";
-        }
-        strResJson = StringHandle::StringTrimRight(strResJson,',');
-        strResJson += "]}";
-        return strResJson;
-        */
-    }
-
     int callback_device_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
     {
         struct pss_device *pss = (struct pss_device *)user;
@@ -474,6 +241,9 @@ namespace HttpWsServer
                     *start = &buf[LWS_PRE], 
                     *p = start,
                     *end = &buf[sizeof(buf) - LWS_PRE - 1];
+                csDevice.lock();
+                setPssDevice.insert(pss);
+                csDevice.unlock();
 
                 lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 				pss->wsi = wsi;
@@ -481,7 +251,7 @@ namespace HttpWsServer
 
                 pss->json = new string;
 				if(!strcmp(pss->path, "/clients")) {
-					*pss->json = GetClientsInfo();
+					*pss->json = LiveClient::GetClientsInfo();
 
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
 						"text/html",
@@ -493,9 +263,13 @@ namespace HttpWsServer
 
 					lws_callback_on_writable(wsi);
 				} else if(!strcmp(pss->path, "/devlist")) {
-					GetDevList((int)pss);
+                    setPssDevlist.insert(pss);
+                    if(!bDevListQuering){
+                        bDevListQuering = true;
+					    LiveClient::GetDevList();
+                    }
 				}else if(!strcmp(pss->path, "/refresh")) {
-					QueryDirtionary();
+					LiveClient::QueryDirtionary();
 
 					*pss->json = "QueryDirtionary send";
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
@@ -528,6 +302,14 @@ namespace HttpWsServer
 
                 return 0;
             }
+        case LWS_CALLBACK_CLOSED_HTTP:
+            {
+                MutexLock lock(&csDevice);
+                auto it = setPssDevice.find(pss);
+                if(it != setPssDevice.end())
+                    setPssDevice.erase(it);
+                break;
+            }
         default:
             break;
         }
@@ -535,27 +317,44 @@ namespace HttpWsServer
         return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
 
-	int dev_list_answer(int pss_num, string devlist) {
-		pss_device *pss = (pss_device*)pss_num;
-		struct lws *wsi = pss->wsi;
+    static int dev_list_answer(string devlist) {
+        MutexLock lock(&csDevList);
+        for(auto pss : setPssDevlist) {
+            MutexLock lk(&csDevice);
+            auto it = setPssDevice.find(pss);
+            if(it == setPssDevice.end()){
+                Log::warning("get devlist http connect has removed");
+                continue;
+            }
+		    struct lws *wsi = pss->wsi;
 
-		*pss->json = devlist;
+		    *pss->json = devlist;
 		
-        uint8_t buf[LWS_PRE + 2048], 
-            *start = &buf[LWS_PRE], 
-            *p = start,
-            *end = &buf[sizeof(buf) - LWS_PRE - 1];
+            uint8_t buf[LWS_PRE + 2048], 
+                *start = &buf[LWS_PRE], 
+                *p = start,
+                *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
-		if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-			"text/html",
-			pss->json->size(),
-			&p, end))
-			return 1;
-		if (lws_finalize_write_http_header(wsi, start, &p, end))
-			return 1;
+		    if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+			    "text/html",
+			    pss->json->size(),
+			    &p, end))
+			    return 1;
+		    if (lws_finalize_write_http_header(wsi, start, &p, end))
+			    return 1;
 
-		lws_callback_on_writable(wsi);
+		    lws_callback_on_writable(wsi);
+        }
+        setPssDevlist.clear();
+        bDevListQuering = false;
 
 		return 0;
 	}
+
+    void live_client_cb(string type, string value) {
+        if(type == "devlist"){
+            dev_list_answer(value);
+        }
+    }
+
 };
