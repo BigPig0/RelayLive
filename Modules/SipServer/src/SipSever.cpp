@@ -11,6 +11,7 @@ CSipSever::CSipSever(eXosip_t* pSip)
     m_bSubStat = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
     m_bSubPos  = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
 	m_bSubPosDev  = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0?true:false;
+	m_strMobile = Settings::getValue("PlatFormInfo","SubscribePosDepart", "111");
 }
 
 CSipSever::~CSipSever(void)
@@ -186,7 +187,7 @@ void CSipSever::SubscribeThread()
 		vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
 		vector<string> devs;
 		for(auto info:devInfo){
-			if(info->strStatus == "ON")
+			if(info->strParentID == m_strMobile)
 				devs.push_back(info->strDevID);
 		}
 		 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);
@@ -208,6 +209,7 @@ void CSipSever::SubscribeThread()
 		if(m_bSubStat && difftime(now,lastSubscribeStat) > 600){
 			 lastSubscribeStat = now;
 			 CSipMgr::m_pSubscribe->SubscribeDirectory(600);
+			 Log::debug(" Subscribe dir %s",platform->strDevCode.c_str());
 		}
 		if(m_bSubPos  && difftime(now,lastSubscribePos) > 600) {
 			CSipMgr::m_pSubscribe->SubscribeMobilepostion(600);
@@ -218,7 +220,7 @@ void CSipSever::SubscribeThread()
 			vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
 			vector<string> devs;
 			for(auto info:devInfo){
-				if(!info->strStatus.empty())
+				if(info->strParentID == m_strMobile)
 					devs.push_back(info->strDevID);
 			}
 			 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);

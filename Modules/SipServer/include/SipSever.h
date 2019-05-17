@@ -62,5 +62,6 @@ private:
     bool        m_bSubStat; //是否订阅设备状态
     bool        m_bSubPos;  //是否订阅设备位置
 	bool        m_bSubPosDev; //按设备订阅移动设备位置
+	string      m_strMobile; //移动设备部门
 };
 

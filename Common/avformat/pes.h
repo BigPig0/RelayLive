@@ -57,7 +57,9 @@ bool inline is_pes_header(pes_header_t* pes)
 {
     if (pes->pes_start_code_prefix[0] == 0 && pes->pes_start_code_prefix[1] == 0 && pes->pes_start_code_prefix[2] == 1)
     {
-        if (pes->stream_id == 0xC0 || pes->stream_id == 0xE0)
+        if (pes->stream_id == 0xC0 || pes->stream_id == 0xE0
+			|| pes->stream_id == 0xBC || pes->stream_id == 0xBD || pes->stream_id == 0xBE || pes->stream_id == 0xBF 
+			|| pes->stream_id == 0xF0 || pes->stream_id == 0xF1 || pes->stream_id == 0xF2 || pes->stream_id == 0xF8)
         {
             return true;
         }

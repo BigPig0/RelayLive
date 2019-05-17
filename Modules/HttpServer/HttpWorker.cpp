@@ -59,7 +59,25 @@ namespace HttpWsServer
 
     bool CHttpWorker::DelConnect(pss_http_ws_live* pss)
     {
+        uint32_t oldest_tail = lws_ring_get_oldest_tail(m_pRing);
+        bool bDelOldest = false; // 删除的连接是最旧的
+        if (pss->tail == oldest_tail) {
+            bDelOldest = true;
+        }
+
         lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pPssList);
+
+        if(bDelOldest) {
+            int most = 0, before = lws_ring_get_count_waiting_elements(m_pRing, &oldest_tail), m;
+            lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
+                m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
+                if (m > most)
+                    most = m;
+            } lws_end_foreach_llp_safe(ppss);
+            lws_ring_consume_and_update_oldest_tail(m_pRing,
+                pss_http_ws_live, &oldest_tail, before - most,
+                m_pPssList, tail, pss_next);
+        }
 
         if(m_pPssList == NULL) {
             DelHttpWorker(m_strCode, m_type);

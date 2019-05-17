@@ -306,7 +306,7 @@ namespace LiveClient
                 // 视频源依然连接，延时20秒再销毁对象，以便短时间内有新请求能快速播放
                 uv_timer_init(g_uv_loop, &m_uvTimerStop);
                 m_uvTimerStop.data = this;
-                uv_timer_start(&m_uvTimerStop, stop_timer_cb, 20000, 0);
+                uv_timer_start(&m_uvTimerStop, stop_timer_cb, 5000, 0);
             }
         }
         return true;
@@ -345,7 +345,7 @@ namespace LiveClient
 			MutexLock lock(&m_csFlv);
 			for (auto h : m_vecLiveFlv)
 			{
-				Log::debug("flv frag ok");
+				//Log::debug("flv frag ok");
 				h->push_video_stream(buff);
 			}   
 		}

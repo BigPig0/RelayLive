@@ -242,7 +242,7 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
     CHECK_POINT_VOID(buff.pData);
 	if(m_pWorker->m_bRtp){
 		m_pWorker->push_rtp_stream(buff);
-	} else if(m_pWorker->m_bFlv || m_pWorker->m_bMp4) {
+	} else if(m_pWorker->m_bFlv || m_pWorker->m_bMp4 || m_pWorker->m_bTs) {
 		if(g_stream_type == STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)
@@ -257,9 +257,11 @@ void CLiveReceiver::push_pes_stream(AV_BUFF buff)
 {
     //Log::debug("PSParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(buff.pData)
-    CPes* pPesParser = (CPes*)m_pPesParser;
-    CHECK_POINT_VOID(pPesParser)
-    pPesParser->Decode(buff);
+	/*if(m_pWorker->m_bFlv || m_pWorker->m_bMp4)*/ {
+		CPes* pPesParser = (CPes*)m_pPesParser;
+		CHECK_POINT_VOID(pPesParser)
+		pPesParser->Decode(buff);
+	}
     //需要回调TS
     if(m_pWorker->m_bTs && nullptr != m_pTs)
     {

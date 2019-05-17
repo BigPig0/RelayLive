@@ -33,6 +33,9 @@
     <ClCompile Include="HttpWorker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="HlsWorker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HttpServer.h">
@@ -51,6 +54,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="HttpWorker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HlsWorker.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

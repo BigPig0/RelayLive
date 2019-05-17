@@ -104,6 +104,8 @@ namespace DeviceMgr
         for (size_t i=0; i<nNum; ++i)
         {
             DevInfo* pDev = vecDevInfo[i];
+			if(bUpdate)
+				_db.UpdateDevPos(pDev);
             //
             auto findDev = _mapDevInfo.find(vecDevInfo[i]->strDevID);
             if (findDev == _mapDevInfo.end())
@@ -156,6 +158,7 @@ namespace DeviceMgr
     bool UpdateDevice(DevInfo* pDev)
     {
         MutexLock lock(&_cs);
+		_db.UpdateDevPos(pDev);
 		auto findDev = _mapDevInfo.find(pDev->strDevID);
 		if (findDev == _mapDevInfo.end())
 		{

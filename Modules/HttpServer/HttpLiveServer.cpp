@@ -2,6 +2,7 @@
 #include "libwebsockets.h"
 #include "HttpLiveServer.h"
 #include "HttpWorker.h"
+#include "HlsWorker.h"
 #include "LiveClient.h"
 
 namespace HttpWsServer
@@ -18,6 +19,8 @@ namespace HttpWsServer
         else if(pss->media_type == media_mp4) t = HandleType::fmp4_handle;
         else if(pss->media_type == media_h264) t = HandleType::h264_handle;
         else if(pss->media_type == media_hls) t = HandleType::ts_handle;
+        else if(pss->media_type == media_m3u8) t = HandleType::ts_handle;
+        else if(pss->media_type == media_ts) t = HandleType::ts_handle;
 
         CHttpWorker* pWorker = GetHttpWorker(devCode, t);
         if (!pWorker) {
@@ -100,6 +103,60 @@ namespace HttpWsServer
         }
     }
 
+    static string StartPlayHls(pss_http_ws_live *pss, string devCode){
+        if(pss == nullptr) {
+            return g_strError_play_faild;
+        }
+        CHlsWorker* pWorker = GetHlsWorker(devCode);
+        if (!pWorker) {
+            pWorker = CreatHlsWorker(devCode);
+        }
+        if(!pWorker) {
+            Log::error("CreatHlsWorker failed%s", devCode.c_str());
+            return g_strError_play_faild;
+        }
+        pss->m_pWorker = (CHttpWorker*)pWorker;
+        return "";
+    }
+
+    static bool SendLiveM3u8(pss_http_ws_live *pss){
+        CHlsWorker* pWorker = (CHlsWorker*)pss->m_pWorker;
+        AV_BUFF tag = pWorker->GetHeader();
+        if(tag.pData == nullptr) {
+			pWorker->AddConnect(pss);
+            return false;
+		}
+
+        int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData, tag.nLen, LWS_WRITE_TEXT);
+        return true;
+    }
+
+    static bool SendLiveTs(pss_http_ws_live *pss){
+        CHlsWorker* pWorker = (CHlsWorker*)pss->m_pWorker;
+        string strPath = pss->path;
+
+        size_t pos = strPath.rfind(".");
+        size_t pos2 = strPath.rfind("/");
+        if(pos == string::npos || pos2 == string::npos) {
+            return false;
+        }
+		Log::debug("pos   %lld  %lld", pos, pos2);
+
+        string devcode = strPath.substr(1, pos2 -1);
+        string tsid = strPath.substr(pos2+1, pos - pos2 - 1);
+        uint64_t id = _atoi64(tsid.c_str());
+
+        Log::debug("get video %lld", id);
+        AV_BUFF tag = pWorker->GetVideo(id);
+        if(tag.pData == nullptr) {
+            return false;
+        }
+
+		Log::debug("send ts");
+        int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData, tag.nLen, LWS_WRITE_BINARY);
+        return true;
+    }
+
     int callback_live_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
     {
         pss_http_ws_live *pss = (pss_http_ws_live*)user;
@@ -137,7 +194,7 @@ namespace HttpWsServer
                     string devcode = strPath.substr(1, pos -1);
 					char* mime;
 
-                    if (!_stricmp(uri_type.c_str(), "flv")) {
+                    if (!_stricmp(uri_type.c_str(), "ztflv")) {
                         pss->media_type = media_flv;
                         strErrInfo = StartPlayLive(pss, devcode);
                         if(!strErrInfo.empty()){
@@ -158,11 +215,27 @@ namespace HttpWsServer
                             break;
                         }
 						mime = "video/mp4";
-                    } else if(!_stricmp(uri_type.c_str(), "hls")) {
-                        pss->media_type = media_hls;
-                        strErrInfo = "error request path";
-                        break;
-                    } else {
+                    } else if(!_stricmp(uri_type.c_str(), "m3u8")) {
+                        pss->media_type = media_m3u8;
+                        strErrInfo = StartPlayHls(pss, devcode);
+                        if(!strErrInfo.empty()){
+                            break;
+                        }
+                        mime = "application/x-mpegURL";
+                    } else if(!_stricmp(uri_type.c_str(), "ts")) {
+                        pss->media_type = media_ts;
+						size_t pos2 = strPath.rfind("/");
+						if(pos2 == string::npos) {
+							strErrInfo = "error request path";
+							break;
+						}
+						devcode = devcode.substr(0, pos2 -1);
+                        strErrInfo = StartPlayHls(pss, devcode);
+                        if(!strErrInfo.empty()){
+                            break;
+                        }
+                        mime = "video/MP2T";
+                    }  else {
                         strErrInfo = "error request path";
                         break;
                     }
@@ -175,7 +248,8 @@ namespace HttpWsServer
                     if (lws_finalize_write_http_header(wsi, start, &p, end))
                         return 1;
 
-                    //lws_callback_on_writable(wsi);
+                    if(!_stricmp(uri_type.c_str(), "m3u8") || !_stricmp(uri_type.c_str(), "ts"))
+                        lws_callback_on_writable(wsi);
                     return 0;
                 }while(0);
 
@@ -203,6 +277,19 @@ namespace HttpWsServer
                         SendLiveH264(pss);
                     } else if(pss->media_type == media_mp4){
                         SendLiveMp4(pss);
+                    } else if(pss->media_type == media_m3u8){
+                        if(SendLiveM3u8(pss)){
+                            if (lws_http_transaction_completed(wsi))
+                                return -1;
+                        }
+                    } else if(pss->media_type == media_ts){
+                        if(SendLiveTs(pss)){
+                            if (lws_http_transaction_completed(wsi))
+                                return -1;
+                        } else {
+                            if (lws_http_transaction_completed(wsi))
+                                return -1;
+                        }
                     }
                     //lws_callback_on_writable(wsi);
                     return 0;
@@ -222,7 +309,13 @@ namespace HttpWsServer
             {
                 if (!pss || !pss->m_pWorker)
                     break;
-                pss->m_pWorker->DelConnect(pss);
+				if(pss->media_type == media_m3u8) {
+					//CHlsWorker* pWorker = (CHlsWorker*)pss->m_pWorker;
+					//pWorker->DelConnect(pss);
+				} else if(pss->media_type == media_ts) {
+				} else {
+					pss->m_pWorker->DelConnect(pss);
+				}
             }
         default:
             break;
@@ -266,7 +359,7 @@ namespace HttpWsServer
                     string uri_type = strPath.substr(pos+1, strPath.size()-pos-1);
                     string devcode = strPath.substr(1, pos -1);
 
-                    if (!_stricmp(uri_type.c_str(), "flv")) {
+                    if (!_stricmp(uri_type.c_str(), "ztflv")) {
                         pss->media_type = media_flv;
                         strErrInfo = StartPlayLive(pss, devcode);
                         if(!strErrInfo.empty()){

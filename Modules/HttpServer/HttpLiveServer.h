@@ -13,7 +13,9 @@ namespace HttpWsServer
         media_flv,
         media_hls,
         media_h264,
-        media_mp4
+        media_mp4,
+        media_m3u8,
+        media_ts
     };
 
     /** per session structure */

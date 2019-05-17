@@ -23,11 +23,13 @@ SubscribePos = 0
 ;是否订阅设备位置
 SubscribePosDev = 1
 ;是否订阅设备位置
+SubscribePosDepart = 32048100002160943362
+;订阅设备所在的组织
 
 [DataBase]
 ;连接数据库设备信息的配置
 Path = D:\app\Administrator\product\instantclient_11_2
-Addr = 10.9.0.7/ETL
+Addr = 10.9.0.10/ETL
 User = lyzhjt
 PassWord = zt123
 

@@ -53,7 +53,7 @@ int CTS::Code(char* pBuf, uint32_t nLen)
         // 存储了足够长的数据
         if (bEnough && (nNalType == idr_Nal || nNalType == sps_Nal || nNalType == pps_Nal))
         {
-            Log::debug("ts callback");
+            Log::debug("ts callback m_nBeginPts:%lld, nVideoPts:%lld", m_nBeginPts, nVideoPts);
             if(m_fCB != nullptr){
                 AV_BUFF buff = {TS, m_pTsBuff, m_nTsDataLen};
                 m_fCB(buff, m_hUser);

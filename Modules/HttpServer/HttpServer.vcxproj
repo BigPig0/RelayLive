@@ -87,6 +87,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="HlsWorker.cpp" />
     <ClCompile Include="HttpServer.cpp" />
     <ClCompile Include="HttpWebServer.cpp" />
     <ClCompile Include="HttpWorker.cpp" />
@@ -94,6 +95,7 @@
     <ClCompile Include="HttpLiveServer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HlsWorker.h" />
     <ClInclude Include="HttpServer.h" />
     <ClInclude Include="HttpWebServer.h" />
     <ClInclude Include="HttpWorker.h" />

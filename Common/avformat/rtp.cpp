@@ -124,6 +124,7 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 			}
             /** 队列中第一个rtp包是已完成的rtp后那一个，没有中断 */
             if(m_bBegin && m_mapRtpList.size() < m_nCatchPacketNum && seqLast+1 != it_pos->first.seq) {
+				Log::error("seqLast: %d, firstseq:%d",seqLast, it_pos->first.seq);
                 break;
             }
         } else {
@@ -131,12 +132,36 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
             if(seqLast+1 != it_pos->first.seq) {
                 break;
             }
+
+			//再次发现ps头，则认为前面是完整的ps数据
+			if(g_stream_type==STREAM_PS) {
+				if(is_ps_header(pPS)){
+					auto it_next = it_last = it_pos;
+					it_last--;
+					//组包成帧，解出PS包
+					m_listRtpFrame.clear();
+					for(auto pos = it_first; pos != it_next; ++pos)
+						m_listRtpFrame.push_back(pos->second);
+					ComposePsFrame();
+					m_nDoneSeq = it_last->first.seq;
+					m_bBegin = true;
+					//删除已经处理好的rtp包
+					for(auto pos = m_mapRtpList.begin(); pos != it_next;)
+					{
+						DelRtpNode(pos->second);
+						pos = m_mapRtpList.erase(pos);
+					}
+					break;
+				}
+			}
+
         }
         seqLast = it_pos->first.seq;
 
+
         //这个包是一个rtp帧的末尾包，且从头到尾连续
-        if((g_stream_type==STREAM_PS && pRTP->m != 0)
-			|| (g_stream_type==STREAM_H264 && is_h264_end((char*)pPS)))
+        if(/*(g_stream_type==STREAM_PS && pRTP->m != 0)
+			||*/ (g_stream_type==STREAM_H264 && is_h264_end((char*)pPS)))
         {
             auto it_next = it_last = it_pos;
             it_next++;
@@ -161,6 +186,9 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
     // 达到最大缓存数，抛弃最早的数据
     while (m_mapRtpList.size() > m_nCatchPacketNum)
     {
+		static uint64_t tmp = 0;
+		tmp++;
+		Log::error("drop rtp packet num: %lld  size %d", tmp, m_mapRtpList.size());
         auto it_begin = m_mapRtpList.begin();
         m_nDoneSeq = it_begin->first.seq;
         DelRtpNode(it_begin->second);

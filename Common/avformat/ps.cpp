@@ -134,6 +134,10 @@ int CPs::ParsePES(char* pBuf, uint32_t nLen)
         pesLen <<= 8;
         pesLen += pes->PES_packet_length[1];
         //Log::debug("CPsAnalyzer::ParsePES this pes len:%d(+head 6), totle:%d",pesLen,nLen);
+		if(nPos + pesLen + 6 > nLen) {
+			Log::error("pes buff not enougth pos:%d pesLen:%d, allLen:%d", nPos, pesLen, nLen);
+			return 0;
+		}
 
         // 回调解析PES包
         if (m_fCB != nullptr)

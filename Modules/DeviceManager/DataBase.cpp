@@ -3,6 +3,82 @@
 #include "dbTool.h"
 #include "luapp.hpp"
 
+lua::Table DevInfo2Table(DevInfo* dev)
+{
+	lua::Table tb;
+	if(!dev->strDevID.empty())
+		tb["DevID"] = dev->strDevID;
+	if(!dev->strName.empty())
+		tb["Name"] = dev->strName;
+	if(!dev->strManuf.empty())
+		tb["Manuf"] = dev->strManuf;
+	if(!dev->strModel.empty())
+		tb["Model"] = dev->strModel;
+	if(!dev->strOwner.empty())
+		tb["Owner"] = dev->strOwner;
+	if(!dev->strCivilCode.empty())
+		tb["CivilCode"] = dev->strCivilCode;
+	if(!dev->strBlock.empty())
+		tb["Block"] = dev->strBlock;
+	if(!dev->strAddress.empty())
+		tb["Address"] = dev->strAddress;
+	if(!dev->strParental.empty())
+		tb["Parental"] = dev->strParental;
+	if(!dev->strParentID.empty())
+		tb["ParentID"] = dev->strParentID;
+	if(!dev->strSafetyWay.empty())
+		tb["SafetyWay"] = dev->strSafetyWay;
+	if(!dev->strRegisterWay.empty())
+		tb["RegisterWay"] = dev->strRegisterWay;
+	if(!dev->strCertNum.empty())
+		tb["CertNum"] = dev->strCertNum;
+	if(!dev->strCertifiable.empty())
+		tb["Certifiable"] = dev->strCertifiable;
+	if(!dev->strErrCode.empty())
+		tb["ErrCode"] = dev->strErrCode;
+	if(!dev->strEndTime.empty())
+		tb["EndTime"] = dev->strEndTime;
+	if(!dev->strSecrecy.empty())
+		tb["Secrecy"] = dev->strSecrecy;
+	if(!dev->strIPAddress.empty())
+		tb["IPAddress"] = dev->strIPAddress;
+	if(!dev->strPort.empty())
+		tb["Port"] = dev->strPort;
+	if(!dev->strPassword.empty())
+		tb["Password"] = dev->strPassword;
+	if(!dev->strStatus.empty())
+		tb["Status"] = dev->strStatus;
+	if(!dev->strLatitude.empty())
+		tb["Latitude"] = dev->strLatitude;
+	if(!dev->strLongitude.empty())
+		tb["Longitude"] = dev->strLongitude;
+
+	if(!dev->strPTZType.empty())
+		tb["PTZType"] = dev->strPTZType;
+	if(!dev->strPositionType.empty())
+		tb["PositionType"] = dev->strPositionType;
+	if(!dev->strRoomType.empty())
+		tb["RoomType"] = dev->strRoomType;
+	if(!dev->strUseType.empty())
+		tb["UseType"] = dev->strUseType;
+	if(!dev->strSupplyLightType.empty())
+		tb["SupplyLightType"] = dev->strSupplyLightType;
+	if(!dev->strDirectionType.empty())
+		tb["DirectionType"] = dev->strDirectionType;
+	if(!dev->strResolution.empty())
+		tb["Resolution"] = dev->strResolution;
+	if(!dev->strBusinessGroupID.empty())
+		tb["BusinessGroupID"] = dev->strBusinessGroupID;
+	if(!dev->strDownloadSpeed.empty())
+		tb["DownloadSpeed"] = dev->strDownloadSpeed;
+	if(!dev->strSVCSpaceSupportType.empty())
+		tb["SVCSpaceSupportType"] = dev->strSVCSpaceSupportType;
+	if(!dev->strSVCTimeSupportType.empty())
+		tb["SVCTimeSupportType"] = dev->strSVCTimeSupportType;
+
+	return tb;
+}
+
 
 CDataBase::CDataBase(void)
     : m_strDB("DB")
@@ -30,6 +106,7 @@ void CDataBase::Init()
     m_lua.getFunc("UpdatePos",   &luafUpdatePos);
     m_lua.getFunc("InsertDev",   &luafInsertDev);
     m_lua.getFunc("DeleteDev",   &luafDeleteDev);
+	m_lua.getFunc("TransDevPos", &luafTransDevPos);
     luafInit();
 }
 
@@ -169,82 +246,36 @@ bool CDataBase::UpdatePos(string code, string lat, string lon)
 
 bool CDataBase::InsertDev(DevInfo* dev)
 {
-    lua::Table tb;
 	if(dev->strDevID.empty())
 		return false;
-    tb["DevID"] = dev->strDevID;
-	if(!dev->strName.empty())
-		tb["Name"] = dev->strName;
-	if(!dev->strManuf.empty())
-		tb["Manuf"] = dev->strManuf;
-	if(!dev->strModel.empty())
-		tb["Model"] = dev->strModel;
-	if(!dev->strOwner.empty())
-		tb["Owner"] = dev->strOwner;
-	if(!dev->strCivilCode.empty())
-		tb["CivilCode"] = dev->strCivilCode;
-	if(!dev->strBlock.empty())
-		tb["Block"] = dev->strBlock;
-	if(!dev->strAddress.empty())
-		tb["Address"] = dev->strAddress;
-	if(!dev->strParental.empty())
-		tb["Parental"] = dev->strParental;
-	if(!dev->strParentID.empty())
-		tb["ParentID"] = dev->strParentID;
-	if(!dev->strSafetyWay.empty())
-		tb["SafetyWay"] = dev->strSafetyWay;
-	if(!dev->strRegisterWay.empty())
-		tb["RegisterWay"] = dev->strRegisterWay;
-	if(!dev->strCertNum.empty())
-		tb["CertNum"] = dev->strCertNum;
-	if(!dev->strCertifiable.empty())
-		tb["Certifiable"] = dev->strCertifiable;
-	if(!dev->strErrCode.empty())
-		tb["ErrCode"] = dev->strErrCode;
-	if(!dev->strEndTime.empty())
-		tb["EndTime"] = dev->strEndTime;
-	if(!dev->strSecrecy.empty())
-		tb["Secrecy"] = dev->strSecrecy;
-	if(!dev->strIPAddress.empty())
-		tb["IPAddress"] = dev->strIPAddress;
-	if(!dev->strPort.empty())
-		tb["Port"] = dev->strPort;
-	if(!dev->strPassword.empty())
-		tb["Password"] = dev->strPassword;
-	if(!dev->strStatus.empty())
-		tb["Status"] = dev->strStatus;
-	if(!dev->strLatitude.empty())
-		tb["Latitude"] = dev->strLatitude;
-	if(!dev->strLongitude.empty())
-		tb["Longitude"] = dev->strLongitude;
-
-	if(!dev->strPTZType.empty())
-		tb["PTZType"] = dev->strPTZType;
-	if(!dev->strPositionType.empty())
-		tb["PositionType"] = dev->strPositionType;
-	if(!dev->strRoomType.empty())
-		tb["RoomType"] = dev->strRoomType;
-	if(!dev->strUseType.empty())
-		tb["UseType"] = dev->strUseType;
-	if(!dev->strSupplyLightType.empty())
-		tb["SupplyLightType"] = dev->strSupplyLightType;
-	if(!dev->strDirectionType.empty())
-		tb["DirectionType"] = dev->strDirectionType;
-	if(!dev->strResolution.empty())
-		tb["Resolution"] = dev->strResolution;
-	if(!dev->strBusinessGroupID.empty())
-		tb["BusinessGroupID"] = dev->strBusinessGroupID;
-	if(!dev->strDownloadSpeed.empty())
-		tb["DownloadSpeed"] = dev->strDownloadSpeed;
-	if(!dev->strSVCSpaceSupportType.empty())
-		tb["SVCSpaceSupportType"] = dev->strSVCSpaceSupportType;
-	if(!dev->strSVCTimeSupportType.empty())
-		tb["SVCTimeSupportType"] = dev->strSVCTimeSupportType;
-
-    return luafInsertDev(tb);
+    
+    return luafInsertDev(DevInfo2Table(dev));
 }
 
 bool CDataBase::CleanDev()
 {
     return luafDeleteDev();
+}
+
+bool CDataBase::UpdateDevPos(DevInfo* dev)
+{
+	if(dev->strLatitude.empty() || dev->strLongitude.empty())
+		return false;
+
+	lua::Table pos = luafTransDevPos(DevInfo2Table(dev));
+
+	for(auto rit = pos.getBegin(); !rit.isEnd(); rit++){
+        lua::Var k2,v2;
+		rit.getKeyValue(&k2, &v2);
+        lua::Str key = lua::VarCast<lua::Str>(k2);
+        if(key == "Latitude"){
+			lua::Str value = lua::VarCast<lua::Str>(v2);
+			dev->strLatitude = value;
+		} else if(key == "Longitude"){
+			lua::Str value = lua::VarCast<lua::Str>(v2);
+			dev->strLongitude = value;
+		}
+	}
+
+	return true;
 }
