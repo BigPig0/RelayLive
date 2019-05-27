@@ -23,6 +23,7 @@
     <ClCompile Include="LiveIpc.cpp" />
     <ClCompile Include="liveReceiver.cpp" />
     <ClCompile Include="LiveWorker.cpp" />
+    <ClCompile Include="ReCode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -42,6 +43,7 @@
     <ClInclude Include="LiveIpc.h" />
     <ClInclude Include="liveReceiver.h" />
     <ClInclude Include="LiveWorker.h" />
+    <ClInclude Include="ReCode.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -101,7 +103,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -120,7 +122,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

@@ -41,6 +41,7 @@ namespace LiveClient
         void stop();
 
         bool m_bFlv;
+        bool m_bFlvSub;
         bool m_bMp4;
         bool m_bH264;
         bool m_bTs;
@@ -54,6 +55,7 @@ namespace LiveClient
         CLiveReceiver*           m_pLiveReceiver;  // 直播数据接收和解包装包
 
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
+        vector<ILiveHandle*>     m_vecLiveFlvSub;  // 播放实例 
         CriticalSection          m_csFlv;
         vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 
         CriticalSection          m_csMp4;
