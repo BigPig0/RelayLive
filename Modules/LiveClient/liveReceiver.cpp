@@ -10,7 +10,7 @@
 #include "flv.h"
 #include "mp4.h"
 #include "h264.h"
-#include "ReCode.h"
+#include "Recode.h"
 
 namespace LiveClient
 {
@@ -64,21 +64,7 @@ static void AVCallback(AV_BUFF buff, void* pUser){
 
 static void RecodeCallback(AV_BUFF buff, void* pUser) {
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
-    switch (buff.eType)
-    {
-    case AV_TYPE::H264_NALU:
-        {
-
-        }
-        break;
-    case AV_TYPE::FLV_HEAD:
-    case AV_TYPE::FLV_FRAG_KEY:
-    case AV_TYPE::FLV_FRAG:
-        {
-
-        }
-        break;
-    }
+    pLive->FlvSubCb(buff);
 }
 
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -143,7 +129,7 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
-    CReCode *recode  = new CReCode(this);
+    CRecoder *recode  = new CRecoder(this);
     recode->SetChannel1(320, 240, RecodeCallback);
     m_pReCode        = recode;
 
@@ -336,8 +322,8 @@ void CLiveReceiver::push_h264_stream(AV_BUFF buff)
 
     //需要转子码流
     if(nullptr != m_pReCode) {
-        CReCode* recode = (CReCode*)m_pReCode;
-        recode->ReCode(buff, m_nalu_type);
+        CRecoder* recode = (CRecoder*)m_pReCode;
+        recode->Recode(buff, m_nalu_type);
     }
 }
 
@@ -384,6 +370,13 @@ void CLiveReceiver::H264Cb(AV_BUFF buff)
     CHECK_POINT_VOID(m_pWorker);
 	if (m_pWorker->m_bH264)
 		m_pWorker->push_h264_stream(buff);
+}
+
+void CLiveReceiver::FlvSubCb(AV_BUFF buff)
+{
+    CHECK_POINT_VOID(m_pWorker);
+    if(m_pWorker->m_bFlvSub)
+        m_pWorker->push_flv_stream_sub(buff);
 }
 
 }

@@ -70,6 +70,9 @@ public:
     /** H264合成回调 */
     void H264Cb(AV_BUFF buff);
 
+    /** FLV子码流回调 */
+    void FlvSubCb(AV_BUFF buff);
+
 public:
     bool        m_bRtpRun;
     bool        m_bTimeOverRun;

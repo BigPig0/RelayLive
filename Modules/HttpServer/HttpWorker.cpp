@@ -25,18 +25,19 @@ namespace HttpWsServer
 
     //////////////////////////////////////////////////////////////////////////
 
-    CHttpWorker::CHttpWorker(string strCode, HandleType t)
+    CHttpWorker::CHttpWorker(string strCode, HandleType t, int nChannel)
         : m_strCode(strCode)
         , m_nType(0)
         , m_pLive(nullptr)
         , m_type(t)
+        , m_nChannel(nChannel)
     {
         memset(&m_stHead, 0, sizeof(m_stHead));
         m_pRing  = lws_ring_create(sizeof(AV_BUFF), 200, destroy_ring_node);
 
         m_pLive = LiveClient::GetWorker(strCode);
 		if(m_pLive)
-			m_pLive->AddHandle(this, t);
+			m_pLive->AddHandle(this, t, nChannel);
     }
 
     CHttpWorker::~CHttpWorker()
@@ -80,14 +81,14 @@ namespace HttpWsServer
         }
 
         if(m_pPssList == NULL) {
-            DelHttpWorker(m_strCode, m_type);
+            DelHttpWorker(m_strCode, m_type, m_nChannel);
         }
         return true;
     }
 
     AV_BUFF CHttpWorker::GetHeader()
     {
-		return m_pLive->GetHeader(m_type);
+		return m_pLive->GetHeader(m_type, m_nChannel);
     }
 
     AV_BUFF CHttpWorker::GetVideo(uint32_t *tail)
@@ -235,58 +236,63 @@ namespace HttpWsServer
 
     //////////////////////////////////////////////////////////////////////////
 
-    CHttpWorker* CreatHttpWorker(string strCode, HandleType t)
+    CHttpWorker* CreatHttpWorker(string strCode, HandleType t, int nChannel)
     {
         Log::debug("CreatHttpWorker begin");
+        std::stringstream ss;
+        ss << strCode << ":" << nChannel;
+        string strKey = ss.str();
         if(t == HandleType::flv_handle){
-            CHttpWorker* pNew = new CHttpWorker(strCode, t);
+            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
             MutexLock lock(&m_csFlv);
-            m_workerMapFlv.insert(make_pair(strCode, pNew));
+            m_workerMapFlv.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::fmp4_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t);
+            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
             MutexLock lock(&m_csMp4);
-            m_workerMapMp4.insert(make_pair(strCode, pNew));
+            m_workerMapMp4.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::h264_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t);
+            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
             MutexLock lock(&m_csH264);
-            m_workerMapH264.insert(make_pair(strCode, pNew));
+            m_workerMapH264.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::ts_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t);
+            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
             MutexLock lock(&m_csTs);
-            m_workerMapTs.insert(make_pair(strCode, pNew));
+            m_workerMapTs.insert(make_pair(strKey, pNew));
             return pNew;
         }
         return nullptr;
     }
 
-    CHttpWorker* GetHttpWorker(string strCode, HandleType t)
+    CHttpWorker* GetHttpWorker(string strCode, HandleType t, int nChannel)
     {
         //Log::debug("GetWorker begin");
-
+        std::stringstream ss;
+        ss << strCode << ":" << nChannel;
+        string strKey = ss.str();
         if(t == flv_handle) {
             MutexLock lock(&m_csFlv);
-            auto itFind = m_workerMapFlv.find(strCode);
+            auto itFind = m_workerMapFlv.find(strKey);
             if (itFind != m_workerMapFlv.end()) {
                 return itFind->second;
             }
         } else if(t == fmp4_handle) {
             MutexLock lock(&m_csMp4);
-            auto itFind = m_workerMapMp4.find(strCode);
+            auto itFind = m_workerMapMp4.find(strKey);
             if (itFind != m_workerMapMp4.end()) {
                 return itFind->second;
             }
         } else if(t == h264_handle) {
             MutexLock lock(&m_csH264);
-            auto itFind = m_workerMapH264.find(strCode);
+            auto itFind = m_workerMapH264.find(strKey);
             if (itFind != m_workerMapH264.end()) {
                 return itFind->second;
             }
         } else if(t == ts_handle) {
             MutexLock lock(&m_csTs);
-            auto itFind = m_workerMapTs.find(strCode);
+            auto itFind = m_workerMapTs.find(strKey);
             if (itFind != m_workerMapTs.end()) {
                 return itFind->second;
             }
@@ -296,11 +302,14 @@ namespace HttpWsServer
         return nullptr;
     }
 
-    bool DelHttpWorker(string strCode, HandleType t)
+    bool DelHttpWorker(string strCode, HandleType t, int nChannel)
     {
+        std::stringstream ss;
+        ss << strCode << ":" << nChannel;
+        string strKey = ss.str();
         if(t == flv_handle) {
             MutexLock lock(&m_csFlv);
-            auto itFind = m_workerMapFlv.find(strCode);
+            auto itFind = m_workerMapFlv.find(strKey);
             if (itFind != m_workerMapFlv.end()) {
                 SAFE_DELETE(itFind->second);
                 m_workerMapFlv.erase(itFind);
@@ -308,7 +317,7 @@ namespace HttpWsServer
             }
         } else if(t == fmp4_handle) {
             MutexLock lock(&m_csMp4);
-            auto itFind = m_workerMapMp4.find(strCode);
+            auto itFind = m_workerMapMp4.find(strKey);
             if (itFind != m_workerMapMp4.end()) {
                 SAFE_DELETE(itFind->second);
                 m_workerMapMp4.erase(itFind);
@@ -316,7 +325,7 @@ namespace HttpWsServer
             }
         } else if(t == h264_handle) {
             MutexLock lock(&m_csH264);
-            auto itFind = m_workerMapH264.find(strCode);
+            auto itFind = m_workerMapH264.find(strKey);
             if (itFind != m_workerMapH264.end()) {
                 SAFE_DELETE(itFind->second);
                 m_workerMapH264.erase(itFind);
@@ -324,7 +333,7 @@ namespace HttpWsServer
             }
         } else if(t == ts_handle) {
             MutexLock lock(&m_csTs);
-            auto itFind = m_workerMapTs.find(strCode);
+            auto itFind = m_workerMapTs.find(strKey);
             if (itFind != m_workerMapTs.end()) {
                 SAFE_DELETE(itFind->second);
                 m_workerMapTs.erase(itFind);

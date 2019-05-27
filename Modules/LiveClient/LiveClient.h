@@ -62,7 +62,7 @@ namespace LiveClient
         * @param pWorker Liveworker负责接收rtp数据并解析成各种格式
         * @param h 需要视频包数据来执行各种处理，如作为服务发送到客户端
         */
-        virtual bool AddHandle(ILiveHandle* h, HandleType t) = 0;
+        virtual bool AddHandle(ILiveHandle* h, HandleType t, int c) = 0;
 
         /**
         * 从liveworker中移除一个livehandle。
@@ -70,7 +70,7 @@ namespace LiveClient
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
 
-		virtual AV_BUFF GetHeader(HandleType t) = 0;
+		virtual AV_BUFF GetHeader(HandleType t, int c) = 0;
 
         virtual string GetSDP() = 0;
     };

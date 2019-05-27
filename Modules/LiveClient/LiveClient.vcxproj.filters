@@ -48,7 +48,7 @@
     <ClCompile Include="liveReceiver.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="ReCode.cpp">
+    <ClCompile Include="Recode.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,7 +95,7 @@
     <ClInclude Include="liveReceiver.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="ReCode.h">
+    <ClInclude Include="Recode.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
