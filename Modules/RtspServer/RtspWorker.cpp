@@ -24,7 +24,7 @@ namespace RtspServer
 
         m_pLive = LiveClient::GetWorker(strCode);
         if(m_pLive)
-            m_pLive->AddHandle(this, HandleType::rtp_handle);
+            m_pLive->AddHandle(this, HandleType::rtp_handle, 0);
     }
 
 

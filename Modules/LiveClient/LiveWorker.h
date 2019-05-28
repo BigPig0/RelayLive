@@ -14,9 +14,9 @@ namespace LiveClient
         ~CLiveWorker();
 
         /** 客户端连接 */
-        virtual bool AddHandle(ILiveHandle* h, HandleType t);
+        virtual bool AddHandle(ILiveHandle* h, HandleType t, int c);
         virtual bool RemoveHandle(ILiveHandle* h);
-		virtual AV_BUFF GetHeader(HandleType t);
+		virtual AV_BUFF GetHeader(HandleType t, int c);
         virtual string GetSDP();
 
         /** 客户端全部断开，延时后销毁实例 */
@@ -33,6 +33,7 @@ namespace LiveClient
         * 类中其他方法包括构造、析构都由http所在的loop线程调用
         */
         void push_flv_stream (AV_BUFF buff);
+        void push_flv_stream_sub(AV_BUFF buff);
         void push_h264_stream(AV_BUFF buff);
         void push_ts_stream  (AV_BUFF buff);
         void push_fmp4_stream(AV_BUFF buff);
@@ -41,20 +42,24 @@ namespace LiveClient
         void stop();
 
         bool m_bFlv;
+        bool m_bFlvSub;
         bool m_bMp4;
         bool m_bH264;
         bool m_bTs;
         bool m_bRtp;
 		AV_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
 		AV_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
+        AV_BUFF               m_stFlvSubHead; //flv子码流头， 内容存储在CFlv里面
 
     private:
         string                   m_strCode;     // 播放媒体编号
         string                   m_strSDP;      // sip服务器返回的sdp
-        CLiveReceiver*           m_pLiveReceiver;  // 直播数据接收和解包装包
+        CLiveReceiver*           m_pReceiver;   // 直播数据接收和解包装包
 
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
         CriticalSection          m_csFlv;
+        vector<ILiveHandle*>     m_vecLiveFlvSub; // 播放实例
+        CriticalSection          m_csFlvSub;
         vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 
         CriticalSection          m_csMp4;
         vector<ILiveHandle*>     m_vecLiveH264; // 播放实例 

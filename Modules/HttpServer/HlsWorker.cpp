@@ -22,7 +22,7 @@ namespace HttpWsServer
 
         m_pLive = LiveClient::GetWorker(strCode);
         if(m_pLive)
-            m_pLive->AddHandle(this, HandleType::ts_handle);
+            m_pLive->AddHandle(this, HandleType::ts_handle, 1);
 
 		m_fall = fopen("all.ts","wb");
     }

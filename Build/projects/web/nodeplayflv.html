@@ -53,7 +53,7 @@
          * 当开启一个音频时,若一个实例已打开,需先关闭
          * iOS的safari浏览器及webview控件,iOS微信内,需要给一个触摸事件才能解锁音频 
          */
-        player.enableAudio(true);
+        //player.enableAudio(true);
 
         /**
             AVDISCARD_NONE    =-16, ///< discard nothing
@@ -79,8 +79,8 @@
         player.on('stop', () => {
             console.log("player on stop");
         });
-
-        var playaddr = "ws://" + window.location.hostname + ":8000/" + window.location.hash.substr(1) + ".flv"
+		
+        var playaddr = "ws://" + window.location.hostname + ":8000/live/flv/" +window.location.hash.substr(1);
         player.start(playaddr);
     </script>
 </body>

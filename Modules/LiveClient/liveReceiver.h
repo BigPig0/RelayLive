@@ -70,6 +70,9 @@ public:
     /** H264合成回调 */
     void H264Cb(AV_BUFF buff);
 
+    /** FLV子码流回调 */
+    void FlvSubCb(AV_BUFF buff);
+
 public:
     bool        m_bRtpRun;
     bool        m_bTimeOverRun;
@@ -92,6 +95,7 @@ private:
     void*       m_pTs;              // TS组包类
     void*       m_pFlv;             // FLV组包类
     void*       m_pMp4;             // MP4组包类
+    void*       m_pReCode;          // 重编码
     CLiveWorker* m_pWorker;        // 回调对象
 
     uint64_t    m_pts;              // 记录PES中的pts

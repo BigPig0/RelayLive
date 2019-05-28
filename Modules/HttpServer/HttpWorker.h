@@ -9,7 +9,7 @@ namespace HttpWsServer
     class CHttpWorker : public LiveClient::ILiveHandle
     {
     public:
-        CHttpWorker(string strCode, HandleType t);
+        CHttpWorker(string strCode, HandleType t, int nChannel);
         ~CHttpWorker();
 
         /** 客户端连接 */
@@ -39,14 +39,15 @@ namespace HttpWsServer
         pss_http_ws_live      *m_pPssList;
 
         int                   m_nType;          //< 0:live直播；1:record历史视频
-        LiveClient::ILiveWorker *m_pLive;         //< 直播数据接收和解包装包
+        LiveClient::ILiveWorker *m_pLive;       //< 直播数据接收和解包装包
         HandleType            m_type;           //< 表明是哪一种类型
+        int                   m_nChannel;       //< 通道 0:原始码流  1:小码流
     };
 
     /** 直播 */
-    CHttpWorker* CreatHttpWorker(string strCode, HandleType t);
-    CHttpWorker* GetHttpWorker(string strCode, HandleType t);
-    bool DelHttpWorker(string strCode, HandleType t);
+    CHttpWorker* CreatHttpWorker(string strCode, HandleType t, int nChannel);
+    CHttpWorker* GetHttpWorker(string strCode, HandleType t, int nChannel);
+    bool DelHttpWorker(string strCode, HandleType t, int nChannel);
 
     /** 点播 */
 };

@@ -48,6 +48,9 @@
     <ClCompile Include="liveReceiver.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Recode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\avformat\es.h">
@@ -90,6 +93,9 @@
       <Filter>avformat</Filter>
     </ClInclude>
     <ClInclude Include="liveReceiver.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Recode.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
