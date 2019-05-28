@@ -120,6 +120,7 @@ namespace LiveClient
         //uint64_t        pts;        // 记录PES中的pts
         //uint64_t        dts;        // 记录PES中的dts
         AV_CALLBACK     funCB;
+		void            *user;
         bool            ok;
         FILE            *yuv;
         FILE            *f;
@@ -213,6 +214,8 @@ namespace LiveClient
             int size = av_image_alloc(frame->data, frame->linesize, width, height, (enum AVPixelFormat)(decode->frame->format), 16);
             Log::debug("image size %d", size);
 
+			pFlv->SetSps(width, height, 25);
+
             ok= true;
         }
 
@@ -235,12 +238,12 @@ namespace LiveClient
     }
 
     static void RecodeCallback(AV_BUFF buff, void* pUser) {
-        CEncoder* pLive = (CEncoder*)pUser;
+        CEncoder* encoder = (CEncoder*)pUser;
         switch (buff.eType)
         {
         case AV_TYPE::H264_NALU:
             {
-                pLive->push_h264_stream(buff);
+                encoder->push_h264_stream(buff);
             }
             break;
         case AV_TYPE::FLV_HEAD:
@@ -248,9 +251,9 @@ namespace LiveClient
         case AV_TYPE::FLV_FRAG:
             {
                 Log::debug("flv %d", buff.eType);
-                pLive->funCB(buff, pLive);
-                fwrite(buff.pData, 1, buff.nLen, pLive->flv);
-                fflush(pLive->flv);
+				encoder->funCB(buff, encoder->user);
+                fwrite(buff.pData, 1, buff.nLen, encoder->flv);
+                fflush(encoder->flv);
             }
             break;
         }
@@ -285,6 +288,7 @@ namespace LiveClient
         m_codec->width = nWidth;
         m_codec->height = nHeight;
         m_codec->funCB = cb;
+		m_codec->user = m_hUser;
     }
 
     int CRecoder::Recode(AV_BUFF buff, NalType t)

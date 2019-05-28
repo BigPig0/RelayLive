@@ -243,22 +243,22 @@ namespace HttpWsServer
         ss << strCode << ":" << nChannel;
         string strKey = ss.str();
         if(t == HandleType::flv_handle){
-            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
+            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
             MutexLock lock(&m_csFlv);
             m_workerMapFlv.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::fmp4_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
+            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
             MutexLock lock(&m_csMp4);
             m_workerMapMp4.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::h264_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
+            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
             MutexLock lock(&m_csH264);
             m_workerMapH264.insert(make_pair(strKey, pNew));
             return pNew;
         } else if(t == HandleType::ts_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strKey, t, nChannel);
+            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
             MutexLock lock(&m_csTs);
             m_workerMapTs.insert(make_pair(strKey, pNew));
             return pNew;

@@ -251,7 +251,7 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
     CHECK_POINT_VOID(buff.pData);
 	if(m_pWorker->m_bRtp){
 		m_pWorker->push_rtp_stream(buff);
-	} else if(m_pWorker->m_bFlv || m_pWorker->m_bMp4 || m_pWorker->m_bTs) {
+	} else if(m_pWorker->m_bFlv || m_pWorker->m_bFlvSub || m_pWorker->m_bMp4 || m_pWorker->m_bTs) {
 		if(g_stream_type == STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)

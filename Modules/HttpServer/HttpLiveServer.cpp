@@ -7,7 +7,7 @@
 
 namespace HttpWsServer
 {
-    static string StartPlayLive(pss_http_ws_live *pss, string devCode)
+    static string StartPlayLive(pss_http_ws_live *pss, string devCode, int channel)
     {
         if(pss == nullptr) {
             return g_strError_play_faild;
@@ -21,9 +21,9 @@ namespace HttpWsServer
         else if(pss->media_type == media_m3u8) t = HandleType::ts_handle;
         else if(pss->media_type == media_ts) t = HandleType::ts_handle;
 
-        CHttpWorker* pWorker = GetHttpWorker(devCode, t, 1);
+        CHttpWorker* pWorker = GetHttpWorker(devCode, t, channel);
         if (!pWorker) {
-            pWorker = CreatHttpWorker(devCode, t, 1);
+            pWorker = CreatHttpWorker(devCode, t, channel);
         }
         if(!pWorker) {
             Log::error("CreatHttpWorker failed%s", devCode.c_str());
@@ -183,15 +183,15 @@ namespace HttpWsServer
 
                 string strErrInfo;
                 string strPath = pss->path;
-                // http://IP:port/live/type/stream/code
+                // http://IP:port/live/type/channel/code
                 // type: flv、mp4、h264、hls
-                // stream: 0:原始码流 1:小码流
+                // channel: 0:原始码流 1:小码流
                 // e.g http://localhost:80/live/flv/0/123456789
                 // 这里path只有 /type/stream/code
                 do{
                     char szType[10]={0}, szCode[30]={0};
-                    int nStream = 0;
-                    int ret = sscanf(pss->path, "/%[a-z0-9]/%d/%[0-9a-z]", szType, &nStream, szCode);
+                    int nChannel = 0;
+                    int ret = sscanf(pss->path, "/%[a-z0-9]/%d/%[0-9a-z]", szType, &nChannel, szCode);
                     if(ret < 0) {
                         Log::error("%s error sscanf %d", pss->path, ret);
                         strErrInfo = "error request path";
@@ -201,21 +201,21 @@ namespace HttpWsServer
                     char* mime;
                     if (!strcasecmp(szType, "flv")) {
                         pss->media_type = media_flv;
-                        strErrInfo = StartPlayLive(pss, szCode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
 						mime = "video/x-flv";
                     } else if(!strcasecmp(szType, "h264")) {
                         pss->media_type = media_h264;
-                        strErrInfo = StartPlayLive(pss, szCode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
 						mime = "video/h264";
                     } else if(!strcasecmp(szType, "mp4")) {
                         pss->media_type = media_mp4;
-                        strErrInfo = StartPlayLive(pss, szCode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
@@ -361,34 +361,36 @@ namespace HttpWsServer
 
                 string strErrInfo;
                 string strPath = pss->path;
+				// ws://IP:port/live/type/channel/code
+                // type: flv、mp4、h264、hls
+                // channel: 0:原始码流 1:小码流
+                // e.g ws://localhost:80/live/flv/0/123456789
+                // 这里path只有 /live/type/stream/code
                 do{
-                    size_t pos = strPath.rfind(".");
-                    if(pos == string::npos) {
+                    char szType[10]={0}, szCode[30]={0};
+                    int nChannel = 0;
+                    int ret = sscanf(pss->path, "/live/%[a-z0-9]/%d/%[0-9a-z]", szType, &nChannel, szCode);
+                    if(ret < 0) {
+                        Log::error("%s error sscanf %d", pss->path, ret);
                         strErrInfo = "error request path";
                         break;
                     }
-                    string uri_type = strPath.substr(pos+1, strPath.size()-pos-1);
-                    string devcode = strPath.substr(1, pos -1);
 
-                    if (!_stricmp(uri_type.c_str(), "ztflv")) {
+                    if (!strcasecmp(szType, "flv")) {
                         pss->media_type = media_flv;
-                        strErrInfo = StartPlayLive(pss, devcode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
-                    } else if(!_stricmp(uri_type.c_str(), "hls")) {
-                        pss->media_type = media_hls;
-                        strErrInfo = "error request path";
-                        break;
-                    } else if(!_stricmp(uri_type.c_str(), "h264")) {
+                    } else if(!strcasecmp(szType, "h264")) {
                         pss->media_type = media_h264;
-                        strErrInfo = StartPlayLive(pss, devcode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
-                    } else if(!_stricmp(uri_type.c_str(), "mp4")) {
+                    } else if(!strcasecmp(szType, "mp4")) {
                         pss->media_type = media_mp4;
-                        strErrInfo = StartPlayLive(pss, devcode);
+                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
                         if(!strErrInfo.empty()){
                             break;
                         }
