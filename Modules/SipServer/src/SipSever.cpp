@@ -200,7 +200,7 @@ void CSipSever::SubscribeThread()
         time_t now = time(nullptr);
         struct tm * timeinfo = localtime(&now);
         if(difftime(now,lastQueryTime) > 3600 //距离上一次查询查过一小时
-            && timeinfo->tm_hour == 5  //夜里5点重新查询
+            && timeinfo->tm_hour == 1  //夜里1点重新查询
           ) {
             lastQueryTime = now;
             DeviceMgr::CleanPlatform(); //清空缓存中的数据和数据库设备表中的记录

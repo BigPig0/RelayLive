@@ -27,7 +27,11 @@ namespace LiveClient
         */
         int Recode(AV_BUFF buff, NalType t);
 
+        void RecodeThread();
+
     private:
+        int Recode2(AV_BUFF buff, NalType t);
+
         /**
         * 生成一个视频断并上抛
         */
@@ -45,10 +49,12 @@ namespace LiveClient
         CNetStreamMaker   *m_pKeyFrame;       // 缓存关键帧，sps和pps有可能在后面
         bool               m_bFirstKey;       // 已经处理第一个关键帧
         bool               m_bRun;            // 执行状态
+        bool               m_bFinish;         // 执行完成
         bool               m_bGotSPS;         // 标记解码是否输出了sps
         bool               m_bGotPPS;         // 标记解码是否输出了sps
         uint32_t           m_timestamp;       // 时间戳
         uint32_t           m_tick_gap;        // 两帧间的间隔
+        ring_buff_t       *m_pRingH264;       // 缓存h264数据
     };
 
 };

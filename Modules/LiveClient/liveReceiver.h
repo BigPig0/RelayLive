@@ -2,6 +2,7 @@
 
 #include "LiveClient.h"
 #include "uv.h"
+#include "ring_buff.h"
 
 enum NalType;
 
@@ -24,10 +25,13 @@ public:
     void StartListen();
 
     /** 接收的rtp数据处理 */
-    void RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in);
+    bool RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in);
 
     /** 接收超时处理 */
     void RtpOverTime();
+
+    /** rtp数据处理线程 */
+    void RtpParse();
 
     /**
      * 添加PS数据内容
@@ -73,9 +77,14 @@ public:
     /** FLV子码流回调 */
     void FlvSubCb(AV_BUFF buff);
 
+    /** 结束时关闭loop */
+    void AsyncClose();
+
 public:
-    bool        m_bRtpRun;
-    bool        m_bTimeOverRun;
+    bool        m_bRtpRun;          // rtp 接收是否在执行
+    bool        m_bTimeOverRun;     // 超时判断是否在执行
+    bool        m_bRun;             // loop是否正在执行
+    uv_loop_t   *m_uvLoop;          // udp接收的loop
 
 private:
     int         m_nLocalRTPPort;    // 本地RTP接收端口
@@ -86,6 +95,7 @@ private:
 
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器
+    uv_async_t  m_uvAsync;          // 异步操作句柄 外部线程用来结束m_uvLoop
 
     void*       m_pRtpParser;       // rtp报文解析类
     void*       m_pPsParser;        // PS帧解析类
@@ -96,11 +106,12 @@ private:
     void*       m_pFlv;             // FLV组包类
     void*       m_pMp4;             // MP4组包类
     void*       m_pReCode;          // 重编码
-    CLiveWorker* m_pWorker;        // 回调对象
+    CLiveWorker* m_pWorker;         // 回调对象
 
     uint64_t    m_pts;              // 记录PES中的pts
     uint64_t    m_dts;              // 记录PES中的dts
     NalType     m_nalu_type;        // h264片元类型
+    ring_buff_t* m_pRingRtp;        // rtp包缓存区，loop线程写入，解析线程读取
 };
 
 }

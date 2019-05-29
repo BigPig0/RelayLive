@@ -11,12 +11,8 @@ namespace DeviceMgr
     CDataBase            _db;         //< 数据库对象
 
 	static bool checkStringDouble(string val1, string val2) {
-		double d1 = 0;
-		if(!val1.empty())
-			atof(val1.c_str());
-		double d2 = 0;
-		if(!val2.empty())
-			atof(val2.c_str());
+		double d1 = val1.empty() ? 0 : atof(val1.c_str());
+		double d2 = val2.empty() ? 0 : atof(val2.c_str());
 		if (abs(d1-d2) <= 0.000001)
 			return true;
 		return false;

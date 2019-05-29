@@ -14,9 +14,7 @@
 
 namespace LiveClient
 {
-    extern uv_loop_t *g_uv_loop;
-    extern int        g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-
+extern int  g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
 
 static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
@@ -104,9 +102,42 @@ static void timer_over_close_cb(uv_handle_t* handle){
     pLive->m_bTimeOverRun = false;
 }
 
+static void async_cb(uv_async_t* handle){
+    CLiveReceiver* obj = (CLiveReceiver*)handle->data;
+    obj->AsyncClose();
+}
+
+static void run_loop_thread(void* arg)
+{
+    CLiveReceiver* h = (CLiveReceiver*)arg;
+    while (h->m_bRun) {
+        uv_run(h->m_uvLoop, UV_RUN_DEFAULT);
+        Sleep(200);
+    }
+    uv_loop_close(h->m_uvLoop);
+    h->m_uvLoop = NULL;
+}
+
+static void rtp_parse_thread(void* arg)
+{
+    CLiveReceiver* h = (CLiveReceiver*)arg;
+    h->RtpParse();
+}
+
+static void destroy_ring_node(void *_msg)
+{
+    AV_BUFF *msg = (AV_BUFF*)_msg;
+    free(msg->pData);
+    msg->pData = NULL;
+    msg->nLen = 0;
+}
+
+
 CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
 	: m_nLocalRTPPort(nPort)
-	, m_nLocalRTCPPort(nPort+1)
+    , m_nLocalRTCPPort(nPort+1)
+    , m_uvLoop(nullptr)
+    , m_bRun(false)
     , m_bRtpRun(false)
     , m_bTimeOverRun(false)
 	, m_pRtpParser(nullptr)
@@ -121,7 +152,9 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     , m_dts(0)
     , m_nalu_type(unknow)
 {
-    m_pRtpParser     = new CRtp(AVCallback, this);
+    CRtp* rtp        = new CRtp(AVCallback, this);
+    rtp->SetCatchFrameNum(g_nRtpCatchPacketNum);
+    m_pRtpParser     = rtp;
     m_pPsParser      = new CPs(AVCallback, this);
     m_pPesParser     = new CPes(PESCallBack, this);
     m_pEsParser      = new CES(AVCallback, this);
@@ -129,31 +162,18 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
-    CRecoder *recode  = new CRecoder(this);
-    recode->SetChannel1(320, 240, RecodeCallback);
+    CRecoder *recode = new CRecoder(this);
+    recode->SetChannel1(640, 480, RecodeCallback);
     m_pReCode        = recode;
 
-	CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
-	rtpAnalyzer->SetCatchFrameNum(g_nRtpCatchPacketNum);
+    m_pRingRtp       = create_ring_buff(sizeof(AV_BUFF), 1000, NULL);
 }
 
 CLiveReceiver::~CLiveReceiver(void)
 {
-    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
-    if(ret < 0) {
-        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
-    }
-    uv_close((uv_handle_t*)&m_uvRtpSocket, rtp_udp_close_cb);
-
-    ret = uv_timer_stop(&m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("stop timer error: %s",uv_strerror(ret));
-    }
-    uv_close((uv_handle_t*)&m_uvTimeOver, timer_over_close_cb);
-
-    while (m_bRtpRun || m_bTimeOverRun){
+    uv_async_send(&m_uvAsync);
+    while (m_uvLoop)
         Sleep(500);
-    }
 
     m_pWorker = nullptr;
     SAFE_DELETE(m_pRtpParser);
@@ -164,13 +184,19 @@ CLiveReceiver::~CLiveReceiver(void)
     SAFE_DELETE(m_pTs);
     SAFE_DELETE(m_pFlv);
     SAFE_DELETE(m_pMp4);
+    SAFE_DELETE(m_pReCode);
+    destroy_ring_buff(m_pRingRtp);
     //Sleep(2000);
 }
 
 void CLiveReceiver::StartListen()
 {
+    m_uvLoop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
+    uv_loop_init(m_uvLoop);
+    m_bRun = true;
+
     // 开启udp接收
-    int ret = uv_udp_init(g_uv_loop, &m_uvRtpSocket);
+    int ret = uv_udp_init(m_uvLoop, &m_uvRtpSocket);
     if(ret < 0) {
         Log::error("udp init error: %s", uv_strerror(ret));
         return;
@@ -200,39 +226,65 @@ void CLiveReceiver::StartListen()
     m_bRtpRun = true;
 
     //开启udp接收超时判断
-    ret = uv_timer_init(g_uv_loop, &m_uvTimeOver);
+    ret = uv_timer_init(m_uvLoop, &m_uvTimeOver);
     if(ret < 0) {
         Log::error("timer init error: %s", uv_strerror(ret));
         return;
     }
 
     m_uvTimeOver.data = (void*)this;
-    ret = uv_timer_start(&m_uvTimeOver, timer_cb,30000, 30000);
+    ret = uv_timer_start(&m_uvTimeOver, timer_cb, 30000, 30000);
     if(ret < 0) {
         Log::error("timer start error: %s", uv_strerror(ret));
         return;
     }
     m_bTimeOverRun = true;
+
+    //异步操作
+    m_uvAsync.data = (void*)this;
+    uv_async_init(m_uvLoop, &m_uvAsync, async_cb);
+
+    //udp 接收loop线程
+    uv_thread_t tid;
+    uv_thread_create(&tid, run_loop_thread, this);
+
+    //rtp数据解析线程
+    uv_thread_create(&tid, rtp_parse_thread, this);
 }
 
-void CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
+bool CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
 {
     //udp来源不匹配，将数据抛弃
     char ipv4addr[64]={0};
     uv_ip4_name(addr_in, ipv4addr, 64);
     int port = ntohs(addr_in->sin_port);
     string ip = ipv4addr;
-    if(m_nRemoteRTPPort != port || m_strRemoteIP != ip)
-        return;
+    if(m_nRemoteRTPPort != port || m_strRemoteIP != ip) {
+        Log::error("this is not my rtp data");
+        return false;
+    }
 
     //重置超时计时器
     int ret = uv_timer_again(&m_uvTimeOver);
     if(ret < 0) {
         Log::error("timer again error: %s", uv_strerror(ret));
-        return;
+        return false;
     }
-    CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
-    rtpAnalyzer->DeCode(pBuff, nLen);
+
+    // 将数据保存在ring buff
+    int n = (int)ring_get_count_free_elements(m_pRingRtp);
+    if (!n) {
+        Log::error("rtp ring buff is full");
+        return false;
+    }
+
+    AV_BUFF newTag = {AV_TYPE::RTP, pBuff, nLen};
+    if (!ring_insert(m_pRingRtp, &newTag, 1)) {
+        Log::error("add data to rtp ring buff failed");
+        return false;
+    }
+
+    return true;
 }
 
 void CLiveReceiver::RtpOverTime()
@@ -242,6 +294,20 @@ void CLiveReceiver::RtpOverTime()
     if(nullptr != m_pWorker)
     {
         m_pWorker->stop();
+    }
+}
+
+void CLiveReceiver::RtpParse()
+{
+    AV_BUFF rtp;
+    while(m_bRtpRun){
+        int ret = ring_consume(m_pRingRtp, NULL, &rtp, 1);
+        if(!ret) {
+            Sleep(10);
+            continue;
+        }
+        CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
+        rtpAnalyzer->DeCode(rtp.pData, rtp.nLen);
     }
 }
 
@@ -379,4 +445,24 @@ void CLiveReceiver::FlvSubCb(AV_BUFF buff)
         m_pWorker->push_flv_stream_sub(buff);
 }
 
+void CLiveReceiver::AsyncClose()
+{
+    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
+    if(ret < 0) {
+        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&m_uvRtpSocket, rtp_udp_close_cb);
+
+    ret = uv_timer_stop(&m_uvTimeOver);
+    if(ret < 0) {
+        Log::error("stop timer error: %s",uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&m_uvTimeOver, timer_over_close_cb);
+
+    while (m_bRtpRun || m_bTimeOverRun){
+        Sleep(500);
+    }
+    uv_stop(m_uvLoop);
+    m_bRun =  false;
+}
 }
