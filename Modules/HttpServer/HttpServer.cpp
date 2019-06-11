@@ -59,7 +59,7 @@ namespace HttpWsServer
         string default_value = Settings::getValue("HttpServer","DefaultFile","index.html");
         if( !default_value.empty()) mount_web_def = default_value;
         bool bDirVisible = Settings::getValue("HttpServer","DirVisible")=="yes"?true:false;
-        if(bDirVisible) mount_web_def = "hls.html";
+        if(bDirVisible) mount_web_def = "This is a not exist file.html";
         static struct lws_protocol_vhost_options mime_txt = {NULL, NULL, "txt", "text/plain"};
         static struct lws_protocol_vhost_options mime_swf = {&mime_txt, NULL, "swf", "application/x-shockwave-flash"};
         static struct lws_protocol_vhost_options mime_flv = {&mime_swf, NULL, "flv", "video/x-flv"};

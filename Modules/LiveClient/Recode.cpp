@@ -469,7 +469,7 @@ namespace LiveClient
             }
             if(!m_codec->ok){
                 Log::error("codec is not ok");
-                return -1;
+                return false;
             }
 
             //int size = m_decode->frame->width * m_decode->frame->height;
@@ -528,6 +528,8 @@ namespace LiveClient
             AV_BUFF ESBUFF = {AV_TYPE::ES, (char*)m_codec->pkt.data, m_codec->pkt.size};
             m_codec->pEs->DeCode(ESBUFF);
         } //while
+
+        return true;
     }
 
     bool CRecoder::EncodeKeyVideo()

@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 typedef enum _AV_TYPE_
 {

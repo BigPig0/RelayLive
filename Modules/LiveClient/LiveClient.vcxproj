@@ -17,7 +17,11 @@
     <ClCompile Include="..\..\Common\avformat\mp4.cpp" />
     <ClCompile Include="..\..\Common\avformat\pes.cpp" />
     <ClCompile Include="..\..\Common\avformat\ps.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtcp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtp2.cpp" />
     <ClCompile Include="..\..\Common\avformat\rtp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtsp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\sdp.cpp" />
     <ClCompile Include="..\..\Common\avformat\ts.cpp" />
     <ClCompile Include="LiveClient.cpp" />
     <ClCompile Include="LiveIpc.cpp" />
@@ -37,7 +41,11 @@
     <ClInclude Include="..\..\Common\avformat\mp4.h" />
     <ClInclude Include="..\..\Common\avformat\pes.h" />
     <ClInclude Include="..\..\Common\avformat\ps.h" />
+    <ClInclude Include="..\..\Common\avformat\rtcp.h" />
     <ClInclude Include="..\..\Common\avformat\rtp.h" />
+    <ClInclude Include="..\..\Common\avformat\rtp2.h" />
+    <ClInclude Include="..\..\Common\avformat\rtsp.h" />
+    <ClInclude Include="..\..\Common\avformat\sdp.h" />
     <ClInclude Include="..\..\Common\avformat\ts.h" />
     <ClInclude Include="LiveClient.h" />
     <ClInclude Include="LiveIpc.h" />
@@ -103,7 +111,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -122,7 +130,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

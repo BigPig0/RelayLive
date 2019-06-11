@@ -51,6 +51,18 @@
     <ClCompile Include="Recode.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\rtcp.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\rtp2.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\rtsp.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\avformat\sdp.cpp">
+      <Filter>avformat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\avformat\es.h">
@@ -97,6 +109,18 @@
     </ClInclude>
     <ClInclude Include="Recode.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\sdp.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\rtcp.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\rtsp.h">
+      <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\avformat\rtp2.h">
+      <Filter>avformat</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

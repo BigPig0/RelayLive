@@ -58,6 +58,9 @@ public:
     static bool DeviceControl(string strDev,
         int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
 
+    /**
+     * 查询设备目录
+     */
 	static bool QueryDirtionary();
 
 private:

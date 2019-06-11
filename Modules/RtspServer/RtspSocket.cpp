@@ -1,5 +1,6 @@
 #include "stdafx.h"
-#include "libRtsp.h"
+#include "RtspSocket.h"
+#include "RtspWorker.h"
 
 namespace RtspServer
 {
@@ -64,8 +65,8 @@ char* response_status[] = {
 };
     
 static void on_close(uv_handle_t* peer) {
-    CClient* client = (CClient*)peer->data;
-	client->m_server->m_options.cb(client, RTSP_CLOSE, client->m_user);
+    CRtspSocket* client = (CRtspSocket*)peer->data;
+	client->m_server->m_options.cb(client, RTSP_REASON_CLOSE, client->m_user);
 }
 
 static void after_shutdown(uv_shutdown_t* req, int status) {
@@ -74,11 +75,11 @@ static void after_shutdown(uv_shutdown_t* req, int status) {
 }
 
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-    *buf = uv_buf_init((char*)malloc(suggested_size), suggested_size);
+    *buf = uv_buf_init((char*)calloc(1,1024), 1024);
 }
 
 static void after_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) {
-    CClient* client = (CClient*)handle->data;
+    CRtspSocket* client = (CRtspSocket*)handle->data;
     if (nread < 0) {
         if(nread == UV_EOF){
             Log::debug("remote close this socket");
@@ -102,8 +103,11 @@ static void after_read(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf) 
         return;
     }
 
-    rtsp_ruquest req = client->parse(buf->base, nread);
+    client->parse(buf->base, nread);
+}
 
+static void request_cb(void *user, rtsp_ruquest_t *req) {
+    CRtspSocket* client = (CRtspSocket*)user;
     client->answer(req);
 }
 
@@ -115,38 +119,43 @@ static void after_write(uv_write_t* req, int status) {
 }
 
 static void on_async(uv_async_t* handle){
-    CClient *c = (CClient*)handle->data;
+    CRtspSocket *c = (CRtspSocket*)handle->data;
     uv_mutex_lock(&c->m_asyncMutex);
     while(!c->m_asyncList.empty()){
         rtsp_event e = c->m_asyncList.front();
-        c->m_server->m_options.cb(c, e.resaon, c->m_user);
+        c->m_server->m_options.cb(c, (RTSP_REASON)e.resaon, c->m_user);
         c->m_asyncList.pop_front();
     }
     uv_mutex_unlock(&c->m_asyncMutex);
 }
 
-CClient::CClient()
+CRtspSocket::CRtspSocket()
     : m_ploop(nullptr)
     , m_server(nullptr)
     , m_Request(nullptr)
     , m_Response(nullptr)
+    , m_pSession(nullptr)
 {
+    m_pRtspParse = create_rtsp(this, request_cb);
+    m_pSessMgr = CRtspSessionMgr::GetInstance();
 }
 
-CClient::~CClient()
+CRtspSocket::~CRtspSocket()
 {
-	SAFE_FREE(m_user);
-	 uv_mutex_destroy(&m_asyncMutex);
-	 m_server->GiveBackRtpPort(m_nLocalPort);
+    SAFE_FREE(m_user);
+	uv_mutex_destroy(&m_asyncMutex);
+	m_server->GiveBackRtpPort(m_nLocalPort);
+    destory_rtsp(m_pRtspParse);
 }
 
-int CClient::Init(uv_loop_t* uv) {
+int CRtspSocket::Init(uv_loop_t* uv) {
     m_ploop = uv;
     int r = uv_tcp_init(m_ploop, &m_rtsp);
     if(r < 0) {
         Log::error("client init rtsp error %s",  uv_strerror(r));
         return r;
     }
+    /*
     r = uv_udp_init(m_ploop, &m_rtp);
     if(r < 0) {
         Log::error("client init rtp error %s", uv_strerror(r));
@@ -169,6 +178,7 @@ int CClient::Init(uv_loop_t* uv) {
         Log::error("client init rtcp error %s", uv_strerror(r));
         return r;
     }
+    */
     r = uv_async_init(m_ploop, &m_async, on_async);
     if(r < 0) {
         Log::error("client init rtcp error %s", uv_strerror(r));
@@ -187,13 +197,13 @@ int CClient::Init(uv_loop_t* uv) {
 	memset(m_user, 0, m_server->m_options.user_len);
 
     m_rtsp.data  = (void*)this;
-    m_rtp.data   = (void*)this;
-    m_rtcp.data  = (void*)this;
+    //m_rtp.data   = (void*)this;
+    //m_rtcp.data  = (void*)this;
     m_async.data = (void*)this;
     return 0;
 }
 
-int CClient::Recv() {
+int CRtspSocket::Recv() {
     int r = uv_read_start((uv_stream_t*)&m_rtsp, echo_alloc, after_read);
     if (r < 0)
     {
@@ -203,152 +213,55 @@ int CClient::Recv() {
     return 0;
 }
 
-rtsp_ruquest CClient::parse(char* buff, int len) {
-    rtsp_ruquest ret;
-    ret.method = RTSP_ERROR;
-    ret.parse_status = true;
-    parse_step_t step =  parse_step_method;
-    string tmp,tmp2;
-    for (int i = 0; i < len; ++i) {
-        if (parse_step_method == step)
-        {
-            if(buff[i] == ' ') {
-                Log::debug("request method is %s", tmp.c_str());
-                if(_stricmp(tmp.c_str(), "OPTIONS") == 0){
-                    ret.method = RTSP_OPTIONS;
-                } else if(_stricmp(tmp.c_str(), "DESCRIBE") == 0){
-                    ret.method = RTSP_DESCRIBE;
-                }else if(_stricmp(tmp.c_str(), "SETUP") == 0){
-                    ret.method = RTSP_SETUP;
-                }else if(_stricmp(tmp.c_str(), "PLAY") == 0){
-                    ret.method = RTSP_PLAY;
-                }else if(_stricmp(tmp.c_str(), "PAUSE") == 0){
-                    ret.method = RTSP_PAUSE;
-                }else if(_stricmp(tmp.c_str(), "TEARDOWN") == 0){
-                    ret.method = RTSP_TEARDOWN;
-                } else {
-                    Log::error("error method : %s", tmp.c_str());
-                    ret.parse_status = false;
-                    ret.code = Code_551_OptionNotSupported;
-                    break;
-                }
-                tmp.clear();
-                step = parse_step_uri;
-            } else {
-                tmp.push_back(buff[i]);
-            }
-        } else if (parse_step_uri == step) {
-            if (buff[i] == ' ') {
-                ret.uri = tmp;
-                tmp.clear();
-                step = parse_step_protocol;
-            } else {
-                tmp.push_back(buff[i]);
-            }
-        } else if (parse_step_protocol == step) {
-            if (buff[i] == '/') {
-                if(_stricmp(tmp.c_str(), "RTSP") != 0) {
-                    Log::error("error protocol : %s", tmp.c_str());
-                    ret.parse_status = false;
-                    ret.code = Code_400_BadRequest;
-                    break;
-                }
-                tmp.clear();
-                step = parse_step_version;
-            } else {
-                tmp.push_back(buff[i]);
-            }
-        } else if (parse_step_version == step) {
-            if (buff[i] == '\r' && buff[i+1] == '\n') {
-                if(_stricmp(tmp.c_str(), "1.0") != 0) {
-                    Log::error("error version : %s", tmp.c_str());
-                    ret.parse_status = false;
-                    ret.code = Code_505_RtspVersionNotSupported;
-                    break;
-                }
-                tmp.clear();
-                i++;
-                step = parse_step_header_k;
-            } else {
-                tmp.push_back(buff[i]);
-            }
-        } else if (parse_step_header_k == step) {
-            if (buff[i] == ':') {
-                step = parse_step_header_v;
-            } else {
-                tmp.push_back(buff[i]);
-            }
-        } else if (parse_step_header_v == step) {
-            if (buff[i] == '\r' && buff[i+1] == '\n') {
-                ret.headers.insert(make_pair(tmp,tmp2));
-                tmp.clear();
-                tmp2.clear();
-                i++;
-                step = parse_step_header_k;
-            } else {
-                if(!tmp2.empty() || buff[i] != ' ')
-                    tmp2.push_back(buff[i]);
-            }
-        }
-    }
-
-    return ret;
+void CRtspSocket::parse(char* buff, int len) {
+    rtsp_handle_request(m_pRtspParse, buff, len);
 }
 
-int CClient::answer(rtsp_ruquest req)
+int CRtspSocket::answer(rtsp_ruquest_t *req)
 {
     rtsp_response res;
-    m_Request = &req;
+    m_Request = req;
     m_Response = &res;
 
     do{
-        auto seq_it = req.headers.find("CSeq");
-        if (seq_it == req.headers.end()) {
+        if(req->method == rtsp_method::RTSP_ERROR) {
             res.code = Code_400_BadRequest;
             break;
         }
-        try {
-            req.CSeq = stoi(seq_it->second);
-        } catch (...) {
-            res.code = Code_400_BadRequest;
-            break;
-        }
-        if (!req.parse_status) {
-            res.code = req.code;
-            break;
-        }
+       
+        res.CSeq = req->CSeq;   //应答序号和请求序号一致
 
-        if(req.method == rtsp_method::RTSP_OPTIONS) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+        if(req->method == rtsp_method::RTSP_OPTIONS) {
+            int ret = m_server->m_options.cb(this, RTSP_REASON_OPTIONS, m_user);
             if(ret)
                 break;
-        } else if(req.method == rtsp_method::RTSP_DESCRIBE) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+        } else if(req->method == rtsp_method::RTSP_DESCRIBE) {
+            //DESCRIBE的时候就建立会话
+            m_pSession = m_pSessMgr->NewSession();
+            int ret = m_server->m_options.cb(this, RTSP_REASON_DESCRIBE, m_user);
             if(ret)
                 break;
-        } else if(req.method == rtsp_method::RTSP_SETUP) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+        } else if(req->method == rtsp_method::RTSP_SETUP) {
+			res.headers.insert(make_pair("Session",m_pSession->m_strSessID));
+            int ret = m_server->m_options.cb(this, RTSP_REASON_SETUP, m_user);
             if(ret)
                 break;
-			
-			string session = StringHandle::toStr<uint64_t>(CRtspServer::m_nSession++);
-			res.headers.insert(make_pair("Session",session));
-        } else if(req.method == rtsp_method::RTSP_PLAY) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+
+        } else if(req->method == rtsp_method::RTSP_PLAY) {
+            int ret = m_server->m_options.cb(this, RTSP_REASON_PLAY, m_user);
             if(ret)
                 break;
-        } else if(req.method == rtsp_method::RTSP_PAUSE) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+        } else if(req->method == rtsp_method::RTSP_PAUSE) {
+            int ret = m_server->m_options.cb(this, RTSP_REASON_PAUSE, m_user);
             if(ret)
                 break;
-        } else if(req.method == rtsp_method::RTSP_TEARDOWN) {
-            int ret = m_server->m_options.cb(this, req.method, m_user);
+        } else if(req->method == rtsp_method::RTSP_TEARDOWN) {
+            int ret = m_server->m_options.cb(this, RTSP_REASON_TEARDOWN, m_user);
             if(ret)
                 break;
         } else {
             res.code = Code_551_OptionNotSupported;
         }
-        res.CSeq = req.CSeq;
     }while(0);
 
     //生成tcp应答报文
@@ -386,7 +299,7 @@ int CClient::answer(rtsp_ruquest req)
     return 0;
 }
 
-void CClient::SetRemotePort(int rtp, int rtcp)
+void CRtspSocket::SetRemotePort(int rtp, int rtcp)
 {
     m_nRtpPort = rtp;
     m_nRtcpPort = rtcp;
@@ -399,7 +312,6 @@ void CClient::SetRemotePort(int rtp, int rtcp)
 
 //////////////////////////////////////////////////////////////////////////
 
-volatile uint64_t CRtspServer::m_nSession = 11111111;
 
 static void on_connection(uv_stream_t* server, int status) {
     if (status != 0) {
@@ -409,7 +321,7 @@ static void on_connection(uv_stream_t* server, int status) {
 
     CRtspServer* rtsp = (CRtspServer*)server->data;
 
-    CClient* client = new CClient;
+    CRtspSocket* client = new CRtspSocket;
     client->m_server = rtsp;
     int r = client->Init(rtsp->m_ploop);
     if(r < 0) {
@@ -423,18 +335,18 @@ static void on_connection(uv_stream_t* server, int status) {
         return;
     }
 
-	// 客户端IP
-	struct sockaddr_in addr;
-	char ipv4addr[64];
-	int namelen = sizeof(addr);
-	uv_tcp_getpeername(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
-	uv_ip4_name(&addr, ipv4addr, 64);
-	client->m_strRtpIP = ipv4addr;
+    // 客户端IP
+    struct sockaddr_in addr;
+    char ipv4addr[64];
+    int namelen = sizeof(addr);
+    uv_tcp_getpeername(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
+    uv_ip4_name(&addr, ipv4addr, 64);
+    client->m_strRtpIP = ipv4addr;
 
-	// 本地IP
-	uv_tcp_getsockname(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
-	uv_ip4_name(&addr, ipv4addr, 64);
-	client->m_strLocalIP = ipv4addr;
+    // 本地IP
+    uv_tcp_getsockname(&client->m_rtsp, (struct sockaddr*)&addr, &namelen);
+    uv_ip4_name(&addr, ipv4addr, 64);
+    client->m_strLocalIP = ipv4addr;
 
     r = client->Recv();
     if (r < 0)
@@ -447,8 +359,7 @@ static void on_connection(uv_stream_t* server, int status) {
 CRtspServer::CRtspServer(rtsp_options options)
     : m_options(options)
 {
-	
-	for (int i=0; i<options.rtp_port_num; ++i) {
+    for (int i=0; i<options.rtp_port_num; ++i) {
         m_vecRtpPort.push_back(options.rtp_port+i*2);
     }
 }
@@ -483,7 +394,7 @@ int CRtspServer::Init(uv_loop_t* uv)
         return -1;
     }
 
-	Log::debug("rtsp server init success");
+    Log::debug("rtsp server init success");
     return 0;
 }
 
@@ -507,11 +418,12 @@ void  CRtspServer::GiveBackRtpPort(int nPort)
     m_vecRtpPort.push_back(nPort);
 }
 
+
 //////////////////////////////////////////////////////////////////////////
 
-int rtp_callback_on_writable(CClient *client){
+int rtp_callback_on_writable(CRtspSocket *client){
     uv_mutex_lock(&client->m_asyncMutex);
-    rtsp_event e = {RTP_WRITE};
+    rtsp_event e = {RTSP_REASON_RTP_WRITE};
     client->m_asyncList.push_back(e);
     uv_mutex_unlock(&client->m_asyncMutex);
     uv_async_send(&client->m_async);
@@ -523,17 +435,17 @@ static void on_udp_send(uv_udp_send_t* req, int status){
     SAFE_FREE(req);
 }
 
-int rtp_write(CClient *client, char* buff, int len){
+int rtp_write(CRtspSocket *client, char* buff, int len){
     SAFE_MALLOC(uv_udp_send_t, req);
 	char* cache = (char *)malloc(len);
     memcpy(cache, buff, len);
     uv_buf_t buf = uv_buf_init(cache, len);
     req->data = cache;
-    int ret = uv_udp_send(req, &client->m_rtp, &buf, 1, (const sockaddr*)&client->m_addrRtp, on_udp_send);
-    if(ret != 0){
-        Log::debug("udp send failed %d: %s", ret, uv_err_name((ret)));
-        return ret;
-    }
+    //int ret = uv_udp_send(req, &client->m_rtp, &buf, 1, (const sockaddr*)&client->m_addrRtp, on_udp_send);
+    //if(ret != 0){
+    //    Log::debug("udp send failed %d: %s", ret, uv_err_name((ret)));
+    //    return ret;
+    //}
     return 0;
 }
 
