@@ -62,7 +62,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;Util.lib;utilc.lib;websockets_static.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;websockets_static.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../ThirdParty/ffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -86,7 +86,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib/$(Platform)/$(Configuration);$(SolutionDir)../ThirdParty/ffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;Util.lib;utilc.lib;websockets_static.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;websockets_static.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>

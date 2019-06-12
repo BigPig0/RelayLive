@@ -394,7 +394,7 @@ int CRtspServer::Init(uv_loop_t* uv)
         return -1;
     }
 
-    Log::debug("rtsp server init success");
+    Log::debug("rtsp server[%s:%d] init success", m_options.ip.c_str(), m_options.port);
     return 0;
 }
 

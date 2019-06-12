@@ -144,6 +144,8 @@ void rtsp_handle_request(rtsp *h, char *data, int len) {
             key   = (char*)calloc(1, line_len);
             value = (char*)calloc(1, line_len);
             ret = sscanf(buff, "%[^:]: %[^\r\n]", key, value);
+            buff     = next_line;
+            buff_len = buff_len - line_len;
             if(ret <= 0) {
                 free(key);
                 free(value);

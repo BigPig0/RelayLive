@@ -70,7 +70,7 @@ namespace RtspServer
         char code[50]={0};
         char control[20]={0};
         int nChannel = 0;
-        sscanf(pss->path, "rtsp://%[^/]/live/%[^/]/%d/%s", code, &nChannel, control);
+        sscanf(client->m_Request->uri, "rtsp://%*[^/]/live/%d/%[^/]/%s", &nChannel, code, control);
 
         CRtspSession *session = client->m_pSession;
         CRtspSubSession *subSession = client->m_pSession->GetSubSession(control);
@@ -158,7 +158,8 @@ namespace RtspServer
 				memcpy(pss->path, client->m_Request->uri, strlen(client->m_Request->uri));
                 Log::debug("new options request: %s", pss->path);
 				
-                sscanf(pss->path, "rtsp://%[^/]/live/%[^/]/%d", pss->code, &pss->channel);
+                sscanf(pss->path, "rtsp://%*[^/]/live/%d/%s", &pss->channel, pss->code);
+                client->m_strDevCode = pss->code;
                 pss->rtspClient = client;
                 pss->pss_next = nullptr;
                 pss->m_pWorker = nullptr;

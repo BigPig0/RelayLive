@@ -1,13 +1,44 @@
 #include "stdafx.h"
 #include "RtspSession.h"
 
+namespace RtspServer
+{
+/**
+ * 会话生成一个rtcp报文
+ */
+static void sess_rtcp_cb(void *user, AV_BUFF buff) {
+
+}
+
+/**
+ * 会话生成一个rtp报文
+ */
+static void sess_rtp_cb(void *user, AV_BUFF buff) {
+
+}
+
+/**
+ * 
+ */
+static void sess_async_cb(uv_async_t* handle) {
+
+}
+
 CRtspSubSession::CRtspSubSession()
     : m_nUseTcp(0)
 {
+    m_pRtcp = create_rtcp(this, sess_rtcp_cb);
+    m_pRtp  = create_rtp(this, sess_rtp_cb);
+
+    m_uvAsyncSchedule.data = this;
+    uv_async_init(g_uv_loop, &m_uvAsyncSchedule, sess_async_cb);
 }
 
 CRtspSubSession::~CRtspSubSession()
 {
+    destory_rtcp(m_pRtcp);
+    destory_rtp(m_pRtp);
+    uv_close((uv_handle_t*)&m_uvAsyncSchedule, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -68,4 +99,5 @@ CRtspSession* CRtspSessionMgr::NewSession()
     newSess->m_strSessID = session;
     m_mapSessions.insert(make_pair(session, newSess));
     return newSess;
+}
 }

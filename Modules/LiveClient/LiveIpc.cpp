@@ -67,7 +67,17 @@ namespace LiveIpc
             return ret;
         }
 
-        while (_ipc_task.ipc_status) Sleep(100);
+        time_t start_time = time(NULL);
+        while (_ipc_task.ipc_status) {
+            time_t now = time(NULL);
+            if(difftime(now, start_time) > 2.0){
+                //≥¨ ±2√Î
+                _ipc_task.ret = -1;
+                _ipc_task.error = "time out";
+                break;
+            }
+            Sleep(100);
+        }
         sdp = _ipc_task.error;
         return _ipc_task.ret;
     }
