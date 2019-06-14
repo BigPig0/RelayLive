@@ -162,9 +162,9 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
-    CRecoder *recode = new CRecoder(this);
-    recode->SetChannel1(640, 480, RecodeCallback);
-    m_pReCode        = recode;
+    //CRecoder *recode = new CRecoder(this);
+    //recode->SetChannel1(640, 480, RecodeCallback);
+    //m_pReCode        = recode;
 
     m_pRingRtp       = create_ring_buff(sizeof(AV_BUFF), 1000, NULL);
 }

@@ -127,7 +127,8 @@ namespace HttpWsServer
             cull_lagging_clients();
             n = (int)lws_ring_get_count_free_elements(m_pRing);
         }
-        Log::debug("ring free space %d\n", n);
+		if(n <80)
+			Log::debug("ring free space %d\n", n);
         if (!n)
             return;
 

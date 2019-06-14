@@ -268,10 +268,27 @@ namespace HttpWsServer
                         bDevListQuering = true;
 					    LiveClient::GetDevList();
                     }
-				}else if(!strcmp(pss->path, "/refresh")) {
+				} else if(!strcmp(pss->path, "/refresh")) {
 					LiveClient::QueryDirtionary();
 
 					*pss->json = "QueryDirtionary send";
+					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
+						"text/html",
+						pss->json->size(),
+						&p, end))
+						return 1;
+					if (lws_finalize_write_http_header(wsi, start, &p, end))
+						return 1;
+
+					lws_callback_on_writable(wsi);
+				} else if(!strncmp(pss->path, "/control", 8)) {
+					char *szDev = (char*)calloc(1,20);
+					int ud=0, lr=0, io=0;
+					sscanf(pss->path, "/control/%[^_]_ud=%d_lr=%d_in=%d", szDev, &ud, &lr, &io);
+					LiveClient::DeviceControl(szDev, io, ud, lr);
+					//free(szDev);
+
+					*pss->json = "ok";
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
 						"text/html",
 						pss->json->size(),

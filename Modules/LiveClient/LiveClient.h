@@ -96,6 +96,12 @@ namespace LiveClient
      */
     void LIVECLIENT_API QueryDirtionary();
 
+	/**
+	 * 通知sip模块发送设备控制信息
+	 */
+	 void LIVECLIENT_API DeviceControl(string strDev,
+        int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
+
     /**
      * 设置回调，获取信息完成后,通知调用者
      */

@@ -110,5 +110,16 @@ namespace LiveIpc
         }
         return 0;
     }
+
+	int DeviceControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
+		stringstream ss;
+        ss << "dev=" << strDev << "&io=" << nInOut << "&ud=" << nUpDown << "&lr=" << nLeftRight;
+		int ret = uv_ipc_send(h, "liveSrc", "DeviceControl", (char*)ss.str().c_str(), ss.str().size());
+        if(ret) {
+            Log::error("ipc send devices_list error");
+            return ret;
+        }
+        return 0;
+	}
 }
 }

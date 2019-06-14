@@ -57,6 +57,10 @@ namespace LiveClient
         LiveIpc::QueryDirtionary();
     }
 
+	void DeviceControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
+		LiveIpc::DeviceControl(strDev, nInOut, nUpDown, nLeftRight);
+	}
+
     void SetCallBack(LIVECLIENT_CB cb){
         ipc_cb = cb;
     }

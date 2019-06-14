@@ -8,7 +8,7 @@
 
 <body>
     <div>
-        <canvas id="video1" width="600" height="300"></canvas>
+        <canvas id="video1" width="800" height="600"></canvas>
     </div>
     <script type="text/javascript" src="./NodePlayer.min.js"></script>
     <script>
@@ -39,12 +39,12 @@
          *  2 视频画面做等比缩放后,完全填充Canvas区域,画面不被拉伸,没有黑边,但画面显示不全
          * 软解时有效
          */
-        player.setScaleMode(1);
+        player.setScaleMode(0);
 
         /**
          * 设置最大缓冲时长，单位毫秒，只在软解时有效
          */
-        player.setBufferTime(500);
+        player.setBufferTime(10);
 
         /**
          * 打开音频
@@ -82,7 +82,33 @@
 		
         var playaddr = "ws://" + window.location.hostname + ":8000/live/flv/" +window.location.hash.substr(1);
         player.start(playaddr);
+
+
+        function controlbtn(c) {
+            var url = "http://" + window.location.host + "/device/control/" + window.location.hash.substr(3) + "_" + c;
+            var request = new XMLHttpRequest();
+            request.open('Get', url);
+            request.onreadystatechange = function () {
+                if (request.readyState != 4) {
+                    return;
+                }
+            }
+            request.send(null);
+        }
     </script>
+
+    <div>
+        <button onmousedown="controlbtn('ud=1_lr=0_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2_lr=0_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0_lr=0_io=1')" onmouseup="controlbtn('ud=0_lr=0_io=0')">放大</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0_lr=0_io=2')" onmouseup="controlbtn('ud=0_lr=0_io=0')">缩小</button>&nbsp;
+    </div>
 </body>
 
 </html>

@@ -320,13 +320,13 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
     CHECK_POINT(m_pData);
 
-    if(bIsKeyFrame && m_pData->size() > 0) {
-        if(m_fCB != nullptr){
-            AV_BUFF buff = {FLV_FRAG_KEY, m_pData->get(), m_pData->size()};
-            m_fCB(buff, m_hUser);
-        }
-        m_pData->clear();
-    }
+    //if(bIsKeyFrame && m_pData->size() > 0) {
+    //    if(m_fCB != nullptr){
+    //        AV_BUFF buff = {FLV_FRAG_KEY, m_pData->get(), m_pData->size()};
+    //        m_fCB(buff, m_hUser);
+    //    }
+    //    m_pData->clear();
+    //}
 
     m_pData->append_byte( FLV_TAG_TYPE_VIDEO );       // Tag Type
     int nDataLenPos = m_pData->size();
@@ -366,13 +366,13 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 
     m_pData->append_be32( 11 + length );               // PreviousTagSize
 
-    //if(m_pData->size() > 0) {
-    //    if(m_fCB != nullptr){
-    //        AV_BUFF buff = {bIsKeyFrame?FLV_FRAG_KEY:FLV_FRAG, m_pData->get(), m_pData->size()};
-    //        m_fCB(buff, m_hUser);
-    //    }
-    //    m_pData->clear();
-    //}
+    if(m_pData->size() > 0) {
+        if(m_fCB != nullptr){
+            AV_BUFF buff = {bIsKeyFrame?FLV_FRAG_KEY:FLV_FRAG, m_pData->get(), m_pData->size()};
+            m_fCB(buff, m_hUser);
+        }
+        m_pData->clear();
+    }
     //// h264п╢нд╪Ч
     //fwrite(data, size, 1, fp);
     //fflush(fp);
