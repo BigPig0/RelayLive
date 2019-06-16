@@ -132,8 +132,8 @@ function TransDevPos(dev)
         lon = tonumber(dev["Longitude"])
     end
 	local ret = {
-		Latitude = tostring(x),
-		Longitude = tostring(y)
+		Latitude = tostring(lat),
+		Longitude = tostring(lon)
 	}
     return ret
 end
