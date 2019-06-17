@@ -1,4 +1,5 @@
 #pragma once
+#ifdef USE_FFMPEG
 #include "avtypes.h"
 #include "ring_buff.h"
 #include "uv.h"
@@ -58,3 +59,4 @@ namespace LiveClient
     };
 
 };
+#endif

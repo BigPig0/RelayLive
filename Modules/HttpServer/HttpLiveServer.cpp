@@ -355,9 +355,6 @@ namespace HttpWsServer
                 pss->isWs = true;
                 pss->m_bSendHead = false;
                 pss->m_pWorker = nullptr;
-                lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
-                    pss->clientName, sizeof(pss->clientName),
-                    pss->clientIP, sizeof(pss->clientIP));
 
                 string strErrInfo;
                 string strPath = pss->path;
@@ -399,6 +396,10 @@ namespace HttpWsServer
                         break;
                     }
 
+				// 这个操作耗时5s	
+                lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
+                    pss->clientName, sizeof(pss->clientName),
+                    pss->clientIP, sizeof(pss->clientIP));
                     return 0;
                 }while(0);
 

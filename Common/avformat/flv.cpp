@@ -109,6 +109,7 @@ CFlv::CFlv(AV_CALLBACK cb, void* handle)
     , m_pData(nullptr)
     , m_timestamp(0)
     , m_tick_gap(0)
+    , m_nNodelay(0)
     , m_nWidth(0)
     , m_nHeight(0)
     , m_nfps(25)
@@ -320,13 +321,14 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
     CHECK_POINT(m_pData);
 
-    //if(bIsKeyFrame && m_pData->size() > 0) {
-    //    if(m_fCB != nullptr){
-    //        AV_BUFF buff = {FLV_FRAG_KEY, m_pData->get(), m_pData->size()};
-    //        m_fCB(buff, m_hUser);
-    //    }
-    //    m_pData->clear();
-    //}
+    // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
+    if(m_nNodelay == 0 && bIsKeyFrame && m_pData->size() > 0) {
+        if(m_fCB != nullptr){
+            AV_BUFF buff = {FLV_FRAG_KEY, m_pData->get(), m_pData->size()};
+            m_fCB(buff, m_hUser);
+        }
+        m_pData->clear();
+    }
 
     m_pData->append_byte( FLV_TAG_TYPE_VIDEO );       // Tag Type
     int nDataLenPos = m_pData->size();
@@ -366,7 +368,8 @@ bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 
     m_pData->append_be32( 11 + length );               // PreviousTagSize
 
-    if(m_pData->size() > 0) {
+    //立即发送模式，每收到一帧数据就立即上抛发送
+    if(m_nNodelay != 0 && m_pData->size() > 0) {
         if(m_fCB != nullptr){
             AV_BUFF buff = {bIsKeyFrame?FLV_FRAG_KEY:FLV_FRAG, m_pData->get(), m_pData->size()};
             m_fCB(buff, m_hUser);

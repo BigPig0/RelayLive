@@ -138,6 +138,8 @@ public:
     uint32_t Height(){return m_nHeight;}
     double Fps(){return m_nFps;}
 
+    void SetNodelay(uint32_t nodelay){m_nNodelay = nodelay;};
+
 private:
     /**
      * 解析数据
@@ -180,6 +182,7 @@ private:
     CNetStreamMaker    *m_pFullBuff;       // 缓存h264数据 7 8 5 1 1 1 1 ... 1
     bool               m_bFirstKey;        // 已经处理第一个关键帧
     bool               m_bDecode;          // 是否已经解析sps
+    uint32_t           m_nNodelay;        // 是否立即发送
     
     void*             m_hUser;                  // 回调处理对象
     H264SPS_CALLBACK  m_fCBSPS;

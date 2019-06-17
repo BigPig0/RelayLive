@@ -15,6 +15,7 @@
 namespace LiveClient
 {
 extern int  g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
+extern int  g_nNodelay;
 
 static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
@@ -160,11 +161,15 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     m_pEsParser      = new CES(AVCallback, this);
     m_pH264          = new CH264(H264SpsCbfun, AVCallback, this);
     m_pTs            = new CTS(AVCallback, this);
-    m_pFlv           = new CFlv(AVCallback, this);
+    CFlv* pFlv       = new CFlv(AVCallback, this);
+    pFlv->SetNodelay(g_nNodelay);
+    m_pFlv           = pFlv;
     m_pMp4           = new CMP4(AVCallback, this);
-    //CRecoder *recode = new CRecoder(this);
-    //recode->SetChannel1(640, 480, RecodeCallback);
-    //m_pReCode        = recode;
+#ifdef USE_FFMPEG
+    CRecoder *recode = new CRecoder(this);
+    recode->SetChannel1(640, 480, RecodeCallback);
+    m_pReCode        = recode;
+#endif
 
     m_pRingRtp       = create_ring_buff(sizeof(AV_BUFF), 1000, NULL);
 }
@@ -387,10 +392,12 @@ void CLiveReceiver::push_h264_stream(AV_BUFF buff)
     }
 
     //需要转子码流
+#ifdef USE_FFMPEG
     if(nullptr != m_pReCode) {
         CRecoder* recode = (CRecoder*)m_pReCode;
         recode->Recode(buff, m_nalu_type);
     }
+#endif
 }
 
 void CLiveReceiver::set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps)

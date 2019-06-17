@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Recode.h"
+#ifdef USE_FFMPEG
 #include "utilc.h"
 #include "es.h"
 #include "h264.h"
@@ -568,3 +569,4 @@ namespace LiveClient
         return false;
     }
 }
+#endif
