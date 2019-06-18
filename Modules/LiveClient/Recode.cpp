@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Recode.h"
+#ifdef USE_FFMPEG
 #include "utilc.h"
 #include "es.h"
 #include "h264.h"
@@ -27,6 +28,12 @@ extern "C"
 
 namespace LiveClient
 {
+    typedef struct _H264_BUFF_ {
+        NalType   eType;    //< 数据包类型
+        char      *pData;   //< 数据内容
+        uint32_t  nLen;     //< 数据长度
+    }H264_BUFF;
+
     static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser);
     static void RecodeCallback(AV_BUFF buff, void* pUser);
 
@@ -122,9 +129,9 @@ namespace LiveClient
         AV_CALLBACK     funCB;
 		void            *user;
         bool            ok;
-        FILE            *yuv;
-        FILE            *f;
-        FILE            *flv;
+        //FILE            *yuv;
+        //FILE            *f;
+        //FILE            *flv;
         CEncoder()
             : ok(false)
             //, pts(0)
@@ -147,8 +154,8 @@ namespace LiveClient
             pkt.size = 0;
 
             //yuv = fopen("test2.yuv", "wb");
-            f = fopen("test.264", "wb");
-            flv = fopen("test.flv", "wb");
+            //f = fopen("test.264", "wb");
+            //flv = fopen("test.flv", "wb");
         }
 
         ~CEncoder(){
@@ -205,8 +212,13 @@ namespace LiveClient
             frame->width = width;
             frame->height = height;
 
+            // 设置立即编码，不延时
+            AVDictionary *options = NULL;
+            av_dict_set(&options, "preset", "superfast",   0);
+            //av_dict_set(&options, "tune",   "zerolatency", 0);
+
             //打开AVCodec对象
-            if (avcodec_open2(c, codec, NULL) < 0){
+            if (avcodec_open2(c, codec, &options) < 0){
                 Log::error("Could not open codec");
                 return;
             }
@@ -250,13 +262,19 @@ namespace LiveClient
         case AV_TYPE::FLV_FRAG_KEY:
         case AV_TYPE::FLV_FRAG:
             {
-                Log::debug("flv %d", buff.eType);
+                //Log::debug("flv %d", buff.eType);
 				encoder->funCB(buff, encoder->user);
-                fwrite(buff.pData, 1, buff.nLen, encoder->flv);
-                fflush(encoder->flv);
+                //fwrite(buff.pData, 1, buff.nLen, encoder->flv);
+                //fflush(encoder->flv);
             }
             break;
         }
+    }
+
+    static void recode_thread(void* arg)
+    {
+        CRecoder* h = (CRecoder*)arg;
+        h->RecodeThread();
     }
 
     CRecoder::CRecoder(void* handle)
@@ -268,6 +286,8 @@ namespace LiveClient
         , m_bGotPPS(false)
         , m_timestamp(0)
         , m_tick_gap(3600)
+        , m_bRun(true)
+        , m_bFinish(false)
     {
         m_decode = new CDecoder;
         m_codec = new CEncoder;
@@ -275,11 +295,21 @@ namespace LiveClient
         m_pSPS = new CFlvStreamMaker();
         m_pPPS = new CFlvStreamMaker();
         m_pKeyFrame = new CFlvStreamMaker();
+
+        m_pRingH264 = create_ring_buff(sizeof(H264_BUFF), 1000, NULL);
+
+        uv_thread_t tid;
+        uv_thread_create(&tid, recode_thread, this);
     }
 
 
     CRecoder::~CRecoder(void)
     {
+        m_bRun = false;
+        destroy_ring_buff(m_pRingH264);
+		while(!m_bFinish){
+			Sleep(10);
+		}
         Log::debug("CReCode release");
     }
 
@@ -293,12 +323,32 @@ namespace LiveClient
 
     int CRecoder::Recode(AV_BUFF buff, NalType t)
     {
+		return Recode2(buff, t);
+
+        // 将数据保存在ring buff
+        int n = (int)ring_get_count_free_elements(m_pRingH264);
+        if (!n) {
+            Log::error("rtp ring buff is full");
+            return -1;
+        }
+
+        H264_BUFF newTag = {t, buff.pData, buff.nLen};
+        if (!ring_insert(m_pRingH264, &newTag, 1)) {
+            Log::error("add data to rtp ring buff failed");
+            return -1;
+        }
+
+        return 0;
+    }
+
+    int CRecoder::Recode2(AV_BUFF buff, NalType t)
+    {
         if(!m_decode->ok){
             Log::error("decode is not ok");
             return -1;
         }
         //Log::debug("begin recode %lld  %lld", pts, dts);
-        Log::debug("begin recode %d", t);
+        //Log::debug("begin recode %d", t);
 
         switch (t)
         {
@@ -309,7 +359,7 @@ namespace LiveClient
                 //如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
                 //sps或pps丢失，可以使用上一次的。
                 EncodeKeyVideo(); 
-                Log::debug("send frame");
+                //Log::debug("send frame");
                 EncodeVideo(buff.pData, buff.nLen,0);
                 m_timestamp += m_tick_gap;
             }
@@ -353,6 +403,22 @@ namespace LiveClient
         return 0;
     }
 
+    void CRecoder::RecodeThread()
+    {
+        H264_BUFF buff;
+        while (m_bRun)
+        {
+            int ret = ring_consume(m_pRingH264, NULL, &buff, 1);
+            if(!ret) {
+                Sleep(10);
+                continue;
+            }
+            AV_BUFF tmp = {AV_TYPE::H264_NALU, buff.pData, buff.nLen};
+            Recode2(tmp, buff.eType);
+        }
+        m_bFinish = true;
+    }
+
     bool CRecoder::EncodeVideo(char *data,int size,int bIsKeyFrame)
     {
         /*
@@ -383,10 +449,10 @@ namespace LiveClient
         }
 
         while(!ret){
-            Log::debug("receive frame");
+            //Log::debug("receive frame");
             ret = avcodec_receive_frame(m_decode->c, m_decode->frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
-                Log::error("decoding end");
+                //Log::error("decoding end");
                 break;
             } else if (ret != 0) {
                 Log::error("Error during decoding");
@@ -395,7 +461,7 @@ namespace LiveClient
 
             //Log::debug("src width:%d, height:%d", m_decode->frame->width, m_decode->frame->height);
             //Log::debug("context %d %d %lld %d %d", m_decode->c->width, m_decode->c->height, m_decode->c->bit_rate, m_decode->c->time_base.den, m_decode->c->time_base.num);
-            Log::debug("yuv pts: %lld  dts: %lld", m_decode->frame->pts, m_decode->frame->pkt_dts);
+            //Log::debug("yuv pts: %lld  dts: %lld", m_decode->frame->pts, m_decode->frame->pkt_dts);
 
             //缩放后的图片重新进行h264编码
             if(!m_codec->ok){
@@ -404,7 +470,7 @@ namespace LiveClient
             }
             if(!m_codec->ok){
                 Log::error("codec is not ok");
-                return -1;
+                return false;
             }
 
             //int size = m_decode->frame->width * m_decode->frame->height;
@@ -417,14 +483,14 @@ namespace LiveClient
             //已经取得一帧yuv图片，进行缩放
 
 
-            Log::debug("begin scale");
+            //Log::debug("begin scale");
             int h = sws_scale(m_codec->swsc, m_decode->frame->data, m_decode->frame->linesize, 0, m_decode->frame->height
                 , m_codec->frame->data, m_codec->frame->linesize);
             m_codec->frame->pts = m_timestamp;
             m_codec->frame->pkt_dts = m_timestamp;
 
-            Log::debug("height:%d line0:%d line1:%d line2:%d", h, m_codec->frame->linesize[0], m_codec->frame->linesize[1], m_codec->frame->linesize[2]);
-            Log::debug("scale pts: %lld  dts: %lld", m_codec->frame->pts, m_codec->frame->pkt_dts);
+            //Log::debug("height:%d line0:%d line1:%d line2:%d", h, m_codec->frame->linesize[0], m_codec->frame->linesize[1], m_codec->frame->linesize[2]);
+            //Log::debug("scale pts: %lld  dts: %lld", m_codec->frame->pts, m_codec->frame->pkt_dts);
 
             //int size = m_codec->frame->width * m_codec->frame->height;
             //fwrite(m_codec->frame->data[0], 1, size, m_codec->yuv);
@@ -433,7 +499,7 @@ namespace LiveClient
             //fflush(m_codec->yuv);
 
 
-            Log::debug("begin encode");
+            //Log::debug("begin encode");
             m_codec->frame->pts = m_timestamp;
             int cret = avcodec_send_frame(m_codec->c, m_codec->frame);
 
@@ -456,13 +522,15 @@ namespace LiveClient
                 Log::error("avcodec_receive_packet error: %s", tmp);
                 break;
             }
-            Log::debug("recode finish size:%d, pts:%d, dts:%d", m_codec->pkt.size, m_codec->pkt.pts, m_codec->pkt.dts);
+            //Log::debug("recode finish size:%d, pts:%d, dts:%d", m_codec->pkt.size, m_codec->pkt.pts, m_codec->pkt.dts);
 
-            fwrite(m_codec->pkt.data, 1, m_codec->pkt.size, m_codec->f);
-            fflush(m_codec->f);
+            //fwrite(m_codec->pkt.data, 1, m_codec->pkt.size, m_codec->f);
+            //fflush(m_codec->f);
             AV_BUFF ESBUFF = {AV_TYPE::ES, (char*)m_codec->pkt.data, m_codec->pkt.size};
             m_codec->pEs->DeCode(ESBUFF);
         } //while
+
+        return true;
     }
 
     bool CRecoder::EncodeKeyVideo()
@@ -478,7 +546,7 @@ namespace LiveClient
             memcpy(buff+pos, m_pKeyFrame->get(), m_pKeyFrame->size());
             pos += m_pKeyFrame->size();
 
-            Log::debug("send key frame");
+            //Log::debug("send key frame");
             EncodeVideo(buff, bufsize, 1);
             free(buff);
 
@@ -501,3 +569,4 @@ namespace LiveClient
         return false;
     }
 }
+#endif

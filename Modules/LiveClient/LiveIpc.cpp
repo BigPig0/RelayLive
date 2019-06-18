@@ -67,7 +67,17 @@ namespace LiveIpc
             return ret;
         }
 
-        while (_ipc_task.ipc_status) Sleep(100);
+        time_t start_time = time(NULL);
+        while (_ipc_task.ipc_status) {
+            time_t now = time(NULL);
+            if(difftime(now, start_time) > 2.0){
+                //≥¨ ±2√Î
+                _ipc_task.ret = -1;
+                _ipc_task.error = "time out";
+                break;
+            }
+            Sleep(100);
+        }
         sdp = _ipc_task.error;
         return _ipc_task.ret;
     }
@@ -100,5 +110,16 @@ namespace LiveIpc
         }
         return 0;
     }
+
+	int DeviceControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
+		stringstream ss;
+        ss << "dev=" << strDev << "&io=" << nInOut << "&ud=" << nUpDown << "&lr=" << nLeftRight;
+		int ret = uv_ipc_send(h, "liveSrc", "DeviceControl", (char*)ss.str().c_str(), ss.str().size());
+        if(ret) {
+            Log::error("ipc send devices_list error");
+            return ret;
+        }
+        return 0;
+	}
 }
 }

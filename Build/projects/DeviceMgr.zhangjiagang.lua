@@ -101,7 +101,7 @@ function DeleteDev()
 end
 
 function Init()
-    DBTOOL_POOL_CONN({tag="DB", dbpath="192.168.10.111/orcl", user="basic", pwd="123", max=5, min=1, inc=2})
+    DBTOOL_POOL_CONN({tag="DB", dbpath="32.81.129.13/orcl", user="basic", pwd="123", max=5, min=1, inc=2})
     --设备表插入工具
     local sql = "insert into recorder (RECORDER_CODE, NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
     devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
@@ -120,4 +120,20 @@ function Cleanup()
     rows = nil
     ins = nil
     return true
+end
+
+function TransDevPos(dev)
+    local lat = 0
+    if(dev["Latitude"] ~= nil) then
+        lat = tonumber(dev["Latitude"])
+    end
+    local lon = 0
+    if(dev["Longitude"] ~= nil) then
+        lon = tonumber(dev["Longitude"])
+    end
+	local ret = {
+		Latitude = tostring(lat),
+		Longitude = tostring(lon)
+	}
+    return ret
 end

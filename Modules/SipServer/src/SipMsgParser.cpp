@@ -461,6 +461,14 @@ msgPublic* CSipMsgParser::ParseNotifyCatalog(pugi::xml_node& root)
                     {
                         dev.strStatus = devNode.child_value();
                     }
+                    else if (nodeName == "Longitude")
+                    {
+                        dev.strLongitude = devNode.child_value();
+                    }
+                    else if (nodeName == "Latitude")
+                    {
+                        dev.strLatitude = devNode.child_value();
+                    }
                 }// for Item Node
                 LogDebug("</Item>");
 

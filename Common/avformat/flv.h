@@ -29,6 +29,8 @@ public:
 
     void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 
+    void SetNodelay(uint32_t nodelay){m_nNodelay = nodelay;};
+
 private:
     /**
      * 生成flv文件头信息并上抛
@@ -42,7 +44,7 @@ private:
      */
     bool MakeVideo(char *data,int size,int bIsKeyFrame);
 
-	/**/
+	/* 生成关键帧 */
 	bool MakeKeyVideo();
 
 private:
@@ -54,6 +56,7 @@ private:
 
     uint32_t           m_timestamp;       // 时间戳
     uint32_t           m_tick_gap;        // 两帧间的间隔
+    uint32_t           m_nNodelay;        // 是否立即发送
 
     void*             m_hUser;                  // 回调处理对象
     AV_CALLBACK       m_fCB;

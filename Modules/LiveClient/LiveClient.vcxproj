@@ -17,7 +17,11 @@
     <ClCompile Include="..\..\Common\avformat\mp4.cpp" />
     <ClCompile Include="..\..\Common\avformat\pes.cpp" />
     <ClCompile Include="..\..\Common\avformat\ps.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtcp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtp2.cpp" />
     <ClCompile Include="..\..\Common\avformat\rtp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\rtsp.cpp" />
+    <ClCompile Include="..\..\Common\avformat\sdp.cpp" />
     <ClCompile Include="..\..\Common\avformat\ts.cpp" />
     <ClCompile Include="LiveClient.cpp" />
     <ClCompile Include="LiveIpc.cpp" />
@@ -37,7 +41,11 @@
     <ClInclude Include="..\..\Common\avformat\mp4.h" />
     <ClInclude Include="..\..\Common\avformat\pes.h" />
     <ClInclude Include="..\..\Common\avformat\ps.h" />
+    <ClInclude Include="..\..\Common\avformat\rtcp.h" />
     <ClInclude Include="..\..\Common\avformat\rtp.h" />
+    <ClInclude Include="..\..\Common\avformat\rtp2.h" />
+    <ClInclude Include="..\..\Common\avformat\rtsp.h" />
+    <ClInclude Include="..\..\Common\avformat\sdp.h" />
     <ClInclude Include="..\..\Common\avformat\ts.h" />
     <ClInclude Include="LiveClient.h" />
     <ClInclude Include="LiveIpc.h" />
@@ -87,23 +95,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)Lib\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\Lib\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\out\Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)Lib\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\out\Lib\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\out\Temp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;USE_FFMPEG;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -118,11 +126,11 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;USE_FFMPEG;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/Util;$(SolutionDir)../common/uvIpc;$(SolutionDir)../common/utilc;$(SolutionDir)../common/avformat;$(SolutionDir)../Modules/LiveClient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>

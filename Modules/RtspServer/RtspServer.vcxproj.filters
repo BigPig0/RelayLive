@@ -9,28 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="rtsp_hik.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="rtsp_client.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="rtsp.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RtspWorker.h">
@@ -42,21 +26,15 @@
     <ClInclude Include="RtspServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="libRtsp.h">
+    <ClInclude Include="RtspSession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RtspSocket.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="rtsp_hik.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="rtsp_client.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="rtsp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RtspWorker.cpp">
@@ -68,7 +46,10 @@
     <ClCompile Include="RtspServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="libRtsp.cpp">
+    <ClCompile Include="RtspSession.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RtspSocket.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

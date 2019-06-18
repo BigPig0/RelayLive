@@ -12,5 +12,8 @@ namespace LiveIpc
     extern int GetDevList();
 
     extern int QueryDirtionary();
+
+	extern int DeviceControl(string strDev,
+        int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
 }
 }

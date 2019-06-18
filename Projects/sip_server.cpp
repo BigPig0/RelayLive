@@ -275,7 +275,14 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
 	} else if(!strcmp(msg,"QueryDirtionary")) {
         //≤È—Ø…Ë±∏
         SipInstance::QueryDirtionary();
-    } 
+    } else if(!strcmp(msg, "DeviceControl")) {
+		data[len] = 0;
+        string strDev = strfind(data, "dev=", "&");
+        string strIO = strfind(data, "io=", "&");
+        string strUD = strfind(data, "ud=", "&");
+        string strLR = strfind(data, "lr=", "&");
+		SipInstance::DeviceControl(strDev, stoi(strIO), stoi(strUD), stoi(strLR));
+	}
 }
 
 int main()

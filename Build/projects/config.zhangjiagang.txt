@@ -2,7 +2,7 @@
 ;开启的国标sip服务配置
 Code = 32058200001130000003
 ;本机平台编码
-IP = 192.168.10.115
+IP = 32.81.129.15
 ;服务IP
 Port = 5060
 ;服务端口
@@ -13,9 +13,9 @@ RegAuthor = false
 ;对接的国标下级平台配置
 Code = 32058200001130000001
 ;对方下级平台的编码
-IP = 192.168.10.232
+IP = 32.81.129.42
 ;对方下级平台的IP
-Port = 5800
+Port = 5060
 ;对方下级平台的端口
 SubscribeStatus = 1
 ;是否订阅设备状态
@@ -27,14 +27,14 @@ SubscribePosDev = 0
 [DataBase]
 ;连接数据库设备信息的配置
 Path = C:\instantclient_11_2_32
-Addr = 192.168.10.111/orcl
+Addr = 32.81.129.13/orcl
 User = basic
 PassWord = 123
 
 
 [RtpClient]
 ;国标接收rtp视频流的配置
-IP = 192.168.10.115
+IP = 32.81.129.15
 ;rtp服务IP
 BeginPort = 50000
 ;rtp起始端口
@@ -53,7 +53,7 @@ Port = 10080
 ;http端口
 wsPort = 18000
 ;websocket端口
-RootPath = E:\wlla\code\RelayLive\Build\projects\web
+RootPath = E:\wlla\web
 ;根目录
 TmpPath = C:\Tmp
 ;临时目录
@@ -65,6 +65,6 @@ DirVisible = yes
 [RtspServer]
 ;开启rtsp服务相关配置
 IP = 0.0.0.0
-Port = 554
+Port = 5540
 RtpPort = 51000
 RtpPortNum = 1000

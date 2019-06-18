@@ -15,3 +15,8 @@
 #include "uv.h"
 #include "common.h"
 #include "utilc.h"
+
+#include <string>
+#include <map>
+
+using namespace std;
