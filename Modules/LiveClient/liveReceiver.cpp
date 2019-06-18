@@ -366,9 +366,8 @@ void CLiveReceiver::push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts)
 
 void CLiveReceiver::push_h264_stream(AV_BUFF buff)
 {
-    //nal_unit_header4* nalu = (nal_unit_header4*)pBuff;
-    //Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", nLen,pBuff[0],pBuff[1],pBuff[2],pBuff[3],pBuff[4]);
     CHECK_POINT_VOID(buff.pData);
+	//Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
     CH264* pH264 = (CH264*)m_pH264;
     pH264->InputBuffer(buff.pData, buff.nLen);
     m_nalu_type = pH264->NaluType();

@@ -245,12 +245,18 @@ namespace HttpWsServer
                 setPssDevice.insert(pss);
                 csDevice.unlock();
 
-                lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
+				int hlen = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
+				if (hlen && hlen < 128) {
+					lws_hdr_copy(wsi, pss->path, sizeof buf, WSI_TOKEN_GET_URI);
+					buf[127] = '\0';
+				}
+
+                //lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 				pss->wsi = wsi;
                 Log::debug("new request: %s", pss->path);
 
                 pss->json = new string;
-				if(!strcmp(pss->path, "/clients")) {
+				if(!strcmp(pss->path, "/device/clients")) {
 					*pss->json = LiveClient::GetClientsInfo();
 
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
@@ -262,13 +268,13 @@ namespace HttpWsServer
 						return 1;
 
 					lws_callback_on_writable(wsi);
-				} else if(!strcmp(pss->path, "/devlist")) {
+				} else if(!strcmp(pss->path, "/device/devlist")) {
                     setPssDevlist.insert(pss);
                     if(!bDevListQuering){
                         bDevListQuering = true;
 					    LiveClient::GetDevList();
                     }
-				} else if(!strcmp(pss->path, "/refresh")) {
+				} else if(!strcmp(pss->path, "/device/refresh")) {
 					LiveClient::QueryDirtionary();
 
 					*pss->json = "QueryDirtionary send";
@@ -281,12 +287,29 @@ namespace HttpWsServer
 						return 1;
 
 					lws_callback_on_writable(wsi);
-				} else if(!strncmp(pss->path, "/control", 8)) {
-					char *szDev = (char*)calloc(1,20);
+				} else if(!strncmp(pss->path, "/device/control", 8)) {
+					// 设备ID
+					char szDev[30]={0};
+					sscanf(pss->path, "/device/control/%s", szDev);
+
+					// 参数
 					int ud=0, lr=0, io=0;
-					sscanf(pss->path, "/control/%[^_]_ud=%d_lr=%d_in=%d", szDev, &ud, &lr, &io);
+					char buf[20];
+					int n = 0;
+					while (lws_hdr_copy_fragment(wsi, buf, sizeof(buf), WSI_TOKEN_HTTP_URI_ARGS, n) > 0) {
+						char arg[10]={0};
+						int argv = 0;
+						sscanf(buf, "%[^=]=%d", arg, &argv);
+						if(!strcmp(arg, "ud")) {
+							ud = argv;
+						} else if(!strcmp(arg, "lr")) {
+							lr = argv;
+						} else if(!strcmp(arg, "io")) {
+							io = argv;
+						}
+						n++;
+					}
 					LiveClient::DeviceControl(szDev, io, ud, lr);
-					//free(szDev);
 
 					*pss->json = "ok";
 					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,

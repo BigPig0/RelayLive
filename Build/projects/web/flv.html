@@ -60,7 +60,7 @@
 
 
         function controlbtn(c) {
-            var url = "http://" + window.location.host + "/device/control/" + window.location.hash.substr(3) + "_" + c;
+            var url = "http://" + window.location.host + "/device/control/" + window.location.hash.substr(3) + "?" + c;
             var request = new XMLHttpRequest();
             request.open('Get', url);
             request.onreadystatechange = function () {
@@ -73,16 +73,16 @@
     </script>
 
     <div>
-        <button onmousedown="controlbtn('ud=1_lr=0_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">上</button>&nbsp;
-        <button onmousedown="controlbtn('ud=2_lr=0_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">下</button>&nbsp;
-        <button onmousedown="controlbtn('ud=0_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左</button>&nbsp;
-        <button onmousedown="controlbtn('ud=0_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右</button>&nbsp;
-        <button onmousedown="controlbtn('ud=1_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左上</button>&nbsp;
-        <button onmousedown="controlbtn('ud=1_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右上</button>&nbsp;
-        <button onmousedown="controlbtn('ud=2_lr=1_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">左下</button>&nbsp;
-        <button onmousedown="controlbtn('ud=2_lr=2_io=0')" onmouseup="controlbtn('ud=0_lr=0_io=0')">右下</button>&nbsp;
-        <button onmousedown="controlbtn('ud=0_lr=0_io=1')" onmouseup="controlbtn('ud=0_lr=0_io=0')">放大</button>&nbsp;
-        <button onmousedown="controlbtn('ud=0_lr=0_io=2')" onmouseup="controlbtn('ud=0_lr=0_io=0')">缩小</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=1')" onmouseup="controlbtn('ud=0&lr=0&io=0')">放大</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=2')" onmouseup="controlbtn('ud=0&lr=0&io=0')">缩小</button>&nbsp;
     </div>
 </body>
 
