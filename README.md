@@ -8,6 +8,13 @@
 * relay_live: http和直播服务器
 * ipc_server: 进程间通讯的工具，sip_server和relay_live通过改程序通讯。因此需要先启动ipc，再启动另外两个程序。
 
+## 编译方法
+* 平台: Windows vs2012
+* 用vs打开build/RelayLive.sln,按顺序编译ThirdParty、Common、Modules、Projects下的项目。
+* 在输出目录部署配置文件config.txt和脚本文件DeviceMgr.lua。(这两个文件在/Build/projects下有示例)
+* 从thirdParty拷贝ocilib和ffmpeg的dll到输出目录。
+* 部署数据库，数据库的操作在DeviceMgr.lua中。
+
 ## flv播放器对比:
 |  | flv.js | NodePlayer.js |
 | ------ | ------ | ------ |
@@ -24,5 +31,6 @@
 * libwebsockets: https://github.com/warmcat/libwebsockets.git
 * libuv: https://github.com/libuv/libuv.git
 * luapp: https://github.com/ToyAuthor/luapp.git
+* libcstl: https://github.com/activesys/libcstl.git
 * flv.js: https://github.com/Bilibili/flv.js.git
 * NodePlayer.js: https://github.com/illuspas/NodePlayer.js.git
