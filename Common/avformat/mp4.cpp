@@ -216,11 +216,14 @@ CMP4::CMP4(AV_CALLBACK cb, void* handle)
     : m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
+    , m_nNodelay(0)
     , m_nfps(25.0)
     , m_nHorizresolution(0x00480000)
     , m_mVertresolution(0x00480000)
     , m_bMakeHeader(false)
     , m_bFirstKey(false)
+    , m_bGotSPS(false)
+    , m_bGotPPS(false)
     , m_bRun(true)
     , m_nSeq(1)
     , m_hUser(handle)
@@ -236,13 +239,13 @@ CMP4::CMP4(AV_CALLBACK cb, void* handle)
 
 CMP4::~CMP4()
 {
+    m_bRun = false;
     SAFE_DELETE(m_pSPS);
     SAFE_DELETE(m_pPPS);
     SAFE_DELETE(m_pMdat);
     SAFE_DELETE(m_pSamplePos);
     SAFE_DELETE(m_pHeader);
     SAFE_DELETE(m_pFragment);
-    m_bRun = false;
 }
 
 int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
@@ -259,55 +262,37 @@ int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
         // 发送非关键帧
         if(!m_bFirstKey)
             break;
-        m_pMdat->append_be32(nLen);
-        m_pMdat->append_data(pBuf, nLen);
-        m_pSamplePos->append_be32(nLen+4);
-        m_nSampleNum++;
+        //如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
+        //sps或pps丢失，可以使用上一次的。
+        MakeKeyVideo(); 
+        //Log::debug("send frame");
+        MakeVideo(pBuf, nLen, false);
         break;
     case idr_Nal:
         //Log::debug("send scriptTag");
-        if(!m_bMakeHeader)
-        {
-            // 生成fmp4头
-            if(!MakeHeader())
-                break;
+        if(m_bGotPPS && m_bGotSPS)
+            MakeKeyVideo();
 
-            m_bMakeHeader = true;
-        }
-        if (m_nSampleNum > 0)
-        {
-            Log::debug("make MP4 fragment");
-            // 生成fmp4片段
-            MakeVideo();
-            m_nSampleNum = 0;
-            m_pSamplePos->clear();
-            m_pMdat->clear();
-        }
-        // sps和pps放在关键帧的前面
-        m_pMdat->append_be32(m_pSPS->size());
-        m_pMdat->append_data(m_pSPS->get(), m_pSPS->size());
-        m_pMdat->append_be32(m_pPPS->size());
-        m_pMdat->append_data(m_pPPS->get(), m_pPPS->size());
-        m_pMdat->append_be32(nLen);
-        m_pMdat->append_data(pBuf, nLen);
-        m_pSamplePos->append_be32(m_pSPS->size() + m_pPPS->size() + nLen + 12); //12是这3个长度区域
-        m_nSampleNum++;
-        m_bFirstKey = true;
+        
         break;
     case sei_Nal:
         break;
     case sps_Nal:
         {
             //Log::debug("save sps size:%d",nLen);
+            CHECK_POINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
+            m_bGotSPS = true;
         }
         break;
     case pps_Nal:
         {
             //Log::debug("save pps size:%d",nLen);
+            CHECK_POINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
+            m_bGotPPS = true;
         }
         break;
     case other:
@@ -546,8 +531,9 @@ bool CMP4::MakeHeader()
     return true;
 }
 
-bool CMP4::MakeVideo()
+bool CMP4::MakeVideo(bool bIsKeyFrame)
 {
+    Log::debug("make MP4 fragment");
     m_pFragment->clear();
     char* pPos = m_pFragment->get();
     uint32_t samples_size = 4*m_nSampleNum;
@@ -614,8 +600,74 @@ bool CMP4::MakeVideo()
     // mdat end
 
     if(m_fCB != nullptr){
-        AV_BUFF buff ={MP4_FRAG, m_pFragment->get(), m_pFragment->size()};
+        AV_BUFF buff ={bIsKeyFrame?MP4_FRAG_KEY:MP4_FRAG, m_pFragment->get(), m_pFragment->size()};
         m_fCB(buff, m_hUser);
     }
+
+    m_nSampleNum = 0;
+    m_pSamplePos->clear();
+    m_pMdat->clear();
     return true;
+}
+
+bool CMP4::MakeVideo(char *data, uint32_t size, bool bIsKeyFrame)
+{
+    CHECK_POINT(m_pMdat);
+
+    // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
+    if(m_nNodelay == 0 && bIsKeyFrame && m_pMdat->size() > 0) {
+        MakeVideo(true);
+    }
+
+    // 关键帧
+    if(bIsKeyFrame) {
+        // sps和pps放在关键帧的前面
+        m_pMdat->append_be32(m_pSPS->size());
+        m_pMdat->append_data(m_pSPS->get(), m_pSPS->size());
+        m_pMdat->append_be32(m_pPPS->size());
+        m_pMdat->append_data(m_pPPS->get(), m_pPPS->size());
+        m_pMdat->append_be32(size);
+        m_pMdat->append_data(data, size);
+        m_pSamplePos->append_be32(m_pSPS->size() + m_pPPS->size() + size + 12); //12是这3个长度区域
+        m_nSampleNum++;
+    } else {
+        m_pMdat->append_be32(size);
+        m_pMdat->append_data(data, size);
+        m_pSamplePos->append_be32(size+4);
+        m_nSampleNum++;
+    }
+
+    //立即发送模式，每收到一帧数据就立即上抛发送
+    if(m_nNodelay != 0 && m_pMdat->size() > 0) {
+        MakeVideo(bIsKeyFrame);
+    }
+
+    return true;
+}
+
+bool CMP4::MakeKeyVideo()
+{
+    if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
+        if(!m_bMakeHeader)
+        {    
+            if(!MakeHeader())
+                return false;
+
+            m_bMakeHeader = true;
+        }
+
+        // 发送关键帧
+        static uint64_t num = 0;
+        Log::debug("send key frame %lld", num++);
+        MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(), true);
+
+        m_pKeyFrame->clear();
+        m_bGotSPS = false;
+        m_bGotPPS = false;
+
+        m_bFirstKey = true;
+
+        return true;
+    }
+    return false;
 }

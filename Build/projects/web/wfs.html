@@ -1,34 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-	
-	<title>h.264 To fmp4</title>  
- 
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title>h264 demo</title>  
 </head>
 <body>
-    <h2>h.264 To fmp4</h2>
-
+    <div>
+        <video id="videoElement" muted controls autoplay="autoplay" width="800" height="600">Your browser is too old which doesn't support HTML5 video.</video>
+    </div>
  
-   <script type="text/javascript" src="wfs.js" ></script>  
-  
-   <div class="wfsjs">
-   <video id="video1"  width="640" height="480" controls></video> 
-   <div class="ratio"></div>
-   </div>
- 
+    <script type="text/javascript" src="wfs.js" ></script>  
     <script>
- 
 	window.onload = function () {
         if (Wfs.isSupported()) {
         	
-            var video1 = document.getElementById("video1"),
-            wfs = new Wfs();    
-            //wfs.attachMedia(video1, 'wslive', 'H264Raw', 'ws://localhost:8000/36030100061320000026.h264');
-            wfs.attachMedia(video1, 'wslive', 'FMp4', 'ws://localhost:8000/36030100061320000026.mp4');
+            var video1 = document.getElementById("videoElement"),
+            wfs = new Wfs();
+			var playaddr = "ws://" + window.location.hostname + ":8000/live/h264/" +window.location.hash.substr(1);
+            wfs.attachMedia(video1, 'wslive', 'H264Raw', playaddr);
         }
     };
  
+    function controlbtn(c) {
+            var url = "http://" + window.location.host + "/device/control/" + window.location.hash.substr(3) + "?" + c;
+            var request = new XMLHttpRequest();
+            request.open('Get', url);
+            request.onreadystatechange = function () {
+                if (request.readyState != 4) {
+                    return;
+                }
+            }
+            request.send(null);
+        }
     </script>
 	
+	<div>
+        <button onmousedown="controlbtn('ud=1&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=1')" onmouseup="controlbtn('ud=0&lr=0&io=0')">放大</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=2')" onmouseup="controlbtn('ud=0&lr=0&io=0')">缩小</button>&nbsp;
+    </div>
 </body>
 </html>

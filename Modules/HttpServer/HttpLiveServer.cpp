@@ -81,8 +81,11 @@ namespace HttpWsServer
         if(tag.pData == nullptr) return;
 
         if (!pss->m_bSendHead) {
+            if(tag.eType != AV_TYPE::MP4_FRAG_KEY) // 第一个包必须是关键帧
+                return;
             AV_BUFF mp4_header = pWorker->GetHeader();
-            if(mp4_header.pData == nullptr) return;
+            if(mp4_header.pData == nullptr)
+                return;
 
             Log::debug("first mp4 data with header: tail:%d",pss->tail);
             int len = mp4_header.nLen + tag.nLen;

@@ -43,6 +43,10 @@ static void AVCallback(AV_BUFF buff, void* pUser){
     case AV_TYPE::H264_NALU:
         pLive->push_h264_stream(buff);
         break;
+	case AV_TYPE::H264_IDR:
+	case AV_TYPE::H264_NDR:
+		pLive->H264Cb(buff);
+		break;
     case AV_TYPE::FLV_HEAD:
     case AV_TYPE::FLV_FRAG_KEY:
     case AV_TYPE::FLV_FRAG:
