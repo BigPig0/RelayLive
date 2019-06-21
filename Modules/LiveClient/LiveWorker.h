@@ -6,6 +6,7 @@
 namespace LiveClient
 {
     class CLiveReceiver;
+    class CLiveChannel;
 
     class CLiveWorker : public ILiveWorker
     {
@@ -27,46 +28,24 @@ namespace LiveClient
         /** 获取客户端信息 */
         string GetClientInfo();
 
-        /**
-        * 从源过来的视频数据，单线程输入 
-        * 以下方法由rtp接收所在的loop线程调用
-        * 类中其他方法包括构造、析构都由http所在的loop线程调用
-        */
-        void push_flv_stream (AV_BUFF buff);
-        void push_flv_stream_sub(AV_BUFF buff);
-        void push_h264_stream(AV_BUFF buff);
-        void push_ts_stream  (AV_BUFF buff);
-        void push_fmp4_stream(AV_BUFF buff);
-        void push_rtp_stream (AV_BUFF buff);
-        void push_rtcp_stream(AV_BUFF buff);
+        /** 接收到的视频流处理 */
+        void ReceiveStream(AV_BUFF buff);
+
+        /** 接收数据超时发起的结束操作，通知发送连接断开 */
         void stop();
 
-        bool m_bFlv;
-        bool m_bFlvSub;
-        bool m_bMp4;
-        bool m_bH264;
-        bool m_bTs;
         bool m_bRtp;
-		AV_BUFF               m_stFlvHead;    //flv头，内容存储在CFlv里面
-		AV_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
-        AV_BUFF               m_stFlvSubHead; //flv子码流头， 内容存储在CFlv里面
 
     private:
         string                   m_strCode;     // 播放媒体编号
         string                   m_strSDP;      // sip服务器返回的sdp
         CLiveReceiver*           m_pReceiver;   // 直播数据接收和解包装包
 
-        vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
-        CriticalSection          m_csFlv;
-        vector<ILiveHandle*>     m_vecLiveFlvSub; // 播放实例
-        CriticalSection          m_csFlvSub;
-        vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 
-        CriticalSection          m_csMp4;
-        vector<ILiveHandle*>     m_vecLiveH264; // 播放实例 
-        CriticalSection          m_csH264;
-        vector<ILiveHandle*>     m_vecLiveTs;   // 播放实例 
-        CriticalSection          m_csTs;
-        vector<ILiveHandleRtp*>  m_vecLiveRtp;  // 播放实例 
+        CLiveChannel*            m_pOrigin;     // 原始流通道
+        map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
+        CriticalSection          m_csChls;
+
+        vector<ILiveHandleRtp*>  m_vecLiveRtp;  // RTP原始流转发
         CriticalSection          m_csRtp;
 
         int                      m_nType;          //< 0:live直播；1:record历史视频

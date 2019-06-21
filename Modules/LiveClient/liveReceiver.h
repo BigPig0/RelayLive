@@ -59,23 +59,6 @@ public:
      */
     void push_h264_stream(AV_BUFF buff);
 
-    /** H264中sps解析回调 */
-    void set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps);
-
-    /** FLV合成回调 */
-    void FlvCb(AV_BUFF buff);
-
-    /** MP4合成回调 */
-    void Mp4Cb(AV_BUFF buff);
-
-    /** TS合成回调 */
-    void TsCb(AV_BUFF buff);
-
-    /** H264合成回调 */
-    void H264Cb(AV_BUFF buff);
-
-    /** FLV子码流回调 */
-    void FlvSubCb(AV_BUFF buff);
 
     /** 结束时关闭loop */
     void AsyncClose();
@@ -101,15 +84,10 @@ private:
     void*       m_pPsParser;        // PS帧解析类
     void*       m_pPesParser;       // PES包解析类
     void*       m_pEsParser;        // ES包解析类
-    void*       m_pH264;            // H264解析类
-    void*       m_pTs;              // TS组包类
-    void*       m_pFlv;             // FLV组包类
-    void*       m_pMp4;             // MP4组包类
-    void*       m_pReCode;          // 重编码
     CLiveWorker* m_pWorker;         // 回调对象
 
-    uint64_t    m_pts;              // 记录PES中的pts
-    uint64_t    m_dts;              // 记录PES中的dts
+    uint64_t    m_pts;              // 显示时间戳
+    uint64_t    m_dts;              // 解码时间戳
     NalType     m_nalu_type;        // h264片元类型
     ring_buff_t* m_pRingRtp;        // rtp包缓存区，loop线程写入，解析线程读取
 };

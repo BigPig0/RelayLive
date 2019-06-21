@@ -48,9 +48,15 @@ public:
     void SetNodelay(uint32_t nodelay){m_nNodelay = nodelay;};
 
 private:
+    /**
+     * 生成mp4文件头信息并上抛
+     */
     bool MakeHeader();
 
-    bool MakeVideo(bool bIsKeyFrame);
+    /**
+     * 生成mp4片段
+     */
+    bool MakeMP4Frag(bool bIsKeyFrame);
 
     /**
      * 生成一个视频断并上抛

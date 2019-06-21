@@ -63,6 +63,9 @@
     <ClCompile Include="..\..\Common\avformat\sdp.cpp">
       <Filter>avformat</Filter>
     </ClCompile>
+    <ClCompile Include="LiveChannel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\avformat\es.h">
@@ -121,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Common\avformat\rtp2.h">
       <Filter>avformat</Filter>
+    </ClInclude>
+    <ClInclude Include="LiveChannel.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

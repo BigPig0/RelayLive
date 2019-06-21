@@ -70,7 +70,7 @@ struct mp4_hdlr_box {
     MP4_FULLBOX_HEADER;
     uchar pre_defined[4];
     uchar handler_type[4];
-    uchar reserved[24];
+    uchar reserved[12];
     uchar name[13];
 };
 
@@ -229,12 +229,13 @@ CMP4::CMP4(AV_CALLBACK cb, void* handle)
     , m_hUser(handle)
     , m_fCB(cb)
 {
-    m_pSPS = new CNetStreamMaker();
-    m_pPPS = new CNetStreamMaker();
-    m_pMdat = new CNetStreamMaker();
+    m_pSPS       = new CNetStreamMaker();
+    m_pPPS       = new CNetStreamMaker();
+	m_pKeyFrame  = new CNetStreamMaker();
+    m_pMdat      = new CNetStreamMaker();
     m_pSamplePos = new CNetStreamMaker();
-    m_pHeader = new CNetStreamMaker();
-    m_pFragment = new CNetStreamMaker();
+    m_pHeader    = new CNetStreamMaker();
+    m_pFragment  = new CNetStreamMaker();
 }
 
 CMP4::~CMP4()
@@ -242,6 +243,7 @@ CMP4::~CMP4()
     m_bRun = false;
     SAFE_DELETE(m_pSPS);
     SAFE_DELETE(m_pPPS);
+	SAFE_DELETE(m_pKeyFrame);
     SAFE_DELETE(m_pMdat);
     SAFE_DELETE(m_pSamplePos);
     SAFE_DELETE(m_pHeader);
@@ -259,21 +261,24 @@ int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
     switch (eType)
     {
     case b_Nal:
-        // 发送非关键帧
-        if(!m_bFirstKey)
-            break;
-        //如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
-        //sps或pps丢失，可以使用上一次的。
-        MakeKeyVideo(); 
-        //Log::debug("send frame");
-        MakeVideo(pBuf, nLen, false);
+		{
+			// 发送非关键帧
+			if(!m_bFirstKey)
+				break;
+			//如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
+			//sps或pps丢失，可以使用上一次的。
+			MakeKeyVideo(); 
+			//Log::debug("send frame");
+			MakeVideo(pBuf, nLen, false);
+		}
         break;
-    case idr_Nal:
-        //Log::debug("send scriptTag");
-        if(m_bGotPPS && m_bGotSPS)
-            MakeKeyVideo();
-
-        
+    case idr_Nal: // 关键帧
+		{
+			m_pKeyFrame->clear();
+				m_pKeyFrame->append_data(pBuf, nLen);
+			if(m_bGotPPS && m_bGotSPS)
+				MakeKeyVideo();
+		}
         break;
     case sei_Nal:
         break;
@@ -309,7 +314,7 @@ void CMP4::SetSps(uint32_t nWidth, uint32_t nHeight, double fFps)
     m_nWidth = nWidth;
     m_nHeight = nHeight;
     m_nfps = fFps;
-    m_tick_gap = 1000/(m_nfps>0?m_nfps:25);
+    m_tick_gap = 90000/(m_nfps>0?m_nfps:25);
     Log::debug("width = %d,height = %d, fps= %lf, tickgap= %d",m_nWidth,m_nHeight,m_nfps,m_tick_gap);
 }
 
@@ -367,8 +372,10 @@ bool CMP4::MakeHeader()
     m_pHeader->append_be32(0x10000);                    //tkhd->matrix5
     m_pHeader->append_bytes(0, 12);                     //tkhd->matrix6、7、8
     m_pHeader->append_be32(0x40000000);                 //tkhd->matrix9
-    m_pHeader->append_be32(m_nWidth);                   //tkhd->width
-    m_pHeader->append_be32(m_nHeight);                  //tkhd->height
+    m_pHeader->append_be16(m_nWidth);                   //tkhd->width
+	m_pHeader->append_be16(0);
+    m_pHeader->append_be16(m_nHeight);                  //tkhd->height
+	m_pHeader->append_be16(0);
     // moov=>trak=>tkhd end
 
     // moov=>trak=>mdia
@@ -393,7 +400,7 @@ bool CMP4::MakeHeader()
     m_pHeader->append_string("hdlr\0");                 //hdlr->type
     m_pHeader->append_bytes(0, 8);                      //hdlr->version hdlr->flags tkhd->pre_defined
     m_pHeader->append_string("vide\0");                 //hdlr->handler_type
-    m_pHeader->append_bytes(0, 24);                     //hdlr->reserved
+    m_pHeader->append_bytes(0, 12);                     //hdlr->reserved
     m_pHeader->append_string("videoHandler\0");         //hdlr->name
     m_pHeader->append_byte(0);                          //hdlr->name
     // moov=>trak=>mdia=>hdlr end
@@ -480,10 +487,11 @@ bool CMP4::MakeHeader()
 
     // moov=>trak=>mdia=>minf=>stbl=>stsz
     mp4_stbl_box_inner *stsz = (mp4_stbl_box_inner*)((char*)pPos + m_pHeader->size());
-    m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)); //stsz->size
+    m_pHeader->append_be32(sizeof(mp4_stbl_box_inner)+4); //stsz->size
     m_pHeader->append_string("stsz\0");                 //stsz->type
     m_pHeader->append_be32(0);                          //stsd->version  stsd->flags
-    m_pHeader->append_be32(0);                          //stsz->entry_count
+    m_pHeader->append_be32(0);                          //stsz->sample_size
+	m_pHeader->append_be32(0);                          //stsz->sample_count
     // moov=>trak=>mdia=>minf=>stbl=>stsz end
 
     // moov=>trak=>mdia=>minf=>stbl=>stco
@@ -531,7 +539,7 @@ bool CMP4::MakeHeader()
     return true;
 }
 
-bool CMP4::MakeVideo(bool bIsKeyFrame)
+bool CMP4::MakeMP4Frag(bool bIsKeyFrame)
 {
     Log::debug("make MP4 fragment");
     m_pFragment->clear();
@@ -616,7 +624,7 @@ bool CMP4::MakeVideo(char *data, uint32_t size, bool bIsKeyFrame)
 
     // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
     if(m_nNodelay == 0 && bIsKeyFrame && m_pMdat->size() > 0) {
-        MakeVideo(true);
+        MakeMP4Frag(true);
     }
 
     // 关键帧
@@ -639,7 +647,7 @@ bool CMP4::MakeVideo(char *data, uint32_t size, bool bIsKeyFrame)
 
     //立即发送模式，每收到一帧数据就立即上抛发送
     if(m_nNodelay != 0 && m_pMdat->size() > 0) {
-        MakeVideo(bIsKeyFrame);
+        MakeMP4Frag(bIsKeyFrame);
     }
 
     return true;

@@ -34,8 +34,6 @@ public:
 private:
     /**
      * 生成flv文件头信息并上抛
-     * @param ppBuff 输出flv头缓存
-     * @param pLen 输出flv头长度
      */
     bool MakeHeader();
 

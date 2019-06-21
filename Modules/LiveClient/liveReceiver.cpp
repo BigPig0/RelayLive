@@ -15,12 +15,6 @@
 namespace LiveClient
 {
 extern int  g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-extern int  g_nNodelay;
-
-static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
-    CLiveReceiver* pLive = (CLiveReceiver*)pUser;
-    pLive->set_h264_param(nWidth, nHeight, fFps);
-}
 
 static void PESCallBack(AV_BUFF buff, void* pUser, uint64_t  pts, uint64_t  dts) {
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
@@ -43,31 +37,9 @@ static void AVCallback(AV_BUFF buff, void* pUser){
     case AV_TYPE::H264_NALU:
         pLive->push_h264_stream(buff);
         break;
-	case AV_TYPE::H264_IDR:
-	case AV_TYPE::H264_NDR:
-		pLive->H264Cb(buff);
-		break;
-    case AV_TYPE::FLV_HEAD:
-    case AV_TYPE::FLV_FRAG_KEY:
-    case AV_TYPE::FLV_FRAG:
-        pLive->FlvCb(buff);
-        break;
-    case AV_TYPE::MP4_HEAD:
-    case AV_TYPE::MP4_FRAG_KEY:
-    case AV_TYPE::MP4_FRAG:
-        pLive->Mp4Cb(buff);
-        break;
-    case AV_TYPE::TS:
-        pLive->TsCb(buff);
-        break;
     default:
         break;
     }
-}
-
-static void RecodeCallback(AV_BUFF buff, void* pUser) {
-    CLiveReceiver* pLive = (CLiveReceiver*)pUser;
-    pLive->FlvSubCb(buff);
 }
 
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -149,12 +121,7 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
     , m_pEsParser(nullptr)
-    , m_pTs(nullptr)
-    , m_pFlv(nullptr)
-    , m_pReCode(nullptr)
     , m_pWorker(worker)
-    , m_pts(0)
-    , m_dts(0)
     , m_nalu_type(unknow)
 {
     CRtp* rtp        = new CRtp(AVCallback, this);
@@ -163,17 +130,6 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     m_pPsParser      = new CPs(AVCallback, this);
     m_pPesParser     = new CPes(PESCallBack, this);
     m_pEsParser      = new CES(AVCallback, this);
-    m_pH264          = new CH264(H264SpsCbfun, AVCallback, this);
-    m_pTs            = new CTS(AVCallback, this);
-    CFlv* pFlv       = new CFlv(AVCallback, this);
-    pFlv->SetNodelay(g_nNodelay);
-    m_pFlv           = pFlv;
-    m_pMp4           = new CMP4(AVCallback, this);
-#ifdef USE_FFMPEG
-    CRecoder *recode = new CRecoder(this);
-    recode->SetChannel1(640, 480, RecodeCallback);
-    m_pReCode        = recode;
-#endif
 
     m_pRingRtp       = create_ring_buff(sizeof(AV_BUFF), 1000, NULL);
 }
@@ -189,11 +145,7 @@ CLiveReceiver::~CLiveReceiver(void)
     SAFE_DELETE(m_pPsParser);
     SAFE_DELETE(m_pPesParser);
     SAFE_DELETE(m_pEsParser);
-    SAFE_DELETE(m_pH264);
-    SAFE_DELETE(m_pTs);
-    SAFE_DELETE(m_pFlv);
-    SAFE_DELETE(m_pMp4);
-    SAFE_DELETE(m_pReCode);
+
     destroy_ring_buff(m_pRingRtp);
     //Sleep(2000);
 }
@@ -269,7 +221,7 @@ bool CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
     int port = ntohs(addr_in->sin_port);
     string ip = ipv4addr;
     if(m_nRemoteRTPPort != port || m_strRemoteIP != ip) {
-        Log::error("this is not my rtp data");
+        //Log::error("this is not my rtp data");
         return false;
     }
 
@@ -325,8 +277,8 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
     //Log::debug("RTPParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(buff.pData);
 	if(m_pWorker->m_bRtp){
-		m_pWorker->push_rtp_stream(buff);
-	} else if(m_pWorker->m_bFlv || m_pWorker->m_bFlvSub || m_pWorker->m_bMp4 || m_pWorker->m_bTs) {
+		m_pWorker->ReceiveStream(buff);
+	} else {
 		if(g_stream_type == STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)
@@ -347,12 +299,12 @@ void CLiveReceiver::push_pes_stream(AV_BUFF buff)
 		pPesParser->Decode(buff);
 	}
     //需要回调TS
-    if(m_pWorker->m_bTs && nullptr != m_pTs)
-    {
-        CTS* ts = (CTS*)m_pTs;
-        ts->SetParam((uint8_t)m_nalu_type, m_pts);
-        ts->Code(buff.pData, buff.nLen);
-    }
+    //if(m_pWorker->m_bTs && nullptr != m_pTs)
+    //{
+    //    CTS* ts = (CTS*)m_pTs;
+    //    ts->SetParam((uint8_t)m_nalu_type, m_pts);
+    //    ts->Code(buff.pData, buff.nLen);
+    //}
 }
 
 void CLiveReceiver::push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts)
@@ -372,87 +324,36 @@ void CLiveReceiver::push_h264_stream(AV_BUFF buff)
 {
     CHECK_POINT_VOID(buff.pData);
 	//Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
-    CH264* pH264 = (CH264*)m_pH264;
-    pH264->InputBuffer(buff.pData, buff.nLen);
-    m_nalu_type = pH264->NaluType();
-    uint32_t nDataLen = 0;
-    char* pData = pH264->DataBuff(nDataLen);
+    //CH264* pH264 = (CH264*)m_pH264;
+    //pH264->InputBuffer(buff.pData, buff.nLen);
+    //m_nalu_type = pH264->NaluType();
+    //uint32_t nDataLen = 0;
+    //char* pData = pH264->DataBuff(nDataLen);
 
     CHECK_POINT_VOID(m_pWorker);
+    m_pWorker->ReceiveStream(buff);
 
-    //需要回调Flv
-    if(m_pWorker->m_bFlv && nullptr != m_pFlv)
-    {
-        CFlv* flv = (CFlv*)m_pFlv;
-        flv->Code(m_nalu_type, pData, nDataLen);
-    }
-
-    //需要回调mp4
-    if (m_pWorker->m_bMp4 && nullptr != m_pMp4)
-    {
-        CMP4* mp4 = (CMP4*)m_pMp4;
-        mp4->Code(m_nalu_type, pData, nDataLen);
-    }
-
-    //需要转子码流
-#ifdef USE_FFMPEG
-    if(nullptr != m_pReCode) {
-        CRecoder* recode = (CRecoder*)m_pReCode;
-        recode->Recode(buff, m_nalu_type);
-    }
-#endif
-}
-
-void CLiveReceiver::set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps)
-{
-	Log::debug("H264SpsCb width:%d, height:%d, fps:%lf", nWidth, nHeight, fFps);
-    if(nullptr != m_pFlv)
-    {
-        CFlv* flv = (CFlv*)m_pFlv;
-        flv->SetSps(nWidth,nHeight,fFps);
-    }
-    if (nullptr != m_pMp4)
-    {
-        CMP4* mp4 = (CMP4*)m_pMp4;
-        mp4->SetSps(nWidth,nHeight,fFps);
-    }
-}
-
-void CLiveReceiver::FlvCb(AV_BUFF buff)
-{
-	//Log::debug("Flvcb type:%d, buffsize:%d", eType, nBuffSize);
-    CHECK_POINT_VOID(m_pWorker);
-    if(m_pWorker->m_bFlv)
-        m_pWorker->push_flv_stream(buff);
-}
-
-void CLiveReceiver::Mp4Cb(AV_BUFF buff)
-{
-    CHECK_POINT_VOID(m_pWorker);
-    if(m_pWorker->m_bMp4)
-        m_pWorker->push_fmp4_stream(buff);
-}
-
-void CLiveReceiver::TsCb(AV_BUFF buff)
-{
-    CHECK_POINT_VOID(m_pWorker);
-    if(m_pWorker->m_bTs)
-        m_pWorker->push_ts_stream(buff);
-}
-
-void CLiveReceiver::H264Cb(AV_BUFF buff)
-{
-	//Log::debug("H264Cb buffsize:%d", nBuffSize);
-    CHECK_POINT_VOID(m_pWorker);
-	if (m_pWorker->m_bH264)
-		m_pWorker->push_h264_stream(buff);
-}
-
-void CLiveReceiver::FlvSubCb(AV_BUFF buff)
-{
-    CHECK_POINT_VOID(m_pWorker);
-    if(m_pWorker->m_bFlvSub)
-        m_pWorker->push_flv_stream_sub(buff);
+//    //需要回调Flv
+//    if(m_pWorker->m_bFlv && nullptr != m_pFlv)
+//    {
+//        CFlv* flv = (CFlv*)m_pFlv;
+//        flv->Code(m_nalu_type, pData, nDataLen);
+//    }
+//
+//    //需要回调mp4
+//    if (m_pWorker->m_bMp4 && nullptr != m_pMp4)
+//    {
+//        CMP4* mp4 = (CMP4*)m_pMp4;
+//        mp4->Code(m_nalu_type, pData, nDataLen);
+//    }
+//
+//    //需要转子码流
+//#ifdef USE_FFMPEG
+//    if(nullptr != m_pReCode) {
+//        CRecoder* recode = (CRecoder*)m_pReCode;
+//        recode->Recode(buff, m_nalu_type);
+//    }
+//#endif
 }
 
 void CLiveReceiver::AsyncClose()

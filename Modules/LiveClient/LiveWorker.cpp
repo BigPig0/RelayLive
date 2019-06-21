@@ -3,6 +3,7 @@
 #include "LiveWorker.h"
 #include "LiveClient.h"
 #include "liveReceiver.h"
+#include "LiveChannel.h"
 #include "LiveIpc.h"
 
 namespace LiveClient
@@ -156,15 +157,7 @@ namespace LiveClient
         , m_pReceiver(nullptr)
         , m_bStop(false)
         , m_bOver(false)
-        , m_bFlv(false)
-        , m_bMp4(false)
-        , m_bH264(false)
-        , m_bTs(false)
-        , m_bRtp(false)
     {
-		memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
-		memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
-
         //从sdp解析出视频源ip和端口
         size_t t1,t2;
         t1 = sdp.find("c=IN IP4 ");
@@ -176,6 +169,8 @@ namespace LiveClient
         t2 = sdp.find(" ", t1);
         string rport = sdp.substr(t1, t2-t1);
         int nport = stoi(rport);
+
+        m_pOrigin = new CLiveChannel();
 
         //启动监听
         m_pReceiver = new CLiveReceiver(rtpPort, this);
@@ -192,38 +187,31 @@ namespace LiveClient
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pReceiver);
+        SAFE_DELETE(m_pOrigin);
+        MutexLock lock(&m_csChls);
+        for(auto it:m_mapChlEx){
+            SAFE_DELETE(it.second);
+        }
+        m_mapChlEx.clear();
         GiveBackRtpPort(m_nPort);
         Log::debug("CLiveWorker release");
     }
 
     bool CLiveWorker::AddHandle(ILiveHandle* h, HandleType t, int c)
     {
-        if(t == HandleType::flv_handle) {
-            if(c == 0) {
-                m_bFlv = true;
-                MutexLock lock(&m_csFlv);
-                m_vecLiveFlv.push_back(h);
+        if(c == 0) {
+            m_pOrigin->AddHandle(h, t);
+        } else {
+            MutexLock lock(&m_csChls);
+            auto fit = m_mapChlEx.find(c);
+            if(fit != m_mapChlEx.end()) {
+                fit->second->AddHandle(h, t);
             } else {
-                m_bFlvSub = true;
-                MutexLock lock(&m_csFlvSub);
-                m_vecLiveFlvSub.push_back(h);
+                CLiveChannel *nc = new CLiveChannel(c);
+                nc->SetParam(640, 480);
+                nc->AddHandle(h, t);
+                m_mapChlEx.insert(make_pair(c, nc));
             }
-        } else if(t == HandleType::fmp4_handle) {
-            m_bMp4 = true;
-            MutexLock lock(&m_csMp4);
-            m_vecLiveMp4.push_back(h);
-        } else if(t == HandleType::h264_handle) {
-            m_bH264 = true;
-            MutexLock lock(&m_csH264);
-            m_vecLiveH264.push_back(h);
-        } else if(t == HandleType::ts_handle) {
-            m_bTs = true;
-            MutexLock lock(&m_csTs);
-            m_vecLiveTs.push_back(h);
-        } else if(t == HandleType::rtp_handle) {
-            m_bRtp = true;
-            MutexLock lock(&m_csRtp);
-            m_vecLiveRtp.push_back((ILiveHandleRtp*)h);
         }
 
         //如果刚刚开启了结束定时器，需要将其关闭
@@ -236,96 +224,22 @@ namespace LiveClient
 
     bool CLiveWorker::RemoveHandle(ILiveHandle* h)
     {
-        bool bFind = false;
-        do {
-            //移除的是否是flv
-            for(auto it = m_vecLiveFlv.begin(); it != m_vecLiveFlv.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveFlv.erase(it);
-                    bFind = true;
-                    break;
-                }
-            }
-            if(bFind) {
-                if(m_vecLiveFlv.empty())
-                    m_bFlv = false;
-                break;
-            }
+        bool bOriginEmpty = m_pOrigin->RemoveHandle(h);
+        bool bExEmpty = true;
 
-            //移除的是否是flv子码流
-            for(auto it = m_vecLiveFlvSub.begin(); it != m_vecLiveFlvSub.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveFlvSub.erase(it);
-                    bFind = true;
-                    break;
-                }
+        MutexLock lock(&m_csChls);
+        for(auto it = m_mapChlEx.begin(); it != m_mapChlEx.end();) {
+            bool bEmpty = it->second->RemoveHandle(h);
+            if(bExEmpty) {
+                delete it->second;
+                it = m_mapChlEx.erase(it);
+            } else {
+                it++;
+                bExEmpty = false;
             }
-            if(bFind) {
-                if(m_vecLiveFlvSub.empty())
-                    m_bFlvSub = false;
-                break;
-            }
+        }
 
-            //移除的是否是Mp4
-            for(auto it = m_vecLiveMp4.begin(); it != m_vecLiveMp4.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveMp4.erase(it);
-                    bFind = true;
-                    break;
-                }
-            }
-            if(bFind) {
-                if(m_vecLiveMp4.empty())
-                    m_bMp4 = false;
-                break;
-            }
-
-            //移除的是否是h264
-            for(auto it = m_vecLiveH264.begin(); it != m_vecLiveH264.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveH264.erase(it);
-                    bFind = true;
-                    break;
-                }
-            }
-            if(bFind) {
-                if(m_vecLiveH264.empty())
-                    m_bH264 = false;
-                break;
-            }
-
-            //移除的是否是HLS
-            for(auto it = m_vecLiveTs.begin(); it != m_vecLiveTs.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveTs.erase(it);
-                    bFind = true;
-                    break;
-                }
-            }
-            if(bFind) {
-                if(m_vecLiveTs.empty())
-                    m_bTs = false;
-                break;
-            }
-
-            //移除的是否是RTSP
-            for(auto it = m_vecLiveRtp.begin(); it != m_vecLiveRtp.end(); it++) {
-                if(*it == h) {
-                    m_vecLiveRtp.erase(it);
-                    bFind = true;
-                    break;
-                }
-            }
-            if(bFind) {
-                if(m_vecLiveRtp.empty())
-                    m_bRtp = false;
-                break;
-            }
-        }while(0);
-
-        if(m_vecLiveFlv.empty() && m_vecLiveFlvSub.empty()
-            && m_vecLiveMp4.empty() && m_vecLiveH264.empty()
-            && m_vecLiveTs.empty() && m_vecLiveRtp.empty()) {
+        if(bExEmpty && bOriginEmpty) {
             if(m_bOver) {
                 // 视频源没有数据，超时，不需要延时
                 Clear2Stop();
@@ -340,14 +254,14 @@ namespace LiveClient
     }
 
 	AV_BUFF CLiveWorker::GetHeader(HandleType t, int c) {
-		if(t == HandleType::flv_handle) {
-            if(c == 0)
-			    return m_stFlvHead;
-            else 
-                return m_stFlvSubHead;
+        if(c == 0) {
+            return m_pOrigin->GetHeader(t);
+        } else {
+            MutexLock lock(&m_csChls);
+            auto fit = m_mapChlEx.find(c);
+            if(fit != m_mapChlEx.end())
+                return fit->second->GetHeader(t);
         }
-		else if(t == HandleType::fmp4_handle)
-			return m_stMp4Head;
 
 		AV_BUFF ret = {AV_TYPE::NONE, NULL, 0};
 		return ret;
@@ -358,95 +272,18 @@ namespace LiveClient
     }
 
 	void CLiveWorker::Clear2Stop() {
-        if(m_vecLiveFlv.empty() && m_vecLiveMp4.empty() && m_vecLiveH264.empty()
-            && m_vecLiveTs.empty() && m_vecLiveRtp.empty()) {
+        bool bOriginEmpty = m_pOrigin->Empty();
+
+        MutexLock lock(&m_csChls);
+        bool bExEmpty = m_mapChlEx.empty();
+
+
+        if(bOriginEmpty && bExEmpty) {
 			Log::debug("need close live stream");
             //首先从map中移走对象
             DelLiveWorker(m_strCode);
 		}
 	}
-
-    void CLiveWorker::push_flv_stream(AV_BUFF buff)
-    {
-		if (buff.eType == FLV_HEAD) {
-            m_stFlvHead.pData = buff.pData;
-            m_stFlvHead.nLen = buff.nLen;
-            Log::debug("flv head ok");
-        } else {
-			MutexLock lock(&m_csFlv);
-			for (auto h : m_vecLiveFlv)
-			{
-				//Log::debug("flv frag ok");
-				h->push_video_stream(buff);
-			}   
-		}
-    }
-
-    void CLiveWorker::push_flv_stream_sub(AV_BUFF buff)
-    {
-        if (buff.eType == FLV_HEAD) {
-            m_stFlvSubHead.pData = buff.pData;
-            m_stFlvSubHead.nLen = buff.nLen;
-            Log::debug("flv head ok");
-        } else {
-            MutexLock lock(&m_csFlvSub);
-            for (auto h : m_vecLiveFlvSub) {
-                //Log::debug("flv frag ok");
-                h->push_video_stream(buff);
-            }   
-        }
-    }
-
-    void CLiveWorker::push_h264_stream(AV_BUFF buff)
-    {
-        MutexLock lock(&m_csH264);
-        for (auto h : m_vecLiveH264)
-        {
-            h->push_video_stream(buff);
-        } 
-    }
-
-    void CLiveWorker::push_ts_stream(AV_BUFF buff)
-    {
-        MutexLock lock(&m_csTs);
-        for (auto h : m_vecLiveTs)
-        {
-            h->push_video_stream(buff);
-        } 
-    }
-
-    void CLiveWorker::push_fmp4_stream(AV_BUFF buff)
-    {
-		if(buff.eType == MP4_HEAD) {
-            m_stMp4Head.pData = buff.pData;
-            m_stMp4Head.nLen = buff.nLen;
-            Log::debug("MP4 Head ok");
-        } else {
-			MutexLock lock(&m_csMp4);
-			for (auto h : m_vecLiveMp4)
-			{
-				h->push_video_stream(buff);
-			}
-		}
-    }
-
-    void CLiveWorker::push_rtp_stream(AV_BUFF buff)
-    {
-        MutexLock lock(&m_csRtp);
-        for (auto h : m_vecLiveRtp)
-        {
-            h->push_video_stream(buff);
-        } 
-    }
-
-    void CLiveWorker::push_rtcp_stream(AV_BUFF buff)
-    {
-        MutexLock lock(&m_csRtp);
-        for (auto h : m_vecLiveRtp)
-        {
-            h->push_rtcp_stream(buff.pData, buff.nLen);
-        } 
-    }
 
     void CLiveWorker::stop()
     {
@@ -455,61 +292,22 @@ namespace LiveClient
         //状态改变为超时，此时前端全部断开，不需要延时，直接销毁
         m_bOver = true;
 
-        for (auto worker : m_vecLiveFlv) {
-            worker->stop();
-        }
-        for (auto worker : m_vecLiveMp4) {
-            worker->stop();
-        }
-        for (auto worker : m_vecLiveH264) {
-            worker->stop();
-        }
-        for (auto worker : m_vecLiveTs) {
-            worker->stop();
-        }
-        for (auto worker : m_vecLiveRtp) {
-            worker->stop();
+        m_pOrigin->stop();
+        MutexLock lock(&m_csChls);
+        for(auto it:m_mapChlEx){
+            it.second->stop();
         }
     }
 
     string CLiveWorker::GetClientInfo()
     {
-		string strResJson;
-		{
-			MutexLock lock(&m_csFlv);
-			for(auto h : m_vecLiveFlv){
-                strResJson += h->get_clients_info();
-				strResJson += ",";
-            }
-		}
-		{
-			MutexLock lock(&m_csMp4);
-			for(auto h : m_vecLiveMp4){
-                strResJson += h->get_clients_info();
-				strResJson += ",";
-            }
-		}
-		{
-			MutexLock lock(&m_csH264);
-			for(auto h : m_vecLiveH264){
-                strResJson += h->get_clients_info();
-				strResJson += ",";
-            }
-		}
-		{
-			MutexLock lock(&m_csTs);
-			for(auto h : m_vecLiveTs){
-                strResJson += h->get_clients_info();
-				strResJson += ",";
-            }
-		}
-		{
-			MutexLock lock(&m_csRtp);
-			for(auto h : m_vecLiveRtp){
-                strResJson += h->get_clients_info();
-				strResJson += ",";
-            }
-		}
+		string strResJson = m_pOrigin->GetClientInfo();
+        strResJson += ",";
+        MutexLock lock(&m_csChls);
+        for(auto chl : m_mapChlEx){
+            strResJson += chl.second->GetClientInfo();
+            strResJson += ",";
+        }
 		return strResJson;
     }
 
