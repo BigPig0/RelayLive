@@ -26,18 +26,35 @@ namespace LiveClient
     class CLiveChannel
     {
     public:
-        CLiveChannel(int channel = 0);
+        /** 原始通道构造 */
+        CLiveChannel();
+        /** 缩放通道构造 */
+        CLiveChannel(int channel, uint32_t w, uint32_t h);
         ~CLiveChannel();
 
-        void SetParam(uint32_t w, uint32_t h){
-            m_nWidth = w;
-            m_nHeight = h;
-        }
-
+        /**
+         * 向通道添加播放客户端
+         * @param h 客户端实例
+         * @param t 播放类型
+         */
         bool AddHandle(ILiveHandle* h, HandleType t);
+
+        /**
+         * 移除一个播放客户端
+         * @param h 客户端实例
+         * return true:所有客户端都被移除 false:依然存在客户端
+         */
         bool RemoveHandle(ILiveHandle* h);
+
+        /** 通道中是否存在播放客户端 */
         bool Empty();
 
+        /**
+         * 接收源数据，原始通道接收压缩好的码流，其他通道接收解码后的yuv数据
+         */
+        void ReceiveStream(AV_BUFF buff);
+
+        /** 获取文件头 */
         AV_BUFF GetHeader(HandleType t);
 
         /** 获取客户端信息 */
@@ -50,12 +67,12 @@ namespace LiveClient
         * 以下方法由rtp接收所在的loop线程调用
         * 类中其他方法包括构造、析构都由http所在的loop线程调用
         */
-        void push_flv_stream (AV_BUFF buff);
-        void push_h264_stream(AV_BUFF buff);
-        void push_ts_stream  (AV_BUFF buff);
-        void push_fmp4_stream(AV_BUFF buff);
-        void push_rtp_stream (AV_BUFF buff);
-        void push_rtcp_stream(AV_BUFF buff);
+        void FlvCb (AV_BUFF buff);
+        void H264Cb(AV_BUFF buff);
+        void TsCb  (AV_BUFF buff);
+        void Mp4Cb (AV_BUFF buff);
+        void RtpCb (AV_BUFF buff);
+        void RtcpCb(AV_BUFF buff);
         void stop();
 
         bool m_bFlv;
@@ -67,6 +84,9 @@ namespace LiveClient
         AV_BUFF               m_stMp4Head;    //mp4头，内容存储在CMP4里面
 
     private:
+        void Init();
+        void push_h264_stream(AV_BUFF buff);
+
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
         CriticalSection          m_csFlv;
         vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 

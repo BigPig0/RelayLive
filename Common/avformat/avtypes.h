@@ -13,6 +13,7 @@ typedef enum _AV_TYPE_
     H264_NALU,
 	H264_IDR,
 	H264_NDR,
+    YUV,
     FLV_HEAD,
     FLV_FRAG_KEY,
     FLV_FRAG,

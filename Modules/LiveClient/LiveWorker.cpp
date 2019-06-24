@@ -207,8 +207,7 @@ namespace LiveClient
             if(fit != m_mapChlEx.end()) {
                 fit->second->AddHandle(h, t);
             } else {
-                CLiveChannel *nc = new CLiveChannel(c);
-                nc->SetParam(640, 480);
+                CLiveChannel *nc = new CLiveChannel(c, 640, 480);
                 nc->AddHandle(h, t);
                 m_mapChlEx.insert(make_pair(c, nc));
             }
@@ -309,6 +308,17 @@ namespace LiveClient
             strResJson += ",";
         }
 		return strResJson;
+    }
+
+    void CLiveWorker::ReceiveStream(AV_BUFF buff)
+    {
+        if(buff.eType == AV_TYPE::RTP) {
+
+        } else if(buff.eType == AV_TYPE::H264_NALU) {
+            if(m_pOrigin){
+                m_pOrigin->ReceiveStream(buff);
+            }
+        }
     }
 
 }

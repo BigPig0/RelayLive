@@ -16,33 +16,53 @@ static void AVCallback(AV_BUFF buff, void* pUser){
     {
     case AV_TYPE::H264_IDR:
     case AV_TYPE::H264_NDR:
-        pLive->push_h264_stream(buff);
+        pLive->H264Cb(buff);
         break;
     case AV_TYPE::FLV_HEAD:
     case AV_TYPE::FLV_FRAG_KEY:
     case AV_TYPE::FLV_FRAG:
-        pLive->push_flv_stream(buff);
+        pLive->FlvCb(buff);
         break;
     case AV_TYPE::MP4_HEAD:
     case AV_TYPE::MP4_FRAG_KEY:
     case AV_TYPE::MP4_FRAG:
-        pLive->push_fmp4_stream(buff);
+        pLive->Mp4Cb(buff);
         break;
     case AV_TYPE::TS:
-        pLive->push_ts_stream(buff);
+        pLive->TsCb(buff);
         break;
     default:
         break;
     }
 }
 
-CLiveChannel::CLiveChannel(int channel)
-    : m_nChannel(channel)
+CLiveChannel::CLiveChannel()
+    : m_nChannel(0)
+    , m_nWidth(0)
+    , m_nHeight(0)
     , m_bFlv(false)
     , m_bMp4(false)
     , m_bH264(false)
     , m_bTs(false)
     , m_bRtp(false)
+{
+    Init();
+}
+
+CLiveChannel::CLiveChannel(int channel, uint32_t w, uint32_t h)
+    : m_nChannel(channel)
+    , m_nWidth(w)
+    , m_nHeight(h)
+    , m_bFlv(false)
+    , m_bMp4(false)
+    , m_bH264(false)
+    , m_bTs(false)
+    , m_bRtp(false)
+{
+    Init();
+}
+
+void CLiveChannel::Init()
 {
     memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
     memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
@@ -167,6 +187,42 @@ bool CLiveChannel::RemoveHandle(ILiveHandle* h)
         && m_vecLiveTs.empty() && m_vecLiveRtp.empty();
 }
 
+void CLiveChannel::ReceiveStream(AV_BUFF buff)
+{
+    if(m_nChannel == 0 && buff.eType == AV_TYPE::H264_NALU) {
+
+    } else if (buff.eType == AV_TYPE::YUV) {
+
+    }
+}
+
+void CLiveChannel::push_h264_stream(AV_BUFF buff)
+{
+    CHECK_POINT_VOID(buff.pData);
+    //Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
+    CH264* pH264 = (CH264*)m_pH264;
+    pH264->InputBuffer(buff.pData, buff.nLen);
+    NalType m_nalu_type = pH264->NaluType();
+    uint32_t nDataLen = 0;
+    char* pData = pH264->DataBuff(nDataLen);
+
+
+    //需要回调Flv
+    if(m_bFlv && nullptr != m_pFlv)
+    {
+        CFlv* flv = (CFlv*)m_pFlv;
+        flv->Code(m_nalu_type, pData, nDataLen);
+    }
+    
+    //需要回调mp4
+    if (m_bMp4 && nullptr != m_pMp4)
+    {
+        CMP4* mp4 = (CMP4*)m_pMp4;
+        mp4->Code(m_nalu_type, pData, nDataLen);
+    }
+
+}
+
 bool CLiveChannel::Empty()
 {
     return m_vecLiveFlv.empty() && m_vecLiveMp4.empty() && m_vecLiveH264.empty()
@@ -229,7 +285,7 @@ string CLiveChannel::GetClientInfo()
 
 
 
-void CLiveChannel::push_flv_stream(AV_BUFF buff)
+void CLiveChannel::FlvCb(AV_BUFF buff)
 {
     if (buff.eType == FLV_HEAD) {
         m_stFlvHead.pData = buff.pData;
@@ -245,7 +301,7 @@ void CLiveChannel::push_flv_stream(AV_BUFF buff)
     }
 }
 
-void CLiveChannel::push_h264_stream(AV_BUFF buff)
+void CLiveChannel::H264Cb(AV_BUFF buff)
 {
     MutexLock lock(&m_csH264);
     for (auto h : m_vecLiveH264)
@@ -254,7 +310,7 @@ void CLiveChannel::push_h264_stream(AV_BUFF buff)
     } 
 }
 
-void CLiveChannel::push_ts_stream(AV_BUFF buff)
+void CLiveChannel::TsCb(AV_BUFF buff)
 {
     MutexLock lock(&m_csTs);
     for (auto h : m_vecLiveTs)
@@ -263,7 +319,7 @@ void CLiveChannel::push_ts_stream(AV_BUFF buff)
     } 
 }
 
-void CLiveChannel::push_fmp4_stream(AV_BUFF buff)
+void CLiveChannel::Mp4Cb(AV_BUFF buff)
 {
     if(buff.eType == MP4_HEAD) {
         m_stMp4Head.pData = buff.pData;
@@ -278,7 +334,7 @@ void CLiveChannel::push_fmp4_stream(AV_BUFF buff)
     }
 }
 
-void CLiveChannel::push_rtp_stream(AV_BUFF buff)
+void CLiveChannel::RtpCb(AV_BUFF buff)
 {
     MutexLock lock(&m_csRtp);
     for (auto h : m_vecLiveRtp)
@@ -287,7 +343,7 @@ void CLiveChannel::push_rtp_stream(AV_BUFF buff)
     } 
 }
 
-void CLiveChannel::push_rtcp_stream(AV_BUFF buff)
+void CLiveChannel::RtcpCb(AV_BUFF buff)
 {
     MutexLock lock(&m_csRtp);
     for (auto h : m_vecLiveRtp)
