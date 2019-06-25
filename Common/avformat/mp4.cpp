@@ -303,7 +303,7 @@ int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
     case other:
     case unknow:
     default:
-        Log::warning("h264 nal type: %d", eType);
+        //Log::warning("h264 nal type: %d", eType);
         break;
     }
     return true;

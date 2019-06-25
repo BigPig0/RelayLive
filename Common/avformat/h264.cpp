@@ -82,7 +82,7 @@ int CH264::InputBuffer(char *pBuf, uint32_t nLen)
     case other:
     case unknow:
     default:
-        Log::warning("h264 nal type: %d", m_eNaluType);
+        //Log::warning("h264 nal type: %d", m_eNaluType);
         break;
     }
 

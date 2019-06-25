@@ -24,7 +24,7 @@ namespace RtspServer
 
         virtual void push_video_stream(AV_BUFF buff);
         virtual void stop();
-        virtual string get_clients_info();
+        virtual vector<ClientInfo> get_clients_info();
     private:
         void cull_lagging_clients();
 

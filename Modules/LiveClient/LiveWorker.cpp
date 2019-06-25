@@ -135,19 +135,32 @@ namespace LiveClient
     }
 
 	string GetAllWorkerClientsInfo(){
-		string strResJson = "{\"root\":[";
+        stringstream ss;
+		ss << "{\"root\":[";
         //MutexLock lock(&m_cs);
-        for (auto w : m_workerMap)
-        {
+        for (auto w : m_workerMap) {
             CLiveWorker *worker = w.second;
-			strResJson += worker->GetClientInfo();
+			vector<ClientInfo> tmp = worker->GetClientInfo();
+            for(auto c:tmp){
+                ss << "{\"DeviceID\":\"" << c.devCode 
+                    << "\",\"Connect\":\"" << c.connect
+                    << "\",\"Media\":\"" << c.media
+                    << "\",\"ClientIP\":\"" << c.clientIP
+                    << "\",\"Channel\":\"" << c.channel
+                    << "\"},";
+            }
 		}
-		strResJson = StringHandle::StringTrimRight(strResJson,',');
+        string strResJson = StringHandle::StringTrimRight(ss.str(),',');
         strResJson += "]}";
         return strResJson;
 	}
 
     //////////////////////////////////////////////////////////////////////////
+
+    static void H264DecodeCb(AV_BUFF buff, void* user) {
+        CLiveWorker* live = (CLiveWorker*)user;
+        live->ReceiveYUV(buff);
+    }
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort, string sdp)
         : m_strCode(strCode)
@@ -155,6 +168,7 @@ namespace LiveClient
         , m_strSDP(sdp)
         , m_nType(0)
         , m_pReceiver(nullptr)
+        , m_pDecoder(nullptr)
         , m_bStop(false)
         , m_bOver(false)
     {
@@ -209,6 +223,7 @@ namespace LiveClient
             } else {
                 CLiveChannel *nc = new CLiveChannel(c, 640, 480);
                 nc->AddHandle(h, t);
+                nc->SetDecoder(m_pDecoder);
                 m_mapChlEx.insert(make_pair(c, nc));
             }
         }
@@ -298,16 +313,15 @@ namespace LiveClient
         }
     }
 
-    string CLiveWorker::GetClientInfo()
+    vector<ClientInfo> CLiveWorker::GetClientInfo()
     {
-		string strResJson = m_pOrigin->GetClientInfo();
-        strResJson += ",";
+		vector<ClientInfo> ret = m_pOrigin->GetClientInfo();
         MutexLock lock(&m_csChls);
         for(auto chl : m_mapChlEx){
-            strResJson += chl.second->GetClientInfo();
-            strResJson += ",";
+            vector<ClientInfo> tmp = chl.second->GetClientInfo();
+            ret.insert(ret.end(), tmp.begin(), tmp.end());
         }
-		return strResJson;
+		return ret;
     }
 
     void CLiveWorker::ReceiveStream(AV_BUFF buff)
@@ -315,9 +329,31 @@ namespace LiveClient
         if(buff.eType == AV_TYPE::RTP) {
 
         } else if(buff.eType == AV_TYPE::H264_NALU) {
+            //原始通道，将h264码流转发过去
             if(m_pOrigin){
                 m_pOrigin->ReceiveStream(buff);
             }
+            //扩展通道，将码流解码成yuv再发送过去
+            MutexLock lock(&m_csChls);
+            if(!m_mapChlEx.empty()){
+                if(nullptr != m_pDecoder) {
+                    m_pDecoder = IDecoder::Create(H264DecodeCb,this);
+                    for(auto it:m_mapChlEx){
+                        it.second->SetDecoder(m_pDecoder);
+                    }
+                }
+                m_pDecoder->Decode(buff);
+            } else {
+                SAFE_DELETE(m_pDecoder);
+            }
+        }
+    }
+
+    void CLiveWorker::ReceiveYUV(AV_BUFF buff)
+    {
+        for (auto it:m_mapChlEx)
+        {
+            it.second->ReceiveStream(buff);
         }
     }
 

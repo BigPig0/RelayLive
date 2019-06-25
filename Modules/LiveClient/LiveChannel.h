@@ -20,6 +20,7 @@
 #include "mp4.h"
 #include "h264.h"
 #include "uv.h"
+#include "Recode.h"
 
 namespace LiveClient
 {
@@ -31,6 +32,11 @@ namespace LiveClient
         /** 缩放通道构造 */
         CLiveChannel(int channel, uint32_t w, uint32_t h);
         ~CLiveChannel();
+
+        /**
+         * h264解码器,用来传递参数
+         */
+        void SetDecoder(IDecoder *decoder);
 
         /**
          * 向通道添加播放客户端
@@ -58,10 +64,11 @@ namespace LiveClient
         AV_BUFF GetHeader(HandleType t);
 
         /** 获取客户端信息 */
-        string GetClientInfo();
+        vector<ClientInfo> GetClientInfo();
 
         /** H264中sps解析回调 */
         void set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps);
+
         /**
         * 从源过来的视频数据，单线程输入 
         * 以下方法由rtp接收所在的loop线程调用
@@ -99,10 +106,11 @@ namespace LiveClient
         CriticalSection          m_csRtp;
 
         int                      m_nChannel;    // 通道号
-        CH264                   *m_pH264;            // H264组包类
-        CTS                     *m_pTs;              // TS组包类
-        CFlv                    *m_pFlv;             // FLV组包类
-        CMP4                    *m_pMp4;             // MP4组包类
+        CH264                   *m_pH264;       // H264组包类
+        CTS                     *m_pTs;         // TS组包类
+        CFlv                    *m_pFlv;        // FLV组包类
+        CMP4                    *m_pMp4;        // MP4组包类
+        IEncoder                *m_pEncoder;    // YUV编码为h264
 
         uint32_t                 m_nWidth;
         uint32_t                 m_nHeight;

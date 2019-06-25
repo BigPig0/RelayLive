@@ -320,37 +320,8 @@ void CLiveReceiver::push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts)
 void CLiveReceiver::push_h264_stream(AV_BUFF buff)
 {
     CHECK_POINT_VOID(buff.pData);
-	//Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
-    //CH264* pH264 = (CH264*)m_pH264;
-    //pH264->InputBuffer(buff.pData, buff.nLen);
-    //m_nalu_type = pH264->NaluType();
-    //uint32_t nDataLen = 0;
-    //char* pData = pH264->DataBuff(nDataLen);
-
     CHECK_POINT_VOID(m_pWorker);
     m_pWorker->ReceiveStream(buff);
-
-//    //需要回调Flv
-//    if(m_pWorker->m_bFlv && nullptr != m_pFlv)
-//    {
-//        CFlv* flv = (CFlv*)m_pFlv;
-//        flv->Code(m_nalu_type, pData, nDataLen);
-//    }
-//
-//    //需要回调mp4
-//    if (m_pWorker->m_bMp4 && nullptr != m_pMp4)
-//    {
-//        CMP4* mp4 = (CMP4*)m_pMp4;
-//        mp4->Code(m_nalu_type, pData, nDataLen);
-//    }
-//
-//    //需要转子码流
-//#ifdef USE_FFMPEG
-//    if(nullptr != m_pReCode) {
-//        CRecoder* recode = (CRecoder*)m_pReCode;
-//        recode->Recode(buff, m_nalu_type);
-//    }
-//#endif
 }
 
 void CLiveReceiver::AsyncClose()

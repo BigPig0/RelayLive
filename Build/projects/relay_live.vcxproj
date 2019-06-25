@@ -89,6 +89,7 @@
       <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;websockets_static.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

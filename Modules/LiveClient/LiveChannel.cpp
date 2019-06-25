@@ -14,6 +14,9 @@ static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveChannel* pLive = (CLiveChannel*)pUser;
     switch (buff.eType)
     {
+    case AV_TYPE::H264_NALU:
+        pLive->ReceiveStream(buff);
+        break;
     case AV_TYPE::H264_IDR:
     case AV_TYPE::H264_NDR:
         pLive->H264Cb(buff);
@@ -71,6 +74,7 @@ void CLiveChannel::Init()
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
+    m_pEncoder       = IEncoder::Create(AVCallback, this);
 
     m_pFlv->SetNodelay(g_nNodelay);
     m_pMp4->SetNodelay(g_nNodelay);
@@ -78,7 +82,16 @@ void CLiveChannel::Init()
 
 CLiveChannel::~CLiveChannel()
 {
+    SAFE_DELETE(m_pH264);
+    SAFE_DELETE(m_pTs);
+    SAFE_DELETE(m_pFlv);
+    SAFE_DELETE(m_pMp4);
+    SAFE_DELETE(m_pEncoder);
+}
 
+void CLiveChannel::SetDecoder(IDecoder *decoder)
+{
+    m_pEncoder->SetDecoder(decoder);
 }
 
 bool CLiveChannel::AddHandle(ILiveHandle* h, HandleType t)
@@ -189,10 +202,10 @@ bool CLiveChannel::RemoveHandle(ILiveHandle* h)
 
 void CLiveChannel::ReceiveStream(AV_BUFF buff)
 {
-    if(m_nChannel == 0 && buff.eType == AV_TYPE::H264_NALU) {
-
+    if(buff.eType == AV_TYPE::H264_NALU) {
+        push_h264_stream(buff);
     } else if (buff.eType == AV_TYPE::YUV) {
-
+        m_pEncoder->Code(buff);
     }
 }
 
@@ -200,11 +213,11 @@ void CLiveChannel::push_h264_stream(AV_BUFF buff)
 {
     CHECK_POINT_VOID(buff.pData);
     //Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
-    CH264* pH264 = (CH264*)m_pH264;
-    pH264->InputBuffer(buff.pData, buff.nLen);
-    NalType m_nalu_type = pH264->NaluType();
+
+    m_pH264->InputBuffer(buff.pData, buff.nLen);
+    NalType m_nalu_type = m_pH264->NaluType();
     uint32_t nDataLen = 0;
-    char* pData = pH264->DataBuff(nDataLen);
+    char* pData = m_pH264->DataBuff(nDataLen);
 
 
     //需要回调Flv
@@ -242,48 +255,61 @@ AV_BUFF CLiveChannel::GetHeader(HandleType t)
 }
 
 /** 获取客户端信息 */
-string CLiveChannel::GetClientInfo()
+vector<ClientInfo> CLiveChannel::GetClientInfo()
 {
-    string strResJson;
+    vector<ClientInfo> ret;
     {
         MutexLock lock(&m_csFlv);
         for(auto h : m_vecLiveFlv){
-            strResJson += h->get_clients_info();
-            strResJson += ",";
+            vector<ClientInfo> tmp = h->get_clients_info();
+            for(auto &c:tmp){
+                c.channel = m_nChannel;
+                ret.push_back(c);
+            }
         }
     }
     {
         MutexLock lock(&m_csMp4);
         for(auto h : m_vecLiveMp4){
-            strResJson += h->get_clients_info();
-            strResJson += ",";
+            vector<ClientInfo> tmp = h->get_clients_info();
+            for(auto &c:tmp){
+                c.channel = m_nChannel;
+                ret.push_back(c);
+            }
         }
     }
     {
         MutexLock lock(&m_csH264);
         for(auto h : m_vecLiveH264){
-            strResJson += h->get_clients_info();
-            strResJson += ",";
+            vector<ClientInfo> tmp = h->get_clients_info();
+            for(auto &c:tmp){
+                c.channel = m_nChannel;
+                ret.push_back(c);
+            }
         }
     }
     {
         MutexLock lock(&m_csTs);
         for(auto h : m_vecLiveTs){
-            strResJson += h->get_clients_info();
-            strResJson += ",";
+            vector<ClientInfo> tmp = h->get_clients_info();
+            for(auto &c:tmp){
+                c.channel = m_nChannel;
+                ret.push_back(c);
+            }
         }
     }
     {
         MutexLock lock(&m_csRtp);
         for(auto h : m_vecLiveRtp){
-            strResJson += h->get_clients_info();
-            strResJson += ",";
+            vector<ClientInfo> tmp = h->get_clients_info();
+            for(auto &c:tmp){
+                c.channel = m_nChannel;
+                ret.push_back(c);
+            }
         }
     }
-    return strResJson;
+    return ret;
 }
-
-
 
 void CLiveChannel::FlvCb(AV_BUFF buff)
 {
@@ -374,13 +400,11 @@ void CLiveChannel::stop()
 void CLiveChannel::set_h264_param(uint32_t nWidth, uint32_t nHeight, double fFps)
 {
     Log::debug("H264SpsCb width:%d, height:%d, fps:%lf", nWidth, nHeight, fFps);
-    if(nullptr != m_pFlv)
-    {
+    if(nullptr != m_pFlv) {
         CFlv* flv = (CFlv*)m_pFlv;
         flv->SetSps(nWidth,nHeight,fFps);
     }
-    if (nullptr != m_pMp4)
-    {
+    if (nullptr != m_pMp4) {
         CMP4* mp4 = (CMP4*)m_pMp4;
         mp4->SetSps(nWidth,nHeight,fFps);
     }

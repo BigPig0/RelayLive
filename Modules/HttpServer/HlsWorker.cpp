@@ -138,21 +138,18 @@ namespace HttpWsServer
         } lws_end_foreach_llp_safe(ppss);
     }
 
-    string CHlsWorker::get_clients_info()
+    vector<LiveClient::ClientInfo> CHlsWorker::get_clients_info()
     {
-        stringstream ss;
+        vector<LiveClient::ClientInfo> ret;
         lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
-            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
-            if((*ppss)->isWs){
-                ss << "Web Socket";
-            } else {
-                ss << "Http";
-            }
-            ss << "\",\"Media\":\"hls";
-            ss << "\",\"ClientIP\":\"" 
-                << (*ppss)->clientIP << "\"},";
+            LiveClient::ClientInfo info;
+            info.devCode = m_strCode;
+            info.connect = "HLS";
+            info.media   = "TS";
+            info.clientIP= (*ppss)->clientIP;
+            ret.push_back(info);
         } lws_end_foreach_llp(ppss, pss_next);
-        return ss.str();
+        return ret;
     }
 
     //////////////////////////////////////////////////////////////////////////

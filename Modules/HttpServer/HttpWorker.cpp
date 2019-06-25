@@ -159,30 +159,31 @@ namespace HttpWsServer
         } lws_end_foreach_llp_safe(ppss);
     }
 
-    string CHttpWorker::get_clients_info()
+    vector<LiveClient::ClientInfo> CHttpWorker::get_clients_info()
     {
-        stringstream ss;
+        vector<LiveClient::ClientInfo> ret;
         lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
-            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
+            LiveClient::ClientInfo info;
+            info.devCode = m_strCode;
             if((*ppss)->isWs){
-                ss << "Web Socket";
+                info.connect = "Web Socket";
             } else {
-                ss << "Http";
+                info.connect = "Http";
             }
-            ss << "\",\"Media\":\"";
             if(m_type == HandleType::flv_handle)
-                ss << "flv";
+                info.connect = "flv";
             else if(m_type == HandleType::fmp4_handle)
-                ss << "mp4";
+                info.connect = "mp4";
             else if(m_type == HandleType::h264_handle)
-                ss << "h264";
+                info.connect = "h264";
             else if(m_type == HandleType::ts_handle)
-                ss << "hls";
-            else ss << "unknown";
-            ss << "\",\"ClientIP\":\"" 
-                << (*ppss)->clientIP << "\"},";
+                info.connect = "hls";
+            else 
+                info.connect = "unknown";
+            info.clientIP = (*ppss)->clientIP;
+            ret.push_back(info);
         } lws_end_foreach_llp(ppss, pss_next);
-        return ss.str();
+        return ret;
     }
 
     void CHttpWorker::cull_lagging_clients()

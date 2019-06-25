@@ -132,15 +132,19 @@ namespace RtspServer
         } end_foreach_llp_safe(ppss);
     }
 
-    string CRtspWorker::get_clients_info()
+    vector<ClientInfo> CRtspWorker::get_clients_info()
     {
+        vector<ClientInfo> ret;
         stringstream ss;
         start_foreach_llp(pss_rtsp_client **, ppss, m_pPssList) {
-            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"Rtsp\","
-                << "\"Media\":\"Rtsp\",\"ClientIP\":\""
-                << (*ppss)->clientIP << "\"},";
+            ClientInfo info;
+            info.devCode = m_strCode;
+            info.connect = "RTSP";
+            info.media = "RTSP";
+            info.clientIP = (*ppss)->clientIP;
+            ret.push_back(info);
         } end_foreach_llp(ppss, pss_next);
-        return ss.str();
+        return ret;
     }
 
     void CRtspWorker::cull_lagging_clients()

@@ -1,6 +1,7 @@
 #pragma once
 #include "LiveClient.h"
 #include "avtypes.h"
+#include "Recode.h"
 #include "uv.h"
 
 namespace LiveClient
@@ -26,10 +27,13 @@ namespace LiveClient
         bool m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
 
         /** 获取客户端信息 */
-        string GetClientInfo();
+        vector<ClientInfo> GetClientInfo();
 
         /** 接收到的视频流处理 */
         void ReceiveStream(AV_BUFF buff);
+
+        /** yuv视频处理 */
+        void ReceiveYUV(AV_BUFF buff);
 
         /** 接收数据超时发起的结束操作，通知发送连接断开 */
         void stop();
@@ -44,6 +48,7 @@ namespace LiveClient
         CLiveChannel*            m_pOrigin;     // 原始流通道
         map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
         CriticalSection          m_csChls;
+        IDecoder                *m_pDecoder;    // h264解码
 
         vector<ILiveHandleRtp*>  m_vecLiveRtp;  // RTP原始流转发
         CriticalSection          m_csRtp;
