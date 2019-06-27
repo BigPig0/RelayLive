@@ -13,10 +13,6 @@ namespace LiveClient
 {
 extern int  g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
 
-static void PESCallBack(AV_BUFF buff, void* pUser, uint64_t  pts, uint64_t  dts) {
-    CLiveReceiver* pLive = (CLiveReceiver*)pUser;
-    pLive->push_es_stream(buff, pts, dts);
-}
 
 static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
@@ -29,7 +25,7 @@ static void AVCallback(AV_BUFF buff, void* pUser){
         pLive->push_pes_stream(buff);
         break;
     case AV_TYPE::ES:
-        pLive->push_es_stream(buff, 0, 0);
+        pLive->push_es_stream(buff);
         break;
     case AV_TYPE::H264_NALU:
         pLive->push_h264_stream(buff);
@@ -125,7 +121,7 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     rtp->SetCatchFrameNum(g_nRtpCatchPacketNum);
     m_pRtpParser     = rtp;
     m_pPsParser      = new CPs(AVCallback, this);
-    m_pPesParser     = new CPes(PESCallBack, this);
+    m_pPesParser     = new CPes(AVCallback, this);
     m_pEsParser      = new CES(AVCallback, this);
 
     m_pRingRtp       = create_ring_buff(sizeof(AV_BUFF), 1000, NULL);
@@ -275,7 +271,8 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
     CHECK_POINT_VOID(buff.pData);
 	if(m_pWorker->m_bRtp){
 		m_pWorker->ReceiveStream(buff);
-	} else {
+	} 
+	{
 		if(g_stream_type == STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)
@@ -304,16 +301,16 @@ void CLiveReceiver::push_pes_stream(AV_BUFF buff)
     //}
 }
 
-void CLiveReceiver::push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts)
+void CLiveReceiver::push_es_stream(AV_BUFF buff)
 {
 	//Log::debug("PESParseCb nlen:%ld,pts:%lld,dts:%lld", buff.nLen,pts,dts);
-    CHECK_POINT_VOID(buff.pData)
+    CHECK_POINT_VOID(buff.pData);
     CES* pEsParser = (CES*)m_pEsParser;
-    CHECK_POINT_VOID(pEsParser)
-	if(pts>0)
-    m_pts = pts;
-	if(dts>0)
-    m_dts = dts;
+    CHECK_POINT_VOID(pEsParser);
+	if(buff.m_pts>0)
+		m_pts = buff.m_pts;
+	if(buff.m_dts>0)
+		m_dts = buff.m_dts;
 	pEsParser->DeCode(buff);
 }
 

@@ -4,8 +4,12 @@
 
 /**
  * H264的结构：
- * 00 00 00 01/00 00 01->nal(1bytes)->slice->宏块->运动估计向量。
- * 如果h264的body中出现了前缀则由00 00 00 01/00 00 01变为00 03 00 00 01/00 03 00 01.
+ * startcode(00 00 00 01/00 00 01)->nal(1bytes)->slice->宏块->运动估计向量。
+ * 如果h264的body中出现了startcode则由00 00 00 01/00 00 01变为00 03 00 00 01/00 03 00 01.
+ *
+ * h264有两种封装，
+ * 一种是annexb模式，传统模式，有startcode(0001/001)，SPS和PPS是在ES中
+ * 一种是mp4模式，一般mp4 mkv会有，没有startcode(0001/001)，SPS和PPS以及其它信息被封装在container中，每一个frame前面是这个frame的长度
  */
 
 /** H264片元类型 */
@@ -43,6 +47,9 @@ typedef struct nal_unit_header
 
 }nal_unit_header_t;
 
+/**
+ *Nal分片单元结构 2个字节
+ */
 typedef struct nal_unit_header_rtp {
 	unsigned char ex_type : 5;      // 4-8位  这个NALU单元的类型 FU_A
     unsigned char nal_ref_idc : 2;  // 2-3位  nal_ref_idc：取00~11，似乎指示这个NALU的重要性, 如00的NALU解码器可以丢弃它而不影响图像的回放。不过一般情况下不太关心这个属性
@@ -54,6 +61,40 @@ typedef struct nal_unit_header_rtp {
 	unsigned char S : 1;
 }nal_unit_header_rtp_t;
 
+/**
+ * 获取nalu位置，即如果存在startcode，输出去除startcode后的位置
+ */
+bool inline h264_nalu_data(char *buff, char **nalu) {
+	if(buff[0]==0 && buff[1]==0 && buff[2]==0 && buff[3]==1) {
+		*nalu = buff+4;
+		return true;
+	} else if (buff[0]==0 && buff[1]==0 && buff[2]==1) {
+		*nalu = buff+3;
+		return true;
+	} 
+	*nalu = buff;
+	return false;
+}
+
+bool inline h264_nalu_data2(char *buff, int len, char **nalu, int *nalu_len) {
+	if(len > 3 &&buff[0]==0 && buff[1]==0 && buff[2]==0 && buff[3]==1) {
+		*nalu = buff+4;
+		*nalu_len = len-4;
+		return true;
+	} else if (len > 2 && buff[0]==0 && buff[1]==0 && buff[2]==1) {
+		*nalu = buff+3;
+		*nalu_len = len-3;
+		return true;
+	} 
+	*nalu = buff;
+	*nalu_len = len;
+	return false;
+}
+
+/**
+ * 判断是否是Nal分片单元
+ * @param buff 不包含startcode(0001/001)的nalu
+ */
 bool inline is_h264_slice(char* buff) {
 	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
 	if(pNalUnit->nal_type == NalType::FU_A) {
@@ -62,6 +103,11 @@ bool inline is_h264_slice(char* buff) {
 	return false;
 }
 
+/**
+ *判断是否是h264码流
+ * @param buff 不包含startcode(0001/001)的nalu
+ * @note 如果是分片单元，只有起始分片才返回true。非分片返回true
+ */
 bool inline is_h264_header(char* buff) {
 	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
 	bool s = 1;
@@ -83,6 +129,11 @@ bool inline is_h264_header(char* buff) {
 	return false;
 }
 
+/**
+ * 判断是否是h264最后分片
+ * @param buff 不包含startcode(0001/001)的nalu
+ * @note 如果是分片单元，只有结束分片才返回true。非分片返回true
+ */
 bool inline is_h264_end(char* buff) {
 	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
 	bool e = 1;
@@ -104,6 +155,10 @@ bool inline is_h264_end(char* buff) {
 	return false;
 }
 
+/**
+ * 获取nalu的类型
+ * @param buff 不包含startcode(0001/001)的nalu
+ */
 NalType inline h264_naltype(char* buff) {
 	nal_unit_header* pNalUnit = (nal_unit_header*)buff;
 	NalType nal = (NalType)pNalUnit->nal_type;

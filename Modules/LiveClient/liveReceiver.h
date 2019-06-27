@@ -48,10 +48,8 @@ public:
     /**
      * 添加ES数据内容
      * @param[in] buff ES包数据
-     * @param[in] pts 展现时间戳字段
-     * @param[in] dts 解码时间戳字段
      */
-    void push_es_stream(AV_BUFF buff, uint64_t  pts, uint64_t  dts);
+    void push_es_stream(AV_BUFF buff);
 
     /**
      * 添加h264数据内容

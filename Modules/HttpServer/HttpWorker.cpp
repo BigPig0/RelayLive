@@ -171,15 +171,15 @@ namespace HttpWsServer
                 info.connect = "Http";
             }
             if(m_type == HandleType::flv_handle)
-                info.connect = "flv";
+				info.media = "flv";
             else if(m_type == HandleType::fmp4_handle)
-                info.connect = "mp4";
+                info.media = "mp4";
             else if(m_type == HandleType::h264_handle)
-                info.connect = "h264";
+                info.media = "h264";
             else if(m_type == HandleType::ts_handle)
-                info.connect = "hls";
+                info.media = "hls";
             else 
-                info.connect = "unknown";
+                info.media = "unknown";
             info.clientIP = (*ppss)->clientIP;
             ret.push_back(info);
         } lws_end_foreach_llp(ppss, pss_next);

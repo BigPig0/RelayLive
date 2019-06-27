@@ -74,10 +74,15 @@ void CLiveChannel::Init()
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
-    m_pEncoder       = IEncoder::Create(AVCallback, this);
 
     m_pFlv->SetNodelay(g_nNodelay);
     m_pMp4->SetNodelay(g_nNodelay);
+
+#ifdef USE_FFMPEG
+    m_pEncoder       = IEncoder::Create(AVCallback, this);
+	m_pEncoder->m_width = m_nWidth;
+	m_pEncoder->m_height = m_nHeight;
+#endif
 }
 
 CLiveChannel::~CLiveChannel()
@@ -86,13 +91,17 @@ CLiveChannel::~CLiveChannel()
     SAFE_DELETE(m_pTs);
     SAFE_DELETE(m_pFlv);
     SAFE_DELETE(m_pMp4);
+#ifdef USE_FFMPEG
     SAFE_DELETE(m_pEncoder);
+#endif
 }
 
+#ifdef USE_FFMPEG
 void CLiveChannel::SetDecoder(IDecoder *decoder)
 {
     m_pEncoder->SetDecoder(decoder);
 }
+#endif
 
 bool CLiveChannel::AddHandle(ILiveHandle* h, HandleType t)
 {
@@ -205,7 +214,9 @@ void CLiveChannel::ReceiveStream(AV_BUFF buff)
     if(buff.eType == AV_TYPE::H264_NALU) {
         push_h264_stream(buff);
     } else if (buff.eType == AV_TYPE::YUV) {
+#ifdef USE_FFMPEG
         m_pEncoder->Code(buff);
+#endif
     }
 }
 

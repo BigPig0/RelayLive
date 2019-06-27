@@ -80,7 +80,7 @@ static uint64_t get_dts(optional_pes_header* option)
 #endif
 
 
-CPes::CPes(PES_CALLBACK cb, void* handle)
+CPes::CPes(AV_CALLBACK cb, void* handle)
     : m_hUser(handle)
     , m_fCB(cb)
 {
@@ -128,8 +128,8 @@ int CPes::Decode(AV_BUFF buff)
     // 回调处理ES包
     if (m_fCB != nullptr)
     {
-        AV_BUFF es = {AV_TYPE::ES, pESBuffer, nESLength};
-        m_fCB(es, m_hUser, pts, dts);
+        AV_BUFF es = {AV_TYPE::ES, pESBuffer, nESLength, pts, dts};
+        m_fCB(es, m_hUser);
     }
 
     return 0;

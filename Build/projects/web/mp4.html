@@ -2,23 +2,55 @@
 <html>
 <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-	<title>Mp4 demo</title>  
+	<title>Mp4 demo</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
 </head>
 <body>
     <div>
         <video id="videoElement" muted controls autoplay="autoplay" width="800" height="600">Your browser is too old which doesn't support HTML5 video.</video>
     </div>
  
-    <script type="text/javascript" src="wfs.js" ></script>  
     <script>
-	window.onload = function () {
-        if (Wfs.isSupported()) {
-        	
-            var video1 = document.getElementById("videoElement"),
-            wfs = new Wfs();
-			var playaddr = "ws://" + window.location.hostname + ":8000/live/mp4/" +window.location.hash.substr(1);
-            wfs.attachMedia(video1, 'wslive', 'FMp4', playaddr);
-        }
+	var video = document.querySelector('video');
+    var wsURL = "ws://" + window.location.hostname + ":8000/live/mp4/" +window.location.hash.substr(1);;
+	var mimeCodec = 'video/mp4;codecs="avc1.428028"';
+
+	if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+	  var mediaSource = new MediaSource;
+	  video.src = URL.createObjectURL(mediaSource);
+	  mediaSource.addEventListener('sourceopen', sourceOpen);
+	} else {
+	  console.error('Unsupported MIME type or codec: ', mimeCodec);
+	}
+
+	function sourceOpen (_) {
+	  var mediaSource = this;
+	  var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+	  
+	  //updateend: appendBuffer结束时
+	  //sourceBuffer.addEventListener('updateend', function(){
+	  //  console.log('updateend');
+      //  mediaSource.endOfStream();
+      //});
+	
+	  fetchAB(wsURL, function (buf) {
+	    console.log('get buff');
+		sourceBuffer.appendBuffer(buf);
+	  });
+	};
+    function fetchAB(url, cb) {
+        ws = new WebSocket(url);
+        ws.binaryType = "arraybuffer";
+        ws.onmessage = function (e) {
+            cb(e.data);
+        };
+        ws.onerror = function (e) {
+            console.log(e.msg);
+        };
+		ws.onclose = function(evt) {
+			console.log('WebSocketClosed!');
+			fetchAB(url, cb);
+		};
     };
  
     function controlbtn(c) {

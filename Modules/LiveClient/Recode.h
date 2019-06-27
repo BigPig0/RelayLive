@@ -27,6 +27,9 @@ namespace LiveClient
         static IEncoder* Create(AV_CALLBACK cb, void* handle=NULL);
         virtual int Code(AV_BUFF buff) = 0;
         virtual void SetDecoder(IDecoder* dec) = 0;
+		
+        uint32_t         m_width;     //缩放大小
+        uint32_t         m_height;    //缩放大小
     };
 };
 #endif

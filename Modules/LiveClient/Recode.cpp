@@ -50,6 +50,8 @@ namespace LiveClient
         bool                 m_bFirstKey;       // 已经处理第一个关键帧
         bool                 m_bGotSPS;         // 标记解码是否输出了sps
         bool                 m_bGotPPS;         // 标记解码是否输出了sps
+        uint32_t             m_timestamp;       // 时间戳
+        uint32_t             m_tick_gap;        // 两帧间的间隔
 
         AV_CALLBACK          m_funCB;      //回调方法
         void                *m_user;       //回调参数
@@ -68,7 +70,21 @@ namespace LiveClient
         return ret;
     }
     
-    CDecoder::CDecoder() : m_ok(false){
+    CDecoder::CDecoder() 
+		: m_ok(false)
+		, m_pSPS(nullptr)
+		, m_pPPS(nullptr)
+        , m_bFirstKey(false)
+        , m_bGotSPS(false)
+        , m_bGotPPS(false)
+		, m_pKeyFrame(nullptr)
+        , m_timestamp(0)
+        , m_tick_gap(3600)
+	{
+		m_pSPS = new CNetStreamMaker();
+		m_pPPS = new CNetStreamMaker();
+		m_pKeyFrame = new CNetStreamMaker();
+
         //编解码器实例
         m_codec = avcodec_find_decoder(AV_CODEC_ID_H264); 
         if (!m_codec){
@@ -124,8 +140,8 @@ namespace LiveClient
         av_init_packet(&pkt);
         pkt.data = (uint8_t*)buff.pData;
         pkt.size = buff.nLen;
-        pkt.pts  = buff.m_pts;
-        pkt.dts  = buff.m_dts;
+        pkt.pts  = m_timestamp;
+        pkt.dts  = m_timestamp;
 
         /*
         m_decode->pkt.data = NULL;
@@ -165,10 +181,11 @@ namespace LiveClient
                 //fflush(m_decode->f);
                 //break;
                 if(m_funCB) {
-                    AV_BUFF yuv = {AV_TYPE::YUV, (char*)m_pFrame, 0};
+					AV_BUFF yuv = {AV_TYPE::YUV, (char*)m_pFrame, m_timestamp, m_timestamp};
                     m_funCB(yuv, m_user);
                 }
             }
+			av_frame_unref(m_pFrame);
         } //while
 
         return true;
@@ -203,6 +220,7 @@ namespace LiveClient
             m_bGotSPS = false;
             m_bGotPPS = false;
 
+			m_timestamp += m_tick_gap;
             m_bFirstKey = true;
 
             return true;
@@ -211,7 +229,9 @@ namespace LiveClient
     }
 
     int CDecoder::Decode(AV_BUFF buff){
-        NalType t = h264_naltype(buff.pData);
+		char *nalu = NULL;
+		h264_nalu_data(buff.pData, &nalu);
+        NalType t = h264_naltype(nalu);
         switch (t)
         {
         case b_Nal:  // 非关键帧
@@ -223,6 +243,7 @@ namespace LiveClient
                 DecodeKeyVideo(); 
                 //Log::debug("send frame");
                 DecodeVideo(buff);
+				m_timestamp += m_tick_gap;
             }
             break;
         case idr_Nal: // 关键帧
@@ -278,13 +299,13 @@ namespace LiveClient
         AVCodec         *m_codec;     //h264编解码器
         AVCodecContext  *m_context;   //解码上下文
         AVFrame         *m_frame;     //缩放后的yuv图片
-        uint32_t         m_width;     //缩放大小
-        uint32_t         m_height;    //缩放大小
         CES             *m_pEs;       // ES包解析，多个nalu
 
         AV_CALLBACK      m_funCB;
 		void            *m_user;
         bool             m_ok;
+        uint32_t         m_timestamp;       // 时间戳
+        uint32_t         m_tick_gap;        // 两帧间的间隔
 
         CEncoder();
         ~CEncoder();
@@ -309,6 +330,8 @@ namespace LiveClient
 
     CEncoder::CEncoder()
         : m_ok(false)
+        , m_timestamp(0)
+        , m_tick_gap(3600)
     {
         m_pEs = new CES(ParseEsCb, this);
 
@@ -321,10 +344,12 @@ namespace LiveClient
     }
 
     CEncoder::~CEncoder(){
-        avcodec_close(m_context);
-        av_free(m_context);
+		if(m_ok) {
+			avcodec_close(m_context);
+			av_free(m_context);
+			sws_freeContext(m_swsc);
+		}
         av_frame_free(&m_frame);
-        sws_freeContext(m_swsc);
         SAFE_DELETE(m_pEs);
     }
 

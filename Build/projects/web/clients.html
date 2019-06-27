@@ -20,6 +20,7 @@
         <th>DeviceID</th>
         <th>Connect</th>
         <th>Media</th>
+        <th>Channel</th>
         <th>ClientIP</th>
       </tr>
       <tbody ng-repeat="item in data track by $index" ng-show="!isFilter">
@@ -28,6 +29,7 @@
             <td>{{item.DeviceID}}</td>
             <td>{{item.Connect}}</td>
             <td>{{item.Media}}</td>
+            <td>{{item.Channel}}</td>
             <td>{{item.ClientIP}}</td>
           </tr>
       </tbody>

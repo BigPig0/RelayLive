@@ -168,7 +168,9 @@ namespace LiveClient
         , m_strSDP(sdp)
         , m_nType(0)
         , m_pReceiver(nullptr)
+#ifdef USE_FFMPEG
         , m_pDecoder(nullptr)
+#endif
         , m_bStop(false)
         , m_bOver(false)
     {
@@ -223,7 +225,9 @@ namespace LiveClient
             } else {
                 CLiveChannel *nc = new CLiveChannel(c, 640, 480);
                 nc->AddHandle(h, t);
+#ifdef USE_FFMPEG
                 nc->SetDecoder(m_pDecoder);
+#endif
                 m_mapChlEx.insert(make_pair(c, nc));
             }
         }
@@ -334,9 +338,10 @@ namespace LiveClient
                 m_pOrigin->ReceiveStream(buff);
             }
             //扩展通道，将码流解码成yuv再发送过去
+#ifdef USE_FFMPEG
             MutexLock lock(&m_csChls);
             if(!m_mapChlEx.empty()){
-                if(nullptr != m_pDecoder) {
+                if(nullptr == m_pDecoder) {
                     m_pDecoder = IDecoder::Create(H264DecodeCb,this);
                     for(auto it:m_mapChlEx){
                         it.second->SetDecoder(m_pDecoder);
@@ -346,6 +351,7 @@ namespace LiveClient
             } else {
                 SAFE_DELETE(m_pDecoder);
             }
+#endif
         }
     }
 

@@ -33,10 +33,12 @@ namespace LiveClient
         CLiveChannel(int channel, uint32_t w, uint32_t h);
         ~CLiveChannel();
 
+#ifdef USE_FFMPEG
         /**
          * h264解码器,用来传递参数
          */
         void SetDecoder(IDecoder *decoder);
+#endif
 
         /**
          * 向通道添加播放客户端
@@ -110,7 +112,10 @@ namespace LiveClient
         CTS                     *m_pTs;         // TS组包类
         CFlv                    *m_pFlv;        // FLV组包类
         CMP4                    *m_pMp4;        // MP4组包类
+
+#ifdef USE_FFMPEG
         IEncoder                *m_pEncoder;    // YUV编码为h264
+#endif
 
         uint32_t                 m_nWidth;
         uint32_t                 m_nHeight;

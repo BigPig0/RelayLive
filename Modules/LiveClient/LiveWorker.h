@@ -48,7 +48,9 @@ namespace LiveClient
         CLiveChannel*            m_pOrigin;     // 原始流通道
         map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
         CriticalSection          m_csChls;
+#ifdef USE_FFMPEG
         IDecoder                *m_pDecoder;    // h264解码
+#endif
 
         vector<ILiveHandleRtp*>  m_vecLiveRtp;  // RTP原始流转发
         CriticalSection          m_csRtp;

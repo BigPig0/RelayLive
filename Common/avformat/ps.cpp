@@ -142,7 +142,7 @@ int CPs::ParsePES(char* pBuf, uint32_t nLen)
         // 回调解析PES包
         if (m_fCB != nullptr)
         {
-            AV_BUFF buff = {AV_TYPE::PES, (char*)pes, pesLen+6};
+            AV_BUFF buff = {AV_TYPE::PES, (char*)pes, pesLen+6, 0, 0};
             m_fCB(buff, m_hUser);
         }
 

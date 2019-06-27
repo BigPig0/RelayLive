@@ -67,7 +67,6 @@ bool inline is_pes_header(pes_header_t* pes)
     return false;
 }
 
-typedef void (*PES_CALLBACK)(AV_BUFF, void*, uint64_t, uint64_t);
 
 /**
  * PES包解析类
@@ -75,7 +74,7 @@ typedef void (*PES_CALLBACK)(AV_BUFF, void*, uint64_t, uint64_t);
 class CPes
 {
 public:
-    CPes(PES_CALLBACK cb, void* handle=NULL);
+    CPes(AV_CALLBACK cb, void* handle=NULL);
     ~CPes(void);
 
     /**
@@ -88,6 +87,6 @@ public:
 
 private:
     void*             m_hUser;                  // 回调处理对象
-    PES_CALLBACK       m_fCB;
+    AV_CALLBACK       m_fCB;
 };
 
