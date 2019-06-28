@@ -138,7 +138,7 @@ CFlv::~CFlv(void)
     SAFE_DELETE(m_pData);
 }
 
-int CFlv::Code(NalType eType, char* pBuf, uint32_t nLen)
+int CFlv::Code(AV_BUFF buff)
 {
     if(!m_bRun)
     {
@@ -146,6 +146,16 @@ int CFlv::Code(NalType eType, char* pBuf, uint32_t nLen)
         return false;
     }
     // MutexLock lock(&m_cs); //由于能保证是单线程调用，因此不需要该锁
+
+    char* pBuf;
+    uint32_t nLen = 0;
+    h264_nalu_data2(buff.pData, buff.nLen, &pBuf, &nLen);
+    NalType eType = h264_naltype(pBuf);
+
+    if(eType == sps_Nal && m_nWidth==0){
+        double fps;
+        h264_sps_info(pBuf, nLen, &m_nWidth, &m_nHeight, &fps);
+    }
 
     switch (eType)
     {

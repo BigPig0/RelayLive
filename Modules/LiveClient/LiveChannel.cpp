@@ -5,11 +5,6 @@ namespace LiveClient
 {
     extern int  g_nNodelay;
 
-static void H264SpsCbfun(uint32_t nWidth, uint32_t nHeight, double fFps, void* pUser){
-    CLiveChannel* pLive = (CLiveChannel*)pUser;
-    pLive->set_h264_param(nWidth, nHeight, fFps);
-}
-
 static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveChannel* pLive = (CLiveChannel*)pUser;
     switch (buff.eType)
@@ -70,7 +65,7 @@ void CLiveChannel::Init()
     memset(&m_stFlvHead, 0, sizeof(m_stFlvHead));
     memset(&m_stMp4Head, 0, sizeof(m_stMp4Head));
 
-    m_pH264          = new CH264(H264SpsCbfun, AVCallback, this);
+    m_pH264          = new CH264(AVCallback, this);
     m_pTs            = new CTS(AVCallback, this);
     m_pFlv           = new CFlv(AVCallback, this);
     m_pMp4           = new CMP4(AVCallback, this);
@@ -225,24 +220,33 @@ void CLiveChannel::push_h264_stream(AV_BUFF buff)
     CHECK_POINT_VOID(buff.pData);
     //Log::debug("ESParseCb nlen:%ld, buff:%02X %02X %02X %02X %02X", buff.nLen,buff.pData[0],buff.pData[1],buff.pData[2],buff.pData[3],buff.pData[4]);
 
-    m_pH264->InputBuffer(buff.pData, buff.nLen);
-    NalType m_nalu_type = m_pH264->NaluType();
+    char* pData;
     uint32_t nDataLen = 0;
-    char* pData = m_pH264->DataBuff(nDataLen);
+    h264_nalu_data2(buff.pData, buff.nLen, &pData, &nDataLen);
+    NalType nalu_type = h264_naltype(pData);
 
+    if(nalu_type == sps_Nal && m_nWidth==0){
+        double fps;
+        h264_sps_info(pData, nDataLen, &m_nWidth, &m_nHeight, &fps);
+        set_h264_param(m_nWidth, m_nHeight, fps);
+    }
 
     //需要回调Flv
     if(m_bFlv && nullptr != m_pFlv)
     {
-        CFlv* flv = (CFlv*)m_pFlv;
-        flv->Code(m_nalu_type, pData, nDataLen);
+        m_pFlv->Code(nalu_type, pData, nDataLen);
     }
     
     //需要回调mp4
-    if (m_bMp4 && nullptr != m_pMp4)
+    if(m_bMp4 && nullptr != m_pMp4)
     {
-        CMP4* mp4 = (CMP4*)m_pMp4;
-        mp4->Code(m_nalu_type, pData, nDataLen);
+        Mp4Cb(buff);
+    }
+
+    //需要回调h264
+    if (m_bH264 && nullptr != m_pH264)
+    {
+        m_pH264->Code(buff.pData, buff.nLen);
     }
 
 }

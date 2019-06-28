@@ -397,7 +397,8 @@ namespace LiveClient
 
         // 设置立即编码，不延时
         AVDictionary *options = NULL;
-        av_dict_set(&options, "preset", "superfast",   0);
+        //-preset fast/faster/verfast/superfast/ultrafast
+        av_dict_set(&options, "preset", "ultrafast",   0);
         //av_dict_set(&options, "tune",   "zerolatency", 0);
 
         //打开AVCodec对象

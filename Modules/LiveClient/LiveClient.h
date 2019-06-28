@@ -51,7 +51,7 @@ namespace LiveClient
         /**
          * 获取客户端信息
          */
-        virtual vector<ClientInfo> get_clients_info() = 0;
+        virtual ClientInfo get_clients_info() = 0;
     };
 
     struct ILiveHandleRtp : public ILiveHandle {

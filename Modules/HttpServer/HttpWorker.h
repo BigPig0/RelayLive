@@ -9,45 +9,51 @@ namespace HttpWsServer
     class CHttpWorker : public LiveClient::ILiveHandle
     {
     public:
-        CHttpWorker(string strCode, HandleType t, int nChannel);
+        CHttpWorker(string strCode, HandleType t, int nChannel, bool isWs);
         ~CHttpWorker();
-
-        /** 客户端连接 */
-        bool AddConnect(pss_http_ws_live* pss);
-        bool DelConnect(pss_http_ws_live* pss);
 
         /** 请求端获取视频数据 */
         AV_BUFF GetHeader();
         AV_BUFF GetVideo(uint32_t *tail);
         void NextWork(pss_http_ws_live* pss);
 
+        /**
+         * 底层推送H264进来
+         */
         virtual void push_video_stream(AV_BUFF buff);
+
+        /**
+         * 底层通知播放关闭(接收rtp超时、对方关闭等)
+         */
         virtual void stop();
-        virtual vector<LiveClient::ClientInfo> get_clients_info();
+
+        /**
+         * 封装媒体类型
+         */
+        void MediaCb(AV_BUFF buff);
+
+        virtual LiveClient::ClientInfo get_clients_info();
     private:
         void cull_lagging_clients();
 
-    private:
-        string                m_strCode;     // 播放媒体编号
+    public:
+        string                m_strCode;        //< 播放媒体编号
+        HandleType            m_eHandleType;     //< 表明是哪一种类型
+        //MediaType             m_eMediaType;
+        int                   m_nChannel;       //< 通道 0:原始码流  1:小码流
+        bool                  m_bWebSocket;     //< false:http请求，true:websocket
 
-        /**
-         * lws_ring无锁环形缓冲区，只能一个线程写入，一个线程读取
-         * m_pRing由liveworker中的uv_loop线程写入，http服务所在的uv_loop线程读取
-         */
-        AV_BUFF               m_stHead;
-        struct lws_ring       *m_pRing;
-        pss_http_ws_live      *m_pPssList;
+        string                m_strPath;        //< 播放端请求地址
+        string                m_strClientName;  //< 播放端的名称
+        string                m_strClientIP;    //< 播放端的ip
+
+    private:
+        LiveClient::ILiveWorker *m_pLive;       //< 接收RTP数据并输出264报文
+        void                    *m_pFormat;     //< 视频格式打包
+        struct lws_ring         *m_pRing;       //< 缓存媒体内容的缓冲区
+        pss_http_ws_live        *m_pPss;        //< 连接会话
 
         int                   m_nType;          //< 0:live直播；1:record历史视频
-        LiveClient::ILiveWorker *m_pLive;       //< 直播数据接收和解包装包
-        HandleType            m_type;           //< 表明是哪一种类型
-        int                   m_nChannel;       //< 通道 0:原始码流  1:小码流
     };
 
-    /** 直播 */
-    CHttpWorker* CreatHttpWorker(string strCode, HandleType t, int nChannel);
-    CHttpWorker* GetHttpWorker(string strCode, HandleType t, int nChannel);
-    bool DelHttpWorker(string strCode, HandleType t, int nChannel);
-
-    /** 点播 */
 };

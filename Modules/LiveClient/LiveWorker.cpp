@@ -168,6 +168,7 @@ namespace LiveClient
         , m_strSDP(sdp)
         , m_nType(0)
         , m_pReceiver(nullptr)
+        , m_pOrigin(nullptr)
 #ifdef USE_FFMPEG
         , m_pDecoder(nullptr)
 #endif
@@ -185,8 +186,6 @@ namespace LiveClient
         t2 = sdp.find(" ", t1);
         string rport = sdp.substr(t1, t2-t1);
         int nport = stoi(rport);
-
-        m_pOrigin = new CLiveChannel();
 
         //启动监听
         m_pReceiver = new CLiveReceiver(rtpPort, this);
@@ -216,8 +215,13 @@ namespace LiveClient
     bool CLiveWorker::AddHandle(ILiveHandle* h, HandleType t, int c)
     {
         if(c == 0) {
+            // 原始通道
+            if(!m_pOrigin)
+                m_pOrigin = new CLiveChannel;
+            CHECK_POINT(m_pOrigin);
             m_pOrigin->AddHandle(h, t);
         } else {
+            // 扩展通道
             MutexLock lock(&m_csChls);
             auto fit = m_mapChlEx.find(c);
             if(fit != m_mapChlEx.end()) {
@@ -242,9 +246,17 @@ namespace LiveClient
 
     bool CLiveWorker::RemoveHandle(ILiveHandle* h)
     {
-        bool bOriginEmpty = m_pOrigin->RemoveHandle(h);
-        bool bExEmpty = true;
+        // 原始通道
+        bool bOriginEmpty = true;
+        if(m_pOrigin){
+            m_pOrigin->RemoveHandle(h);
+            if(bOriginEmpty) {
+                SAFE_DELETE(m_pOrigin);
+            }
+        }
 
+        //扩展通道
+        bool bExEmpty = true;
         MutexLock lock(&m_csChls);
         for(auto it = m_mapChlEx.begin(); it != m_mapChlEx.end();) {
             bool bEmpty = it->second->RemoveHandle(h);

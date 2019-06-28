@@ -13,6 +13,8 @@ CES::CES(AV_CALLBACK cb, void* handle)
 
 CES::~CES(void)
 {
+    if(m_pH264Buf)
+        free(m_pH264Buf);
 }
 
 int CES::DeCode(AV_BUFF buff)

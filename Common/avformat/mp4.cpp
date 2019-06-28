@@ -250,12 +250,22 @@ CMP4::~CMP4()
     SAFE_DELETE(m_pFragment);
 }
 
-int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
+int CMP4::Code(AV_BUFF buff)
 {
     if(!m_bRun)
     {
         Log::error("already stop");
         return false;
+    }
+
+    char* pBuf;
+    uint32_t nLen = 0;
+    h264_nalu_data2(buff.pData, buff.nLen, &pBuf, &nLen);
+    NalType eType = h264_naltype(pBuf);
+
+    if(eType == sps_Nal && m_nWidth==0){
+        double fps;
+        h264_sps_info(pBuf, nLen, &m_nWidth, &m_nHeight, &fps);
     }
 
     switch (eType)
@@ -275,7 +285,7 @@ int CMP4::Code(NalType eType, char* pBuf, uint32_t nLen)
     case idr_Nal: // ¹Ø¼üÖ¡
 		{
 			m_pKeyFrame->clear();
-				m_pKeyFrame->append_data(pBuf, nLen);
+			m_pKeyFrame->append_data(pBuf, nLen);
 			if(m_bGotPPS && m_bGotSPS)
 				MakeKeyVideo();
 		}

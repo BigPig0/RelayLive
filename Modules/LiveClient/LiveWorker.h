@@ -43,12 +43,13 @@ namespace LiveClient
     private:
         string                   m_strCode;     // 播放媒体编号
         string                   m_strSDP;      // sip服务器返回的sdp
-        CLiveReceiver*           m_pReceiver;   // 直播数据接收和解包装包
+        CLiveReceiver           *m_pReceiver;   // 直播数据接收和解包
 
-        CLiveChannel*            m_pOrigin;     // 原始流通道
-        map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
-        CriticalSection          m_csChls;
+        CLiveChannel            *m_pOrigin;     // 原始流通道
+
 #ifdef USE_FFMPEG
+        map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
+        CriticalSection          m_csChls;      // map的锁
         IDecoder                *m_pDecoder;    // h264解码
 #endif
 

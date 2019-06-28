@@ -96,6 +96,8 @@ namespace LiveClient
         void Init();
         void push_h264_stream(AV_BUFF buff);
 
+        bool                     m_bDecodeSps;  // 是否已解析SPS,只有原始通道需要
+
         vector<ILiveHandle*>     m_vecLiveFlv;  // 播放实例 
         CriticalSection          m_csFlv;
         vector<ILiveHandle*>     m_vecLiveMp4;  // 播放实例 
@@ -117,8 +119,8 @@ namespace LiveClient
         IEncoder                *m_pEncoder;    // YUV编码为h264
 #endif
 
-        uint32_t                 m_nWidth;
-        uint32_t                 m_nHeight;
+        uint32_t                 m_nWidth;      // 视频图像的宽度
+        uint32_t                 m_nHeight;     // 视频图像的高度
     };
 
 }

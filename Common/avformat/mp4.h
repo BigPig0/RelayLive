@@ -41,7 +41,7 @@ public:
     CMP4(AV_CALLBACK cb, void* handle=NULL);
     ~CMP4();
 
-    int Code(NalType eType, char* pBuf, uint32_t nLen);
+    int Code(AV_BUFF buff);
 
     void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 

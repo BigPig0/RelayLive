@@ -25,7 +25,7 @@ public:
     CFlv(AV_CALLBACK cb, void* handle=NULL);
     ~CFlv(void);
 
-    int Code(NalType eType, char* pBuf, uint32_t nLen);
+    int Code(AV_BUFF buff);
 
     void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 
