@@ -99,6 +99,9 @@
     <ProjectReference Include="..\..\Modules\HttpServer\HttpServer.vcxproj">
       <Project>{d99bdf45-2f42-4d81-8795-5357c4a1914f}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\Modules\LiveClient\LiveClient.vcxproj">
+      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Projects\relay_live.cpp" />

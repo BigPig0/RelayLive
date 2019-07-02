@@ -213,10 +213,15 @@ struct mp4_mdat_box {
 
 
 CMP4::CMP4(AV_CALLBACK cb, void* handle)
-    : m_nSampleNum(0)
+    : m_pSPS(nullptr)
+    , m_pPPS(nullptr)
+    , m_pMdat(nullptr)
+    , m_nSampleNum(0)
     , m_timestamp(0)
     , m_tick_gap(400)
     , m_nNodelay(0)
+    , m_nWidth(0)
+    , m_nHeight(0)
     , m_nfps(25.0)
     , m_nHorizresolution(0x00480000)
     , m_mVertresolution(0x00480000)
@@ -266,6 +271,8 @@ int CMP4::Code(AV_BUFF buff)
     if(eType == sps_Nal && m_nWidth==0){
         double fps;
         h264_sps_info(pBuf, nLen, &m_nWidth, &m_nHeight, &fps);
+		m_tick_gap = 90000/(m_nfps>0?m_nfps:25);
+        Log::debug("width = %d,height = %d, fps= %lf, tickgap= %d",m_nWidth,m_nHeight,m_nfps,m_tick_gap);
     }
 
     switch (eType)

@@ -77,8 +77,6 @@ namespace LiveClient
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
 
-		virtual AV_BUFF GetHeader(HandleType t, int c) = 0;
-
         virtual string GetSDP() = 0;
     };
 

@@ -18,7 +18,6 @@ namespace LiveClient
         /** 客户端连接 */
         virtual bool AddHandle(ILiveHandle* h, HandleType t, int c);
         virtual bool RemoveHandle(ILiveHandle* h);
-		virtual AV_BUFF GetHeader(HandleType t, int c);
         virtual string GetSDP();
 
         /** 客户端全部断开，延时后销毁实例 */

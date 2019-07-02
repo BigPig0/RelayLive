@@ -190,12 +190,6 @@ public:
      */
     int Code(AV_BUFF buff);
 
-    /** 获取类型 */
-    NalType NaluType(){return m_eNaluType;}
-
-    /** 获取数据内容位置(去除掉001或0001) */
-    char* DataBuff(uint32_t& nLen){nLen=m_nDataLen;return m_pDataBuff;}
-
     void SetNodelay(uint32_t nodelay){m_nNodelay = nodelay;};
 
 private:

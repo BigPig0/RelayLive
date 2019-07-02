@@ -37,7 +37,7 @@ namespace HttpWsServer
 
     bool CHlsWorker::AddConnect(pss_http_ws_live* pss)
     {
-        pss->pss_next = m_pPssList;
+        //pss->pss_next = m_pPssList;
         m_pPssList = pss;
 
         return true;
@@ -45,7 +45,7 @@ namespace HttpWsServer
 
     bool CHlsWorker::DelConnect(pss_http_ws_live* pss)
     {
-        lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pPssList);
+        //lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pPssList);
         return true;
     }
 
@@ -121,9 +121,9 @@ namespace HttpWsServer
             m_listTs.pop_front();
         }
 
-		lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
-			lws_callback_on_writable((*ppss)->wsi);
-        } lws_end_foreach_llp_safe(ppss);
+		//lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
+		//	lws_callback_on_writable((*ppss)->wsi);
+        //} lws_end_foreach_llp_safe(ppss);
 		m_pPssList = NULL;
     }
 
@@ -133,23 +133,25 @@ namespace HttpWsServer
         Log::debug("no data recived any more, stopped");
 
         //断开所有客户端连接
-        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
-            lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-        } lws_end_foreach_llp_safe(ppss);
+        //lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
+        //    lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        //} lws_end_foreach_llp_safe(ppss);
     }
 
-    vector<LiveClient::ClientInfo> CHlsWorker::get_clients_info()
+    LiveClient::ClientInfo CHlsWorker::get_clients_info()
     {
-        vector<LiveClient::ClientInfo> ret;
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
-            LiveClient::ClientInfo info;
-            info.devCode = m_strCode;
-            info.connect = "HLS";
-            info.media   = "TS";
-            info.clientIP= (*ppss)->clientIP;
-            ret.push_back(info);
-        } lws_end_foreach_llp(ppss, pss_next);
-        return ret;
+        //vector<LiveClient::ClientInfo> ret;
+        //lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
+        //    LiveClient::ClientInfo info;
+        //    info.devCode = m_strCode;
+        //    info.connect = "HLS";
+        //    info.media   = "TS";
+        //    info.clientIP= (*ppss)->clientIP;
+        //    ret.push_back(info);
+        //} lws_end_foreach_llp(ppss, pss_next);
+        //return ret;
+        LiveClient::ClientInfo info;
+        return info;
     }
 
     //////////////////////////////////////////////////////////////////////////

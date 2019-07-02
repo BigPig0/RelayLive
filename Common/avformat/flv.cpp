@@ -155,6 +155,8 @@ int CFlv::Code(AV_BUFF buff)
     if(eType == sps_Nal && m_nWidth==0){
         double fps;
         h264_sps_info(pBuf, nLen, &m_nWidth, &m_nHeight, &fps);
+		m_tick_gap = 1000/(m_nfps>0?m_nfps:25);
+		Log::debug("width = %d,height = %d, fps= %lf, tickgap= %d",m_nWidth,m_nHeight,m_nfps,m_tick_gap);
     }
 
     switch (eType)

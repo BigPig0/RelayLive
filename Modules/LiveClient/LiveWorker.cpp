@@ -249,7 +249,7 @@ namespace LiveClient
         // 原始通道
         bool bOriginEmpty = true;
         if(m_pOrigin){
-            m_pOrigin->RemoveHandle(h);
+            bOriginEmpty = m_pOrigin->RemoveHandle(h);
             if(bOriginEmpty) {
                 SAFE_DELETE(m_pOrigin);
             }
@@ -260,7 +260,7 @@ namespace LiveClient
         MutexLock lock(&m_csChls);
         for(auto it = m_mapChlEx.begin(); it != m_mapChlEx.end();) {
             bool bEmpty = it->second->RemoveHandle(h);
-            if(bExEmpty) {
+            if(bEmpty) {
                 delete it->second;
                 it = m_mapChlEx.erase(it);
             } else {
@@ -283,26 +283,12 @@ namespace LiveClient
         return true;
     }
 
-	AV_BUFF CLiveWorker::GetHeader(HandleType t, int c) {
-        if(c == 0) {
-            return m_pOrigin->GetHeader(t);
-        } else {
-            MutexLock lock(&m_csChls);
-            auto fit = m_mapChlEx.find(c);
-            if(fit != m_mapChlEx.end())
-                return fit->second->GetHeader(t);
-        }
-
-		AV_BUFF ret = {AV_TYPE::NONE, NULL, 0};
-		return ret;
-	}
-
     string CLiveWorker::GetSDP(){
         return m_strSDP;
     }
 
 	void CLiveWorker::Clear2Stop() {
-        bool bOriginEmpty = m_pOrigin->Empty();
+        bool bOriginEmpty = !m_pOrigin || m_pOrigin->Empty();
 
         MutexLock lock(&m_csChls);
         bool bExEmpty = m_mapChlEx.empty();
@@ -322,7 +308,8 @@ namespace LiveClient
         //状态改变为超时，此时前端全部断开，不需要延时，直接销毁
         m_bOver = true;
 
-        m_pOrigin->stop();
+		if(m_pOrigin)
+			m_pOrigin->stop();
         MutexLock lock(&m_csChls);
         for(auto it:m_mapChlEx){
             it.second->stop();
@@ -331,7 +318,9 @@ namespace LiveClient
 
     vector<ClientInfo> CLiveWorker::GetClientInfo()
     {
-		vector<ClientInfo> ret = m_pOrigin->GetClientInfo();
+		vector<ClientInfo> ret;
+		if(m_pOrigin)
+			ret = m_pOrigin->GetClientInfo();
         MutexLock lock(&m_csChls);
         for(auto chl : m_mapChlEx){
             vector<ClientInfo> tmp = chl.second->GetClientInfo();

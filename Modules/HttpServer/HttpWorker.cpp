@@ -8,6 +8,8 @@
 #include "flv.h"
 #include "mp4.h"
 
+#include "netstream.h"
+
 namespace HttpWsServer
 {
     static void destroy_ring_node(void *_msg)
@@ -33,7 +35,7 @@ namespace HttpWsServer
         , m_nChannel(nChannel)
         , m_bWebSocket(isWs)
     {
-        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 50, destroy_ring_node);
+        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
 
         if (t == h264_handle) {
             CH264 *tmp = new CH264(AVCallback, this);
@@ -46,6 +48,10 @@ namespace HttpWsServer
             m_pFormat = tmp;
         }
 
+        m_SocketBuff.eType = AV_TYPE::NONE;
+        m_SocketBuff.pData = nullptr;
+        m_SocketBuff.nLen = 0;
+
         m_pLive = LiveClient::GetWorker(strCode);
 		if(m_pLive)
 			m_pLive->AddHandle(this, t, nChannel);
@@ -56,38 +62,69 @@ namespace HttpWsServer
 		if(m_pLive)
 			m_pLive->RemoveHandle(this);
 
+        SAFE_FREE(m_SocketBuff.pData);
+
         lws_ring_destroy(m_pRing);
         Log::debug("CHttpWorker release");
     }
 
-    AV_BUFF CHttpWorker::GetHeader()
+    int CHttpWorker::GetVideo(char **buff)
     {
-		return m_pLive->GetHeader(m_eMediaType, m_nChannel);
-    }
+        int wnum = lws_ring_get_count_waiting_elements(m_pRing, NULL);
+        //没有缓存数据
+        if(wnum == 0)
+            return 0;
+        //只有一个缓存数据
+        if(wnum == 1) {
+            AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+            if(!tmp) {
+                return 0;
+            }
+            uint32_t tlen = LWS_PRE +  tmp->nLen;         //LWS_PRE 多申请一段空间，供websocket发送使用
+            if(m_SocketBuff.nLen < tlen){
+                m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
+                m_SocketBuff.nLen = tlen;
+            }
+            memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
+            memcpy(m_SocketBuff.pData+LWS_PRE, tmp->pData, tmp->nLen);
+            *buff = m_SocketBuff.pData;
+            return tlen;
+        }
 
-    AV_BUFF CHttpWorker::GetVideo(uint32_t *tail)
-    {
-        AV_BUFF ret = {AV_TYPE::NONE,nullptr,0};
-        AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, 0);
-        if(tag) ret = *tag;
-        lws_ring_consume(m_pRing, 0,0,0);
-        return ret;
-    }
+        //多个缓存数据
+		AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+		if(!tmp) {
+			return 0;
+		}
+		net_stream_maker_t *sm = create_net_stream_maker();
+		while(tmp){
+			net_stream_append_data(sm, tmp->pData, tmp->nLen);
+			lws_ring_consume(m_pRing, NULL, NULL, 1);
+			tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+		}
 
-    void CHttpWorker::NextWork(pss_http_ws_live* pss)
-    {
-        lws_callback_on_writable(pss->wsi);
+		uint32_t tlen = LWS_PRE +  get_net_stream_len(sm);          //LWS_PRE 多申请一段空间，供websocket发送使用
+        if(m_SocketBuff.nLen < tlen){
+            m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
+            m_SocketBuff.nLen = tlen;
+        }
+        memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
+		memcpy(m_SocketBuff.pData+LWS_PRE, get_net_stream_data(sm), get_net_stream_len(sm));
+		destory_net_stream_maker(sm);
+
+		*buff = m_SocketBuff.pData;
+        return tlen;
     }
 
     void CHttpWorker::push_video_stream(AV_BUFF buff)
     {
-        if (m_eMediaType == h264_handle) {
+        if (m_eHandleType == h264_handle) {
             CH264 *tmp = (CH264 *)m_pFormat;
             tmp->Code(buff);
-        } else if(m_eMediaType == flv_handle) {
+        } else if(m_eHandleType == flv_handle) {
             CFlv *tmp = (CFlv *)m_pFormat;
             tmp->Code(buff);
-        } else if(m_eMediaType == fmp4_handle){
+        } else if(m_eHandleType == fmp4_handle){
             CMP4 *tmp = (CMP4 *)m_pFormat;
             tmp->Code(buff);
         }
@@ -105,16 +142,16 @@ namespace HttpWsServer
     void CHttpWorker::MediaCb(AV_BUFF buff)
     {
         int n = (int)lws_ring_get_count_free_elements(m_pRing);
+        //Log::debug("ring free space %d", n);
         if (!n) {
             return;
         }
-        if(n <80)
-            Log::debug("ring free space %d\n", n);
 
         // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(buff.nLen + LWS_PRE);
-        memcpy(pSaveBuff + LWS_PRE, buff.pData, buff.nLen);
-        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen};
+        char* pSaveBuff = (char*)malloc(buff.nLen);
+        memcpy(pSaveBuff, buff.pData, buff.nLen);
+        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen, 0, 0};
+
         if (!lws_ring_insert(m_pRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
             Log::error("dropping!");
@@ -134,16 +171,17 @@ namespace HttpWsServer
         } else {
             info.connect = "Http";
         }
-        if(m_eMediaType == HandleType::flv_handle)
+        if(m_eHandleType == HandleType::flv_handle)
             info.media = "flv";
-        else if(m_eMediaType == HandleType::fmp4_handle)
+        else if(m_eHandleType == HandleType::fmp4_handle)
             info.media = "mp4";
-        else if(m_eMediaType == HandleType::h264_handle)
+        else if(m_eHandleType == HandleType::h264_handle)
             info.media = "h264";
-        else if(m_eMediaType == HandleType::ts_handle)
+        else if(m_eHandleType == HandleType::ts_handle)
             info.media = "hls";
         else 
             info.media = "unknown";
+		info.channel = m_nChannel;
         info.clientIP = m_strClientIP;
         return info;
     }

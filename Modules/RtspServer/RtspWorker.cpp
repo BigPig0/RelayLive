@@ -132,19 +132,21 @@ namespace RtspServer
         } end_foreach_llp_safe(ppss);
     }
 
-    vector<ClientInfo> CRtspWorker::get_clients_info()
+    LiveClient::ClientInfo CRtspWorker::get_clients_info()
     {
-        vector<ClientInfo> ret;
-        stringstream ss;
-        start_foreach_llp(pss_rtsp_client **, ppss, m_pPssList) {
-            ClientInfo info;
-            info.devCode = m_strCode;
-            info.connect = "RTSP";
-            info.media = "RTSP";
-            info.clientIP = (*ppss)->clientIP;
-            ret.push_back(info);
-        } end_foreach_llp(ppss, pss_next);
-        return ret;
+        //vector<ClientInfo> ret;
+        //stringstream ss;
+        //start_foreach_llp(pss_rtsp_client **, ppss, m_pPssList) {
+        //    ClientInfo info;
+        //    info.devCode = m_strCode;
+        //    info.connect = "RTSP";
+        //    info.media = "RTSP";
+        //    info.clientIP = (*ppss)->clientIP;
+        //    ret.push_back(info);
+        //} end_foreach_llp(ppss, pss_next);
+        //return ret;
+        LiveClient::ClientInfo info;
+        return info;
     }
 
     void CRtspWorker::cull_lagging_clients()

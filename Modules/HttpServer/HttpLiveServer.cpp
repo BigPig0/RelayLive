@@ -12,82 +12,15 @@ namespace HttpWsServer
     {
         live_error_ok = 0,
         live_error_uri,
+        live_error_media_type
     };
 
     static const char* live_error_str[] = {
         "ok",
         "error request uri",
+        "unkown media type"
     };
-    static void SendLiveFlv(pss_http_ws_live *pss) {
-        CHttpWorker* pWorker = (CHttpWorker*)pss->pWorker;
-        AV_BUFF tag = pWorker->GetVideo(&pss->tail);
-        if(tag.pData == nullptr) return;
-
-        if (!pss->m_bSendHead) {
-            if(tag.eType != AV_TYPE::FLV_FRAG_KEY) // 第一个包必须是关键帧
-                return;
-            AV_BUFF flvheader = pWorker->GetHeader();
-            if(flvheader.pData == nullptr)
-                return;
-
-            Log::debug("first flv data with header: tail:%d",pss->tail);
-            int len = flvheader.nLen + tag.nLen;
-            uint8_t* buff = (uint8_t *)malloc(len + LWS_PRE);
-            int nPos = LWS_PRE;
-            memcpy(buff + nPos, flvheader.pData, flvheader.nLen);
-            nPos += flvheader.nLen;
-            memcpy(buff + nPos, tag.pData + LWS_PRE, tag.nLen);
-            int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, len, LWS_WRITE_BINARY);
-            pss->m_bSendHead = true;
-            free(buff);
-            pWorker->NextWork(pss);
-        } else {
-            //Log::debug(" flv data tail:%d", pss->tail);
-            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
-            pWorker->NextWork(pss);
-        }
-    }
-
-    static void SendLiveH264(pss_http_ws_live *pss) {
-        AV_BUFF tag = pss->pWorker->GetVideo(&pss->tail);
-		if(tag.pData == nullptr) return;
-
-        Log::debug(" h264 data tail:%d", pss->tail);
-        int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
-        pss->pWorker->NextWork(pss);
-    }
-
-    static void SendLiveMp4(pss_http_ws_live *pss)
-    {
-        CHttpWorker* pWorker = (CHttpWorker*)pss->pWorker;
-        AV_BUFF tag = pWorker->GetVideo(&pss->tail);
-        if(tag.pData == nullptr) return;
-
-        if (!pss->m_bSendHead) {
-            if(tag.eType != AV_TYPE::MP4_FRAG_KEY) // 第一个包必须是关键帧
-                return;
-            AV_BUFF mp4_header = pWorker->GetHeader();
-            if(mp4_header.pData == nullptr)
-                return;
-
-            Log::debug("first mp4 data with header: tail:%d",pss->tail);
-            int len = mp4_header.nLen + tag.nLen;
-            uint8_t* buff = (uint8_t *)malloc(len + LWS_PRE);
-            int nPos = LWS_PRE;
-            memcpy(buff + nPos, mp4_header.pData, mp4_header.nLen);
-            nPos += mp4_header.nLen;
-            memcpy(buff + nPos, tag.pData + LWS_PRE, tag.nLen);
-            int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, len, LWS_WRITE_BINARY);
-            pss->m_bSendHead = true;
-            free(buff);
-            pWorker->NextWork(pss);
-        } else {
-            Log::debug(" mp4 data tail:%d", pss->tail);
-            int wlen = lws_write(pss->wsi, (uint8_t *)tag.pData + LWS_PRE, tag.nLen, LWS_WRITE_BINARY);
-            pWorker->NextWork(pss);
-        }
-    }
-
+ 
     static string StartPlayHls(pss_http_ws_live *pss, string devCode){
         if(pss == nullptr) {
             return g_strError_play_faild;
@@ -118,7 +51,7 @@ namespace HttpWsServer
 
     static bool SendLiveTs(pss_http_ws_live *pss){
         CHlsWorker* pWorker = (CHlsWorker*)pss->pWorker;
-        string strPath = pss->path;
+        string strPath;
 
         size_t pos = strPath.rfind(".");
         size_t pos2 = strPath.rfind("/");
@@ -155,17 +88,18 @@ namespace HttpWsServer
                     *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
                 pss->wsi = wsi;
-
-                // http://IP:port/live/type/channel/code
-                // type: flv、mp4、h264、hls
-                // channel: 0:原始码流 1:小码流
-                // e.g http://localhost:80/live/flv/0/123456789
-                // 这里path只有 /type/stream/code
+                pss->pWorker = nullptr;
+                pss->error_code = 0;
                 char path[MAX_PATH]={0};
                 lws_snprintf(path, MAX_PATH, "%s", (const char *)in);
                 Log::debug("new request: %s", path);
 
                 do{
+                    // http://IP:port/live/type/channel/code
+                    // type: flv、mp4、h264、hls
+                    // channel: 0:原始码流 1:小码流
+                    // e.g http://localhost:80/live/flv/0/123456789
+                    // 这里path只有 /type/stream/code
                     char szType[10]={0}, szCode[30]={0};
                     int nChannel = 0;
                     int ret = sscanf(path, "/%[a-z0-9]/%d/%[0-9a-z]", szType, &nChannel, szCode);
@@ -179,14 +113,20 @@ namespace HttpWsServer
                     if (!strcasecmp(szType, "flv")) {
                         pss->media_type = media_flv;
                         pss->pWorker = new CHttpWorker(szCode, flv_handle, nChannel, false);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
 						mime = "video/x-flv";
                     } else if(!strcasecmp(szType, "h264")) {
                         pss->media_type = media_h264;
-                        pss->pWorker = new CHttpWorker(szCode, flv_handle, nChannel, false);
+                        pss->pWorker = new CHttpWorker(szCode, h264_handle, nChannel, false);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
 						mime = "video/h264";
                     } else if(!strcasecmp(szType, "mp4")) {
                         pss->media_type = media_mp4;
-                        pss->pWorker = new CHttpWorker(szCode, flv_handle, nChannel, false);
+                        pss->pWorker = new CHttpWorker(szCode, fmp4_handle, nChannel, false);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
 						mime = "video/mp4";
                     } else if(!strcasecmp(szType, "hls")) {
                         char szRealCode[30]={0}, szRealType[30]={0};
@@ -209,7 +149,7 @@ namespace HttpWsServer
                             break;
                         }
                     } else {
-                        pss->error_code = live_error_uri;
+                        pss->error_code = live_error_media_type;
                         break;
                     }
                     lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end);
@@ -221,20 +161,20 @@ namespace HttpWsServer
                     if (lws_finalize_write_http_header(wsi, start, &p, end))
                         return 1;
 
+                    char clientName[50]={0};    //播放端的名称
+                    char clientIP[50]={0};      //播放端的ip
+                    lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
+                        clientName, sizeof(clientName),
+                        clientIP, sizeof(clientIP));
+                    pss->pWorker->m_strClientIP = clientIP;
+
                     if(!strcasecmp(szType, "hls"))
                         lws_callback_on_writable(wsi);
                     return 0;
                 }while(0);
 
 
-                char clientName[50]={0};    //播放端的名称
-                char clientIP[50]={0};      //播放端的ip
-                lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
-                    clientName, sizeof(clientName),
-                    clientIP, sizeof(clientIP));
-                pss->pWorker->m_strClientIP = clientIP;
-
-
+                // 失败的情况
                 if (lws_add_http_common_headers(wsi, HTTP_STATUS_FORBIDDEN, "text/html",
                     LWS_ILLEGAL_HTTP_CONTENT_LEN, &p, end))
                     return 1;
@@ -246,18 +186,22 @@ namespace HttpWsServer
             }
         case LWS_CALLBACK_HTTP_WRITEABLE: 
             {
-                if (!pss || pss->pWorker)
+                if (!pss || !pss->pWorker)
                     break;
-                CHttpWorker *pWorker = pss->pWorker;
 
-                if (pss->error_code > 0) {
+                if (pss->error_code == 0) {
 
-                    if(pss->media_type == media_flv){
-                        SendLiveFlv(pss);
-                    } else if(pss->media_type == media_h264){
-                        SendLiveH264(pss);
-                    } else if(pss->media_type == media_mp4){
-                        SendLiveMp4(pss);
+                    if( pss->media_type == media_flv
+                     || pss->media_type == media_h264
+                     || pss->media_type == media_mp4 ){
+                        char *buff;
+                        CHttpWorker *pWorker = (CHttpWorker *)pss->pWorker;
+                        int nLen = pWorker->GetVideo(&buff);
+                        if(nLen == 0)
+                            return 0;
+
+                        int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, nLen, LWS_WRITE_BINARY);
+                        lws_callback_on_writable(pss->wsi);
                     } else if(pss->media_type == media_m3u8){
                         if(SendLiveM3u8(pss)){
                             if (lws_http_transaction_completed(wsi))
@@ -310,17 +254,14 @@ namespace HttpWsServer
         case LWS_CALLBACK_ESTABLISHED:
             {
                 /* add ourselves to the list of live pss held in the vhd */
-                lws_hdr_copy(wsi, pss->path, sizeof(pss->path), WSI_TOKEN_GET_URI);
-                Log::debug("live ws protocol establised: %s", pss->path);
+                char path[MAX_PATH]={0};
+                lws_hdr_copy(wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
+                Log::debug("live ws protocol establised: %s", path);
 
                 pss->wsi = wsi;
-                pss->pss_next = nullptr;
-                pss->isWs = true;
-                pss->m_bSendHead = false;
                 pss->pWorker = nullptr;
+                pss->error_code = 0;
 
-                string strErrInfo;
-                string strPath = pss->path;
 				// ws://IP:port/live/type/channel/code
                 // type: flv、mp4、h264、hls
                 // channel: 0:原始码流 1:小码流
@@ -329,48 +270,47 @@ namespace HttpWsServer
                 do{
                     char szType[10]={0}, szCode[30]={0};
                     int nChannel = 0;
-                    int ret = sscanf(pss->path, "/live/%[a-z0-9]/%d/%[0-9a-z]", szType, &nChannel, szCode);
+                    int ret = sscanf(path, "/live/%[a-z0-9]/%d/%[0-9a-z]", szType, &nChannel, szCode);
                     if(ret < 0) {
-                        Log::error("%s error sscanf %d", pss->path, ret);
-                        strErrInfo = "error request path";
+                        Log::error("%s error sscanf %d", path, ret);
+                        pss->error_code = live_error_uri;
                         break;
                     }
 
                     if (!strcasecmp(szType, "flv")) {
                         pss->media_type = media_flv;
-                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
-                        if(!strErrInfo.empty()){
-                            break;
-                        }
+                        pss->pWorker = new CHttpWorker(szCode, flv_handle, nChannel, true);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
                     } else if(!strcasecmp(szType, "h264")) {
                         pss->media_type = media_h264;
-                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
-                        if(!strErrInfo.empty()){
-                            break;
-                        }
+                        pss->pWorker = new CHttpWorker(szCode, h264_handle, nChannel, true);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
                     } else if(!strcasecmp(szType, "mp4")) {
                         pss->media_type = media_mp4;
-                        pss->pBind = new MP4Maker(pss);
-                        strErrInfo = StartPlayLive(pss, szCode, nChannel);
-                        if(!strErrInfo.empty()){
-                            break;
-                        }
+                        pss->pWorker = new CHttpWorker(szCode, fmp4_handle, nChannel, true);
+                        pss->pWorker->m_pPss = pss;
+						pss->pWorker->m_strPath = path;
                     } else {
-                        strErrInfo = "error request path";
+                        pss->error_code = live_error_media_type;
                         break;
                     }
 
-				// 这个操作耗时5s	
+				//某些环境下，获取socket对端ip竟然耗时很多
+                char clientName[50]={0};    //播放端的名称
+                char clientIP[50]={0};      //播放端的ip
                 lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
-                    pss->clientName, sizeof(pss->clientName),
-                    pss->clientIP, sizeof(pss->clientIP));
+                    clientName, sizeof(clientName),
+                    clientIP, sizeof(clientIP));
+                pss->pWorker->m_strClientIP = clientIP;
                     return 0;
                 }while(0);
 
                 //播放失败，断开连接
-                lws_snprintf(pss->strErrInfo, sizeof(pss->strErrInfo), "%s", (const char *)strErrInfo.c_str());
-                int len = strlen(pss->strErrInfo);
-                lws_close_reason(wsi, LWS_CLOSE_STATUS_NORMAL,(uint8_t *)pss->strErrInfo, len);
+                const char *errors = live_error_str[pss->error_code];
+                int len = strlen(errors);
+                lws_close_reason(wsi, LWS_CLOSE_STATUS_NORMAL,(uint8_t *)errors, len);
                 return 0;
             }
             break;
@@ -386,18 +326,23 @@ namespace HttpWsServer
 
         case LWS_CALLBACK_SERVER_WRITEABLE: 
             {
-                if (!pss || pss->culled)
+                if (!pss || !pss->pWorker)
                     break;
 
                 //Log::debug("live ws protocol writeable %s", pss->path);
                 int len = 0;
                 int wlen = 0;
-                if(pss->media_type == media_flv){
-                    SendLiveFlv(pss);
-                } else if(pss->media_type == media_h264) {
-                    SendLiveH264(pss);
-                } else if(pss->media_type == media_mp4){
-                    SendLiveMp4(pss);
+                if(pss->media_type == media_flv
+                || pss->media_type == media_h264
+                || pss->media_type == media_mp4){
+                    char *buff;
+                    CHttpWorker *pWorker = (CHttpWorker *)pss->pWorker;
+                    int nLen = pWorker->GetVideo(&buff);
+                    if(nLen <= LWS_PRE)
+                        return 0;
+
+                    int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, nLen-LWS_PRE, LWS_WRITE_BINARY);
+                    lws_callback_on_writable(pss->wsi);
                 }
 
                 return 0;
@@ -406,10 +351,8 @@ namespace HttpWsServer
             {
                 if (!pss || !pss->pWorker)
                     break;
-                Log::debug("live ws protocol cloes %s", pss->path);
-                if(pss->media_type == media_mp4)
-                    delete (MP4Maker*)pss->pBind;
-                pss->pWorker->DelConnect(pss);
+				Log::debug("live ws protocol cloes %s", pss->pWorker->m_strPath.c_str());
+                delete pss->pWorker;
             }
         default:
             break;
