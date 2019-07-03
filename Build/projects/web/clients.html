@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>播放统计</title>
   <link rel="stylesheet" href="lib/bootstrap.min.css"/>
   <style>
     tr{
@@ -20,6 +20,7 @@
         <th>DeviceID</th>
         <th>Connect</th>
         <th>Media</th>
+        <th>Channel</th>
         <th>ClientIP</th>
       </tr>
       <tbody ng-repeat="item in data track by $index" ng-show="!isFilter">
@@ -28,6 +29,7 @@
             <td>{{item.DeviceID}}</td>
             <td>{{item.Connect}}</td>
             <td>{{item.Media}}</td>
+            <td>{{item.Channel}}</td>
             <td>{{item.ClientIP}}</td>
           </tr>
       </tbody>

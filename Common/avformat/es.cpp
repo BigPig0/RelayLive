@@ -13,71 +13,43 @@ CES::CES(AV_CALLBACK cb, void* handle)
 
 CES::~CES(void)
 {
+    if(m_pH264Buf)
+        free(m_pH264Buf);
 }
 
 int CES::DeCode(AV_BUFF buff)
 {
-    // ES包没有es头，由h264片组成
-    //nal_unit_header_t* nalUnit = nullptr;
-    //uint8_t nNalType = 0;
+    // ES包没有es头，由h264片组成.一个es可以包含多个nalu，也有可能一个nalu分割在多个es中
     uint32_t pos = 0;
     uint32_t begin_pos = 0;
     char* begin_buff = buff.pData;
-    while (pos < buff.nLen)
-    {
+    while (pos < buff.nLen) {
         char* pPos = buff.pData + pos;
-        if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 1)
-        {
+        if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 1) {
             //if(pos > 0) Log::debug("nal3 begin width 001 pos:%d",pos);
             // 是h264报文开头
-            if (pos > begin_pos)
-            {
-                // 回调处理H264帧
-                //if (m_pObj != nullptr)
-                //{
-                //    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
-                //}
+            if (pos > begin_pos) {
                 CatchData(begin_buff, pos-begin_pos);
             }
-            //nalUnit = (nal_unit_header_t*)(pPos+3);
-            //nNalType = nalUnit->nal_type;
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 3;
-        }
-        else if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 0 && pPos[3] == 1)
-        {
+        } else if (pPos[0] == 0 && pPos[1] == 0 && pPos[2] == 0 && pPos[3] == 1) {
 			//if(pos > 0) Log::debug("nal4 begin width 0001 pos:%d",pos);
             // 是h264报文开头
-            if (pos > begin_pos)
-            {
-                // 回调处理H264帧
-                //if (m_pObj != nullptr)
-                //{
-                //    m_pObj->ESParseCb(begin_buff, pos-begin_pos/*, nNalType*/);
-                //}
+            if (pos > begin_pos) { 
                 CatchData(begin_buff, pos-begin_pos);
-            }
-            //nalUnit = (nal_unit_header_t*)(pPos+4);
-            //nNalType = nalUnit->nal_type;
+            } 
             begin_pos = pos;
             begin_buff = (char*)pPos;
             pos += 4;
-        }
-        else
-        {
+        } else {
             // 不是h264开头
             pos++;
         }
     }
     // 最后一帧
-    if (buff.nLen > begin_pos)
-    {
-        // 回调处理H264帧
-        //if (m_pObj != nullptr)
-        //{
-        //    m_pObj->ESParseCb(begin_buff, nLen-begin_pos/*, nNalType*/);
-        //}
+    if (buff.nLen > begin_pos) {
         CatchData(begin_buff, pos-begin_pos);
     }
     return 0;

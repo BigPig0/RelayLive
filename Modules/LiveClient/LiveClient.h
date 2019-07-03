@@ -25,6 +25,13 @@ enum HandleType
 
 namespace LiveClient
 {
+    struct ClientInfo {
+        string devCode; //设备id
+        string connect; //连接协议 http/websocket/rtsp/hls
+        string media;   //媒体类型 h264/flv/mp4/ts
+        string clientIP; //客户端ip
+        int    channel; //通道号
+    };
     /**
     * 数据回调处理接口
     * 由上层实现一个继承该接口的类，live worker通过该接口访问其实例的方法
@@ -36,7 +43,7 @@ namespace LiveClient
          */
         virtual void push_video_stream(AV_BUFF buff) = 0;
 
-        /**
+       /**
         * rtp接收端结束，目前已知只有接收超时引起
         */
         virtual void stop() = 0;
@@ -44,7 +51,7 @@ namespace LiveClient
         /**
          * 获取客户端信息
          */
-        virtual string get_clients_info() = 0;
+        virtual ClientInfo get_clients_info() = 0;
     };
 
     struct ILiveHandleRtp : public ILiveHandle {
@@ -69,8 +76,6 @@ namespace LiveClient
         * 当liveworker中的handle全部移除时，liveworker将会自杀
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
-
-		virtual AV_BUFF GetHeader(HandleType t, int c) = 0;
 
         virtual string GetSDP() = 0;
     };

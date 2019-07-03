@@ -1,143 +1,115 @@
 #include "stdafx.h"
 #include "h264.h"
 
-CH264::CH264(H264SPS_CALLBACK spscb, AV_CALLBACK cb, void* handle)
-    : m_pNaluBuff(nullptr)
-    , m_nBuffLen(0)
-    , m_pDataBuff(nullptr)
-    , m_nDataLen(0)
-    , m_eNaluType(NalType::unknow)
-    , m_nWidth(0)
-    , m_nHeight(0)
-    , m_nFps(0)
-    , m_bFirstKey(false)
-    , m_bDecode(false)
-    , m_hUser(handle)
-    , m_fCB(cb)
-    , m_fCBSPS(spscb)
-{
-    m_pSPS = new CNetStreamMaker();
-    m_pPPS = new CNetStreamMaker();
-    m_pFullBuff = new CNetStreamMaker();
-}
 
-CH264::~CH264()
+static uint32_t Ue(uchar *pBuff, uint32_t nLen, uint32_t &nStartBit)
 {
-    SAFE_DELETE(m_pSPS);
-    SAFE_DELETE(m_pPPS);
-    SAFE_DELETE(m_pFullBuff);
-}
-
-int CH264::InputBuffer(char *pBuf, uint32_t nLen)
-{
-    m_pNaluBuff = pBuf;
-    m_nBuffLen = nLen;
-    ParseNalu();
-
-    switch (m_eNaluType)
+    //计算0bit的个数
+    UINT nZeroNum = 0;
+    while (nStartBit < nLen * 8)
     {
-    case b_Nal:
-        // 发送非关键帧
-        if(!m_bFirstKey)
+        if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8))) //&:按位与，%取余
+        {
             break;
-        //Log::debug("h264 frame");
-        m_pFullBuff->append_data(pBuf, nLen);
-        break;
-    case idr_Nal:
-        // 发送关键帧
-        //Log::debug("h264 key frame");
-        if(m_pFullBuff->size() > 0) {
-            AV_BUFF buff = {H264_IDR, m_pFullBuff->get(), m_pFullBuff->size()};
-            m_fCB(buff, m_hUser);
-            m_pFullBuff->clear();
         }
-        m_pFullBuff->append_data(m_pSPS->get(), m_pSPS->size());
-        m_pFullBuff->append_data(m_pPPS->get(), m_pPPS->size());
-        m_pFullBuff->append_data(pBuf, nLen);
-        m_bFirstKey = true;
-        break;
-    case sei_Nal:
-        break;
-    case sps_Nal:
-        {
-            //Log::debug("save sps size:%d",nLen);
-            CHECK_POINT_INT(m_pSPS,-1);
-            m_pSPS->clear();
-            m_pSPS->append_data(pBuf, nLen);
-            if(!m_bDecode) {
-                m_bDecode = DecodeSps();
-                if(m_bDecode)
-                    m_fCBSPS(m_nWidth, m_nHeight, m_nFps, m_hUser);
-            }
-        }
-        break;
-    case pps_Nal:
-        {
-            //Log::debug("save pps size:%d",nLen);
-            CHECK_POINT_INT(m_pPPS,-1);
-            m_pPPS->clear();
-            m_pPPS->append_data(pBuf, nLen);
-        }
-        break;
-    case other:
-    case unknow:
-    default:
-        Log::warning("h264 nal type: %d", m_eNaluType);
-        break;
+        nZeroNum++;
+        nStartBit++;
     }
+    nStartBit ++;
 
-    return 0;
+
+    //计算结果
+    DWORD dwRet = 0;
+    for (UINT i=0; i<nZeroNum; i++)
+    {
+        dwRet <<= 1;
+        if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
+        {
+            dwRet += 1;
+        }
+        nStartBit++;
+    }
+    return (1 << nZeroNum) - 1 + dwRet;
 }
 
-void CH264::ParseNalu()
+static int Se(uchar *pBuff, uint32_t nLen, uint32_t &nStartBit)
 {
-    CHECK_POINT_VOID(m_pNaluBuff)
-    m_eNaluType = NalType::unknow;
-
-    // 00 00 00 01开头
-    if (m_pNaluBuff[0] == 0 && m_pNaluBuff[1] == 0 && m_pNaluBuff[2] == 0 && m_pNaluBuff[3] == 1)
-    {
-        m_pDataBuff = m_pNaluBuff + 4;
-        m_nDataLen  = m_nBuffLen - 4;
-    }
-    // 00 00 01开头
-    else if (m_pNaluBuff[0] == 0 && m_pNaluBuff[1] == 0 && m_pNaluBuff[2] == 1)
-    {
-        m_pDataBuff = m_pNaluBuff + 3;
-        m_nDataLen  = m_nBuffLen - 3;
-    }
-    else
-    {
-         m_pDataBuff = m_pNaluBuff;
-		 m_nDataLen  = m_nBuffLen;
-    }
-
-    nal_unit_header* pNalUnit = (nal_unit_header*)m_pDataBuff;
-    if ( NalType::sps_Nal != pNalUnit->nal_type
-      && NalType::pps_Nal != pNalUnit->nal_type
-      && NalType::sei_Nal != pNalUnit->nal_type
-      && NalType::idr_Nal != pNalUnit->nal_type
-      && NalType::b_Nal   != pNalUnit->nal_type)
-    {
-        m_eNaluType = NalType::other;
-        return;
-    }
-    m_eNaluType = (NalType)pNalUnit->nal_type;
+    int UeVal=Ue(pBuff,nLen,nStartBit);
+    double k=UeVal;
+    int nValue=ceil(k/2);//ceil函数：ceil函数的作用是求不小于给定实数的最小整数。ceil(2)=ceil(1.2)=cei(1.5)=2.00
+    if (UeVal % 2==0)
+        nValue=-nValue;
+    return nValue;
 }
 
-bool CH264::DecodeSps()
+/**
+ * 计算字节流中从nStartBit位开始的BitCount位的值
+ * @param buf 输入字节流起始位置
+ * @param nStartBit 输入起始位，输出结束后的位置
+ * @param BitCount 输入位数
+ * @return 指定位的数值
+ */
+static uint32_t u(uint32_t BitCount,uchar *buf,uint32_t &nStartBit)
 {
-    if(m_eNaluType != sps_Nal) return false;
-    CHECK_POINT(m_pDataBuff);
-    m_nFps    = 0;
-    m_nWidth  = 0;
-    m_nHeight = 0;
+    uint32_t dwRet = 0;
+    for (uint32_t i=0; i<BitCount; i++)
+    {
+        dwRet <<= 1;
+        if (buf[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
+        {
+            dwRet += 1;
+        }
+        nStartBit++;
+    }
+    return dwRet;
+}
+
+/** 将输入的nalu数据中的003转成00(组包时001和0001转成了0031和00301) */
+static void de_emulation_prevention(uchar* buf,uint32_t* buf_size)
+{
+    int i=0,j=0;
+    BYTE* tmp_ptr=NULL;
+    unsigned int tmp_buf_size=0;
+    int val=0;
+
+    tmp_ptr=buf;
+    tmp_buf_size=*buf_size;
+    for(i=0;i<(tmp_buf_size-2);i++)
+    {
+        //check for 0x000003
+        val=(tmp_ptr[i]^0x00) +(tmp_ptr[i+1]^0x00)+(tmp_ptr[i+2]^0x03);
+        if(val==0)
+        {
+            //kick out 0x03
+            for(j=i+2;j<tmp_buf_size-1;j++)
+                tmp_ptr[j]=tmp_ptr[j+1];
+
+            //and so we should devrease bufsize
+            (*buf_size)--;
+        }
+    }
+
+    return;
+}
+
+bool h264_sps_info(char *buff, uint32_t len, uint32_t *width, uint32_t *height, double *fps) {
+    char *nalu;
+    uint32_t nalue_len;
+    h264_nalu_data2(buff, len, &nalu, &nalue_len);
+
+    NalType tpye = h264_naltype(nalu);
+    if(tpye != sps_Nal) 
+        return false;
+
+    *fps    = 0;
+    *width  = 0;
+    *height = 0;
 
     // 拷贝一份临时数据
-    uint32_t nLen = m_nDataLen;
+    uint32_t nLen = nalue_len;
     uchar* buf = (uchar*)malloc(nLen);
-    CHECK_POINT(buf)
-    memcpy_s(buf, nLen, m_pDataBuff, m_nDataLen);
+    CHECK_POINT(buf);
+    memcpy_s(buf, nLen, nalu, nalue_len);
 
     // 将数据中的003转成00(组包时001和0001转成了0031和00301)
     de_emulation_prevention(buf,&nLen);
@@ -253,8 +225,8 @@ bool CH264::DecodeSps()
     int pic_width_in_mbs_minus1=Ue(buf,nLen,StartBit);
     int pic_height_in_map_units_minus1=Ue(buf,nLen,StartBit);
     //Log::debug("h264_decode_sps pic_width_in_mbs_minus1:%d pic_width_in_mbs_minus1:%d",pic_width_in_mbs_minus1,pic_width_in_mbs_minus1);
-    m_nWidth = (pic_width_in_mbs_minus1+1)*16;
-    m_nHeight = (pic_height_in_map_units_minus1+1)*16;
+    *width = (pic_width_in_mbs_minus1+1)*16;
+    *height = (pic_height_in_map_units_minus1+1)*16;
 
     int frame_mbs_only_flag=u(1,buf,StartBit);
     if(!frame_mbs_only_flag)
@@ -311,7 +283,7 @@ bool CH264::DecodeSps()
             int num_units_in_tick=u(32,buf,StartBit);   
             int time_scale=u(32,buf,StartBit);    
             //Log::debug("h264_decode_sps num_units_in_tick:%d, time_scale:%d",num_units_in_tick,time_scale);
-            m_nFps = (double)time_scale/(2*num_units_in_tick);
+            *fps = (double)time_scale/(2*num_units_in_tick);
         }
     }
 
@@ -319,84 +291,138 @@ bool CH264::DecodeSps()
     return true;
 }
 
-uint32_t CH264::Ue(uchar *pBuff, uint32_t nLen, uint32_t &nStartBit)
+CH264::CH264(AV_CALLBACK cb, void* handle)
+    : m_bFirstKey(false)
+    , m_hUser(handle)
+    , m_fCB(cb)
 {
-    //计算0bit的个数
-    UINT nZeroNum = 0;
-    while (nStartBit < nLen * 8)
+    m_pSPS = new CNetStreamMaker();
+    m_pPPS = new CNetStreamMaker();
+    m_pKeyFrame = new CNetStreamMaker();
+    m_pData = new CNetStreamMaker();
+}
+
+CH264::~CH264()
+{
+    SAFE_DELETE(m_pSPS);
+    SAFE_DELETE(m_pPPS);
+    SAFE_DELETE(m_pKeyFrame);
+    SAFE_DELETE(m_pData);
+}
+
+int CH264::Code(AV_BUFF buff)
+{
+    char *pBuf = buff.pData;
+    uint32_t nLen = buff.nLen;
+
+    char* pDataBuff;    //< 去除掉001或0001后的内容
+    h264_nalu_data(pBuf, &pDataBuff);
+    NalType eType = h264_naltype(pDataBuff);
+
+    switch (eType)
     {
-        if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8))) //&:按位与，%取余
-        {
+    case b_Nal:
+        // 发送非关键帧
+        if(!m_bFirstKey)
             break;
-        }
-        nZeroNum++;
-        nStartBit++;
-    }
-    nStartBit ++;
-
-
-    //计算结果
-    DWORD dwRet = 0;
-    for (UINT i=0; i<nZeroNum; i++)
-    {
-        dwRet <<= 1;
-        if (pBuff[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
+        //如果存在关键帧没有处理，需要先发送关键帧。pps可能在关键帧后面接收到。
+        //sps或pps丢失，可以使用上一次的。
+        MakeKeyVideo(); 
+        //Log::debug("send frame");
+        MakeVideo(pBuf,nLen,0);
+        break;
+    case idr_Nal:
+        // 发送关键帧
+        m_pKeyFrame->clear();
+        m_pKeyFrame->append_data(pBuf, nLen);
+        //一般sps或pps都在关键帧前面，但有时会在关键帧后面。
+        if(m_bGotPPS && m_bGotSPS)
+            MakeKeyVideo();
+        break;
+    case sei_Nal:
+        break;
+    case sps_Nal:
         {
-            dwRet += 1;
+            //Log::debug("save sps size:%d",nLen);
+            CHECK_POINT_INT(m_pSPS,-1);
+            m_pSPS->clear();
+            m_pSPS->append_data(pBuf, nLen);
+            m_bGotSPS = true;
         }
-        nStartBit++;
+        break;
+    case pps_Nal:
+        {
+            //Log::debug("save pps size:%d",nLen);
+            CHECK_POINT_INT(m_pPPS,-1);
+            m_pPPS->clear();
+            m_pPPS->append_data(pBuf, nLen);
+            m_bGotPPS = true;
+        }
+        break;
+    case other:
+    case unknow:
+    default:
+        //Log::warning("h264 nal type: %d", m_eNaluType);
+        break;
     }
-    return (1 << nZeroNum) - 1 + dwRet;
+
+    return 0;
 }
 
-int CH264::Se(uchar *pBuff, uint32_t nLen, uint32_t &nStartBit)
+bool CH264::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
-    int UeVal=Ue(pBuff,nLen,nStartBit);
-    double k=UeVal;
-    int nValue=ceil(k/2);//ceil函数：ceil函数的作用是求不小于给定实数的最小整数。ceil(2)=ceil(1.2)=cei(1.5)=2.00
-    if (UeVal % 2==0)
-        nValue=-nValue;
-    return nValue;
-}
+    CHECK_POINT(m_pData);
 
-uint32_t CH264::u(uint32_t BitCount,uchar * buf,uint32_t &nStartBit)
-{
-    uint32_t dwRet = 0;
-    for (uint32_t i=0; i<BitCount; i++)
-    {
-        dwRet <<= 1;
-        if (buf[nStartBit / 8] & (0x80 >> (nStartBit % 8)))
-        {
-            dwRet += 1;
+    // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
+    if(m_nNodelay == 0) {
+        if(bIsKeyFrame && m_pData->size() > 0){
+            if(m_fCB != nullptr){
+                AV_BUFF buff = {H264_IDR, m_pData->get(), m_pData->size()};
+                m_fCB(buff, m_hUser);
+            }
+            m_pData->clear();
         }
-        nStartBit++;
-    }
-    return dwRet;
-}
-
-void CH264::de_emulation_prevention(uchar* buf,uint32_t* buf_size)
-{
-    int i=0,j=0;
-    BYTE* tmp_ptr=NULL;
-    unsigned int tmp_buf_size=0;
-    int val=0;
-
-    tmp_ptr=buf;
-    tmp_buf_size=*buf_size;
-    for(i=0;i<(tmp_buf_size-2);i++)
-    {
-        //check for 0x000003
-        val=(tmp_ptr[i]^0x00) +(tmp_ptr[i+1]^0x00)+(tmp_ptr[i+2]^0x03);
-        if(val==0)
-        {
-            //kick out 0x03
-            for(j=i+2;j<tmp_buf_size-1;j++)
-                tmp_ptr[j]=tmp_ptr[j+1];
-
-            //and so we should devrease bufsize
-            (*buf_size)--;
+        if (bIsKeyFrame) {
+            m_pData->append_data(m_pSPS->get(), m_pSPS->size());
+            m_pData->append_data(m_pPPS->get(), m_pPPS->size());
+        }
+        m_pData->append_data(data, size);
+    } else {
+        // 立即发送模式，每帧数据都立即上抛
+        if (bIsKeyFrame) {
+            m_pData->append_data(m_pSPS->get(), m_pSPS->size());
+            m_pData->append_data(m_pPPS->get(), m_pPPS->size());
+            m_pData->append_data(data, size);
+            if(m_fCB != nullptr){
+                AV_BUFF buff = {H264_IDR, m_pData->get(), m_pData->size()};
+                m_fCB(buff, m_hUser);
+            }
+            m_pData->clear();
+        } else {
+            if(m_fCB != nullptr){
+                AV_BUFF buff = {H264_NDR, data, size};
+                m_fCB(buff, m_hUser);
+            }
         }
     }
+    return true;
+}
 
-    return;
+bool CH264::MakeKeyVideo()
+{
+    if(m_pSPS->size() && m_pPPS->size() && m_pKeyFrame->size()) {
+        // 发送关键帧
+        static uint64_t num = 0;
+        Log::debug("send key frame %lld", num++);
+        MakeVideo(m_pKeyFrame->get(),m_pKeyFrame->size(),1);
+
+        m_pKeyFrame->clear();
+        m_bGotSPS = false;
+        m_bGotPPS = false;
+
+        m_bFirstKey = true;
+
+        return true;
+    }
+    return false;
 }

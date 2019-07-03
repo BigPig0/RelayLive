@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\Common\avformat\rtsp.cpp" />
     <ClCompile Include="..\..\Common\avformat\sdp.cpp" />
     <ClCompile Include="..\..\Common\avformat\ts.cpp" />
+    <ClCompile Include="LiveChannel.cpp" />
     <ClCompile Include="LiveClient.cpp" />
     <ClCompile Include="LiveIpc.cpp" />
     <ClCompile Include="liveReceiver.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="..\..\Common\avformat\rtsp.h" />
     <ClInclude Include="..\..\Common\avformat\sdp.h" />
     <ClInclude Include="..\..\Common\avformat\ts.h" />
+    <ClInclude Include="LiveChannel.h" />
     <ClInclude Include="LiveClient.h" />
     <ClInclude Include="LiveIpc.h" />
     <ClInclude Include="liveReceiver.h" />

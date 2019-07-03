@@ -8,10 +8,11 @@
 CSipSever::CSipSever(eXosip_t* pSip)
     : m_pExContext(pSip)
 {
-    m_bSubStat = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
-    m_bSubPos  = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
-	m_bSubPosDev  = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0?true:false;
-	m_strMobile = Settings::getValue("PlatFormInfo","SubscribePosDepart", "111");
+    m_bSubStat       = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0?true:false;
+    m_bSubPos        = Settings::getValue("PlatFormInfo","SubscribePos",0)>0?true:false;
+	m_bSubPosDev     = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0?true:false;
+	string strMobile = Settings::getValue("PlatFormInfo","SubscribePosDepart", "111");
+    m_vecMobile      = StringHandle::StringSplit(strMobile, ',');
 }
 
 CSipSever::~CSipSever(void)
@@ -187,7 +188,8 @@ void CSipSever::SubscribeThread()
 		vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
 		vector<string> devs;
 		for(auto info:devInfo){
-			if(info->strParentID == m_strMobile)
+            auto ret = std::find(m_vecMobile.begin(), m_vecMobile.end(), info->strParentID);
+			if(ret != m_vecMobile.end())
 				devs.push_back(info->strDevID);
 		}
 		 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);
@@ -199,13 +201,16 @@ void CSipSever::SubscribeThread()
     {
         time_t now = time(nullptr);
         struct tm * timeinfo = localtime(&now);
-        if(difftime(now,lastQueryTime) > 3600) { //距离上一次查询查过一小时重新查询
+        if(difftime(now,lastQueryTime) > 3600) { //距离上一次查询超过一小时重新查询
             lastQueryTime = now;
             if(timeinfo->tm_hour == 1){ //夜里1点
                 DeviceMgr::CleanPlatform(); //清空缓存中的数据和数据库设备表中的记录
             }
             CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
         }
+
+        //对接的海康平台，exosip自动发送的刷新订阅消息总是返回失败，只能一直发送初始订阅消息
+#ifdef FORCE_SUBSCRIBE
 		if(m_bSubStat && difftime(now,lastSubscribeStat) > 600){
 			 lastSubscribeStat = now;
 			 CSipMgr::m_pSubscribe->SubscribeDirectory(600);
@@ -220,14 +225,15 @@ void CSipSever::SubscribeThread()
 			vector<DevInfo*> devInfo = DeviceMgr::GetDeviceInfo();
 			vector<string> devs;
 			for(auto info:devInfo){
-				if(info->strParentID == m_strMobile)
+                auto ret = std::find(m_vecMobile.begin(), m_vecMobile.end(), info->strParentID);
+                if(ret != m_vecMobile.end())
 					devs.push_back(info->strDevID);
 			}
 			 CSipMgr::m_pSubscribe->SubscribeMobilepostion(600, devs);
 			lastSubscribePos = time(NULL);
 			Log::debug(" Subscribe all mobile pos %s",platform->strDevCode.c_str());
 		}
-
+#endif
         Sleep(1000);
     }
 }

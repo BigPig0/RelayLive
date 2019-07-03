@@ -4,16 +4,15 @@
 #include "HttpWorker.h"
 #include "LiveClient.h"
 
+#include "h264.h"
+#include "flv.h"
+#include "mp4.h"
+
+#include "netstream.h"
+
 namespace HttpWsServer
 {
-    static map<string,CHttpWorker*>  m_workerMapFlv;
-    static CriticalSection           m_csFlv;
-    static map<string,CHttpWorker*>  m_workerMapMp4;
-    static CriticalSection           m_csMp4;
-    static map<string,CHttpWorker*>  m_workerMapH264;
-    static CriticalSection           m_csH264;
-    static map<string,CHttpWorker*>  m_workerMapTs;
-    static CriticalSection           m_csTs;
+    extern int g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
 
     static void destroy_ring_node(void *_msg)
     {
@@ -23,17 +22,40 @@ namespace HttpWsServer
         msg->nLen = 0;
     }
 
+    static void AVCallback(AV_BUFF buff, void* pUser){
+        CHttpWorker* pLive = (CHttpWorker*)pUser;
+        pLive->MediaCb(buff);
+    }
+
     //////////////////////////////////////////////////////////////////////////
 
-    CHttpWorker::CHttpWorker(string strCode, HandleType t, int nChannel)
+    CHttpWorker::CHttpWorker(string strCode, HandleType t, int nChannel, bool isWs)
         : m_strCode(strCode)
         , m_nType(0)
         , m_pLive(nullptr)
-        , m_type(t)
+        , m_eHandleType(t)
         , m_nChannel(nChannel)
+        , m_bWebSocket(isWs)
     {
-        memset(&m_stHead, 0, sizeof(m_stHead));
-        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 200, destroy_ring_node);
+        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
+
+        if (t == h264_handle) {
+            CH264 *tmp = new CH264(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
+            m_pFormat = tmp;
+        } else if(t == flv_handle) {
+            CFlv *tmp = new CFlv(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
+            m_pFormat = tmp;
+        } else if(t == fmp4_handle){
+            CMP4 *tmp = new CMP4(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
+            m_pFormat = tmp;
+        }
+
+        m_SocketBuff.eType = AV_TYPE::NONE;
+        m_SocketBuff.pData = nullptr;
+        m_SocketBuff.nLen = 0;
 
         m_pLive = LiveClient::GetWorker(strCode);
 		if(m_pLive)
@@ -45,107 +67,73 @@ namespace HttpWsServer
 		if(m_pLive)
 			m_pLive->RemoveHandle(this);
 
+        SAFE_FREE(m_SocketBuff.pData);
+
         lws_ring_destroy(m_pRing);
         Log::debug("CHttpWorker release");
     }
 
-    bool CHttpWorker::AddConnect(pss_http_ws_live* pss)
+    int CHttpWorker::GetVideo(char **buff)
     {
-        pss->pss_next = m_pPssList;
-        m_pPssList = pss;
-        pss->tail = lws_ring_get_oldest_tail(m_pRing);
-
-        return true;
-    }
-
-    bool CHttpWorker::DelConnect(pss_http_ws_live* pss)
-    {
-        uint32_t oldest_tail = lws_ring_get_oldest_tail(m_pRing);
-        bool bDelOldest = false; // 删除的连接是最旧的
-        if (pss->tail == oldest_tail) {
-            bDelOldest = true;
+        int wnum = lws_ring_get_count_waiting_elements(m_pRing, NULL);
+        //没有缓存数据
+        if(wnum == 0)
+            return 0;
+        //只有一个缓存数据
+        if(wnum == 1) {
+            AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+            if(!tmp) {
+                return 0;
+            }
+            uint32_t tlen = LWS_PRE +  tmp->nLen;         //LWS_PRE 多申请一段空间，供websocket发送使用
+            if(m_SocketBuff.nLen < tlen){
+                m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
+                m_SocketBuff.nLen = tlen;
+            }
+            memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
+            memcpy(m_SocketBuff.pData+LWS_PRE, tmp->pData, tmp->nLen);
+            *buff = m_SocketBuff.pData;
+            lws_ring_consume(m_pRing, NULL, NULL, 1);
+            return tlen;
         }
 
-        lws_ll_fwd_remove(pss_http_ws_live, pss_next, pss, m_pPssList);
+        //多个缓存数据
+		AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+		if(!tmp) {
+			return 0;
+		}
+		net_stream_maker_t *sm = create_net_stream_maker();
+		while(tmp){
+			net_stream_append_data(sm, tmp->pData, tmp->nLen);
+			lws_ring_consume(m_pRing, NULL, NULL, 1);
+			tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
+		}
 
-        if(bDelOldest) {
-            int most = 0, before = lws_ring_get_count_waiting_elements(m_pRing, &oldest_tail), m;
-            lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
-                m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
-                if (m > most)
-                    most = m;
-            } lws_end_foreach_llp_safe(ppss);
-            lws_ring_consume_and_update_oldest_tail(m_pRing,
-                pss_http_ws_live, &oldest_tail, before - most,
-                m_pPssList, tail, pss_next);
+		uint32_t tlen = LWS_PRE +  get_net_stream_len(sm);          //LWS_PRE 多申请一段空间，供websocket发送使用
+        if(m_SocketBuff.nLen < tlen){
+            m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
+            m_SocketBuff.nLen = tlen;
         }
+        memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
+		memcpy(m_SocketBuff.pData+LWS_PRE, get_net_stream_data(sm), get_net_stream_len(sm));
+		destory_net_stream_maker(sm);
 
-        if(m_pPssList == NULL) {
-            DelHttpWorker(m_strCode, m_type, m_nChannel);
-        }
-        return true;
-    }
-
-    AV_BUFF CHttpWorker::GetHeader()
-    {
-		return m_pLive->GetHeader(m_type, m_nChannel);
-    }
-
-    AV_BUFF CHttpWorker::GetVideo(uint32_t *tail)
-    {
-        AV_BUFF ret = {AV_TYPE::NONE,nullptr,0};
-        AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, tail);
-        if(tag) ret = *tag;
-
-        return ret;
-    }
-
-    void CHttpWorker::NextWork(pss_http_ws_live* pss)
-    {
-        //Log::debug("this work tail:%d\r\n", pss->tail);
-        lws_ring_consume_and_update_oldest_tail(
-            m_pRing,	          /* lws_ring object */
-            pss_http_ws_live, /* type of objects with tails */
-            &pss->tail,	      /* tail of guy doing the consuming */
-            1,		          /* number of payload objects being consumed */
-            m_pPssList,	      /* head of list of objects with tails */
-            tail,		      /* member name of tail in objects with tails */
-            pss_next	      /* member name of next object in objects with tails */
-            );
-        //Log::debug("next work tail:%d\r\n", pss->tail);
-
-        /* more to do for us? */
-        if (lws_ring_get_element(m_pRing, &pss->tail))
-            /* come back as soon as we can write more */
-                lws_callback_on_writable(pss->wsi);
+		*buff = m_SocketBuff.pData;
+        return tlen;
     }
 
     void CHttpWorker::push_video_stream(AV_BUFF buff)
     {
-        int n = (int)lws_ring_get_count_free_elements(m_pRing);
-        if (!n) {
-            cull_lagging_clients();
-            n = (int)lws_ring_get_count_free_elements(m_pRing);
+        if (m_eHandleType == h264_handle) {
+            CH264 *tmp = (CH264 *)m_pFormat;
+            tmp->Code(buff);
+        } else if(m_eHandleType == flv_handle) {
+            CFlv *tmp = (CFlv *)m_pFormat;
+            tmp->Code(buff);
+        } else if(m_eHandleType == fmp4_handle){
+            CMP4 *tmp = (CMP4 *)m_pFormat;
+            tmp->Code(buff);
         }
-		if(n <80)
-			Log::debug("ring free space %d\n", n);
-        if (!n)
-            return;
-
-        // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(buff.nLen + LWS_PRE);
-        memcpy(pSaveBuff + LWS_PRE, buff.pData, buff.nLen);
-        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen};
-        if (!lws_ring_insert(m_pRing, &newTag, 1)) {
-            destroy_ring_node(&newTag);
-            Log::error("dropping!");
-            return;
-        }
-
-        //向所有播放链接发送数据
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
-            lws_callback_on_writable((*ppss)->wsi);
-        } lws_end_foreach_llp(ppss, pss_next);
     }
 
     void CHttpWorker::stop()
@@ -154,196 +142,53 @@ namespace HttpWsServer
         Log::debug("no data recived any more, stopped");
 
         //断开所有客户端连接
-        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
-            lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-        } lws_end_foreach_llp_safe(ppss);
+        lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
     }
 
-    string CHttpWorker::get_clients_info()
+    void CHttpWorker::MediaCb(AV_BUFF buff)
     {
-        stringstream ss;
-        lws_start_foreach_llp(pss_http_ws_live **, ppss, m_pPssList) {
-            ss << "{\"DeviceID\":\"" << m_strCode << "\",\"Connect\":\"";
-            if((*ppss)->isWs){
-                ss << "Web Socket";
-            } else {
-                ss << "Http";
-            }
-            ss << "\",\"Media\":\"";
-            if(m_type == HandleType::flv_handle)
-                ss << "flv";
-            else if(m_type == HandleType::fmp4_handle)
-                ss << "mp4";
-            else if(m_type == HandleType::h264_handle)
-                ss << "h264";
-            else if(m_type == HandleType::ts_handle)
-                ss << "hls";
-            else ss << "unknown";
-            ss << "\",\"ClientIP\":\"" 
-                << (*ppss)->clientIP << "\"},";
-        } lws_end_foreach_llp(ppss, pss_next);
-        return ss.str();
-    }
-
-    void CHttpWorker::cull_lagging_clients()
-    {
-        uint32_t oldest_tail = lws_ring_get_oldest_tail(m_pRing);
-        pss_http_ws_live *old_pss = NULL;
-        int most = 0, before = lws_ring_get_count_waiting_elements(m_pRing, &oldest_tail), m;
-
-        lws_start_foreach_llp_safe(pss_http_ws_live **, ppss, m_pPssList, pss_next) {
-            if ((*ppss)->tail == oldest_tail) {
-                //连接超时
-                // 20190425 发送速度比插入速度慢，不要断开连接，将该连接的标志移动到后面的第一个关键帧
-                //old_pss = *ppss;
-                //Log::debug("Killing lagging client %p", (*ppss)->wsi);
-                //lws_set_timeout((*ppss)->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
-                //(*ppss)->culled = 1;
-                //lws_ll_fwd_remove(pss_http_ws_live, pss_next, (*ppss), m_pPssList);
-				if(!old_pss){ //只查一次，后面直接改tail的值
-					old_pss = *ppss;
-					while(true){
-						lws_ring_consume(m_pRing, &(*ppss)->tail, NULL, 1);
-						AV_BUFF* tag = (AV_BUFF*)lws_ring_get_element(m_pRing, &(*ppss)->tail);
-						if ((*ppss)->media_type == media_flv){
-							if(!tag || tag->eType == AV_TYPE::FLV_FRAG_KEY){ //找到关键帧或跳过所有数据
-								m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
-								if (m > most)
-									most = m;
-								break;
-							}
-						}
-					}
-				} else {
-				    (*ppss)->tail = old_pss->tail;	//
-                }
-                continue;
-            } else {
-                m = lws_ring_get_count_waiting_elements(m_pRing, &((*ppss)->tail));
-                if (m > most)
-                    most = m;
-            }
-        } lws_end_foreach_llp_safe(ppss);
-
-        if (!old_pss)
+        int n = (int)lws_ring_get_count_free_elements(m_pRing);
+        //Log::debug("ring free space %d", n);
+        if (!n) {
             return;
-
-        lws_ring_consume_and_update_oldest_tail(m_pRing,
-            pss_http_ws_live, &oldest_tail, before - most,
-            m_pPssList, tail, pss_next);
-
-        Log::debug("shrunk ring from %d to %d", before, most);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-
-    CHttpWorker* CreatHttpWorker(string strCode, HandleType t, int nChannel)
-    {
-        Log::debug("CreatHttpWorker begin");
-        std::stringstream ss;
-        ss << strCode << ":" << nChannel;
-        string strKey = ss.str();
-        if(t == HandleType::flv_handle){
-            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
-            MutexLock lock(&m_csFlv);
-            m_workerMapFlv.insert(make_pair(strKey, pNew));
-            return pNew;
-        } else if(t == HandleType::fmp4_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
-            MutexLock lock(&m_csMp4);
-            m_workerMapMp4.insert(make_pair(strKey, pNew));
-            return pNew;
-        } else if(t == HandleType::h264_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
-            MutexLock lock(&m_csH264);
-            m_workerMapH264.insert(make_pair(strKey, pNew));
-            return pNew;
-        } else if(t == HandleType::ts_handle) {
-            CHttpWorker* pNew = new CHttpWorker(strCode, t, nChannel);
-            MutexLock lock(&m_csTs);
-            m_workerMapTs.insert(make_pair(strKey, pNew));
-            return pNew;
-        }
-        return nullptr;
-    }
-
-    CHttpWorker* GetHttpWorker(string strCode, HandleType t, int nChannel)
-    {
-        //Log::debug("GetWorker begin");
-        std::stringstream ss;
-        ss << strCode << ":" << nChannel;
-        string strKey = ss.str();
-        if(t == flv_handle) {
-            MutexLock lock(&m_csFlv);
-            auto itFind = m_workerMapFlv.find(strKey);
-            if (itFind != m_workerMapFlv.end()) {
-                return itFind->second;
-            }
-        } else if(t == fmp4_handle) {
-            MutexLock lock(&m_csMp4);
-            auto itFind = m_workerMapMp4.find(strKey);
-            if (itFind != m_workerMapMp4.end()) {
-                return itFind->second;
-            }
-        } else if(t == h264_handle) {
-            MutexLock lock(&m_csH264);
-            auto itFind = m_workerMapH264.find(strKey);
-            if (itFind != m_workerMapH264.end()) {
-                return itFind->second;
-            }
-        } else if(t == ts_handle) {
-            MutexLock lock(&m_csTs);
-            auto itFind = m_workerMapTs.find(strKey);
-            if (itFind != m_workerMapTs.end()) {
-                return itFind->second;
-            }
         }
 
-        //Log::error("GetWorker failed: %s",strCode.c_str());
-        return nullptr;
-    }
+        // 将数据保存在ring buff
+        char* pSaveBuff = (char*)malloc(buff.nLen);
+        memcpy(pSaveBuff, buff.pData, buff.nLen);
+        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen, 0, 0};
 
-    bool DelHttpWorker(string strCode, HandleType t, int nChannel)
-    {
-        std::stringstream ss;
-        ss << strCode << ":" << nChannel;
-        string strKey = ss.str();
-        if(t == flv_handle) {
-            MutexLock lock(&m_csFlv);
-            auto itFind = m_workerMapFlv.find(strKey);
-            if (itFind != m_workerMapFlv.end()) {
-                SAFE_DELETE(itFind->second);
-                m_workerMapFlv.erase(itFind);
-                return true;
-            }
-        } else if(t == fmp4_handle) {
-            MutexLock lock(&m_csMp4);
-            auto itFind = m_workerMapMp4.find(strKey);
-            if (itFind != m_workerMapMp4.end()) {
-                SAFE_DELETE(itFind->second);
-                m_workerMapMp4.erase(itFind);
-                return true;
-            }
-        } else if(t == h264_handle) {
-            MutexLock lock(&m_csH264);
-            auto itFind = m_workerMapH264.find(strKey);
-            if (itFind != m_workerMapH264.end()) {
-                SAFE_DELETE(itFind->second);
-                m_workerMapH264.erase(itFind);
-                return true;
-            }
-        } else if(t == ts_handle) {
-            MutexLock lock(&m_csTs);
-            auto itFind = m_workerMapTs.find(strKey);
-            if (itFind != m_workerMapTs.end()) {
-                SAFE_DELETE(itFind->second);
-                m_workerMapTs.erase(itFind);
-                return true;
-            }
+        if (!lws_ring_insert(m_pRing, &newTag, 1)) {
+            destroy_ring_node(&newTag);
+            Log::error("dropping!");
+            return;
         }
 
-        Log::error("dosn't find worker object");
-        return false;
+        //向所有播放链接发送数据
+        lws_callback_on_writable(m_pPss->wsi);
     }
 
+    LiveClient::ClientInfo CHttpWorker::get_clients_info()
+    {
+        LiveClient::ClientInfo info;
+        info.devCode = m_strCode;
+        if(m_bWebSocket){
+            info.connect = "Web Socket";
+        } else {
+            info.connect = "Http";
+        }
+        if(m_eHandleType == HandleType::flv_handle)
+            info.media = "flv";
+        else if(m_eHandleType == HandleType::fmp4_handle)
+            info.media = "mp4";
+        else if(m_eHandleType == HandleType::h264_handle)
+            info.media = "h264";
+        else if(m_eHandleType == HandleType::ts_handle)
+            info.media = "hls";
+        else 
+            info.media = "unknown";
+		info.channel = m_nChannel;
+        info.clientIP = m_strClientIP;
+        return info;
+    }
 }

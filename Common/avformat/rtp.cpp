@@ -322,10 +322,10 @@ int CRtp::ComposePsFrame()
     if (m_fCB != nullptr)
     {
         if(g_stream_type == STREAM_PS) {
-            AV_BUFF buff = {AV_TYPE::PS, m_frame_buf, nPsLen};
+            AV_BUFF buff = {AV_TYPE::PS, m_frame_buf, nPsLen, 0, 0};
             m_fCB(buff, m_hUser);
         } else if(g_stream_type == STREAM_H264) {
-            AV_BUFF buff = {AV_TYPE::H264_NALU, m_frame_buf, nPsLen};
+            AV_BUFF buff = {AV_TYPE::H264_NALU, m_frame_buf, nPsLen, 0, 0};
             m_fCB(buff, m_hUser);
         }
     }

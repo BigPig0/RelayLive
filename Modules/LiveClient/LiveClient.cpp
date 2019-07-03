@@ -12,7 +12,6 @@ namespace LiveClient
     int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
     int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
-    int    g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
 
     vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     CriticalSection m_csRTP;          //< RTP端口锁
@@ -31,7 +30,6 @@ namespace LiveClient
         g_nRtpPortNum        = Settings::getValue("RtpClient","PortNum",1000);          //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
         g_nRtpCatchPacketNum = Settings::getValue("RtpClient", "CatchPacketNum", 100);  //< rtp缓存的包的数量
         g_nRtpStreamType     = Settings::getValue("RtpClient", "Filter", 0);            //< rtp类型，是ps还是h264
-        g_nNodelay           = Settings::getValue("RtpClient", "NoDelay", 0);           //< 是否立即发送
 
         Log::debug("RtpConfig IP:%s, BeginPort:%d,PortNum:%d,CatchPacketNum:%d"
             , g_strRtpIP.c_str(), g_nRtpBeginPort, g_nRtpPortNum, g_nRtpCatchPacketNum);

@@ -9,11 +9,13 @@
 namespace HttpWsServer
 {
 	uv_loop_t *g_uv_loop = NULL;
+    int        g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
+
     static struct lws_context_creation_info info;  //libwebsockets配置信息
     static struct lws_context *context;            //libwebsockets句柄
     // 服务器配置
     static struct lws_http_mount mount_other;  //其他
-    static struct lws_http_mount mount_device; //查看设备信息
+    static struct lws_http_mount mount_device; //查看设备信息、控制
     static struct lws_http_mount mount_live;   //直播
     static struct lws_http_mount mount_web;    //站点静态文件
     static std::string mount_web_origin("./home");  //站点本地位置
@@ -89,6 +91,7 @@ namespace HttpWsServer
     int Init(void* uv)
     {
 		g_uv_loop = (uv_loop_t *)uv;
+        g_nNodelay = Settings::getValue("RtpClient", "NoDelay", 0);           //< 是否立即发送
 
         //设置日志
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;

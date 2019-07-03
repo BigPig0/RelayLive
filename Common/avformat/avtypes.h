@@ -13,6 +13,7 @@ typedef enum _AV_TYPE_
     H264_NALU,
 	H264_IDR,
 	H264_NDR,
+    YUV,
     FLV_HEAD,
     FLV_FRAG_KEY,
     FLV_FRAG,
@@ -25,9 +26,11 @@ typedef enum _AV_TYPE_
  * 一帧视音频数据的内容
  */
 typedef struct _AV_BUFF_ {
-    AV_TYPE   eType;    //< 数据包类型
-    char      *pData;   //< 数据内容
-    uint32_t  nLen;     //< 数据长度
+    AV_TYPE     eType;    //< 数据包类型
+    char       *pData;    //< 数据内容
+    uint32_t    nLen;     //< 数据长度
+    uint64_t    m_pts;    //< 显示时间戳
+    uint64_t    m_dts;    //< 解码时间戳
 }AV_BUFF;
 
 /** 视频回调方法 */

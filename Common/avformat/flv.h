@@ -25,7 +25,7 @@ public:
     CFlv(AV_CALLBACK cb, void* handle=NULL);
     ~CFlv(void);
 
-    int Code(NalType eType, char* pBuf, uint32_t nLen);
+    int Code(AV_BUFF buff);
 
     void SetSps(uint32_t nWidth, uint32_t nHeight, double fFps);
 
@@ -34,8 +34,6 @@ public:
 private:
     /**
      * 生成flv文件头信息并上抛
-     * @param ppBuff 输出flv头缓存
-     * @param pLen 输出flv头长度
      */
     bool MakeHeader();
 
