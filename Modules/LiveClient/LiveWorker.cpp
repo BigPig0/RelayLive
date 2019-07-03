@@ -15,7 +15,6 @@ namespace LiveClient
     extern int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
     extern int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
 	extern int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
-    extern int    g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
 
     extern vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     //extern CriticalSection m_csRTP;          //< RTP端口锁

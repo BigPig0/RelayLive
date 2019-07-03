@@ -3,8 +3,6 @@
 
 namespace LiveClient
 {
-    extern int  g_nNodelay;
-
 static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveChannel* pLive = (CLiveChannel*)pUser;
     switch (buff.eType)

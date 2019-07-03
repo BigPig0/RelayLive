@@ -12,6 +12,8 @@
 
 namespace HttpWsServer
 {
+    extern int g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
+
     static void destroy_ring_node(void *_msg)
     {
         AV_BUFF *msg = (AV_BUFF*)_msg;
@@ -39,12 +41,15 @@ namespace HttpWsServer
 
         if (t == h264_handle) {
             CH264 *tmp = new CH264(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
             m_pFormat = tmp;
         } else if(t == flv_handle) {
             CFlv *tmp = new CFlv(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
             m_pFormat = tmp;
         } else if(t == fmp4_handle){
             CMP4 *tmp = new CMP4(AVCallback, this);
+            tmp->SetNodelay(g_nNodelay);
             m_pFormat = tmp;
         }
 
@@ -88,6 +93,7 @@ namespace HttpWsServer
             memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
             memcpy(m_SocketBuff.pData+LWS_PRE, tmp->pData, tmp->nLen);
             *buff = m_SocketBuff.pData;
+            lws_ring_consume(m_pRing, NULL, NULL, 1);
             return tlen;
         }
 

@@ -65,11 +65,21 @@ static void timer_cb(uv_timer_t* handle)
 static void rtp_udp_close_cb(uv_handle_t* handle){
     CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
     pLive->m_bRtpRun = false;
+
+	if(!pLive->m_bTimeOverRun){
+		pLive->m_bRun = false;
+		uv_stop(pLive->m_uvLoop);
+	}
 }
 
 static void timer_over_close_cb(uv_handle_t* handle){
     CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
     pLive->m_bTimeOverRun = false;
+
+	if(!pLive->m_bRtpRun){
+		pLive->m_bRun = false;
+		uv_stop(pLive->m_uvLoop);
+	}
 }
 
 static void async_cb(uv_async_t* handle){
@@ -335,10 +345,5 @@ void CLiveReceiver::AsyncClose()
     }
     uv_close((uv_handle_t*)&m_uvTimeOver, timer_over_close_cb);
 
-    while (m_bRtpRun || m_bTimeOverRun){
-        Sleep(500);
-    }
-    uv_stop(m_uvLoop);
-    m_bRun =  false;
 }
 }
