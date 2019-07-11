@@ -2,43 +2,52 @@
 #include "uvIpc.h"
 #include "LiveIpc.h"
 #include "LiveClient.h"
+#include "LiveWorker.h"
 
 namespace LiveClient
 {
-    LIVECLIENT_CB ipc_cb = NULL;
+LIVECLIENT_CB ipc_cb = NULL;
+extern uv_loop_t *g_uv_loop;
 
 namespace LiveIpc
 {
     static uv_ipc_handle_t* h = NULL;
 
-    struct ipc_play_task
-    {
-        int ipc_status;
-        int ret;
-        string ssid;
-        string error;
-    };
-    static ipc_play_task _ipc_task;
+    static PlayAnswerList   *_pPlayAnswerList = NULL;
+    static CriticalSection   _csPlayAnswerList;
+    static uv_async_t        _uvAsyncPlay;    //< 异步回调播放结果
 
-    static string strfind(char* src, char* begin, char* end){
-        char *p1, *p2;
-        p1 = strstr(src, begin);
-        if(!p1) return "";
-        p1 += strlen(begin);
-        p2 = strstr(p1, end);
-        if(p2) return string(p1, p2-p1);
-        else return string(p1);
+    static void async_cb(uv_async_t* handle){
+        CLiveReceiver* obj = (CLiveReceiver*)handle->data;
+        MutexLock lock(&_csPlayAnswerList);
+        PlayAnswerList *pa = _pPlayAnswerList;
+        while(pa){
+            PlayAnswerList *tmp = pa;
+            pa = pa->pNext;
+            AsyncPlayCB(tmp);
+            delete tmp;
+        }
+        _pPlayAnswerList = NULL;
     }
 
     static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
         if (!strcmp(msg,"live_play_answer")) {
-            // ssid=123&ret=0&error=XXXX
+            //播放请求回调 devcode=123rtpport=80&ret=0&error=XXXX
             data[len] = 0;
-            _ipc_task.ssid = strfind(data, "ssid=", "&");
-            _ipc_task.ret = stoi(strfind(data, "ret=", "&"));
-            _ipc_task.error = strfind(data, "error=", "&");
-            _ipc_task.ipc_status = 0;
+            char szDevCode[30] = {0}; // 设备编码
+            char szInfo[256]={0};     // 成功时sdp信息，失败时错误描述
+            PlayAnswerList *pNewPA = new PlayAnswerList;
+
+            sscanf(data, szDevCode, &pNewPA->strPort, &pNewPA->nRet, szInfo);
+            pNewPA->strDevCode = szDevCode;
+            pNewPA->strMark = szInfo;
+
+            MutexLock lock(&_csPlayAnswerList);
+            pNewPA->pNext = _pPlayAnswerList;
+            _pPlayAnswerList = pNewPA;
+            uv_async_send(&_uvAsyncPlay);
         } else if (!strcmp(msg,"dev_list_answer")) {
+            //获取设备列表回调
             string devjson(data, len);
             if(ipc_cb)
                 ipc_cb("devlist", devjson);
@@ -50,40 +59,24 @@ namespace LiveIpc
         if(ret < 0) {
             printf("ipc server err: %s\n", uv_ipc_strerr(ret));
         }
+        uv_async_init(g_uv_loop, &_uvAsyncPlay, async_cb);
     }
 
-    int RealPlay(string dev_code, string rtp_ip, int rtp_port, string &sdp){
-        // ssid=123&rtpip=1.1.1.1&rtpport=50000
-        _ipc_task.ssid = dev_code;
-        _ipc_task.ret = 0;
-        _ipc_task.ipc_status = 1;
-        _ipc_task.error = "";
-
+    int RealPlay(string dev_code, string rtp_ip, int rtp_port){
+        // devcode=123&rtpip=1.1.1.1&rtpport=50000
         stringstream ss;
-        ss << "ssid=" << dev_code << "&rtpip=" << rtp_ip << "&rtpport=" << rtp_port;
+        ss << "devcode=" << dev_code << "&rtpip=" << rtp_ip << "&rtpport=" << rtp_port;
         int ret = uv_ipc_send(h, "liveSrc", "live_play", (char*)ss.str().c_str(), ss.str().size());
         if(ret) {
             Log::error("ipc send real play error");
             return ret;
         }
-
-        time_t start_time = time(NULL);
-        while (_ipc_task.ipc_status) {
-            time_t now = time(NULL);
-            if(difftime(now, start_time) > 2.0){
-                //超时2秒
-                _ipc_task.ret = -1;
-                _ipc_task.error = "time out";
-                break;
-            }
-            Sleep(100);
-        }
-        sdp = _ipc_task.error;
-        return _ipc_task.ret;
+        return 0;
     }
 
-    int StopPlay(string dev_code){
-        int ret = uv_ipc_send(h, "liveSrc", "stop_play", (char*)dev_code.c_str(), dev_code.size());
+    int StopPlay(int rtp_port){
+        string strPort = StringHandle::toStr<int>(rtp_port);
+        int ret = uv_ipc_send(h, "liveSrc", "stop_play", (char*)strPort.c_str(), strPort.size());
         if(ret) {
             Log::error("ipc send stop error");
             return ret;

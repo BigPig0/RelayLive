@@ -1,5 +1,5 @@
 #pragma once
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
 #include "avtypes.h"
 #include "ring_buff.h"
 #include "uv.h"

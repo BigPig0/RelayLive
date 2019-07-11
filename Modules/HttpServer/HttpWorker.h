@@ -15,6 +15,8 @@ namespace HttpWsServer
         /** 请求端获取视频数据 */
         int GetVideo(char **buff);
 
+        virtual void play_answer(int ret, string error_info);
+
         /**
          * 底层推送H264进来
          */

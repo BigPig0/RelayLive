@@ -39,6 +39,9 @@
     <ClInclude Include="buflist.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="bnf.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="memfile.c">
@@ -57,6 +60,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="buflist.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="bnf.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

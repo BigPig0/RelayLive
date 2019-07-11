@@ -11,6 +11,7 @@ CRtp::CRtp(AV_CALLBACK cb, void* handle)
     , m_bBegin(false)
     , m_hUser(handle)
     , m_fCB(cb)
+    , m_stream_type(RTP_STREAM_UNKNOW)
 {
     m_frame_buf = new char[FRAME_MAX_SIZE];
     memset(m_frame_buf, '\0', FRAME_MAX_SIZE);
@@ -116,10 +117,10 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 
         if(it_pos == it_first) {
             /** 队列中第一个不是ps包头 */
-			if(g_stream_type==STREAM_PS && !is_ps_header(pPS)) {
+			if(m_stream_type==RTP_STREAM_PS && !is_ps_header(pPS)) {
                 break;
             }
-			if(g_stream_type==STREAM_H264 && !is_h264_header((char*)pPS)) {
+			if(m_stream_type==RTP_STREAM_H264 && !is_h264_header((char*)pPS)) {
 				break;
 			}
             /** 队列中第一个rtp包是已完成的rtp后那一个，没有中断 */
@@ -134,7 +135,7 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
             }
 
 			//再次发现ps头，则认为前面是完整的ps数据
-			if(g_stream_type==STREAM_PS) {
+			if(m_stream_type==RTP_STREAM_PS) {
 				if(is_ps_header(pPS)){
 					auto it_next = it_last = it_pos;
 					it_last--;
@@ -161,7 +162,7 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 
         //这个包是一个rtp帧的末尾包，且从头到尾连续
         if(/*(g_stream_type==STREAM_PS && pRTP->m != 0)
-			||*/ (g_stream_type==STREAM_H264 && is_h264_end((char*)pPS)))
+			||*/ (m_stream_type==RTP_STREAM_H264 && is_h264_end((char*)pPS)))
         {
             auto it_next = it_last = it_pos;
             it_next++;
@@ -282,10 +283,10 @@ int CRtp::ComposePsFrame()
 	//Log::debug("compose num: %d", m_listRtpFrame.size());
     for (auto pNode : m_listRtpFrame)
     {
-		if(g_stream_type == STREAM_PS) {
+		if(m_stream_type == RTP_STREAM_PS) {
 			memcpy(m_frame_buf+nPsLen, pNode->data+pNode->head_len, pNode->playload_len);
 			nPsLen += pNode->playload_len;  // 累加载荷大小
-		} else if(g_stream_type == STREAM_H264) {
+		} else if(m_stream_type == RTP_STREAM_H264) {
 			bool isSilce = is_h264_slice(pNode->data+pNode->head_len);
 			NalType nal = h264_naltype(pNode->data+pNode->head_len);
 			//Log::debug("slice:%d - type:%d - begin:%d - end:%d", isSilce, nal, is_h264_header(pNode->data+pNode->head_len), is_h264_end(pNode->data+pNode->head_len));
@@ -321,10 +322,10 @@ int CRtp::ComposePsFrame()
     // PS帧组合完毕，回调处理PS帧
     if (m_fCB != nullptr)
     {
-        if(g_stream_type == STREAM_PS) {
+        if(m_stream_type == RTP_STREAM_PS) {
             AV_BUFF buff = {AV_TYPE::PS, m_frame_buf, nPsLen, 0, 0};
             m_fCB(buff, m_hUser);
-        } else if(g_stream_type == STREAM_H264) {
+        } else if(m_stream_type == RTP_STREAM_H264) {
             AV_BUFF buff = {AV_TYPE::H264_NALU, m_frame_buf, nPsLen, 0, 0};
             m_fCB(buff, m_hUser);
         }

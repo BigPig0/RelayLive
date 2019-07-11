@@ -24,6 +24,12 @@
 #define SPS_MAX_SIZE         64
 #define FRAME_MAX_SIZE       (1024 * 1024 * 3)   // PS帧最大大小
 
+enum RTP_STREAM_TYPE {
+    RTP_STREAM_UNKNOW = 0,
+    RTP_STREAM_PS,
+    RTP_STREAM_H264
+};
+
 //frame type
 enum{
     FRAME_TYPE_OTHER = 0,
@@ -145,6 +151,13 @@ public:
     {
         m_nCatchPacketNum = nFrameNum;
     }
+
+    /**
+     * 设置视频流类型
+     */
+    void SetRtpStreamType(RTP_STREAM_TYPE rst){
+        m_stream_type = rst;
+    }
 private:
     /**
      * 向rtp缓存列表中插入新接收的数据
@@ -184,6 +197,7 @@ private:
 private:
     char*             m_frame_buf;            // PS帧缓存
     CriticalSection   m_cs;                   // 确保当前对象的处理函数是非并行的
+    RTP_STREAM_TYPE   m_stream_type;          // 视频流类型
 
     MapRtpList        m_mapRtpList;            // 接收到的rtp/udp报文排序列表
     ListRtpFrame      m_listRtpFrame;          // 能够组成一帧的连续报文

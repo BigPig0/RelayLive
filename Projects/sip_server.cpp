@@ -10,47 +10,40 @@
 
 uv_ipc_handle_t* h = NULL;
 
-static string strfind(char* src, char* begin, char* end){
-    char *p1, *p2;
-    p1 = strstr(src, begin);
-    if(!p1) return "";
-    p1 += strlen(begin);
-    p2 = strstr(p1, end);
-    if(p2) return string(p1, p2-p1);
-    else return string(p1);
-}
-
 void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len)
 {
     if (!strcmp(msg,"live_play")) {
-        // ssid=123&rtpip=1.1.1.1&rtpport=50000
+        // 请求播放 devcode=123&rtpip=1.1.1.1&rtpport=50000
         data[len] = 0;
-        string ssid = strfind(data, "ssid=", "&");
-        string ip = strfind(data, "rtpip=", "&");
-        string port = strfind(data, "rtpport=", "&");
+        char   szDevCode[30] = {0}; // 设备编码
+        char   szIP[20] = {0};      // rtp客户端IP
+        int    nPort = 0;           // rtp客户端端口
+        string strInfo;             // 成功时的sdp或者失败时的错误原因
 
-        string sdp;
-        bool bplay = SipInstance::RealPlay(ssid, ip, stoi(port), sdp);
+        sscanf(data, "devcode=%[^&]&rtpip=%[^&]&rtpport=%d",szDevCode,szIP,&nPort);
+
+        // 此处需要优化为异步
+        bool bplay = SipInstance::RealPlay(szDevCode, szIP, nPort, strInfo);
         if(bplay) {
             stringstream ss;
-            ss << "ssid=" << port << "&ret=0&error=" << sdp;
+            ss << "devcode=" <<szDevCode << "&rtpport=" << nPort << "&ret=0&error=" << strInfo;
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         } else {
             stringstream ss;
-            ss << "ssid=" << port << "&ret=-1&error=sip play failed";
+            ss << "devcode=" <<szDevCode << "&rtpport=" << nPort << "&ret=-1&error=sip play failed";
             string str = ss.str();
             uv_ipc_send(h, "liveDest", "live_play_answer", (char*)str.c_str(), str.size());
         }
     } else if(!strcmp(msg,"stop_play")) {
-        string ssid(data, len);
-
-        SipInstance::StopPlay(ssid);
+        //关闭指定播放请求
+        string port(data, len);
+        SipInstance::StopPlay(port);
     } else if(!strcmp(msg,"close")) {
         //关闭所有正在进行的播放
         SipInstance::StopPlayAll();
     } else if(!strcmp(msg,"devices_list")) {
-		//string user(data, len);
+		//获取设备列表
 		vector<DevInfo*> vecDev = DeviceMgr::GetDeviceInfo();
         string strResJson = "{\"root\":[";
         for (auto dev:vecDev)
@@ -268,20 +261,17 @@ void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* da
         strResJson = StringHandle::StringTrimRight(strResJson,',');
         strResJson += "]}";
 
-		//stringstream ss;
-		//ss << "ssid=" << user << "devlist=" << strResJson;
-		//string str = ss.str();
         uv_ipc_send(h, "liveDest", "dev_list_answer", (char*)strResJson.c_str(), strResJson.size());
 	} else if(!strcmp(msg,"QueryDirtionary")) {
-        //查询设备
+        //查询目录设备
         SipInstance::QueryDirtionary();
     } else if(!strcmp(msg, "DeviceControl")) {
+        //相机云台控制
 		data[len] = 0;
-        string strDev = strfind(data, "dev=", "&");
-        string strIO = strfind(data, "io=", "&");
-        string strUD = strfind(data, "ud=", "&");
-        string strLR = strfind(data, "lr=", "&");
-		SipInstance::DeviceControl(strDev, stoi(strIO), stoi(strUD), stoi(strLR));
+        char szDevCode[30]={0};
+        int nInOut=0, nUpDown=0, nLeftRight=0;
+        sscanf(data, "dev=%[^&]&io=d&ud=%d&lr=%d", szDevCode, &nInOut, &nUpDown, &nLeftRight);
+		SipInstance::DeviceControl(szDevCode, nInOut, nUpDown, nLeftRight);
 	}
 }
 

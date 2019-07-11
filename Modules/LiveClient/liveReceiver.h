@@ -3,12 +3,12 @@
 #include "LiveClient.h"
 #include "uv.h"
 #include "ring_buff.h"
+#include "rtp.h"
 
 enum NalType;
 
 namespace LiveClient
 {
-enum STREAM_TYPE;
 class CLiveWorker;
 
 /**
@@ -18,7 +18,7 @@ class CLiveReceiver
 {
     friend class CLiveWorker;
 public:
-    CLiveReceiver(int nPort, CLiveWorker *worker);
+    CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst);
     ~CLiveReceiver(void);
 
     /** 启动UDP端口监听 */
@@ -73,6 +73,7 @@ private:
     string      m_strRemoteIP;      // 远端发送IP
     int         m_nRemoteRTPPort;   // 远端RTP发送端口
     int         m_nRemoteRTCPPort;  // 远端RTCP发送端口
+    RTP_STREAM_TYPE m_stream_type;      // 视频流类型
 
     uv_udp_t    m_uvRtpSocket;      // rtp接收
     uv_timer_t  m_uvTimeOver;       // 接收超时定时器

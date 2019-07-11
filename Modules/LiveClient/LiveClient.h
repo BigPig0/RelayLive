@@ -39,6 +39,13 @@ namespace LiveClient
     struct ILiveHandle
     {
         /**
+         * 播放请求结果回调
+         * @param ret 错误码 成功是0
+         * @param error_info 成功为下级平台返回的sdp，失败是失败原因
+         */
+        virtual void play_answer(int ret, string error_info) = 0;
+
+        /**
          * 视频数据发送回调
          */
         virtual void push_video_stream(AV_BUFF buff) = 0;

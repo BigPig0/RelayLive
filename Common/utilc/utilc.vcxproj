@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bnf.h" />
     <ClInclude Include="buflist.h" />
     <ClInclude Include="doubly_linked_list.h" />
     <ClInclude Include="linked_list.h" />
@@ -23,6 +24,7 @@
     <ClInclude Include="utilc_export.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bnf.c" />
     <ClCompile Include="buflist.c" />
     <ClCompile Include="doubly_linked_list.c" />
     <ClCompile Include="memfile.c" />

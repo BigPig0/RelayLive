@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Recode.h"
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
 #include "utilc.h"
 #include "es.h"
 #include "h264.h"
