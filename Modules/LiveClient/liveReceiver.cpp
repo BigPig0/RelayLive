@@ -113,7 +113,7 @@ static void destroy_ring_node(void *_msg)
 }
 
 
-CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
+CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst)
 	: m_nLocalRTPPort(nPort)
     , m_nLocalRTCPPort(nPort+1)
     , m_uvLoop(nullptr)
@@ -126,9 +126,11 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker)
     , m_pEsParser(nullptr)
     , m_pWorker(worker)
     , m_nalu_type(unknow)
+    , m_stream_type(rst)
 {
     CRtp* rtp        = new CRtp(AVCallback, this);
     rtp->SetCatchFrameNum(g_nRtpCatchPacketNum);
+    rtp->SetRtpStreamType(rst);
     m_pRtpParser     = rtp;
     m_pPsParser      = new CPs(AVCallback, this);
     m_pPesParser     = new CPes(AVCallback, this);
@@ -283,11 +285,11 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
 		m_pWorker->ReceiveStream(buff);
 	} 
 	{
-		if(g_stream_type == STREAM_PS) {
+		if(m_stream_type == RTP_STREAM_PS) {
 			CPs* pPsParser = (CPs*)m_pPsParser;
 			CHECK_POINT_VOID(pPsParser)
 			pPsParser->DeCode(buff);
-		} else if(g_stream_type == STREAM_H264) {
+		} else if(m_stream_type == RTP_STREAM_H264) {
 			push_h264_stream(buff);
 		}
 	}

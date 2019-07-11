@@ -3,6 +3,56 @@
 #include "utilc.h"
 #include "cstl_easy.h"
 
+char* response_status[] = {
+    "100 Continue(all 100 range)",
+    "110 Connect Timeout",
+    "200 OK",
+    "201 Created",
+    "250 Low on Storage Space",
+    "300 Multiple Choices",
+    "301 Moved Permanently",
+    "302 Moved Temporarily",
+    "303 See Other",
+    "304 Not Modified",
+    "305 Use Proxy",
+    "350 Going Away",
+    "351 Load Balancing",
+    "400 Bad Request",
+    "401 Unauthorized",
+    "402 Payment Required",
+    "403 Forbidden",
+    "404 Not Found",
+    "405 Method Not Allowed",
+    "406 Not Acceptable",
+    "407 Proxy Authentication Required",
+    "408 Request Time-out",
+    "410 Gone",
+    "411 Length Required",
+    "412 Precondition Failed",
+    "413 Request Entity Too Large",
+    "414 Request-URI Too Large",
+    "415 Unsupported Media Type",
+    "451 Parameter Not Understood",
+    "452 reserved",
+    "453 Not Enough Bandwidth",
+    "454 Session Not Found",
+    "455 Method Not Valid in This State",
+    "456 Header Field Not Valid for Resource",
+    "457 Invalid Range",
+    "458 Parameter Is Read-Only",
+    "459 Aggregate operation not allowed",
+    "460 Only aggregate operation allowed",
+    "461 Unsupported transport",
+    "462 Destination unreachable",
+    "500 Internal Server Error",
+    "501 Not Implemented",
+    "502 Bad Gateway",
+    "503 Service Unavailable",
+    "504 Gateway Time-out",
+    "505 RTSP Version not supported",
+    "551 Option not supported"
+};
+
 /**
  * 销毁请求结构体
  */
@@ -153,7 +203,17 @@ void rtsp_handle_request(rtsp *h, char *data, int len) {
             }
             if(!strcasecmp(key, "CSeq")) {
                 req->CSeq = atoi(value);
-            } else {
+			} else {
+				//解析出rtp端口
+				if(!strcasecmp(key, "Transport")) {
+					char *cp = strstr(value, "client_port=");
+					if(cp) {
+						int p1=0, p2=0;
+						sscanf(cp, "client_port=%d-%d", &p1, &p2);
+						req->rtp_port = p1;
+						req->rtcp_port = p2;
+					}
+				}
                 if(!req->headers) {
                     req->headers = create_hash_map(void*, void*);
                     hash_map_init_ex(req->headers, 0, string_map_hash, string_map_compare);
@@ -185,4 +245,12 @@ void rtsp_handle_request(rtsp *h, char *data, int len) {
 
 void rtsp_handle_answer(rtsp *h, char *data, int len) {
 
+}
+
+const char* rtsp_request_get_header(rtsp_ruquest_t *req, char *data){
+    string_t* str_h = (string_t*)hash_map_find_easy_str(req->headers, data);
+    if(str_h)
+        return string_c_str(str_h);
+
+    return NULL;
 }

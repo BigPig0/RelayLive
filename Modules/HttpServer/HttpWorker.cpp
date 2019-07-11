@@ -122,6 +122,10 @@ namespace HttpWsServer
         return tlen;
     }
 
+    void CHttpWorker::play_answer(int ret, string error_info)
+    {
+    }
+
     void CHttpWorker::push_video_stream(AV_BUFF buff)
     {
         if (m_eHandleType == h264_handle) {

@@ -19,7 +19,7 @@ CLiveChannel::CLiveChannel()
     : m_nChannel(0)
     , m_nWidth(0)
     , m_nHeight(0)
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
 	, m_pEncoder(nullptr)
 #endif
 {
@@ -29,11 +29,11 @@ CLiveChannel::CLiveChannel(int channel, uint32_t w, uint32_t h)
     : m_nChannel(channel)
     , m_nWidth(w)
     , m_nHeight(h)
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
 	, m_pEncoder(nullptr)
 #endif
 {
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
     m_pEncoder       = IEncoder::Create(AVCallback, this);
 	m_pEncoder->m_width = m_nWidth;
 	m_pEncoder->m_height = m_nHeight;
@@ -42,13 +42,13 @@ CLiveChannel::CLiveChannel(int channel, uint32_t w, uint32_t h)
 
 CLiveChannel::~CLiveChannel()
 {
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
     SAFE_DELETE(m_pEncoder);
 #endif
 	Log::debug("CLiveChannel %d release", m_nChannel);
 }
 
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
 void CLiveChannel::SetDecoder(IDecoder *decoder)
 {
     m_pEncoder->SetDecoder(decoder);
@@ -83,7 +83,7 @@ void CLiveChannel::ReceiveStream(AV_BUFF buff)
             h->push_video_stream(buff);
         }
     } else if (buff.eType == AV_TYPE::YUV) {
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
         m_pEncoder->Code(buff);
 #endif
     }

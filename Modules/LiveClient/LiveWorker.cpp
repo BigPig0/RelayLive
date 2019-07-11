@@ -5,41 +5,30 @@
 #include "liveReceiver.h"
 #include "LiveChannel.h"
 #include "LiveIpc.h"
+#include "bnf.h"
 
 namespace LiveClient
 {
-	extern uv_loop_t *g_uv_loop;
-
-    extern string g_strRtpIP;            //< RTP服务IP
-    extern int    g_nRtpBeginPort;       //< RTP监听的起始端口，必须是偶数
-    extern int    g_nRtpPortNum;         //< RTP使用的个数，从strRTPPort开始每次加2，共strRTPNum个
-    extern int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-	extern int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
-
-    extern vector<int>     m_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
-    //extern CriticalSection m_csRTP;          //< RTP端口锁
-
+	extern uv_loop_t      *g_uv_loop;
+    extern string          g_strRtpIP;       //< RTP服务IP
+    extern vector<int>     g_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+    
     static map<string,CLiveWorker*>  m_workerMap;
-    //static CriticalSection           m_cs;
 
     static int GetRtpPort()
     {
-        //MutexLock lock(&m_csRTP);
-
         int nRet = -1;
-        auto it = m_vecRtpPort.begin();
-        if (it != m_vecRtpPort.end()) {
+        auto it = g_vecRtpPort.begin();
+        if (it != g_vecRtpPort.end()) {
             nRet = *it;
-            m_vecRtpPort.erase(it);
+            g_vecRtpPort.erase(it);
         }
-
         return nRet;
     }
 
     static void GiveBackRtpPort(int nPort)
     {
-        //MutexLock lock(&m_csRTP);
-        m_vecRtpPort.push_back(nPort);
+        g_vecRtpPort.push_back(nPort);
     }
 
 
@@ -81,29 +70,17 @@ namespace LiveClient
             return nullptr;
         }
 
-        string sdp;
-        if(LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort, sdp))
-        {
-            //uv_thread_t tid;
-            //uv_thread_create(&tid, live_worker_destory_thread, pNew);
-            Log::error("play failed %s",strCode.c_str());
-            return nullptr;
-        }
-
-        Log::debug("RealPlay ok: %s",strCode.c_str());
-        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort, sdp);
-
-        //MutexLock lock(&m_cs);
+        CLiveWorker* pNew = new CLiveWorker(strCode, rtpPort);
         m_workerMap.insert(make_pair(strCode, pNew));
+
+        LiveIpc::RealPlay(strCode, g_strRtpIP,  rtpPort);
+        Log::debug("RealPlay start: %s",strCode.c_str());
 
         return pNew;
     }
 
     CLiveWorker* GetLiveWorker(string strCode)
     {
-        //Log::debug("GetWorker begin");
-
-        //MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
@@ -111,13 +88,11 @@ namespace LiveClient
             return itFind->second;
         }
 
-        //Log::error("GetWorker failed: %s",strCode.c_str());
         return nullptr;
     }
 
     bool DelLiveWorker(string strCode)
     {
-        //MutexLock lock(&m_cs);
         auto itFind = m_workerMap.find(strCode);
         if (itFind != m_workerMap.end())
         {
@@ -136,7 +111,6 @@ namespace LiveClient
 	string GetAllWorkerClientsInfo(){
         stringstream ss;
 		ss << "{\"root\":[";
-        //MutexLock lock(&m_cs);
         for (auto w : m_workerMap) {
             CLiveWorker *worker = w.second;
 			vector<ClientInfo> tmp = worker->GetClientInfo();
@@ -161,43 +135,26 @@ namespace LiveClient
         live->ReceiveYUV(buff);
     }
 
-    CLiveWorker::CLiveWorker(string strCode, int rtpPort, string sdp)
+    CLiveWorker::CLiveWorker(string strCode, int rtpPort)
         : m_strCode(strCode)
+        , m_bPlayed(false)
+        , m_nPlayRes(0)
         , m_nPort(rtpPort)
-        , m_strSDP(sdp)
         , m_nType(0)
         , m_pReceiver(nullptr)
         , m_pOrigin(nullptr)
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
         , m_pDecoder(nullptr)
 #endif
         , m_bStop(false)
         , m_bOver(false)
+        , m_stream_type(RTP_STREAM_UNKNOW)
     {
-        //从sdp解析出视频源ip和端口
-        size_t t1,t2;
-        t1 = sdp.find("c=IN IP4 ");
-        t1 += 9;
-        t2 = sdp.find("\r\n", t1);
-        string rip = sdp.substr(t1, t2-t1);
-        t1 = sdp.find("m=video ");
-        t1 += 8;
-        t2 = sdp.find(" ", t1);
-        string rport = sdp.substr(t1, t2-t1);
-        int nport = stoi(rport);
-
-        //启动监听
-        m_pReceiver = new CLiveReceiver(rtpPort, this);
-        m_pReceiver->m_strRemoteIP = rip;
-        m_pReceiver->m_nRemoteRTPPort = nport;
-        m_pReceiver->m_nRemoteRTCPPort = nport+1;
-        m_pReceiver->StartListen();
     }
 
     CLiveWorker::~CLiveWorker()
     {
-        string ssid = StringHandle::toStr<int>(m_nPort);
-        if(LiveIpc::StopPlay(ssid)) {
+        if(LiveIpc::StopPlay(m_nPort)) {
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pReceiver);
@@ -221,6 +178,7 @@ namespace LiveClient
             m_pOrigin->AddHandle(h, t);
         } else {
             // 扩展通道
+#ifdef EXTEND_CHANNELS
             MutexLock lock(&m_csChls);
             auto fit = m_mapChlEx.find(c);
             if(fit != m_mapChlEx.end()) {
@@ -228,11 +186,16 @@ namespace LiveClient
             } else {
                 CLiveChannel *nc = new CLiveChannel(c, 640, 480);
                 nc->AddHandle(h, t);
-#ifdef USE_FFMPEG
                 nc->SetDecoder(m_pDecoder);
-#endif
                 m_mapChlEx.insert(make_pair(c, nc));
             }
+#else
+            // 原始通道
+            if(!m_pOrigin)
+                m_pOrigin = new CLiveChannel;
+            CHECK_POINT(m_pOrigin);
+            m_pOrigin->AddHandle(h, t);
+#endif
         }
 
         //如果刚刚开启了结束定时器，需要将其关闭
@@ -283,7 +246,7 @@ namespace LiveClient
     }
 
     string CLiveWorker::GetSDP(){
-        return m_strSDP;
+        return m_strPlayInfo;
     }
 
 	void CLiveWorker::Clear2Stop() {
@@ -338,7 +301,7 @@ namespace LiveClient
                 m_pOrigin->ReceiveStream(buff);
             }
             //扩展通道，将码流解码成yuv再发送过去
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
             MutexLock lock(&m_csChls);
             if(!m_mapChlEx.empty()){
                 if(nullptr == m_pDecoder) {
@@ -355,6 +318,7 @@ namespace LiveClient
         }
     }
 
+#ifdef EXTEND_CHANNELS
     void CLiveWorker::ReceiveYUV(AV_BUFF buff)
     {
         for (auto it:m_mapChlEx)
@@ -362,5 +326,71 @@ namespace LiveClient
             it.second->ReceiveStream(buff);
         }
     }
+#endif
 
+    void CLiveWorker::PlayAnswer(PlayAnswerList *pal){
+        if(!pal->nRet){
+            Log::debug("RealPlay ok: %s",pal->strDevCode.c_str());
+
+            //从sdp解析出视频源ip和端口
+            m_strPlayInfo = pal->strMark;
+            ParseSdp();
+
+            //启动监听
+            m_pReceiver = new CLiveReceiver(m_nPort, this, m_stream_type);
+            m_pReceiver->m_strRemoteIP     = m_strServerIP;
+            m_pReceiver->m_nRemoteRTPPort  = m_nServerPort;
+            m_pReceiver->m_nRemoteRTCPPort = m_nServerPort+1;
+            m_pReceiver->StartListen();
+        } else {
+            Log::error("RealPlay failed: %s %s",pal->strDevCode.c_str(), pal->strMark.c_str());
+        }
+
+        m_nPlayRes = pal->nRet;
+        m_bPlayed = true;
+    }
+
+    bool AsyncPlayCB(PlayAnswerList *pal){
+        CLiveWorker* pWorker = GetLiveWorker(pal->strDevCode);
+        if(!pWorker){
+            Log::error("get live worker failed %s", pal->strDevCode.c_str());
+            return false;
+        }
+        pWorker->PlayAnswer(pal);
+        return true;
+    }
+
+    void CLiveWorker::ParseSdp()
+    {
+        //从sdp解析出视频源ip和端口
+        bnf_t* sdp_bnf = create_bnf(m_strPlayInfo.c_str(), m_strPlayInfo.size());
+        char *sdp_line = NULL;
+        char remoteIP[25]={0};
+        int remotePort = 0;
+        while (bnf_line(sdp_bnf, &sdp_line)) {
+            if(sdp_line[0]=='c'){
+                sscanf(sdp_line, "c=IN IP4 %[^/\r\n]", remoteIP);
+                m_strServerIP = remoteIP;
+            } else if(sdp_line[0]=='m') {
+                sscanf(sdp_line, "m=video %d ", &remotePort);
+                m_nServerPort = remotePort;
+            }
+
+            if(sdp_line[0]=='a' && !strncmp(sdp_line, "a=rtpmap:", 9)){
+                //a=rtpmap:96 PS/90000
+                //a=rtpmap:96 H264/90000
+                char tmp[256]={0};
+                int num = 0;
+                char type[20]={0};
+                int bitrate = 0;
+                sscanf(sdp_line, "a=rtpmap:%d %[^/]/%d", &num, type, &bitrate);
+                if(!strcmp(type, "PS") || !strcmp(type, "MP2P")){
+                    m_stream_type = RTP_STREAM_PS;
+                }else{
+                    m_stream_type = RTP_STREAM_H264;
+                }
+            }
+        }
+        destory_bnf(sdp_bnf);
+    }
 }

@@ -94,6 +94,10 @@ namespace RtspServer
 		return origin;
     }
 
+    void CRtspWorker::play_answer(int ret, string error_info)
+    {
+    }
+
     void CRtspWorker::push_video_stream(AV_BUFF buff)
     {
         int n = (int)ring_get_count_free_elements(m_pRing);

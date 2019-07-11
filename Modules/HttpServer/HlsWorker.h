@@ -25,6 +25,7 @@ namespace HttpWsServer
         AV_BUFF GetHeader();
         AV_BUFF GetVideo(uint64_t id);
 
+        virtual void play_answer(int ret, string error_info);
         virtual void push_video_stream(AV_BUFF buff);
         virtual void stop();
         virtual LiveClient::ClientInfo get_clients_info();
