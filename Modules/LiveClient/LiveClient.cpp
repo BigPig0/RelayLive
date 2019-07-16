@@ -13,7 +13,7 @@ namespace LiveClient
     int    g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
     int    g_nRtpStreamType;      //< rtp包的类型，传给libLive。ps h264
 
-    vector<int>     g_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+    list<int>     g_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     CriticalSection m_csRTP;          //< RTP端口锁
 
     extern LIVECLIENT_CB ipc_cb;

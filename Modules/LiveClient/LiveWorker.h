@@ -9,11 +9,11 @@ namespace LiveClient
 {
     class CLiveReceiver;
     class CLiveChannel;
+    struct live_event_loop_t;
 
     struct PlayAnswerList {
         struct PlayAnswerList *pNext;
         string strDevCode;  //设备编码
-        string strPort;     //rtp接收端口
         int    nRet;        //播放请求返回值 0成功 非0失败
         string strMark;     //失败时保存错误原因，成功时保存sdp信息
     };
@@ -26,8 +26,11 @@ namespace LiveClient
 
         /** 客户端连接 */
         virtual bool AddHandle(ILiveHandle* h, HandleType t, int c);
+        bool AddHandleAsync(ILiveHandle* h, HandleType t, int c);
         virtual bool RemoveHandle(ILiveHandle* h);
+        bool RemoveHandleAsync(ILiveHandle* h);
         virtual string GetSDP();
+
 
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
@@ -39,6 +42,7 @@ namespace LiveClient
 
         /** 接收到的视频流处理 */
         void ReceiveStream(AV_BUFF buff);
+        void ReceiveStreamAsync(AV_BUFF buff);
 
 #ifdef EXTEND_CHANNELS
         /** yuv视频处理 */
@@ -54,6 +58,8 @@ namespace LiveClient
         /** 解析SDP */
         void ParseSdp();
 
+    public:
+        int         m_nRunNum;
         bool m_bRtp;
 
     private:
@@ -71,16 +77,17 @@ namespace LiveClient
 
 #ifdef EXTEND_CHANNELS
         map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
-        CriticalSection          m_csChls;      // map的锁
+        //CriticalSection          m_csChls;      // map的锁
         IDecoder                *m_pDecoder;    // h264解码
 #endif
 
         vector<ILiveHandleRtp*>  m_vecLiveRtp;  // RTP原始流转发
-        CriticalSection          m_csRtp;
+        //CriticalSection          m_csRtp;
 
         int                      m_nType;          //< 0:live直播；1:record历史视频
 
-        uv_timer_t               m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
+        live_event_loop_t*       m_pEventLoop;
+        //uv_timer_t               m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
     };
 
     extern CLiveWorker* CreatLiveWorker(string strCode);

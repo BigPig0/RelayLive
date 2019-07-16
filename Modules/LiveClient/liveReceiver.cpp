@@ -8,11 +8,11 @@
 #include "es.h"
 #include "h264.h"
 #include "Recode.h"
+#include "utilc.h"
 
 namespace LiveClient
 {
 extern int  g_nRtpCatchPacketNum;  //< rtp缓存的包的数量
-
 
 static void AVCallback(AV_BUFF buff, void* pUser){
     CLiveReceiver* pLive = (CLiveReceiver*)pUser;
@@ -35,15 +35,34 @@ static void AVCallback(AV_BUFF buff, void* pUser){
     }
 }
 
+//////////////////////////////////////////////////////////////////////////
+/**
+ * udp接收事件循环
+ */
+struct udp_recv_loop_t {
+    uv_loop_t   uvLoop;           // udp接收的loop
+    uv_udp_t    uvRtpSocket;      // rtp接收
+    uv_timer_t  uvTimeOver;       // 接收超时定时器
+    uv_async_t  uvAsync;          // 外部线程通知结束loop
+    bool        running;          // loop线程是否正在执行
+    int         uvHandleNum;      // 启动的uv句柄数，这些句柄通过uv_close关闭
+    string      remoteIP;         // 发送方IP
+    int         remotePort;       // 发送方端口
+    int         port;
+    void       *user;             // 用户对象
+};
+
+/** udp接收申请缓存空间 */
 static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
     UNUSED(handle);
     UNUSED(suggested_size);
     *buf = uv_buf_init((char*)malloc(PACK_MAX_SIZE), PACK_MAX_SIZE);
 }
 
+/** udp接收数据，读取一个包 */
 static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags)
 {
-    //Log::debug("after_read thread ID : %d", GetCurrentThreadId());
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
     UNUSED(flags);
     if(nread < 0){
         Log::error("read error: %s",uv_strerror(nread));
@@ -52,74 +71,246 @@ static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, con
 	if(nread == 0)
 		return;
 
-    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
-    pLive->RtpRecv(buf->base, nread, (struct sockaddr_in*)addr);
+    //udp来源不匹配，将数据抛弃
+    struct sockaddr_in* addr_in =(struct sockaddr_in*)addr;
+    int port = ntohs(addr_in->sin_port);
+    char ipv4addr[64]={0};
+    uv_ip4_name(addr_in, ipv4addr, 64);
+    string ip = ipv4addr;
+    if(loop->remotePort != port || loop->remoteIP != ip) {
+        //Log::error("this is not my rtp data");
+        return;
+    }
+
+    //重置超时计时器
+    int ret = uv_timer_again(&loop->uvTimeOver);
+    if(ret < 0) {
+        Log::error("timer again error: %s", uv_strerror(ret));
+        return;
+    }
+
+    CLiveReceiver* pLive = (CLiveReceiver*)loop->user;
+    pLive->RtpRecv(buf->base, nread);
 }
 
+/** 超时定时器到时回调 */
 static void timer_cb(uv_timer_t* handle)
 {
-    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
+    CLiveReceiver* pLive = (CLiveReceiver*)loop->user;
     pLive->RtpOverTime();
 }
 
-static void rtp_udp_close_cb(uv_handle_t* handle){
-    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
-    pLive->m_bRtpRun = false;
-
-	if(!pLive->m_bTimeOverRun){
-		pLive->m_bRun = false;
-		uv_stop(pLive->m_uvLoop);
-	}
+/** 关闭uv句柄的回调 */
+static void udp_uv_close_cb(uv_handle_t* handle){
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
+    loop->uvHandleNum--;
+    //uv句柄全部关闭后，停止loop
+    if(!loop->uvHandleNum){
+        loop->running = false;
+        uv_stop(&loop->uvLoop);
+    }
 }
 
-static void timer_over_close_cb(uv_handle_t* handle){
-    CLiveReceiver* pLive = (CLiveReceiver*)handle->data;
-    pLive->m_bTimeOverRun = false;
-
-	if(!pLive->m_bRtpRun){
-		pLive->m_bRun = false;
-		uv_stop(pLive->m_uvLoop);
-	}
-}
-
+/** 外部线程通知回调，在loop回调中关闭用到的uv句柄 */
 static void async_cb(uv_async_t* handle){
-    CLiveReceiver* obj = (CLiveReceiver*)handle->data;
-    obj->AsyncClose();
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
+    int ret = uv_udp_recv_stop(&loop->uvRtpSocket);
+    if(ret < 0) {
+        Log::error("stop rtp recv port:%d err: %s", loop->port, uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&loop->uvRtpSocket, udp_uv_close_cb);
+
+    ret = uv_timer_stop(&loop->uvTimeOver);
+    if(ret < 0) {
+        Log::error("stop timer error: %s",uv_strerror(ret));
+    }
+    uv_close((uv_handle_t*)&loop->uvTimeOver, udp_uv_close_cb);
+
+    uv_close((uv_handle_t*)&loop->uvAsync, udp_uv_close_cb);
 }
 
+/** event loop thread */
 static void run_loop_thread(void* arg)
 {
-    CLiveReceiver* h = (CLiveReceiver*)arg;
-    while (h->m_bRun) {
-        uv_run(h->m_uvLoop, UV_RUN_DEFAULT);
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)arg;
+    CLiveReceiver *recver = (CLiveReceiver*)loop->user;
+    recver->m_nRunNum++;
+    while (loop->running) {
+        uv_run(&loop->uvLoop, UV_RUN_DEFAULT);
         Sleep(200);
     }
-    uv_loop_close(h->m_uvLoop);
-    h->m_uvLoop = NULL;
+    uv_loop_close(&loop->uvLoop);
+    delete loop;
+    recver->m_nRunNum--;
 }
 
-static void rtp_parse_thread(void* arg)
+/**
+ * 建立一个接收udp数据的事件循环
+ * @param port 监听端口
+ * @param time_over 超时时间，即这么长的时间没有收到数据，认为收不到数据
+ * @note 所有的uv异常判断，都不应该进入异常流程，没有考虑异常时的内存释放
+ */
+udp_recv_loop_t* create_udp_recv_loop(int port, int time_over, void *usr){
+    SAFE_MALLOC(udp_recv_loop_t, loop);
+    loop->port = port;
+    loop->user = usr;
+
+    int ret =uv_loop_init(&loop->uvLoop);
+    if(ret < 0) {
+        Log::error("uv_loop init error: %s", uv_strerror(ret));
+        return NULL;
+    }
+    loop->running = true;
+
+    // 开启udp接收
+    ret = uv_udp_init(&loop->uvLoop, &loop->uvRtpSocket);
+    if(ret < 0) {
+        Log::error("udp init error: %s", uv_strerror(ret));
+        return NULL;
+    }
+
+    struct sockaddr_in addr;
+    ret = uv_ip4_addr("0.0.0.0", port, &addr);
+    if(ret < 0) {
+        Log::error("make address err: %s",  uv_strerror(ret));
+        return NULL;
+    }
+
+    ret = uv_udp_bind(&loop->uvRtpSocket, (struct sockaddr*)&addr, 0);
+    if(ret < 0) {
+        Log::error("tcp bind err: %s",  uv_strerror(ret));
+        return NULL;
+    }
+
+    int nRecvBuf = 10 * 1024 * 1024;       // 缓存区设置成10M，默认值太小会丢包
+    setsockopt(loop->uvRtpSocket.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
+    int nOverTime = 30*1000;  //
+    setsockopt(loop->uvRtpSocket.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+    setsockopt(loop->uvRtpSocket.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+
+    loop->uvRtpSocket.data = (void*)loop;
+    uv_udp_recv_start(&loop->uvRtpSocket, echo_alloc, after_read);
+    loop->uvHandleNum++;
+
+    //开启udp接收超时判断
+    ret = uv_timer_init(&loop->uvLoop, &loop->uvTimeOver);
+    if(ret < 0) {
+        Log::error("timer init error: %s", uv_strerror(ret));
+        return NULL;
+    }
+
+    loop->uvTimeOver.data = (void*)loop;
+    ret = uv_timer_start(&loop->uvTimeOver, timer_cb, 30000, 30000);
+    if(ret < 0) {
+        Log::error("timer start error: %s", uv_strerror(ret));
+        return NULL;
+    }
+    loop->uvHandleNum++;
+
+    //异步操作
+    loop->uvAsync.data = (void*)loop;
+    uv_async_init(&loop->uvLoop, &loop->uvAsync, async_cb);
+    loop->uvHandleNum++;
+
+    //udp 接收loop线程
+    uv_thread_t tid;
+    uv_thread_create(&tid, run_loop_thread, loop);
+}
+
+void close_udp_recv_loop(udp_recv_loop_t *loop){
+    uv_async_send(&loop->uvAsync);
+}
+
+//////////////////////////////////////////////////////////////////////////
+/**
+ * rtp解析事件循环，该线程负责rtp组包，解析出裸码流
+ */
+struct rtp_parse_loop_t {
+    uv_loop_t   uvLoop;           // rtp报文解析的loop
+    uv_async_t  uvAsyncRtp;       // 外部线程通知收到rtp报文
+    uv_async_t  uvAsyncClose;     // 外部线程通知结束m_uvLoop
+    bool        running;          // loop是否运行
+    int         uvHandleNum;
+    void       *user;             // 用户对象
+};
+
+static void run_rtp_parse_thread(void* arg)
 {
-    CLiveReceiver* h = (CLiveReceiver*)arg;
+    rtp_parse_loop_t *loop = (rtp_parse_loop_t*)arg;
+    CLiveReceiver *recver = (CLiveReceiver*)loop->user;
+    recver->m_nRunNum++;
+    while (loop->running) {
+        uv_run(&loop->uvLoop, UV_RUN_DEFAULT);
+        Sleep(40);
+    }
+    uv_loop_close(&loop->uvLoop);
+    delete loop;
+    recver->m_nRunNum--;
+}
+
+/** 外部线程通知回调，在loop线程回调解析RTP数据 */
+static void async_rtp_parse_cb(uv_async_t* handle){
+    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
+    CLiveReceiver* h = (CLiveReceiver*)loop->user;
     h->RtpParse();
 }
 
-static void destroy_ring_node(void *_msg)
-{
-    AV_BUFF *msg = (AV_BUFF*)_msg;
-    free(msg->pData);
-    msg->pData = NULL;
-    msg->nLen = 0;
+/** 关闭uv句柄的回调 */
+static void rtp_uv_close_cb(uv_handle_t* handle){
+    rtp_parse_loop_t *loop = (rtp_parse_loop_t*)handle->data;
+    loop->uvHandleNum--;
+    //uv句柄全部关闭后，停止loop
+    if(!loop->uvHandleNum){
+        loop->running = false;
+        uv_stop(&loop->uvLoop);
+    }
 }
 
+/** 外部线程通知回调，在loop回调中关闭所有uv句柄 */
+static void async_close_cb(uv_async_t* handle){
+    rtp_parse_loop_t *loop = (rtp_parse_loop_t*)handle->data;
+    uv_close((uv_handle_t*)&loop->uvAsyncRtp, rtp_uv_close_cb);
+    uv_close((uv_handle_t*)&loop->uvAsyncClose, rtp_uv_close_cb);
+}
+
+rtp_parse_loop_t* create_rtp_parse_loop(void *usr){
+    SAFE_MALLOC(rtp_parse_loop_t, loop);
+    loop->user = usr;
+
+    int ret =uv_loop_init(&loop->uvLoop);
+    if(ret < 0) {
+        Log::error("uv_loop init error: %s", uv_strerror(ret));
+        return NULL;
+    }
+
+    //异步操作
+    loop->uvAsyncRtp.data = (void*)loop;
+    uv_async_init(&loop->uvLoop, &loop->uvAsyncRtp, async_rtp_parse_cb);
+    loop->uvHandleNum++;
+
+    loop->uvAsyncClose.data = (void*)loop;
+    uv_async_init(&loop->uvLoop, &loop->uvAsyncClose, async_close_cb);
+    loop->uvHandleNum++;
+
+    //rtp 解析 loop线程
+    uv_thread_t tid;
+    uv_thread_create(&tid, run_rtp_parse_thread, loop);
+}
+
+void close_rtp_parse_loop(rtp_parse_loop_t *loop) {
+    uv_async_send(&loop->uvAsyncClose);
+}
+
+void rtp_parse_event(rtp_parse_loop_t *loop) {
+    uv_async_send(&loop->uvAsyncRtp);
+}
+
+//////////////////////////////////////////////////////////////////////////
 
 CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst)
 	: m_nLocalRTPPort(nPort)
     , m_nLocalRTCPPort(nPort+1)
-    , m_uvLoop(nullptr)
-    , m_bRun(false)
-    , m_bRtpRun(false)
-    , m_bTimeOverRun(false)
 	, m_pRtpParser(nullptr)
     , m_pPsParser(nullptr)
     , m_pPesParser(nullptr)
@@ -127,6 +318,7 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst
     , m_pWorker(worker)
     , m_nalu_type(unknow)
     , m_stream_type(rst)
+    , m_nRunNum(0)
 {
     CRtp* rtp        = new CRtp(AVCallback, this);
     rtp->SetCatchFrameNum(g_nRtpCatchPacketNum);
@@ -141,9 +333,10 @@ CLiveReceiver::CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst
 
 CLiveReceiver::~CLiveReceiver(void)
 {
-    uv_async_send(&m_uvAsync);
-    while (m_uvLoop)
-        Sleep(500);
+    close_udp_recv_loop(m_pUdpRecv);
+    close_rtp_parse_loop(m_pRtpParse);
+    while (m_nRunNum)
+        sleep(50);
 
     m_pWorker = nullptr;
     SAFE_DELETE(m_pRtpParser);
@@ -157,90 +350,20 @@ CLiveReceiver::~CLiveReceiver(void)
 
 void CLiveReceiver::StartListen()
 {
-    m_uvLoop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
-    uv_loop_init(m_uvLoop);
-    m_bRun = true;
-
-    // 开启udp接收
-    int ret = uv_udp_init(m_uvLoop, &m_uvRtpSocket);
-    if(ret < 0) {
-        Log::error("udp init error: %s", uv_strerror(ret));
-        return;
-    }
-
-    struct sockaddr_in addr;
-    ret = uv_ip4_addr("0.0.0.0", m_nLocalRTPPort, &addr);
-    if(ret < 0) {
-        Log::error("make address err: %s",  uv_strerror(ret));
-        return ;
-    }
-
-    ret = uv_udp_bind(&m_uvRtpSocket, (struct sockaddr*)&addr, 0);
-    if(ret < 0) {
-        Log::error("tcp bind err: %s",  uv_strerror(ret));
-        return;
-    }
-
-	int nRecvBuf = 10 * 1024 * 1024;       // 缓存区设置成10M，默认值太小会丢包
-	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
-	int nOverTime = 30*1000;  //
-	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-	setsockopt(m_uvRtpSocket.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-
-    m_uvRtpSocket.data = (void*)this;
-    uv_udp_recv_start(&m_uvRtpSocket, echo_alloc, after_read);
-    m_bRtpRun = true;
-
-    //开启udp接收超时判断
-    ret = uv_timer_init(m_uvLoop, &m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("timer init error: %s", uv_strerror(ret));
-        return;
-    }
-
-    m_uvTimeOver.data = (void*)this;
-    ret = uv_timer_start(&m_uvTimeOver, timer_cb, 30000, 30000);
-    if(ret < 0) {
-        Log::error("timer start error: %s", uv_strerror(ret));
-        return;
-    }
-    m_bTimeOverRun = true;
-
-    //异步操作
-    m_uvAsync.data = (void*)this;
-    uv_async_init(m_uvLoop, &m_uvAsync, async_cb);
-
-    //udp 接收loop线程
-    uv_thread_t tid;
-    uv_thread_create(&tid, run_loop_thread, this);
-
-    //rtp数据解析线程
-    uv_thread_create(&tid, rtp_parse_thread, this);
+    m_pUdpRecv = create_udp_recv_loop(m_nLocalRTPPort, 30000, this);
+    m_pUdpRecv->remoteIP = m_strRemoteIP;
+    m_pUdpRecv->remotePort = m_nRemoteRTPPort;
+   
+    m_pRtpParse = create_rtp_parse_loop(this);
 }
 
-bool CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
+bool CLiveReceiver::RtpRecv(char* pBuff, long nLen)
 {
-    //udp来源不匹配，将数据抛弃
-    char ipv4addr[64]={0};
-    uv_ip4_name(addr_in, ipv4addr, 64);
-    int port = ntohs(addr_in->sin_port);
-    string ip = ipv4addr;
-    if(m_nRemoteRTPPort != port || m_strRemoteIP != ip) {
-        //Log::error("this is not my rtp data");
-        return false;
-    }
-
-    //重置超时计时器
-    int ret = uv_timer_again(&m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("timer again error: %s", uv_strerror(ret));
-        return false;
-    }
-
     // 将数据保存在ring buff
     int n = (int)ring_get_count_free_elements(m_pRingRtp);
     if (!n) {
         Log::error("rtp ring buff is full");
+        rtp_parse_event(m_pRtpParse);
         return false;
     }
 
@@ -250,6 +373,7 @@ bool CLiveReceiver::RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in)
         return false;
     }
 
+    rtp_parse_event(m_pRtpParse);
     return true;
 }
 
@@ -266,11 +390,10 @@ void CLiveReceiver::RtpOverTime()
 void CLiveReceiver::RtpParse()
 {
     AV_BUFF rtp;
-    while(m_bRtpRun){
+    while(true){
         int ret = ring_consume(m_pRingRtp, NULL, &rtp, 1);
         if(!ret) {
-            Sleep(10);
-            continue;
+            return;
         }
         CRtp* rtpAnalyzer = (CRtp*)m_pRtpParser;
         rtpAnalyzer->DeCode(rtp.pData, rtp.nLen);
@@ -284,26 +407,23 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
 	if(m_pWorker->m_bRtp){
 		m_pWorker->ReceiveStream(buff);
 	} 
-	{
-		if(m_stream_type == RTP_STREAM_PS) {
-			CPs* pPsParser = (CPs*)m_pPsParser;
-			CHECK_POINT_VOID(pPsParser)
-			pPsParser->DeCode(buff);
-		} else if(m_stream_type == RTP_STREAM_H264) {
-			push_h264_stream(buff);
-		}
-	}
+
+    if(m_stream_type == RTP_STREAM_PS) {
+        CPs* pPsParser = (CPs*)m_pPsParser;
+        CHECK_POINT_VOID(pPsParser);
+        pPsParser->DeCode(buff);
+    } else if(m_stream_type == RTP_STREAM_H264) {
+        push_h264_stream(buff);
+    }
 }
 
 void CLiveReceiver::push_pes_stream(AV_BUFF buff)
 {
     //Log::debug("PSParseCb nlen:%ld", nLen);
-    CHECK_POINT_VOID(buff.pData)
-	/*if(m_pWorker->m_bFlv || m_pWorker->m_bMp4)*/ {
-		CPes* pPesParser = (CPes*)m_pPesParser;
-		CHECK_POINT_VOID(pPesParser)
-		pPesParser->Decode(buff);
-	}
+    CHECK_POINT_VOID(buff.pData);
+    CPes* pPesParser = (CPes*)m_pPesParser;
+    CHECK_POINT_VOID(pPesParser);
+    pPesParser->Decode(buff);
     //需要回调TS
     //if(m_pWorker->m_bTs && nullptr != m_pTs)
     //{
@@ -331,21 +451,5 @@ void CLiveReceiver::push_h264_stream(AV_BUFF buff)
     CHECK_POINT_VOID(buff.pData);
     CHECK_POINT_VOID(m_pWorker);
     m_pWorker->ReceiveStream(buff);
-}
-
-void CLiveReceiver::AsyncClose()
-{
-    int ret = uv_udp_recv_stop(&m_uvRtpSocket);
-    if(ret < 0) {
-        Log::error("stop rtp recv port:%d err: %s", m_nLocalRTPPort, uv_strerror(ret));
-    }
-    uv_close((uv_handle_t*)&m_uvRtpSocket, rtp_udp_close_cb);
-
-    ret = uv_timer_stop(&m_uvTimeOver);
-    if(ret < 0) {
-        Log::error("stop timer error: %s",uv_strerror(ret));
-    }
-    uv_close((uv_handle_t*)&m_uvTimeOver, timer_over_close_cb);
-
 }
 }

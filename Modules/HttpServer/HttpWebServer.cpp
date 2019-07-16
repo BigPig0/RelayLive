@@ -247,23 +247,19 @@ namespace HttpWsServer
 
 				int hlen = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
 				if (hlen && hlen < 128) {
-					lws_hdr_copy(wsi, pss->path, sizeof buf, WSI_TOKEN_GET_URI);
+					lws_hdr_copy(wsi, pss->path, MAX_PATH, WSI_TOKEN_GET_URI);
 					buf[127] = '\0';
 				}
 
-                //lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 				pss->wsi = wsi;
-                Log::debug("new request: %s", pss->path);
+                Log::debug("new http-web request: %s", pss->path);
 
                 pss->json = new string;
 				if(!strcmp(pss->path, "/device/clients")) {
 					*pss->json = LiveClient::GetClientsInfo();
 
-					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-						"text/html",
-						pss->json->size(),
-						&p, end))
-						return 1;
+					lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->json->size(), &p, end);
+                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
 					if (lws_finalize_write_http_header(wsi, start, &p, end))
 						return 1;
 
@@ -278,11 +274,8 @@ namespace HttpWsServer
 					LiveClient::QueryDirtionary();
 
 					*pss->json = "QueryDirtionary send";
-					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-						"text/html",
-						pss->json->size(),
-						&p, end))
-						return 1;
+					lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->json->size(), &p, end);
+                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
 					if (lws_finalize_write_http_header(wsi, start, &p, end))
 						return 1;
 
@@ -312,11 +305,8 @@ namespace HttpWsServer
 					LiveClient::DeviceControl(szDev, io, ud, lr);
 
 					*pss->json = "ok";
-					if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-						"text/html",
-						pss->json->size(),
-						&p, end))
-						return 1;
+					lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->json->size(), &p, end);
+                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
 					if (lws_finalize_write_http_header(wsi, start, &p, end))
 						return 1;
 
@@ -332,9 +322,9 @@ namespace HttpWsServer
 
                 int len = pss->json->size();
                 int wlen = lws_write(wsi, (uint8_t *)pss->json->c_str(), len, LWS_WRITE_HTTP_FINAL);
-                SAFE_DELETE(pss->json)
-                    if (wlen != len)
-                        return 1;
+                SAFE_DELETE(pss->json);
+                if (wlen != len)
+                    return 1;
 
                 if (lws_http_transaction_completed(wsi))
                     return -1;
@@ -375,11 +365,8 @@ namespace HttpWsServer
                 *p = start,
                 *end = &buf[sizeof(buf) - LWS_PRE - 1];
 
-		    if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK,
-			    "text/html",
-			    pss->json->size(),
-			    &p, end))
-			    return 1;
+		    lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->json->size(), &p, end);
+            lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
 		    if (lws_finalize_write_http_header(wsi, start, &p, end))
 			    return 1;
 

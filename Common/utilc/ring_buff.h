@@ -169,6 +169,14 @@ void ring_dump(struct ring_buff *ring, uint32_t *tail);
 	ring_update_oldest_tail(___ring, *(___ptail)); \
 }
 
+
+/**
+ * 内部维护tail的简单的ringbuff
+ */
+#define simple_ring_insert(ring, src) ring_insert(ring, src, 1);
+#define simple_ring_get_element(ring) ring_get_element(ring, NULL);
+#define simple_ring_cosume(ring) ring_consume(ring, NULL, NULL, 1);
+
 #ifdef __cplusplus
 }
 #endif

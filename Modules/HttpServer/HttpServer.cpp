@@ -9,20 +9,25 @@
 namespace HttpWsServer
 {
 	uv_loop_t *g_uv_loop = NULL;
-    int        g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
 
     static struct lws_context_creation_info info;  //libwebsockets配置信息
     static struct lws_context *context;            //libwebsockets句柄
-    // 服务器配置
-    static struct lws_http_mount mount_other;  //其他
+
+    // http地址匹配
+    //static struct lws_http_mount mount_other;  //其他
     static struct lws_http_mount mount_device; //查看设备信息、控制
     static struct lws_http_mount mount_live;   //直播
     static struct lws_http_mount mount_web;    //站点静态文件
-    static std::string mount_web_origin("./home");  //站点本地位置
-    static std::string mount_web_def("index.html"); //默认文件
+
+    // 服务器配置
+    static std::string mount_web_origin;  //站点本地位置
+    static std::string mount_web_def; //默认文件
+    static int http_port = 80; //HTTP服务端口
+    static int ws_port = 8000; //web socket服务端口
+    int        g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
 
     static struct lws_protocols protocols[] = {
-        { "http",  callback_other_http,   sizeof(pss_other),   0 },
+        { "http",   callback_other_http,  sizeof(pss_other),   0 },
         { "live",   callback_live_http,   sizeof(pss_http_ws_live),    0 },
         { "device", callback_device_http, sizeof(pss_device),  0 },
         { "wslive", callback_live_ws,     sizeof(pss_http_ws_live), 0 },
@@ -34,14 +39,25 @@ namespace HttpWsServer
         { NULL, NULL, 0, 0 } 
     };
 
-    static void serverInit()
-    {
-        memset(&mount_other, 0, sizeof(mount_other));
-        mount_other.mountpoint = "/";
-        mount_other.mountpoint_len = 1;
-        mount_other.origin_protocol = LWSMPRO_CALLBACK;
-        mount_other.protocol = "other";
+    static void ReadConfig(){
+        mount_web_origin = Settings::getValue("HttpServer","RootPath", "./home");
+        mount_web_def    = Settings::getValue("HttpServer","DefaultFile","index.html");
+        bool bDirVisible = Settings::getValue("HttpServer","DirVisible")=="yes"?true:false;
+        if(bDirVisible)
+            mount_web_def = "This is a not exist file.html";
+        http_port        = Settings::getValue("HttpServer","Port", 80);
+        ws_port          = Settings::getValue("HttpServer","wsPort", 8000);
+    }
 
+    static void ServerInit()
+    {
+        //memset(&mount_other, 0, sizeof(mount_other));
+        //mount_other.mountpoint = "/";
+        //mount_other.mountpoint_len = 1;
+        //mount_other.origin_protocol = LWSMPRO_CALLBACK;
+        //mount_other.protocol = "other";
+
+        // 设备信息查看、控制请求
         memset(&mount_device, 0, sizeof(mount_device));
         mount_device.mountpoint = "/device";
         mount_device.mountpoint_len = 7;
@@ -49,6 +65,7 @@ namespace HttpWsServer
         mount_device.protocol = "device";
         //mount_device.mount_next = &mount_other;
 
+        // 直播请求
         memset(&mount_live, 0, sizeof(mount_live));
         mount_live.mountpoint = "/live";
         mount_live.mountpoint_len = 5;
@@ -56,12 +73,7 @@ namespace HttpWsServer
         mount_live.protocol = "live";
         mount_live.mount_next = &mount_device;
 
-        string home_value = Settings::getValue("HttpServer","RootPath");
-        if( !home_value.empty() ) mount_web_origin = home_value;
-        string default_value = Settings::getValue("HttpServer","DefaultFile","index.html");
-        if( !default_value.empty()) mount_web_def = default_value;
-        bool bDirVisible = Settings::getValue("HttpServer","DirVisible")=="yes"?true:false;
-        if(bDirVisible) mount_web_def = "This is a not exist file.html";
+        // 静态文件请求
         static struct lws_protocol_vhost_options mime_txt = {NULL, NULL, "txt", "text/plain"};
         static struct lws_protocol_vhost_options mime_swf = {&mime_txt, NULL, "swf", "application/x-shockwave-flash"};
         static struct lws_protocol_vhost_options mime_flv = {&mime_swf, NULL, "flv", "video/x-flv"};
@@ -97,7 +109,7 @@ namespace HttpWsServer
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
         lws_set_log_level(level, userLog);
 
-        serverInit();
+        ServerInit();
 
         LiveClient::SetCallBack(live_client_cb);
 
@@ -111,29 +123,20 @@ namespace HttpWsServer
         context = lws_create_context(&info);
 
         //创建http服务器
-        info.port = 80;
+        info.port = http_port;
         info.protocols = protocols;
         info.mounts = &mount_web;
         info.vhost_name = "gb28181 relay server";
-
-        //读取配置文件
-        string port_value = Settings::getValue("HttpServer","Port");
-        if( !port_value.empty() ) info.port = stoi(port_value);
-
         if (!lws_create_vhost(context, &info)) {
             Log::error("Failed to create http vhost\n");
             return -1;
         }
 
         //创建webSocket服务器
-        info.port = 8000;
+        info.port = ws_port;
         info.protocols = wsprotocols;
         info.mounts = NULL;
         info.vhost_name = "gb28181 relay server websocket";
-
-        //读取配置文件
-        port_value = Settings::getValue("HttpServer","wsPort");
-        if( !port_value.empty() ) info.port = stoi(port_value);
         if (!lws_create_vhost(context, &info)) {
             Log::error("Failed to create websocket vhost\n");
             return -1;

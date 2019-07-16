@@ -38,7 +38,8 @@ namespace LiveIpc
             char szInfo[256]={0};     // 成功时sdp信息，失败时错误描述
             PlayAnswerList *pNewPA = new PlayAnswerList;
 
-            sscanf(data, szDevCode, &pNewPA->strPort, &pNewPA->nRet, szInfo);
+            int rtpport = 0;
+            sscanf(data, "devcode=%[^&]&rtpport=%d&ret=%d&error=%s", szDevCode, &rtpport, &pNewPA->nRet, szInfo);
             pNewPA->strDevCode = szDevCode;
             pNewPA->strMark = szInfo;
 
