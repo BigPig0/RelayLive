@@ -124,6 +124,11 @@ namespace HttpWsServer
 
     void CHttpWorker::play_answer(int ret, string error_info)
     {
+        if(ret){
+            m_pPss->error_code = ret;
+            m_strError = error_info;
+        }
+        lws_callback_on_writable(m_pPss->wsi);
     }
 
     void CHttpWorker::push_video_stream(AV_BUFF buff)

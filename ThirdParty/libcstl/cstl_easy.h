@@ -57,15 +57,15 @@ _THIRD_UTIL_API void* map_find_easy_str(map_t* pmap_map, const char* key);
 
 #define MAP_FOR_BEGIN(_mapptr, _keytype, _key, _valuetype, _value) \
     if (_mapptr) {\
-    map_iterator_t it = map_begin(_mapptr);\
-    map_iterator_t end = map_end(_mapptr);\
-    pair_t* pt_pair;\
-    _keytype _key;\
-    _valuetype _value;\
-    for (; iterator_not_equal(it, end); it = iterator_next(it)) {\
-    pt_pair = (pair_t*)iterator_get_pointer(it);\
-    _key = *(_keytype*)pair_first(pt_pair);\
-    _value = *(_valuetype*)pair_second(pt_pair);\
+        map_iterator_t it = map_begin(_mapptr);\
+        map_iterator_t end = map_end(_mapptr);\
+        pair_t* pt_pair;\
+        _keytype _key;\
+        _valuetype _value;\
+        for (; iterator_not_equal(it, end); it = iterator_next(it)) {\
+            pt_pair = (pair_t*)iterator_get_pointer(it);\
+            _key = *(_keytype*)pair_first(pt_pair);\
+            _value = *(_valuetype*)pair_second(pt_pair);\
 
 #define MAP_FOR_END }}
 

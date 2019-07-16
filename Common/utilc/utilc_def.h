@@ -1,7 +1,7 @@
 #ifndef _UTIL_CDEF_
 #define _UTIL_CDEF_
 
-#define SAFE_MALLOC(t, p)         t *p = (t*)malloc(sizeof(t));memset(p,0,sizeof(t));
+#define SAFE_MALLOC(t, p)         t *p = (t*)calloc(1,sizeof(t))
 #define SAFE_FREE(p)              if(NULL != (p)){free (p);(p) = NULL;}
 
 #define CHECK(p,r)                if(p){printf(#p);return r;}
