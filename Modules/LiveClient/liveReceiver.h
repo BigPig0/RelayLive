@@ -1,15 +1,16 @@
 #pragma once
 
 #include "LiveClient.h"
-#include "uv.h"
 #include "ring_buff.h"
+#include "rtp.h"
 
 enum NalType;
 
 namespace LiveClient
 {
-enum STREAM_TYPE;
 class CLiveWorker;
+struct udp_recv_loop_t;
+struct rtp_parse_loop_t;
 
 /**
  * 视频流rtp/rtcp接收处理模块
@@ -18,14 +19,14 @@ class CLiveReceiver
 {
     friend class CLiveWorker;
 public:
-    CLiveReceiver(int nPort, CLiveWorker *worker);
+    CLiveReceiver(int nPort, CLiveWorker *worker, RTP_STREAM_TYPE rst);
     ~CLiveReceiver(void);
 
     /** 启动UDP端口监听 */
     void StartListen();
 
     /** 接收的rtp数据处理 */
-    bool RtpRecv(char* pBuff, long nLen, struct sockaddr_in* addr_in);
+    bool RtpRecv(char* pBuff, long nLen);
 
     /** 接收超时处理 */
     void RtpOverTime();
@@ -57,26 +58,18 @@ public:
      */
     void push_h264_stream(AV_BUFF buff);
 
-
-    /** 结束时关闭loop */
-    void AsyncClose();
-
 public:
-    bool        m_bRtpRun;          // rtp 接收是否在执行
-    bool        m_bTimeOverRun;     // 超时判断是否在执行
-    bool        m_bRun;             // loop是否正在执行
-    uv_loop_t   *m_uvLoop;          // udp接收的loop
-
+    int         m_nRunNum;
 private:
     int         m_nLocalRTPPort;    // 本地RTP接收端口
     int         m_nLocalRTCPPort;   // 本地RTCP接收端口
     string      m_strRemoteIP;      // 远端发送IP
     int         m_nRemoteRTPPort;   // 远端RTP发送端口
     int         m_nRemoteRTCPPort;  // 远端RTCP发送端口
+    RTP_STREAM_TYPE m_stream_type;      // 视频流类型
 
-    uv_udp_t    m_uvRtpSocket;      // rtp接收
-    uv_timer_t  m_uvTimeOver;       // 接收超时定时器
-    uv_async_t  m_uvAsync;          // 异步操作句柄 外部线程用来结束m_uvLoop
+    udp_recv_loop_t  *m_pUdpRecv;   // udp接收工具
+    rtp_parse_loop_t *m_pRtpParse;  // rtp解析工具
 
     void*       m_pRtpParser;       // rtp报文解析类
     void*       m_pPsParser;        // PS帧解析类

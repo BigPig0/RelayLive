@@ -30,7 +30,7 @@ namespace LiveClient
         CLiveChannel(int channel, uint32_t w, uint32_t h);
         ~CLiveChannel();
 
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
         /**
          * h264解码器,用来传递参数
          */
@@ -70,7 +70,7 @@ namespace LiveClient
         vector<ILiveHandle*>     m_vecHandle;   // 播放实例 
         CriticalSection          m_csHandle;
 
-#ifdef USE_FFMPEG
+#ifdef EXTEND_CHANNELS
         IEncoder                *m_pEncoder;    // YUV编码为h264
 #endif
 

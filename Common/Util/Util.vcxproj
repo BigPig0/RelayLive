@@ -44,11 +44,9 @@
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="include\WINFile.h" />
     <ClInclude Include="include\TimeFormat.h" />
-    <ClInclude Include="ring_buff.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ring_buff.c" />
     <ClCompile Include="src\AbstractFile.cpp" />
     <ClCompile Include="Src\base64.cpp" />
     <ClCompile Include="src\EncodeConvert.cpp" />

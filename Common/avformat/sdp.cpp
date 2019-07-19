@@ -122,8 +122,8 @@ sdp_t* create_sdp(char const *content /*= NULL*/) {
         return sdp;
 
     char const* sdp_line = content;
-    char const* next_line;
-    uint32_t    line_len;
+    char const* next_line = NULL;
+    uint32_t    line_len = 0;
     while (sdp_line) {
         if(!parse_sdp_line(sdp_line, &line_len, next_line))
             return sdp;

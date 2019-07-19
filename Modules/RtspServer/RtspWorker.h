@@ -22,6 +22,7 @@ namespace RtspServer
 
         string GetSDP();
 
+        virtual void play_answer(int ret, string error_info);
         virtual void push_video_stream(AV_BUFF buff);
         virtual void stop();
         virtual LiveClient::ClientInfo get_clients_info();

@@ -38,6 +38,15 @@ namespace LiveClient
     */
     struct ILiveHandle
     {
+		virtual ~ILiveHandle(){};
+
+        /**
+         * 播放请求结果回调
+         * @param ret 错误码 成功是0
+         * @param error_info 成功为下级平台返回的sdp，失败是失败原因
+         */
+        virtual void play_answer(int ret, string error_info) = 0;
+
         /**
          * 视频数据发送回调
          */
@@ -77,7 +86,7 @@ namespace LiveClient
         */
         virtual bool RemoveHandle(ILiveHandle* h) = 0;
 
-        virtual string GetSDP() = 0;
+        //virtual string GetSDP() = 0;
     };
 
     /**
@@ -86,9 +95,9 @@ namespace LiveClient
     void LIVECLIENT_API Init(void* uv);
 
     /**
-    * 获取客户端内容json字符串
+    * 获取客户端内容。这是异步操作，此处只发出请求。
     */
-    string LIVECLIENT_API GetClientsInfo();
+    void LIVECLIENT_API GetClientsInfo();
 
     /**
     * 获取设备信息。这是异步操作，此处只发出请求。
@@ -109,6 +118,8 @@ namespace LiveClient
 
     /**
      * 设置回调，获取信息完成后,通知调用者
+     * 参数1：命令名称
+     * 参数2：命令运算结果返回值
      */
     typedef void(*LIVECLIENT_CB)(string, string);
     void LIVECLIENT_API SetCallBack(LIVECLIENT_CB cb);

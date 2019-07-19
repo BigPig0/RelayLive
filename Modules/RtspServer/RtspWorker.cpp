@@ -87,11 +87,15 @@ namespace RtspServer
     }
 
     string CRtspWorker::GetSDP(){
-        if(!m_pLive)
+        //if(!m_pLive)
 			return "";
 		
-		string origin = m_pLive->GetSDP(); //下级平台发出的sdp信息
-		return origin;
+		//string origin = m_pLive->GetSDP(); //下级平台发出的sdp信息
+		//return origin;
+    }
+
+    void CRtspWorker::play_answer(int ret, string error_info)
+    {
     }
 
     void CRtspWorker::push_video_stream(AV_BUFF buff)

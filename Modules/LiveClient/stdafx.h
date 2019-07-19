@@ -18,12 +18,3 @@
 #include "Endian.h"
 
 using namespace std;
-
-
-
-enum STREAM_TYPE {
-	STREAM_UNKNOW = 0,
-	STREAM_PS,
-	STREAM_H264
-};
-extern STREAM_TYPE g_stream_type;

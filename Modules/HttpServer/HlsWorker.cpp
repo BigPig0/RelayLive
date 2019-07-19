@@ -97,6 +97,10 @@ namespace HttpWsServer
         return ret;
     }
 
+    void CHlsWorker::play_answer(int ret, string error_info)
+    {
+    }
+
     void CHlsWorker::push_video_stream(AV_BUFF buff)
     {
         TS_BUFF ts;
