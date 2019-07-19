@@ -13,17 +13,20 @@
 namespace LiveClient
 {
 	extern uv_loop_t      *g_uv_loop;
+    extern LIVECLIENT_CB  liveclient_respond;
 
 #define ADDHANDLE    0X0001
 #define REMOVEHANDLE 0X0002
 #define RECEIVING    0X0004
 #define CLOSE        0X0008
+#define CLIENTSINFO  0X0010
 
     struct adding_handle {
         ILiveHandle* handle;
         HandleType   type;
         int          channel;
     };
+
     struct live_event_loop_t {
         uv_loop_t                loop;
         uv_async_t               async;
@@ -64,11 +67,13 @@ namespace LiveClient
                 //如果刚刚开启了结束定时器，需要将其关闭
                 if(uv_is_active((const uv_handle_t*)&loop->timer_stop)) {
                     uv_timer_stop(&loop->timer_stop);
+                    Log::debug("new client comed, and will not close live stream");
                 }
             }LIST_FOR_END
             list_clear(loop->adding_list);
             uv_mutex_unlock(&loop->uv_mutex_add);
-        } else if(loop->async_event & REMOVEHANDLE) {
+        } 
+		if(loop->async_event & REMOVEHANDLE) {
             // 移除客户端连接实例
             loop->async_event &= ~REMOVEHANDLE;
             uv_mutex_lock(&loop->uv_mutex_remove);
@@ -77,16 +82,39 @@ namespace LiveClient
             }LIST_FOR_END
             list_clear(loop->removing_list);
             uv_mutex_unlock(&loop->uv_mutex_remove);
-        } else if(loop->async_event & RECEIVING) {
+        } 
+		if(loop->async_event & RECEIVING) {
             // 上抛码流处理
             loop->async_event &= ~RECEIVING;
             AV_BUFF *buff = (AV_BUFF*)simple_ring_get_element(loop->ring);
-        } else if(loop->async_event & CLOSE) {
+			while(buff){
+				live->ReceiveStreamAsync(*buff);
+				simple_ring_cosume(loop->ring);
+				buff = (AV_BUFF*)simple_ring_get_element(loop->ring);
+			}
+        } 
+		if(loop->async_event & CLOSE) {
             // 结束
             loop->async_event &= ~CLOSE;
             uv_close((uv_handle_t*)&loop->async, live_close_cb);
             uv_close((uv_handle_t*)&loop->timer_stop, live_close_cb);
+        } 
+		if(loop->async_event & CLIENTSINFO) {
+            //查看当前live对应的客户端连接信息
+            loop->async_event &= ~CLIENTSINFO;
+            live->GetClientInfoAsync();
         }
+    }
+
+    /** 客户端全部断开后，延时断开源的定时器 */
+    static void stop_timer_cb(uv_timer_t* handle) {
+        live_event_loop_t *loop = (live_event_loop_t*)handle->data;
+        CLiveWorker *live = (CLiveWorker*)loop->usr;
+        int ret = uv_timer_stop(handle);
+        if(ret < 0) {
+            Log::error("timer stop error:%s",uv_strerror(ret));
+        }
+        live->Clear2Stop();
     }
 
     /** event loop thread */
@@ -106,7 +134,12 @@ namespace LiveClient
         live->m_nRunNum--;
     }
 
-    /** 新建一个直播事件循环 */
+	static void destory_avbuf(void* arg) {
+		AV_BUFF *buff = (AV_BUFF*)arg;
+		SAFE_FREE(buff->pData);
+	}
+
+    /** 外部线程新建一个直播事件循环 */
     live_event_loop_t* create_live_event_loop(void *usr) {
         SAFE_MALLOC(live_event_loop_t, loop);
         loop->usr = usr;
@@ -130,15 +163,15 @@ namespace LiveClient
         loop->ref_num++;
 
         //ring buff
-        loop->ring = create_ring_buff(sizeof(AV_BUFF), 100, NULL);
+        loop->ring = create_ring_buff(sizeof(AV_BUFF), 100, destory_avbuf);
 
         //adding list
-        loop->adding_list = create_list(adding_handle*);
+        loop->adding_list = create_list(void*); //list<adding_handle>
         list_init(loop->adding_list);
         uv_mutex_init(&loop->uv_mutex_add);
 
         //removing list
-        loop->removing_list = create_list(ILiveHandle*);
+        loop->removing_list = create_list(void*); //list<ILiveHandle>
         list_init(loop->removing_list);
         uv_mutex_init(&loop->uv_mutex_remove);
 
@@ -146,6 +179,8 @@ namespace LiveClient
         loop->running = true;
         uv_thread_t tid;
         uv_thread_create(&tid, run_loop_thread, loop);
+
+		return loop;
     }
 
     /** 外部线程关闭事件循环 */
@@ -172,7 +207,7 @@ namespace LiveClient
     /** 外部线程移除客户端连接 */
     void live_event_remove_handle(live_event_loop_t* loop, ILiveHandle* h){
         uv_mutex_lock(&loop->uv_mutex_remove);
-        list_push_back(loop->adding_list, h);
+		list_push_back(loop->removing_list, h);
         uv_mutex_unlock(&loop->uv_mutex_remove);
 
         loop->async_event |= REMOVEHANDLE;
@@ -181,15 +216,59 @@ namespace LiveClient
 
     /** 外部线程输入裸码流 */
     void live_event_push_stream(live_event_loop_t* loop, AV_BUFF *buff){
-        simple_ring_insert(loop->ring, buff);
+		AV_BUFF tmp = *buff;
+		tmp.pData = (char*)malloc(tmp.nLen);
+		memcpy(tmp.pData, buff->pData, tmp.nLen);
+        simple_ring_insert(loop->ring, &tmp);
+        loop->async_event |= RECEIVING;
+        uv_async_send(&loop->async);
+    }
+
+    /** 外部线程请求查询客户端连接信息 */
+    void live_event_get_clients_info(live_event_loop_t* loop) {
+        loop->async_event |= CLIENTSINFO;
+        uv_async_send(&loop->async);
+    }
+
+    /** 外部线程启动结束定时器，指定时间内有新客户端请求，则不结束 */
+    void live_event_end_timer(live_event_loop_t* loop) {
+        uv_timer_start(&loop->timer_stop, stop_timer_cb, 5000, 0);
     }
     
     //////////////////////////////////////////////////////////////////////////
 
+    /** 查询客户端连接的信息 */
+    static int _clients_req_num = 0;
+    static vector<ClientInfo> _clients_info;
+    static CriticalSection _cs_clients;
+
+    /** 直播实例获得客户端信息后，发送到这里汇总 */
+    static void PushWorkerClientsInfo(vector<ClientInfo> infos) {
+        _clients_req_num--;
+        MutexLock lock(&_cs_clients);
+        _clients_info.insert(_clients_info.end(), infos.begin(), infos.end());
+
+        if(!_clients_req_num && liveclient_respond) {
+            stringstream ss;
+            ss << "{\"root\":[";
+            for(auto c:_clients_info){
+                ss << "{\"DeviceID\":\"" << c.devCode 
+                    << "\",\"Connect\":\"" << c.connect
+                    << "\",\"Media\":\"" << c.media
+                    << "\",\"ClientIP\":\"" << c.clientIP
+                    << "\",\"Channel\":\"" << c.channel
+                    << "\"},";
+            }
+            string strResJson = StringHandle::StringTrimRight(ss.str(),',');
+            strResJson += "]}";
+            liveclient_respond("clientsinfo", strResJson);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    /** rtp接收配置 */
     extern string        g_strRtpIP;       //< RTP服务IP
     extern list<int>     g_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
-
-    static map<string,CLiveWorker*>  m_workerMap;   //live worker 由http模块 event loop单线程访问
 
     static int GetRtpPort()
     {
@@ -206,36 +285,15 @@ namespace LiveClient
         g_vecRtpPort.push_back(nPort);
     }
 
-    /** 延时销毁定时器从loop中移除完成 */
-    static void stop_timer_close_cb(uv_handle_t* handle) {
-        CLiveWorker* live = (CLiveWorker*)handle->data;
-        if (live->m_bStop){
-            live->Clear2Stop();
-        } else {
-            Log::debug("new client comed, and will not close live stream");
-        }
-    }
+    //////////////////////////////////////////////////////////////////////////
 
-    /** 客户端全部断开后，延时断开源的定时器 */
-	static void stop_timer_cb(uv_timer_t* handle) {
-        live_event_loop_t *loop = (live_event_loop_t*)handle->data;
-        CLiveWorker *live = (CLiveWorker*)loop->usr;
-		int ret = uv_timer_stop(handle);
-		if(ret < 0) {
-			Log::error("timer stop error:%s",uv_strerror(ret));
-        }
-        live->Clear2Stop();
-        //live->m_bStop = true;
-        //uv_close((uv_handle_t*)handle, stop_timer_close_cb);
-	}
+    static map<string,CLiveWorker*>  m_workerMap;   //live worker 由http模块 event loop单线程访问
 
     /** CLiveWorker析构中删除m_pLive比较耗时，会阻塞event loop，因此使用线程。 */
     static void live_worker_destory_thread(void* arg) {
         CLiveWorker* live = (CLiveWorker*)arg;
         SAFE_DELETE(live);
     }
-
-    //////////////////////////////////////////////////////////////////////////
 
     CLiveWorker* CreatLiveWorker(string strCode)
     {
@@ -284,24 +342,24 @@ namespace LiveClient
         return false;
     }
 
-	string GetAllWorkerClientsInfo(){
-        stringstream ss;
-		ss << "{\"root\":[";
+	void GetAllWorkerClientsInfo(){
+        _clients_req_num = 0;
+        _cs_clients.lock();
+        _clients_info.clear();
+        _cs_clients.unlock();
+        
+		if(m_workerMap.empty()){
+			_clients_req_num = 1;
+			vector<ClientInfo> ret;
+			PushWorkerClientsInfo(ret);
+			return;
+		}
+
         for (auto w : m_workerMap) {
             CLiveWorker *worker = w.second;
-			vector<ClientInfo> tmp = worker->GetClientInfo();
-            for(auto c:tmp){
-                ss << "{\"DeviceID\":\"" << c.devCode 
-                    << "\",\"Connect\":\"" << c.connect
-                    << "\",\"Media\":\"" << c.media
-                    << "\",\"ClientIP\":\"" << c.clientIP
-                    << "\",\"Channel\":\"" << c.channel
-                    << "\"},";
-            }
+            _clients_req_num++;
+			worker->GetClientInfo();
 		}
-        string strResJson = StringHandle::StringTrimRight(ss.str(),',');
-        strResJson += "]}";
-        return strResJson;
     }
 
     bool AsyncPlayCB(PlayAnswerList *pal){
@@ -346,8 +404,11 @@ namespace LiveClient
             Log::error("stop play failed");
         }
         SAFE_DELETE(m_pReceiver);
+        close_live_event_loop(m_pEventLoop);
+        while (m_nRunNum)
+            sleep(50);
+
         SAFE_DELETE(m_pOrigin);
-        //MutexLock lock(&m_csChls);
         for(auto it:m_mapChlEx){
             SAFE_DELETE(it.second);
         }
@@ -359,6 +420,7 @@ namespace LiveClient
     bool CLiveWorker::AddHandle(ILiveHandle* h, HandleType t, int c)
     {
         live_event_add_handle(m_pEventLoop, h, t, c);
+        return true;
     }
 
     bool CLiveWorker::AddHandleAsync(ILiveHandle* h, HandleType t, int c)
@@ -390,18 +452,13 @@ namespace LiveClient
             m_pOrigin->AddHandle(h, t);
 #endif
         }
-
-        //如果刚刚开启了结束定时器，需要将其关闭
-        //if(uv_is_active((const uv_handle_t*)&m_uvTimerStop)) {
-        //    uv_timer_stop(&m_uvTimerStop);
-        //    uv_close((uv_handle_t*)&m_uvTimerStop, stop_timer_close_cb);
-        //}
         return true;
     }
 
     bool CLiveWorker::RemoveHandle(ILiveHandle* h)
     {
         live_event_remove_handle(m_pEventLoop, h);
+        return true;
     }
 
     bool CLiveWorker::RemoveHandleAsync(ILiveHandle* h)
@@ -435,18 +492,15 @@ namespace LiveClient
                 Clear2Stop();
             } else {
                 // 视频源依然连接，延时N秒再销毁对象，以便短时间内有新请求能快速播放
-                //uv_timer_init(g_uv_loop, &m_uvTimerStop);
-                //m_uvTimerStop.data = this;
-                //uv_timer_start(&m_uvTimerStop, stop_timer_cb, 5000, 0);
-                uv_timer_start(&m_pEventLoop->timer_stop, stop_timer_cb, 5000, 0);
+                live_event_end_timer(m_pEventLoop);
             }
         }
         return true;
     }
 
-    string CLiveWorker::GetSDP(){
-        return m_strPlayInfo;
-    }
+    //string CLiveWorker::GetSDP(){
+    //    return m_strPlayInfo;
+    //}
 
 	void CLiveWorker::Clear2Stop() {
         bool bOriginEmpty = !m_pOrigin || m_pOrigin->Empty();
@@ -469,6 +523,7 @@ namespace LiveClient
         //状态改变为超时，此时前端全部断开，不需要延时，直接销毁
         m_bOver = true;
 
+        //通知所有通道断开前端连接
 		if(m_pOrigin)
 			m_pOrigin->stop();
         //MutexLock lock(&m_csChls);
@@ -477,7 +532,12 @@ namespace LiveClient
         }
     }
 
-    vector<ClientInfo> CLiveWorker::GetClientInfo()
+    void CLiveWorker::GetClientInfo()
+    {
+        live_event_get_clients_info(m_pEventLoop);
+    }
+
+    void CLiveWorker::GetClientInfoAsync()
     {
 		vector<ClientInfo> ret;
 		if(m_pOrigin)
@@ -487,7 +547,7 @@ namespace LiveClient
             vector<ClientInfo> tmp = chl.second->GetClientInfo();
             ret.insert(ret.end(), tmp.begin(), tmp.end());
         }
-		return ret;
+        PushWorkerClientsInfo(ret);
     }
 
     void CLiveWorker::ReceiveStream(AV_BUFF buff){

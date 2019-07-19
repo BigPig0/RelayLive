@@ -33,6 +33,8 @@ namespace HttpWsServer
         void MediaCb(AV_BUFF buff);
 
         virtual LiveClient::ClientInfo get_clients_info();
+
+		void close();
     private:
         void cull_lagging_clients();
 
@@ -55,6 +57,7 @@ namespace HttpWsServer
         void                    *m_pFormat;     //< 视频格式打包
         struct lws_ring         *m_pRing;       //< 缓存媒体内容的缓冲区
         AV_BUFF                  m_SocketBuff;  //< socket发送的数据缓存
+		bool                     m_bConnect;       //<
 
         int                   m_nType;          //< 0:live直播；1:record历史视频
     };

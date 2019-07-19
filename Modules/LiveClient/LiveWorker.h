@@ -27,22 +27,25 @@ namespace LiveClient
         /** 客户端连接 */
         virtual bool AddHandle(ILiveHandle* h, HandleType t, int c);
         bool AddHandleAsync(ILiveHandle* h, HandleType t, int c);
+
+        /** 客户端断开 */
         virtual bool RemoveHandle(ILiveHandle* h);
         bool RemoveHandleAsync(ILiveHandle* h);
-        virtual string GetSDP();
+        //virtual string GetSDP();
+
+        /** 获取客户端信息 */
+        void GetClientInfo();
+        void GetClientInfoAsync();
+
+        /** 接收到的视频流处理 */
+        void ReceiveStream(AV_BUFF buff);
+        void ReceiveStreamAsync(AV_BUFF buff);
 
 
         /** 客户端全部断开，延时后销毁实例 */
         void Clear2Stop();
         bool m_bStop;          //< 进入定时器回调后设为true，close定时器回调中销毁对象
         bool m_bOver;          //< 超时后设为true，客户端全部断开后不延时，立即销毁
-
-        /** 获取客户端信息 */
-        vector<ClientInfo> GetClientInfo();
-
-        /** 接收到的视频流处理 */
-        void ReceiveStream(AV_BUFF buff);
-        void ReceiveStreamAsync(AV_BUFF buff);
 
 #ifdef EXTEND_CHANNELS
         /** yuv视频处理 */
@@ -59,8 +62,8 @@ namespace LiveClient
         void ParseSdp();
 
     public:
-        int         m_nRunNum;
-        bool m_bRtp;
+        int         m_nRunNum;  //启动的event loop数量
+        bool        m_bRtp;
 
     private:
         string                   m_strServerIP; // rtp发送端IP
@@ -77,22 +80,24 @@ namespace LiveClient
 
 #ifdef EXTEND_CHANNELS
         map<int, CLiveChannel*>  m_mapChlEx;    // 扩展通道
-        //CriticalSection          m_csChls;      // map的锁
         IDecoder                *m_pDecoder;    // h264解码
 #endif
 
         vector<ILiveHandleRtp*>  m_vecLiveRtp;  // RTP原始流转发
-        //CriticalSection          m_csRtp;
 
         int                      m_nType;          //< 0:live直播；1:record历史视频
 
         live_event_loop_t*       m_pEventLoop;
-        //uv_timer_t               m_uvTimerStop;    //< http播放端全部连开连接后延迟销毁，以便页面刷新时快速播放
     };
 
+    /** 建立一个设备的播放实例 */
     extern CLiveWorker* CreatLiveWorker(string strCode);
+    /** 获取指定设备播放实例 */
     extern CLiveWorker* GetLiveWorker(string strCode);
+    /** 结束指定设备播放实例 */
     extern bool DelLiveWorker(string strCode);
-	extern string GetAllWorkerClientsInfo();
+    /** 获取当前所有播放实例的客户端连接情况 */
+	extern void GetAllWorkerClientsInfo();
+    /** 响应sip服务器返回的播放应答 */
     extern bool AsyncPlayCB(PlayAnswerList *pal);
 }
