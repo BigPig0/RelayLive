@@ -109,6 +109,7 @@ namespace HttpWsServer
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
         lws_set_log_level(level, userLog);
 
+		ReadConfig();
         ServerInit();
 
         LiveClient::SetCallBack(live_client_cb);

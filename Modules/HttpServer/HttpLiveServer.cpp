@@ -261,7 +261,7 @@ namespace HttpWsServer
             {
                 if (!pss || !pss->pWorker)
                     break;
-                SAFE_DELETE(pss->pWorker);
+                pss->pWorker->close();
             }
         default:
             break;
@@ -320,7 +320,7 @@ namespace HttpWsServer
                 if (!pss || !pss->pWorker)
                     break;
 				Log::debug("live ws protocol cloes %s", pss->pWorker->m_strPath.c_str());
-                delete pss->pWorker;
+				pss->pWorker->close();
             }
         default:
             break;

@@ -68,6 +68,7 @@ bool CLiveChannel::RemoveHandle(ILiveHandle* h)
     for(auto it = m_vecHandle.begin(); it != m_vecHandle.end(); it++) {
         if(*it == h) {
             m_vecHandle.erase(it);
+			delete h;
             break;
         }
     }

@@ -16,7 +16,7 @@ namespace LiveClient
     list<int>     g_vecRtpPort;     //< RTP可用端口，使用时从中取出，使用结束重新放入
     CriticalSection m_csRTP;          //< RTP端口锁
 
-    extern LIVECLIENT_CB ipc_cb;
+    LIVECLIENT_CB liveclient_respond = NULL;
 
     void Init(void* uv){
         g_uv_loop = (uv_loop_t *)uv;
@@ -38,9 +38,9 @@ namespace LiveClient
         }
     }
 
-    string GetClientsInfo() 
+    void GetClientsInfo() 
     {
-        return GetAllWorkerClientsInfo();
+        GetAllWorkerClientsInfo();
     }
 
     void GetDevList(){
@@ -56,7 +56,7 @@ namespace LiveClient
 	}
 
     void SetCallBack(LIVECLIENT_CB cb){
-        ipc_cb = cb;
+        liveclient_respond = cb;
     }
 
     ILiveWorker* GetWorker(string strCode){

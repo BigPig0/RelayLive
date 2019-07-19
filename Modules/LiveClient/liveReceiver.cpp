@@ -216,6 +216,8 @@ udp_recv_loop_t* create_udp_recv_loop(int port, int time_over, void *usr){
     //udp 接收loop线程
     uv_thread_t tid;
     uv_thread_create(&tid, run_loop_thread, loop);
+
+	return loop;
 }
 
 void close_udp_recv_loop(udp_recv_loop_t *loop){
@@ -251,7 +253,7 @@ static void run_rtp_parse_thread(void* arg)
 
 /** 外部线程通知回调，在loop线程回调解析RTP数据 */
 static void async_rtp_parse_cb(uv_async_t* handle){
-    udp_recv_loop_t *loop = (udp_recv_loop_t*)handle->data;
+    rtp_parse_loop_t *loop = (rtp_parse_loop_t*)handle->data;
     CLiveReceiver* h = (CLiveReceiver*)loop->user;
     h->RtpParse();
 }
@@ -295,7 +297,10 @@ rtp_parse_loop_t* create_rtp_parse_loop(void *usr){
 
     //rtp 解析 loop线程
     uv_thread_t tid;
+	loop->running = true;
     uv_thread_create(&tid, run_rtp_parse_thread, loop);
+
+	return loop;
 }
 
 void close_rtp_parse_loop(rtp_parse_loop_t *loop) {
@@ -404,9 +409,9 @@ void CLiveReceiver::push_ps_stream(AV_BUFF buff)
 {
     //Log::debug("RTPParseCb nlen:%ld", nLen);
     CHECK_POINT_VOID(buff.pData);
-	if(m_pWorker->m_bRtp){
-		m_pWorker->ReceiveStream(buff);
-	} 
+	//if(m_pWorker->m_bRtp){
+	//	m_pWorker->ReceiveStream(buff);
+	//} 
 
     if(m_stream_type == RTP_STREAM_PS) {
         CPs* pPsParser = (CPs*)m_pPsParser;

@@ -6,8 +6,8 @@
 
 namespace LiveClient
 {
-LIVECLIENT_CB ipc_cb = NULL;
-extern uv_loop_t *g_uv_loop;
+    extern uv_loop_t     *g_uv_loop;
+    extern LIVECLIENT_CB liveclient_respond;
 
 namespace LiveIpc
 {
@@ -35,13 +35,15 @@ namespace LiveIpc
             //播放请求回调 devcode=123rtpport=80&ret=0&error=XXXX
             data[len] = 0;
             char szDevCode[30] = {0}; // 设备编码
-            char szInfo[256]={0};     // 成功时sdp信息，失败时错误描述
+            //char szInfo[256]={0};     
             PlayAnswerList *pNewPA = new PlayAnswerList;
 
-            int rtpport = 0;
-            sscanf(data, "devcode=%[^&]&rtpport=%d&ret=%d&error=%s", szDevCode, &rtpport, &pNewPA->nRet, szInfo);
+			int rtpport = 0;
+            sscanf(data, "devcode=%[^&]&rtpport=%d&ret=%d&error=",szDevCode, &rtpport, &pNewPA->nRet);
+			char *pInfo = strstr(data, "&error="); //// 成功时sdp信息，失败时错误描述
+			pInfo += 7;
             pNewPA->strDevCode = szDevCode;
-            pNewPA->strMark = szInfo;
+            pNewPA->strMark = pInfo;
 
             MutexLock lock(&_csPlayAnswerList);
             pNewPA->pNext = _pPlayAnswerList;
@@ -50,8 +52,8 @@ namespace LiveIpc
         } else if (!strcmp(msg,"dev_list_answer")) {
             //获取设备列表回调
             string devjson(data, len);
-            if(ipc_cb)
-                ipc_cb("devlist", devjson);
+            if(liveclient_respond)
+                liveclient_respond("devlist", devjson);
         }
     }
 

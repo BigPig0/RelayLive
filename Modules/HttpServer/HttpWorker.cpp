@@ -36,6 +36,7 @@ namespace HttpWsServer
         , m_eHandleType(t)
         , m_nChannel(nChannel)
         , m_bWebSocket(isWs)
+		, m_bConnect(true)
     {
         m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
 
@@ -64,8 +65,6 @@ namespace HttpWsServer
 
     CHttpWorker::~CHttpWorker()
     {
-		if(m_pLive)
-			m_pLive->RemoveHandle(this);
 
         SAFE_FREE(m_SocketBuff.pData);
 
@@ -124,6 +123,10 @@ namespace HttpWsServer
 
     void CHttpWorker::play_answer(int ret, string error_info)
     {
+		if(!m_bConnect){
+			Log::debug("connect has stoped");
+			return;
+		}
         if(ret){
             m_pPss->error_code = ret;
             m_strError = error_info;
@@ -133,6 +136,10 @@ namespace HttpWsServer
 
     void CHttpWorker::push_video_stream(AV_BUFF buff)
     {
+		if(!m_bConnect){
+			Log::debug("connect has stoped");
+			return;
+		}
         if (m_eHandleType == h264_handle) {
             CH264 *tmp = (CH264 *)m_pFormat;
             tmp->Code(buff);
@@ -147,6 +154,11 @@ namespace HttpWsServer
 
     void CHttpWorker::stop()
     {
+		if(!m_bConnect){
+			Log::debug("connect has stoped");
+			return;
+		}
+
         //视频源没有数据并超时
         Log::debug("no data recived any more, stopped");
 
@@ -156,6 +168,10 @@ namespace HttpWsServer
 
     void CHttpWorker::MediaCb(AV_BUFF buff)
     {
+		if(!m_bConnect){
+			Log::debug("connect has stoped");
+			return;
+		}
         int n = (int)lws_ring_get_count_free_elements(m_pRing);
         //Log::debug("ring free space %d", n);
         if (!n) {
@@ -200,4 +216,11 @@ namespace HttpWsServer
         info.clientIP = m_strClientIP;
         return info;
     }
+
+	void CHttpWorker::close()
+	{
+		m_bConnect = false;
+		if(m_pLive)
+			m_pLive->RemoveHandle(this);
+	}
 }
