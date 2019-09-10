@@ -1,8 +1,8 @@
 function GetDevInfo()
-    local ret = {}
+    devtb = {}
     local con = DBTOOL_GET_CONN("DB")
     if (type(con)=="nil") then
-        return ret
+        return devtb
     end
     --部门
     local stmt = DBTOOL_CREATE_STMT(con)
@@ -13,7 +13,8 @@ function GetDevInfo()
         row["DevID"]  = DBTOOL_GET_STR(rs, 1)
         row["Name"]   = DBTOOL_GET_STR(rs, 2)
         row["BusinessGroupID"]= DBTOOL_GET_STR(rs, 3)
-        table.insert(ret, row)
+        --table.insert(devtb, row)
+	    devtb[row["DevID"]] = row
     end
     DBTOOL_FREE_STMT(stmt)
     --设备
@@ -33,11 +34,12 @@ function GetDevInfo()
         row["Latitude"]   = DBTOOL_GET_STR(rs, 4)
         row["Longitude"]  = DBTOOL_GET_STR(rs, 5)
 		row["ParentID"]   = DBTOOL_GET_STR(rs, 6)
-        table.insert(ret, row)
+        --table.insert(devtb, row)
+	    devtb[row["DevID"]] = row
     end
     DBTOOL_FREE_STMT(stmt2)
     DBTOOL_FREE_CONN(con)
-    return ret
+    return devtb
 end
 
 function UpdateStatus(code, status)
@@ -65,7 +67,6 @@ function UpdatePos(code, lat, lon)
     if (type(con)=="nil") then
         return false
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
 	if string.len(lat)>9 then
 	    lat = string.sub(lat, 0, 9)
 	end
@@ -74,9 +75,22 @@ function UpdatePos(code, lat, lon)
 	end
 	local sql = string.format("update VIDEODEVICE set LATITUDE = %s, LONGITUDE = %s where GUID = '%s'", lat, lon, code)
 	print(sql)
+    local stmt = DBTOOL_CREATE_STMT(con)
     DBTOOL_EXECUTE_STMT(stmt, sql)
 	DBTOOL_COMMIT(con)
     DBTOOL_FREE_STMT(stmt)
+	
+	if devtb[code] ~= nil and devtb[code]["ParentID"] == '32048100002160100008' then
+        local row = devtb[code]
+        local now = os.date("%Y%m%d%H%M%S",os.time())
+        sql = string.format("insert into CRUISER_GPS_HIS (VEHICLENO, GPSTIME, LONGITUDE, LATITUDE) values ('%s', '%s', %s, %s)", row["Name"], now, lon, lat)
+        print(sql)
+        local stmt = DBTOOL_CREATE_STMT(con)
+        DBTOOL_EXECUTE_STMT(stmt, sql)
+        DBTOOL_COMMIT(con)
+        DBTOOL_FREE_STMT(stmt)
+	end
+	
     DBTOOL_FREE_CONN(con)
     return true
 end

@@ -2,6 +2,7 @@
 #define _UTIL_CDEF_
 
 #define SAFE_MALLOC(t, p)         t *p = (t*)calloc(1,sizeof(t))
+#define SAFE_MALLOC_COUNT(t, p, c) t *p = (t*)calloc(c, sizeof(t))
 #define SAFE_FREE(p)              if(NULL != (p)){free (p);(p) = NULL;}
 
 #define CHECK(p,r)                if(p){printf(#p);return r;}
