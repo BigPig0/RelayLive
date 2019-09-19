@@ -187,7 +187,7 @@ int CFlv::Code(AV_BUFF buff)
     case sps_Nal:
         {
             //Log::debug("save sps size:%d",nLen);
-            CHECK_POINT_INT(m_pSPS,-1);
+            CHECKPOINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
             m_bGotSPS = true;
@@ -196,7 +196,7 @@ int CFlv::Code(AV_BUFF buff)
     case pps_Nal:
         {
             //Log::debug("save pps size:%d",nLen);
-            CHECK_POINT_INT(m_pPPS,-1);
+            CHECKPOINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
             m_bGotPPS = true;
@@ -222,9 +222,9 @@ void CFlv::SetSps(uint32_t nWidth, uint32_t nHeight, double fFps)
 
 bool CFlv::MakeHeader()
 {
-    CHECK_POINT(m_pHeader);
-    CHECK_POINT(m_pSPS);
-    CHECK_POINT(m_pPPS);
+    CHECKPOINT_BOOL(m_pHeader);
+    CHECKPOINT_BOOL(m_pSPS);
+    CHECKPOINT_BOOL(m_pPPS);
     uint16_t nSpsLen = (uint16_t)m_pSPS->size();
     char* pSpsData = m_pSPS->get(); 
     uint16_t nPpsLen = (uint16_t)m_pPPS->size();
@@ -331,7 +331,7 @@ bool CFlv::MakeHeader()
 
 bool CFlv::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
-    CHECK_POINT(m_pData);
+    CHECKPOINT_BOOL(m_pData);
 
     // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
     if(m_nNodelay == 0 && bIsKeyFrame && m_pData->size() > 0) {

@@ -120,7 +120,7 @@ void InitMinDump()
 CMiniDump::CMiniDump(LPCTSTR szFileName)
 {
     g_szDumpFileName = (LPTSTR)szFileName;
-    InitMinDump();
+    //InitMinDump();
     SetErrorMode(SEM_NOGPFAULTERRORBOX);
 }
 

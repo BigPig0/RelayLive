@@ -118,7 +118,7 @@ failed:
 
 bool ThreadPool::closeTimer(TimerRunnable *runnable)
 {
-    CHECK_POINT(runnable)
+    CHECKPOINT_BOOL(runnable)
 
     //SetThreadpoolTimer(runnable->m_pWork,NULL,0,0);
     //WaitForThreadpoolTimerCallbacks(runnable->m_pWork,TRUE);

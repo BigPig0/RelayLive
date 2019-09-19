@@ -1,0 +1,384 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bcon.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-atomic.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-clock.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-context.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-decimal128.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-error.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-iso8601.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-iter.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-json.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-keys.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-md5.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-memory.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-oid.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-reader.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-string.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-timegm.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-utf8.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-value.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-version-functions.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson-writer.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\bson\bson.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\common\common-b64.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\common\common-md5.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\jsonsl\jsonsl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-apm.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-array.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-async-cmd.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-async.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-buffer.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-bulk-operation.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-change-stream.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-pool.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-session.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-cyrus.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-sasl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-sspi.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cmd.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-collection.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-compression.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-counters.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-cng.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-common-crypto.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-openssl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-array.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-cmd-deprecated.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-cmd.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-find-cmd.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-find-opquery.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-find.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-legacy.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cyrus.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-database.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-error.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-find-and-modify.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-bucket-file.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-bucket.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-list.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-page.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-handshake.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-host-list.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-index.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-init.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-libressl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-linux-distro-scanner.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-list.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-log.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-matcher-op.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-matcher.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-memcmp.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-openssl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-opts-helpers.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-opts.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-queue.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rand-cng.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rand-common-crypto.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rand-openssl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-concern.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-prefs.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rpc.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-sasl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-scram.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-secure-channel.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-secure-transport.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-server-description.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-server-stream.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-set.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-socket.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-ssl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-sspi.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-buffered.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-file.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs-download.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs-upload.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-socket.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-libressl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-openssl-bio.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-openssl.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-channel.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-transport.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-description-apm.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-description.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-scanner.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-uri.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-util.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-version-functions.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-command-legacy.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-command.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-concern.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\adler32.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\compress.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\crc32.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\deflate.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\gzclose.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\gzlib.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\gzread.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\gzwrite.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\infback.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inffast.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inflate.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inftrees.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\trees.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\uncompr.c" />
+    <ClCompile Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bcon.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-atomic.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-clock.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-compat.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-context-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-context.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-decimal128.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-endian.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-error.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-iso8601-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-iter.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-json.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-keys.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-macros.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-md5.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-memory.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-oid.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-prelude.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-reader.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-string.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-timegm-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-types.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-utf8.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-value.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-version-functions.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson-writer.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\bson\bson.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\common\common-b64-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\common\common-md5-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\common\common-prelude.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\common\common-thread-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\jsonsl\jsonsl.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-apm-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-apm.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-array-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-async-cmd-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-async-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-buffer-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-bulk-operation-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-bulk-operation.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-change-stream-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-change-stream.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-pool-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-pool.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-session-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client-session.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-client.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-cyrus-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-sasl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cluster-sspi-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cmd-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-collection-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-collection.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-compression-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-counters-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-cng-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-common-crypto-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-openssl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-crypto-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cursor.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-cyrus-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-database-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-database.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-errno-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-error.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-find-and-modify-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-find-and-modify.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-flags.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-bucket-file-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-bucket-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-bucket.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-list-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-list.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-page-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-page.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-file.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-gridfs.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-handshake-compiler-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-handshake-os-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-handshake-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-handshake.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-host-list-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-host-list.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-index.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-init.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-iovec.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-libressl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-linux-distro-scanner-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-list-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-log-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-log.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-macros.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-matcher-op-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-matcher-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-matcher.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-memcmp-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-opcode.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-openssl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-opts-helpers-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-opts-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-prelude.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-queue-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rand-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rand.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-concern-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-concern.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-prefs-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-read-prefs.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-rpc-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-sasl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-scram-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-secure-channel-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-secure-transport-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-server-description-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-server-description.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-server-stream-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-set-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-socket-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-socket.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-ssl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-ssl.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-sspi-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-buffered.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-file.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs-download-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs-upload-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-gridfs.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-socket.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-libressl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-libressl.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-openssl-bio-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-openssl-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-openssl.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-channel-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-channel.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-transport-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls-secure-transport.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream-tls.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-stream.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-thread-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-description-apm-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-description-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-description.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-topology-scanner-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-trace-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-uri-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-uri.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-util-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-version-functions.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-command-legacy-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-command-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-concern-private.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc-write-concern.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\mongoc.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\mongoc\utlist.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\crc32.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\deflate.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\gzguts.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inffast.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inffixed.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inflate.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\inftrees.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\trees.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\zlib.h" />
+    <ClInclude Include="..\..\ThirdParty\libmongoc\zlib-1.2.11\zutil.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C46EBE69-F3AC-417B-8594-756D46E14D58}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>BSON_COMPILATION;BSON_STATIC;JSONSL_PARSE_NAN;MONGOC_COMPILATION;MONGOC_STATIC;_CRT_SECURE_NO_WARNINGS;_GNU_SOURCE;_BSD_SOURCE;_DEFAULT_SOURCE;WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libmongoc;$(SolutionDir)../ThirdParty/libmongoc/common;$(SolutionDir)../ThirdParty/libmongoc/zlib-1.2.11;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>BSON_COMPILATION;BSON_STATIC;JSONSL_PARSE_NAN;MONGOC_COMPILATION;MONGOC_STATIC;_CRT_SECURE_NO_WARNINGS;_GNU_SOURCE;_BSD_SOURCE;_DEFAULT_SOURCE;WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libmongoc;$(SolutionDir)../ThirdParty/libmongoc/common;$(SolutionDir)../ThirdParty/libmongoc/zlib-1.2.11;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

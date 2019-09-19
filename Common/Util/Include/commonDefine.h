@@ -22,10 +22,10 @@ using namespace std;
 #define SAFE_DELETE(p)            if(nullptr != (p)){delete (p);(p) = nullptr;}
 #define SAFE_DELETE_ARRAY(p)      if(nullptr != (p)){delete[] (p);(p) = nullptr;}
 
-#define CHECK_POINT(p)            if(nullptr == (p)){Log::error("nullptr == "#p);return false;}
-#define CHECK_POINT_VOID(p)       if(nullptr == (p)){Log::error("nullptr == "#p);return;}
-#define CHECK_POINT_NULLPTR(p)    if(nullptr == (p)){Log::error("nullptr == "#p);return nullptr;}
-#define CHECK_POINT_INT(p,r)      if(nullptr == (p)){Log::error("nullptr == "#p);return (r);}
+#define CHECKPOINT_BOOL(p)       if(nullptr == (p)){Log::error("nullptr == "#p);return false;}
+#define CHECKPOINT_VOID(p)       if(nullptr == (p)){Log::error("nullptr == "#p);return;}
+#define CHECKPOINT_NULLPTR(p)    if(nullptr == (p)){Log::error("nullptr == "#p);return nullptr;}
+#define CHECKPOINT_INT(p,r)      if(nullptr == (p)){Log::error("nullptr == "#p);return (r);}
 
 typedef unsigned char      uchar;
 typedef unsigned short     ushort;

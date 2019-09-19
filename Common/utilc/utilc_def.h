@@ -6,6 +6,7 @@
 #define SAFE_FREE(p)              if(NULL != (p)){free (p);(p) = NULL;}
 
 #define CHECK(p,r)                if(p){printf(#p);return r;}
+#define CHECK_POINT(p,r)          if(NULL == (p)){printf("NULL == "#p);return r;}
 #define CHECK_POINT_VOID(p)       if(NULL == (p)){printf("NULL == "#p);return;}
 #define CHECK_POINT_BOOL(p)       if(NULL == (p)){printf("NULL == "#p);return false;}
 #define CHECK_POINT_NULLPTR(p)    if(NULL == (p)){printf("NULL == "#p);return NULL;}

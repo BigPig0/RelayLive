@@ -429,7 +429,7 @@ namespace LiveClient
             // 原始通道
             if(!m_pOrigin)
                 m_pOrigin = new CLiveChannel;
-            CHECK_POINT(m_pOrigin);
+            CHECK_POINT_BOOL(m_pOrigin);
             m_pOrigin->AddHandle(h, t);
         } else {
             // 扩展通道

@@ -24,6 +24,14 @@ public:
 	*/
 	static std::vector<std::string>  StringSplit(const std::string s, const char tag);
 
+    /**
+	 * @brief:×Ö·û´®·Ö¸î
+	 * @param:s:Ô­Ê¼×Ö·û´®
+	 * @param:tag:·Ö¸î·ûºÅ
+	 * @return:std::vector<std::string>:·Ö¸îºóµÄ×Ö·û´®Êý×é
+	 */
+	static std::vector<std::string>  StringSplit(const std::string s, const std::string tag);
+
 	/**
 	*@brief:×Ö·û´®·Ö¸î
 	*@param:strSrc:Ô­Ê¼×Ö·û´®

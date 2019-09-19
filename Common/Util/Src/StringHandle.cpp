@@ -184,6 +184,42 @@ std::vector<std::string> StringHandle::StringSplit(const std::string s, const ch
 	return vecNum;
 }
 
+std::vector<std::string>  StringHandle::StringSplit(const std::string s, const std::string tag)
+{
+    std::string res;
+    std::vector<std::string> vecNum;
+    size_t nSrcSize = s.size();
+    size_t nSplSize = tag.size();
+    if (nSplSize > nSrcSize) {
+        vecNum.push_back(s);
+        return vecNum;
+    }
+
+    size_t nEndPos = nSrcSize - nSplSize;
+    for (size_t i=0; i<nSrcSize; i++) {
+        char c = s[i];
+        if (i <= nEndPos) {
+            std::string str = s.substr(i,nSplSize);
+            if (str != tag) {
+                res.push_back(c);
+            } else {
+                i += (nSplSize - 1);
+                if(!res.empty()) {
+                    vecNum.push_back(res);
+                    res = "";
+                }
+            }
+        } else {
+            res.push_back(c);
+        }
+    }
+    if(!res.empty()) {
+        vecNum.push_back(res);
+        res = "";
+    }
+    return vecNum;
+}
+
 std::string StringHandle::RemoveUnDig(std::string str)
 {
 	std::string newStr;
