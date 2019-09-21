@@ -1,33 +1,33 @@
 function GetDevInfo()
     local ret = {}
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return ret
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from ENFORCEMENT_RECORDER t")
-    local rs = DBTOOL_GET_RES(stmt)
-    while (DBTOOL_FETCH_NEXT(rs)) do
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from ENFORCEMENT_RECORDER t")
+    local rs = LUDB_GET_RES(stmt)
+    while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
-        row["DevID"]  = DBTOOL_GET_STR(rs, 1)
-        row["Name"]   = DBTOOL_GET_STR(rs, 2)
-        local status  = DBTOOL_GET_INT(rs, 3)
+        row["DevID"]  = LUDB_GET_STR(rs, 1)
+        row["Name"]   = LUDB_GET_STR(rs, 2)
+        local status  = LUDB_GET_INT(rs, 3)
 		if(status == 1) then
 			row["Status"] = "ON";
 		else
 			row["Status"] = "OFF";
 		end
-        row["Latitude"]   = DBTOOL_GET_STR(rs, 4)
-        row["Longitude"]  = DBTOOL_GET_STR(rs, 5)
+        row["Latitude"]   = LUDB_GET_STR(rs, 4)
+        row["Longitude"]  = LUDB_GET_STR(rs, 5)
         table.insert(ret, row)
     end
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return ret
 end
 
 function UpdateStatus(code, status)
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
@@ -37,20 +37,20 @@ function UpdateStatus(code, status)
     end
     local sql = string.format("update enforcement_recorder set STATUS = %d where RECORDER_CODE = '%s'", sta, code)
     print(sql)
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, sql)
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, sql)
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return true
 end
 
 function UpdatePos(code, lat, lon)
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
+    local stmt = LUDB_CREATE_STMT(con)
 	if string.len(lat)>9 then
 	    lat = string.sub(lat, 0, 9)
 	end
@@ -59,10 +59,10 @@ function UpdatePos(code, lat, lon)
 	end
 	local sql = string.format("update ENFORCEMENT_RECORDER set LAT = %s, LON = %s where RECORDER_CODE = '%s'", lat, lon, code)
 	print(sql)
-    DBTOOL_EXECUTE_STMT(stmt, sql)
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    LUDB_CREATE_STMT(stmt, sql)
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return true
 end
 
@@ -81,42 +81,44 @@ function InsertDev(dev)
 		    status = "1"
 		end
         local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], status}
-        DBTOOL_ADD_ROW(devHelp, row)
+        LUDB_ADD_ROW(devHelp, row)
     return true
 end
 
 function DeleteDev()
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "TRUNCATE TABLE recorder")
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE recorder")
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return true
 end
 
 function Init()
-    DBTOOL_POOL_CONN({tag="DB", dbpath="172.31.7.7/pxzhjt", user="basic", pwd="123", max=5, min=1, inc=2})
+    LUDB_INIT({dbtype="oracle", path="E:/instantclient_11_2"})
+    LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="172.31.7.7/pxzhjt", user="basic", pwd="123", max=5, min=1, inc=2})
     --设备表插入工具
     local sql = "insert into ENFORCEMENT_RECORDER (RECORDER_CODE, NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
-    devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
-        {bindname = "CODE",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "LAT",        coltype = DBTOOL_TYPE_CHR, maxlen = 20},
-        {bindname = "LON",        coltype = DBTOOL_TYPE_CHR, maxlen = 20},
-        {bindname = "STATUS",     coltype = DBTOOL_TYPE_INT}
+    devHelp = LUDB_BATCH_INIT("DB", sql, 50, 10, {
+        {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
+        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20},
+        {bindname = "STATUS",     coltype = LUDB_TYPE_INT}
     })
 	--更新操作执行工具
-	updateHelp = DBTOOL_HELP_INIT("DB", "", 50, 10, {})
+	updateHelp = LUDB_BATCH_INIT("DB", "", 50, 10, {})
     return true
 end
 
 function Cleanup()
     rows = nil
     ins = nil
+	LUDB_CLEAN()
     return true
 end
 

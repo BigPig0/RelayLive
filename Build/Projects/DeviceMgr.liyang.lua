@@ -1,53 +1,53 @@
 function GetDevInfo()
     devtb = {}
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return devtb
     end
     --部门
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "select t.DEPARTMEN_ID, t.DEPARTMENT_NAME, t.PARENT_ID from VIDEODEPART t")
-    local rs = DBTOOL_GET_RES(stmt)
-    while (DBTOOL_FETCH_NEXT(rs)) do
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, "select t.DEPARTMEN_ID, t.DEPARTMENT_NAME, t.PARENT_ID from VIDEODEPART t")
+    local rs = LUDB_GET_RES(stmt)
+    while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
-        row["DevID"]  = DBTOOL_GET_STR(rs, 1)
-        row["Name"]   = DBTOOL_GET_STR(rs, 2)
-        row["BusinessGroupID"]= DBTOOL_GET_STR(rs, 3)
+        row["DevID"]  = LUDB_GET_STR(rs, 1)
+        row["Name"]   = LUDB_GET_STR(rs, 2)
+        row["BusinessGroupID"]= LUDB_GET_STR(rs, 3)
         --table.insert(devtb, row)
 	    devtb[row["DevID"]] = row
     end
-    DBTOOL_FREE_STMT(stmt)
+    LUDB_FREE_STMT(stmt)
     --设备
-    local stmt2 = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t where t.TYPE = 5")
-    local rs2 = DBTOOL_GET_RES(stmt2)
-    while (DBTOOL_FETCH_NEXT(rs2)) do
+    local stmt2 = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t where t.TYPE = 5")
+    local rs2 = LUDB_GET_RES(stmt2)
+    while (LUDB_FETCH_NEXT(rs2)) do
         local row = {}
-        row["DevID"]  = DBTOOL_GET_STR(rs, 1)
-        row["Name"]   = DBTOOL_GET_STR(rs, 2)
-        local status  = DBTOOL_GET_INT(rs, 3)
+        row["DevID"]  = LUDB_GET_STR(rs, 1)
+        row["Name"]   = LUDB_GET_STR(rs, 2)
+        local status  = LUDB_GET_INT(rs, 3)
 		if(status == 1) then
 			row["Status"] = "ON";
 		else
 			row["Status"] = "OFF";
 		end
-        row["Latitude"]   = DBTOOL_GET_STR(rs, 4)
-        row["Longitude"]  = DBTOOL_GET_STR(rs, 5)
-		row["ParentID"]   = DBTOOL_GET_STR(rs, 6)
+        row["Latitude"]   = LUDB_GET_STR(rs, 4)
+        row["Longitude"]  = LUDB_GET_STR(rs, 5)
+		row["ParentID"]   = LUDB_GET_STR(rs, 6)
         --table.insert(devtb, row)
 	    devtb[row["DevID"]] = row
     end
-    DBTOOL_FREE_STMT(stmt2)
-    DBTOOL_FREE_CONN(con)
+    LUDB_FREE_STMT(stmt2)
+    LUDB_FREE_CONN(con)
     return devtb
 end
 
 function UpdateStatus(code, status)
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
+    local stmt = LUDB_CREATE_STMT(con)
 	local sta = 0
 	if status then 
 		sta = 1 
@@ -55,15 +55,15 @@ function UpdateStatus(code, status)
     local date=os.date("%Y%m%d%H%M%S")
 	local sql = string.format("update VIDEODEVICE set STATUS = %d, RESETTIME = '%s' where GUID = '%s'", sta, date, code)
 	print(sql)
-    DBTOOL_EXECUTE_STMT(stmt, sql)
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    LUDB_CREATE_STMT(stmt, sql)
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return true
 end
 
 function UpdatePos(code, lat, lon)
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
@@ -75,23 +75,23 @@ function UpdatePos(code, lat, lon)
 	end
 	local sql = string.format("update VIDEODEVICE set LATITUDE = %s, LONGITUDE = %s where GUID = '%s'", lat, lon, code)
 	print(sql)
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, sql)
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, sql)
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
 	
 	if devtb[code] ~= nil and devtb[code]["ParentID"] == '32048100002160100008' then
         local row = devtb[code]
         local now = os.date("%Y%m%d%H%M%S",os.time())
         sql = string.format("insert into CRUISER_GPS_HIS (VEHICLENO, GPSTIME, LONGITUDE, LATITUDE) values ('%s', '%s', %s, %s)", row["Name"], now, lon, lat)
         print(sql)
-        local stmt = DBTOOL_CREATE_STMT(con)
-        DBTOOL_EXECUTE_STMT(stmt, sql)
-        DBTOOL_COMMIT(con)
-        DBTOOL_FREE_STMT(stmt)
+        local stmt = LUDB_CREATE_STMT(con)
+        LUDB_CREATE_STMT(stmt, sql)
+        LUDB_COMMIT(con)
+        LUDB_FREE_STMT(stmt)
 	end
 	
-    DBTOOL_FREE_CONN(con)
+    LUDB_FREE_CONN(con)
     return true
 end
 
@@ -126,7 +126,7 @@ function InsertDev(dev)
 		end
         local row = {dev["DevID"], dev["Name"], dev["DevID"], dev["DevID"], "5", lat, lon, status, date, dp}
         --print("dev:"..dev["DevID"].." name:"..dev["Name"].." Pos:"..lat.." "..lon)
-        DBTOOL_ADD_ROW(devHelp, row)
+        LUDB_ADD_ROW(devHelp, row)
     else
         --记录插入部门表
 		if(dev["BusinessGroupID"] ~= nil) then
@@ -137,56 +137,58 @@ function InsertDev(dev)
 			end
 		end
         local row = {dev["DevID"], dev["Name"], dp}
-        DBTOOL_ADD_ROW(departHelp, row)
+        LUDB_ADD_ROW(departHelp, row)
     end
     return true
 end
 
 function DeleteDev()
-    local con = DBTOOL_GET_CONN("DB")
+    local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
     end
-    local stmt = DBTOOL_CREATE_STMT(con)
-    DBTOOL_EXECUTE_STMT(stmt, "DELETE FROM VIDEODEVICE WHERE TYPE = 5")
-    DBTOOL_EXECUTE_STMT(stmt, "TRUNCATE TABLE VIDEODEPART")
-	DBTOOL_COMMIT(con)
-    DBTOOL_FREE_STMT(stmt)
-    DBTOOL_FREE_CONN(con)
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, "DELETE FROM VIDEODEVICE WHERE TYPE = 5")
+    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE VIDEODEPART")
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
     return true
 end
 
 function Init()
-    DBTOOL_POOL_CONN({tag="DB", dbpath="10.9.0.10/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
+    LUDB_INIT({dbtype="oracle", path="D:/app/Administrator/product/instantclient_11_2"})
+    LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="10.9.0.10/ETL", user="lyzhjt", pwd="zt123", max=5, min=1, inc=2})
     --设备表插入工具
     local sql = "insert into VIDEODEVICE (GUID, NAME, SERVERGUID, OBJID, TYPE, LATITUDE, LONGITUDE, STATUS, UPDATETIME, DEPARTMENT) values (:GUID, :NAME, :SERVERGUID, :OBJID, :TYPE, :LAT, :LON, :STATUS, :UPTIME, :DPART)"
-    devHelp = DBTOOL_HELP_INIT("DB", sql, 50, 10, {
-        {bindname = "GUID",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "NAME",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "SERVERGUID", coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "OBJID",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "TYPE",       coltype = DBTOOL_TYPE_INT},
-		{bindname = "LAT",        coltype = DBTOOL_TYPE_CHR, 10},
-		{bindname = "LON",        coltype = DBTOOL_TYPE_CHR, 10},
-        {bindname = "STATUS",     coltype = DBTOOL_TYPE_INT},
-        {bindname = "UPTIME",     coltype = DBTOOL_TYPE_CHR, maxlen = 14},
-		{bindname = "DPART",      coltype = DBTOOL_TYPE_CHR, maxlen = 50}
+    devHelp = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
+        {bindname = "GUID",       coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "SERVERGUID", coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "OBJID",      coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "TYPE",       coltype = LUDB_TYPE_INT},
+		{bindname = "LAT",        coltype = LUDB_TYPE_CHR, 10},
+		{bindname = "LON",        coltype = LUDB_TYPE_CHR, 10},
+        {bindname = "STATUS",     coltype = LUDB_TYPE_INT},
+        {bindname = "UPTIME",     coltype = LUDB_TYPE_CHR, maxlen = 14},
+		{bindname = "DPART",      coltype = LUDB_TYPE_CHR, maxlen = 50}
     })
     --部门表插入工具
     local sql2 = "insert into VIDEODEPART (GUID, DEPARTMEN_ID, DEPARTMENT_NAME, PARENT_ID) values (:id, :id, :name, :pid)"
-    departHelp = DBTOOL_HELP_INIT("DB", sql2, 50, 10, {
-        {bindname = "id",       coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "name",     coltype = DBTOOL_TYPE_CHR, maxlen = 64},
-        {bindname = "pid",      coltype = DBTOOL_TYPE_CHR, maxlen = 64},
+    departHelp = LUDB_BATCH_INIT("oracle", "DB", sql2, 50, 10, {
+        {bindname = "id",       coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "name",     coltype = LUDB_TYPE_CHR, maxlen = 64},
+        {bindname = "pid",      coltype = LUDB_TYPE_CHR, maxlen = 64},
     })
 	--更新操作执行工具
-	updateHelp = DBTOOL_HELP_INIT("DB", "", 50, 10, {})
+	updateHelp = LUDB_BATCH_INIT("oracle", "DB", "", 50, 10, {})
     return true
 end
 
 function Cleanup()
     rows = nil
     ins = nil
+	LUDB_CLEAN()
     return true
 end
 

@@ -16,6 +16,29 @@ ludb_db_type_t lu_get_type(lua::Str type){
     return ludb_db_unknow;
 }
 
+lua::Bool luaDbInit(lua::Table pra){
+    ludb_db_type_t t = lu_get_type(pra["dbtype"]);
+    if(t == ludb_db_oracle){
+        if(pra.isExist(string("path"))){
+            lua::Str path = pra["path"];
+            return ludb_init_oracle(path.c_str());
+        } else {
+            return ludb_init_oracle(NULL);
+        }
+    } else if(t == ludb_db_mongo) {
+        return ludb_init_mongo();
+    } else if(t == ludb_db_redis) {
+        return ludb_init_redis();
+    }
+    return false;
+}
+lua::Bool luaDbClean(lua::Str type){
+    ludb_db_type_t t = lu_get_type(type);
+    if(t == ludb_db_unknow)
+        return false;
+    ludb_clean(t);
+    return true;
+}
 lua::Ptr luaConnect(lua::Table pra) {
     lua::Str database = pra["dbpath"];
     lua::Str username = pra["user"];
@@ -105,7 +128,11 @@ lua::Str luaGetBlob(lua::Ptr rs, lua::Int i){
     string blob = ludb_rest_get_blob((ludb_rest_t*)rs, i);
     return blob;
 }
-lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, lua::Int interval, lua::Table binds) {
+lua::Ptr luaBatchInit(lua::Str type, lua::Str tag, lua::Str sql, lua::Int rnum, lua::Int interval, lua::Table binds) {
+    ludb_db_type_t t = lu_get_type(type);
+    if(t == ludb_db_unknow)
+        return NULL;
+
     bind_column_t *param = (bind_column_t*)calloc(sizeof(bind_column_t), binds.size()+1);
     int i = 0;
     for(auto it = binds.getBegin(); !it.isEnd(); it++,i++){
@@ -151,7 +178,7 @@ lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, 
         }
     }
     param[i].name = NULL;
-    ludb_batch_t *dbInster = create_ludb_batch((ludb_db_type_t)type,(char*)tag.c_str(), (char*)sql.c_str(), rnum, interval, param);
+    ludb_batch_t *dbInster = create_ludb_batch(t, (char*)tag.c_str(), (char*)sql.c_str(), rnum, interval, param);
 
     for(int j=0; j<i; j++){
         if(param[j].name)
@@ -190,10 +217,15 @@ lua::Bool luaAddRow(lua::Ptr rc, lua::Table row){
 void ludb_lua_init(void *lua) {
 
     lua::State<> *luastate = (lua::State<> *)lua;
+    luastate->setFunc("LUDB_INIT",         &luaDbInit);
+    luastate->setFunc("LUDB_CLEAN",        &luaDbClean);
+
     luastate->setFunc("LUDB_CONN",         &luaConnect);
     luastate->setFunc("LUDB_CREAT_POOL",   &luaCreatePool);
     luastate->setFunc("LUDB_POOL_CONN",    &luaPoolConnect);
     luastate->setFunc("LUDB_FREE_CONN",    &luaFreeConnect);
+    luastate->setFunc("LUDB_COMMIT",       &luaCommit);
+
     luastate->setFunc("LUDB_CREATE_STMT",  &luaCreateStatement);
     luastate->setFunc("LUDB_FREE_STMT",    &luaFreeStatement);
     luastate->setFunc("LUDB_EXECUTE_STMT", &luaExecuteStmt);
@@ -202,24 +234,24 @@ void ludb_lua_init(void *lua) {
     luastate->setFunc("LUDB_BIND_STRING",  &luaBindString);
     luastate->setFunc("LUDB_EXECUTE",      &luaExecute);
     luastate->setFunc("LUDB_GET_AFFECT",   &luaGetAffectedRows);
-    luastate->setFunc("LUDB_COMMIT",       &luaCommit);
     luastate->setFunc("LUDB_GET_RES",      &luaGetResultset);
+
     luastate->setFunc("LUDB_FREE_RES",     &luaFreeResultset);
     luastate->setFunc("LUDB_FETCH_NEXT",   &luaFetchNext);
 
-    luastate->setFunc("LUDB_GET_STR",     &luaGetString);
-    luastate->setFunc("LUDB_GET_INT",     &luaGetInt);
-    luastate->setFunc("LUDB_GET_ODT",     &luaGetOdt);
-    luastate->setFunc("LUDB_GET_BLOB",    &luaGetBlob);
+    luastate->setFunc("LUDB_GET_STR",      &luaGetString);
+    luastate->setFunc("LUDB_GET_INT",      &luaGetInt);
+    luastate->setFunc("LUDB_GET_ODT",      &luaGetOdt);
+    luastate->setFunc("LUDB_GET_BLOB",     &luaGetBlob);
 
-    luastate->setFunc("LUDB_BATCH_INIT",  &luaBatchInit);
-    luastate->setFunc("LUDB_ADD_ROW",     &luaAddRow);
+    luastate->setFunc("LUDB_BATCH_INIT",   &luaBatchInit);
+    luastate->setFunc("LUDB_ADD_ROW",      &luaAddRow);
 
-    luastate->setGlobal("LUDB_TYPE_CHR", column_type_char);
-    luastate->setGlobal("LUDB_TYPE_INT", column_type_int);
-    luastate->setGlobal("LUDB_TYPE_FLT", column_type_float);
-    luastate->setGlobal("LUDB_TYPE_LNG", column_type_long);
-    luastate->setGlobal("LUDB_TYPE_UIN", column_type_uint);
-    luastate->setGlobal("LUDB_TYPE_BLOB", column_type_blob);
-    luastate->setGlobal("LUDB_TYPE_ODT", column_type_date);
+    luastate->setGlobal("LUDB_TYPE_CHR",   column_type_char);
+    luastate->setGlobal("LUDB_TYPE_INT",   column_type_int);
+    luastate->setGlobal("LUDB_TYPE_FLT",   column_type_float);
+    luastate->setGlobal("LUDB_TYPE_LNG",   column_type_long);
+    luastate->setGlobal("LUDB_TYPE_UIN",   column_type_uint);
+    luastate->setGlobal("LUDB_TYPE_BLOB",  column_type_blob);
+    luastate->setGlobal("LUDB_TYPE_ODT",   column_type_date);
 }

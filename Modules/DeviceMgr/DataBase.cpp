@@ -95,11 +95,11 @@ CDataBase::~CDataBase(void)
 
 void CDataBase::Init()
 {
-    string path = Settings::getValue("DataBase", "Path");
-    if(!ludb_init_oracle(path.c_str())){
-        Log::error("data base init failed");
-        return;
-    }
+    //string path = Settings::getValue("DataBase", "Path");
+    //if(!ludb_init_oracle(path.c_str())){
+    //    Log::error("data base init failed");
+    //    return;
+    //}
     ludb_use_lua((void*)&m_lua);
 
     m_lua.run(".","DeviceMgr.lua");
@@ -111,7 +111,9 @@ void CDataBase::Init()
     m_lua.getFunc("InsertDev",   &luafInsertDev);
     m_lua.getFunc("DeleteDev",   &luafDeleteDev);
 	m_lua.getFunc("TransDevPos", &luafTransDevPos);
-    luafInit();
+    if(!luafInit()){
+        Log::error("data base init failed");
+    }
 }
 
 vector<DevInfo*> CDataBase::GetDevInfo()

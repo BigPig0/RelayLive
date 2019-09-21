@@ -22,8 +22,8 @@ LUDB_API bool ludb_init_mongo();
 LUDB_API bool ludb_init_redis();
 
 /**
- * 设置lua句柄。默认不能通过lua调用。
- * @param lua 外部建立的lua句柄
+ * 向lua::State实例设置ludb模块提供的接口
+ * @param lua 外部建立的lua::State<>*实例
  */
 LUDB_API void ludb_use_lua(void* lua);
 
