@@ -1,5 +1,4 @@
-#ifndef _LUDB_EXPORT_H
-#define _LUDB_EXPORT_H
+#pragma once
 
 #if ( defined _WIN32 )
 #ifndef LUDB_API
@@ -13,6 +12,4 @@
 #ifndef LUDB_API
 #define LUDB_API        extern
 #endif
-#endif
-
 #endif

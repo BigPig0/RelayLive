@@ -1,18 +1,9 @@
-#ifndef LUDB_H
-#define LUDB_H
+#pragma once
+
 #include "utilc.h"
 #include "ludb_exp.h"
 #include "ludb_public.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-/**
- * 设置日志输出方式。默认通过printf输出。
- */
-LUDB_API void ludb_hook_log(LOG_HANDLE fuc);
 
 /**
  * 初始化oracle数据库
@@ -26,6 +17,11 @@ LUDB_API bool ludb_init_oracle(const char *path /*= NULL*/);
 LUDB_API bool ludb_init_mongo();
 
 /**
+ * 初始化redis数据库
+ */
+LUDB_API bool ludb_init_redis();
+
+/**
  * 设置lua句柄。默认不能通过lua调用。
  * @param lua 外部建立的lua句柄
  */
@@ -35,6 +31,7 @@ LUDB_API void ludb_use_lua(void* lua);
  * 清理数据库环境。每种数据库分别释放
  */
 LUDB_API void ludb_clean(ludb_db_type_t t);
+
 
 /**
  * 连接数据库
@@ -123,7 +120,7 @@ LUDB_API bool ludb_result_next(ludb_rest_t *res);
 /**
  * 获取字符串字段内容。字段内容为空时，返回空字符串。
  */
-LUDB_API char* ludb_rest_get_char(ludb_rest_t *res, uint32_t i);
+LUDB_API std::string ludb_rest_get_char(ludb_rest_t *res, uint32_t i);
 
 /** 
  * 获取整数字段内容。字段内容为空时，返回0
@@ -133,14 +130,9 @@ LUDB_API int ludb_rest_get_int(ludb_rest_t *res, uint32_t i);
 /** 
  * 获取日期时间，转为yyyymmddhh24miss格式的字符串。
  */
-LUDB_API char* ludb_rest_get_date(ludb_rest_t *res, uint32_t i, char *buff);
+LUDB_API std::string ludb_rest_get_date(ludb_rest_t *res, uint32_t i);
 
 /** 
  * 获取二进制。字段内容为空时，返回空字符串。
  */
-LUDB_API char* ludb_rest_get_blob(ludb_rest_t *res, uint32_t i);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+LUDB_API std::string ludb_rest_get_blob(ludb_rest_t *res, uint32_t i);

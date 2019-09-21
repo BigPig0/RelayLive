@@ -1,63 +1,66 @@
-#ifndef _LUDB_ORACLE_H_
-#define _LUDB_ORACLE_H_
+#pragma once
+
 #include "utilc.h"
 #include "ludb_private.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class ludb_oracle_conn : public ludb_conn_t
+{
+public:
+    ludb_oracle_conn();
+    ~ludb_oracle_conn();
+
+    virtual ludb_stmt_t* create_stmt();
+    virtual bool ludb_commit();
+};
+
+class ludb_oracle_stmt : public ludb_stmt_t
+{
+public:
+    ludb_oracle_stmt();
+    ~ludb_oracle_stmt();
+
+    virtual bool execute(const char *sql);
+    virtual bool prepare(const char *sql);
+    virtual bool bind_int(const char *name, int *data);
+    virtual bool bind_str(const char *name, const char *data, int len);
+    virtual bool execute();
+    virtual uint32_t affected_rows();
+    virtual ludb_rest_t* result();
+};
+
+class ludb_oracle_rest_t : public ludb_rest_t
+{
+public:
+    ludb_oracle_rest_t();
+    ~ludb_oracle_rest_t();
+
+    virtual bool next();
+    virtual string get_char(uint32_t i);
+    virtual int get_int(uint32_t i);
+    virtual string get_date(uint32_t i);
+    virtual string get_blob(uint32_t i);
+};
+
 
 extern bool ludb_oracle_init(const char *path /*= NULL*/);
 
 extern void ludb_oracle_clean();
 
-extern ludb_conn_t* ludb_oracle_connect(char *database, char *usr, char *pwd);
+extern ludb_conn_t* ludb_oracle_connect(const char *database, const char *usr, const char *pwd);
 
-extern bool ludb_oracle_create_pool(char *tag, char *database, char *usr, char *pwd, uint32_t max, uint32_t min, uint32_t inc);
+extern bool ludb_oracle_create_pool(const char *tag, const char *database, const char *usr, const char *pwd, uint32_t max, uint32_t min, uint32_t inc);
 
-extern ludb_conn_t* ludb_oracle_pool_connect(char *tag);
-
-extern bool ludb_oracle_free_conn(ludb_conn_t *conn);
-
-extern ludb_stmt_t* ludb_oracle_create_stmt(ludb_conn_t *conn);
-
-extern bool ludb_oracle_free_stmt(ludb_stmt_t *stmt);
-
-extern bool ludb_oracle_execute_stmt(ludb_stmt_t *stmt, char *sql);
-
-extern bool ludb_oracle_prepare(ludb_stmt_t *stmt, char *sql);
-
-extern bool ludb_oracle_bind_int(ludb_stmt_t *stmt, char *name, int *data);
-
-extern bool ludb_oracle_bind_str(ludb_stmt_t *stmt, char *name, char *data, int len);
-
-extern bool ludb_oracle_execute(ludb_stmt_t *stmt);
-
-extern uint32_t ludb_oracle_affected_rows(ludb_stmt_t *stmt);
-
-extern bool ludb_oracle_commit(ludb_conn_t *conn);
-
-extern ludb_rest_t* ludb_oracle_result(ludb_stmt_t *stmt);
-
-extern bool ludb_oracle_result_next(ludb_rest_t *res);
-
-extern char* ludb_oracle_rest_get_char(ludb_rest_t *res, uint32_t i);
-
-extern int ludb_oracle_rest_get_int(ludb_rest_t *res, uint32_t i);
-
-extern char* ludb_oracle_rest_get_date(ludb_rest_t *res, uint32_t i, char *buff);
-
-extern char* ludb_oracle_rest_get_blob(ludb_rest_t *res, uint32_t i);
+extern ludb_conn_t* ludb_oracle_pool_connect(const char *tag);
 
 //////////////////////////////////////////////////////////////////////////
 
-extern bool create_ludb_batch_oracle(ludb_batch_t *h);
+class ludb_oracle_batch : public ludb_batch_t
+{
+public:
+    char*  buff;     //< ÄÚ´æÇøÓò
 
-extern void destory_ludb_batch_oracle(ludb_batch_t* h);
+    ludb_oracle_batch(string Tag, string Sql, int RowNum, int Interval, bind_column_t* Binds);
+    ~ludb_oracle_batch();
 
-extern bool ludb_batch_insert_oracle(ludb_batch_t* h);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+    virtual bool insert();
+};

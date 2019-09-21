@@ -5,36 +5,37 @@
 #include <string>
 using namespace std;
 
-lua::Ptr luaConnect(lua::Table pra) {
-    string type = pra["dbtype"];
-    string database = pra["dbpath"];
-    string username = pra["user"];
-    string password = pra["pwd"];
-    ludb_db_type_t t;
+ludb_db_type_t lu_get_type(lua::Str type){
     if(type == "oracle") {
-        t = ludb_db_oracle;
+        return ludb_db_oracle;
     } else if(type == "mongodb") {
-        t = ludb_db_mongo;
-    } else {
+        return ludb_db_mongo;
+    } else if(type == "redis") {
+        return ludb_db_redis;
+    }
+    return ludb_db_unknow;
+}
+
+lua::Ptr luaConnect(lua::Table pra) {
+    lua::Str database = pra["dbpath"];
+    lua::Str username = pra["user"];
+    lua::Str password = pra["pwd"];
+    ludb_db_type_t t = lu_get_type(pra["dbtype"]);
+    if(t == ludb_db_unknow){
         return false;
     }
     return ludb_connect(t, database.c_str(), username.c_str(), password.c_str());
 }
 lua::Bool luaCreatePool(lua::Table pra){
-    string type = pra["dbtype"];
-    string tag = pra["tag"];
-    string database = pra["dbpath"];
-    string username = pra["user"];
-    string password = pra["pwd"];
+    lua::Str tag = pra["tag"];
+    lua::Str database = pra["dbpath"];
+    lua::Str username = pra["user"];
+    lua::Str password = pra["pwd"];
     int max_conns = pra.isExist(string("max"))?lua::VarCast<lua::Int>(pra["max"]):1;
     int min_conns = pra.isExist(string("min"))?lua::VarCast<lua::Int>(pra["min"]):0;
     int inc_conns = pra.isExist(string("inc"))?lua::VarCast<lua::Int>(pra["inc"]):1;
-    ludb_db_type_t t;
-    if(type == "oracle") {
-        t = ludb_db_oracle;
-    } else if(type == "mongodb") {
-        t = ludb_db_mongo;
-    } else {
+    ludb_db_type_t t = lu_get_type(pra["dbtype"]);
+    if(t == ludb_db_unknow){
         return false;
     }
     return ludb_create_pool(t
@@ -45,13 +46,9 @@ lua::Bool luaCreatePool(lua::Table pra){
         , max_conns, min_conns, inc_conns);
 }
 lua::Ptr luaPoolConnect(lua::Str type, lua::Str tag){
-    ludb_db_type_t t;
-    if(type == "oracle") {
-        t = ludb_db_oracle;
-    } else if(type == "mongodb") {
-        t = ludb_db_mongo;
-    } else {
-        return NULL;
+    ludb_db_type_t t = lu_get_type(type);
+    if(t == ludb_db_unknow){
+        return false;
     }
     return (void*)ludb_pool_connect(t, (char*)tag.c_str());
 }
@@ -102,14 +99,11 @@ lua::Int luaGetInt(lua::Ptr rs, lua::Int i){
     return ludb_rest_get_int((ludb_rest_t*)rs, i);
 }
 lua::Str luaGetOdt(lua::Ptr rs, lua::Int i){
-    char buff[20]={0};
-    return ludb_rest_get_date((ludb_rest_t*)rs, i, buff);
+    return ludb_rest_get_date((ludb_rest_t*)rs, i);
 }
 lua::Str luaGetBlob(lua::Ptr rs, lua::Int i){
-    char* blob = ludb_rest_get_blob((ludb_rest_t*)rs, i);
-    string ret(blob);
-    free(blob);
-    return ret;
+    string blob = ludb_rest_get_blob((ludb_rest_t*)rs, i);
+    return blob;
 }
 lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, lua::Int interval, lua::Table binds) {
     bind_column_t *param = (bind_column_t*)calloc(sizeof(bind_column_t), binds.size()+1);
@@ -126,9 +120,10 @@ lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, 
             continue;
 
         string &bindName    = lua::VarCast<lua::Str>(col["bindname"]);
-        param[i].name   = (char*)malloc(bindName.size()+1);
-        memcpy(param[i].name, bindName.c_str(), bindName.size());
-        param[i].name[bindName.size()] = 0;
+        char *pname         = (char*)malloc(bindName.size()+1);
+        memcpy(pname, bindName.c_str(), bindName.size());
+        pname[bindName.size()] = 0;
+        param[i].name = pname;
 
         param[i].type = (column_type_t)lua::VarCast<lua::Int>(col["coltype"]);
 
@@ -148,9 +143,10 @@ lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, 
         if(col.isExist(lua::Str("def"))){
             if(lua::VarType<lua::Str>(col["def"])) {
                 string &strDefault = lua::VarCast<lua::Str>(col["def"]);
-                param[i].default_value = (char*)malloc(strDefault.size()+1);
-                memcpy(param[i].default_value, strDefault.c_str(), strDefault.size());
-                param[i].default_value[strDefault.size()] = 0;
+                char *pname = (char*)malloc(strDefault.size()+1);
+                memcpy(pname, strDefault.c_str(), strDefault.size());
+                pname[strDefault.size()] = 0;
+                param[i].default_value = pname;
             }
         }
     }
@@ -159,9 +155,9 @@ lua::Ptr luaBatchInit(lua::Int type, lua::Str tag, lua::Str sql, lua::Int rnum, 
 
     for(int j=0; j<i; j++){
         if(param[j].name)
-            free(param[j].name);
+            free((char*)param[j].name);
         if(param[j].default_value)
-            free(param[j].default_value);
+            free((char*)param[j].default_value);
     }
     SAFE_FREE(param);
     return (void*)dbInster;

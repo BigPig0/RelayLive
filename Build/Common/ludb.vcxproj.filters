@@ -33,21 +33,27 @@
     <ClInclude Include="..\..\Common\ludb\ludb_batch.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_redis.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Common\ludb\ludb.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\ludb\ludb_oracle.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\ludb\ludb_mongo.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\ludb\ludb_batch.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Common\ludb\ludb_lua.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_batch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_mongo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_oracle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_redis.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
