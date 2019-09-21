@@ -1,7 +1,8 @@
-#include "stdafx.h"
-#include "DataBase.h"
+//#include "stdafx.h"
+#include "common.h"
 #include "ludb.h"
 #include "luapp.hpp"
+#include "DataBase.h"
 
 lua::Table DevInfo2Table(DevInfo* dev)
 {

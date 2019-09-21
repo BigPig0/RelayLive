@@ -15,9 +15,6 @@
     <ClCompile Include="..\..\Modules\DeviceMgr\DeviceMgr.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Modules\DeviceMgr\stdafx.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Modules\DeviceMgr\DataBase.h">
@@ -27,12 +24,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Modules\DeviceMgr\PublicDefine.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\DeviceMgr\stdafx.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\DeviceMgr\targetver.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

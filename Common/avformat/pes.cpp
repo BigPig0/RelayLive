@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "pes.h"
 
 //#define SELF_DTS

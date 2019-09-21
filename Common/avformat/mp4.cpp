@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "mp4.h"
 #include "h264.h"
 

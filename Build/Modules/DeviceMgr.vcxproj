@@ -13,16 +13,11 @@
   <ItemGroup>
     <ClCompile Include="..\..\Modules\DeviceMgr\DataBase.cpp" />
     <ClCompile Include="..\..\Modules\DeviceMgr\DeviceMgr.cpp" />
-    <ClCompile Include="..\..\Modules\DeviceMgr\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Modules\DeviceMgr\DataBase.h" />
     <ClInclude Include="..\..\Modules\DeviceMgr\DeviceMgr.h" />
     <ClInclude Include="..\..\Modules\DeviceMgr\PublicDefine.h" />
-    <ClInclude Include="..\..\Modules\DeviceMgr\stdafx.h" />
-    <ClInclude Include="..\..\Modules\DeviceMgr\targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\ludb.vcxproj">
@@ -74,7 +69,7 @@
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ludb;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

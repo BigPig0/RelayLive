@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "common.h"
+#include "Endian.h"
 #include "ts.h"
 #include "crc.h"
 #include "h264.h"

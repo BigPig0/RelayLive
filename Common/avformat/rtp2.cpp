@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "rtp2.h"
 #include "utilc.h"
 #include "buflist.h"

@@ -7,6 +7,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{75ae4239-2153-4326-8935-d2a9e5908329}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{655d4d24-fc2b-4cbe-af1a-b7f9f541ca5d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\avformat\es.cpp">
@@ -32,9 +35,6 @@
     </ClCompile>
     <ClCompile Include="..\..\Common\avformat\ts.cpp">
       <Filter>avformat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules\LiveClient\stdafx.cpp">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Modules\LiveClient\LiveWorker.cpp">
       <Filter>src</Filter>
@@ -92,26 +92,8 @@
     <ClInclude Include="..\..\Common\avformat\ts.h">
       <Filter>avformat</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\LiveClient.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\stdafx.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\LiveWorker.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\LiveIpc.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\avformat\avtypes.h">
       <Filter>avformat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\liveReceiver.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\LiveClient\Recode.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\avformat\sdp.h">
       <Filter>avformat</Filter>
@@ -126,7 +108,22 @@
       <Filter>avformat</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Modules\LiveClient\LiveChannel.h">
-      <Filter>src</Filter>
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\LiveClient\LiveClient.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\LiveClient\LiveIpc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\LiveClient\liveReceiver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\LiveClient\LiveWorker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\LiveClient\Recode.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

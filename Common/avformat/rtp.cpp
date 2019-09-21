@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "rtp.h"
 #include "ps.h"
 #include "h264.h"

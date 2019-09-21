@@ -1,4 +1,6 @@
-#include "stdafx.h"
+#include "common.h"
+#include "luapp.hpp"
+#include <thread>
 #include "DeviceMgr.h"
 #include "DataBase.h"
 
