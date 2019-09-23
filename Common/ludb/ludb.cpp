@@ -25,41 +25,63 @@ void ludb_use_lua(void* lua) {
 
 void ludb_clean(ludb_db_type_t t) {
     if (t == ludb_db_oracle) {
+#ifdef DB_ORACLE
         ludb_oracle_clean();
+#endif
     } else if (t == ludb_db_redis) {
+#ifdef DB_REDIS
         ludb_redis_clean();
+#endif
     }
 }
 
 ludb_conn_t* ludb_connect(ludb_db_type_t t, const char *database, const char *usr, const char *pwd) {
     if(t == ludb_db_oracle) {
+#ifdef DB_ORACLE
         return ludb_oracle_connect(database, usr, pwd);
+#endif
     } else if(t == ludb_db_mongo) {
+#ifdef DB_MONGO
         return ludb_mongo_connect(database, usr, pwd);
+#endif
     } else if(t == ludb_db_redis) {
+#ifdef DB_REDIS
         return ludb_redis_connect(database, usr, pwd);
+#endif
     }
     return NULL;
 }
 
 bool ludb_create_pool(ludb_db_type_t t, const char *tag, const char *database, const char *usr, const char *pwd, uint32_t max, uint32_t min, uint32_t inc) {
     if(t == ludb_db_oracle) {
+#ifdef DB_ORACLE
         return ludb_oracle_create_pool(tag, database, usr, pwd, max, min, inc);
+#endif
     } else if (t == ludb_db_mongo) {
+#ifdef DB_MONGO
         return ludb_mongo_create_pool(tag, database, usr, pwd, max, min, inc);
+#endif
     } else if (t == ludb_db_redis) {
+#ifdef DB_REDIS
         return ludb_redis_create_pool(tag, database, usr, pwd, max, min, inc);
+#endif
     }
     return false;
 }
 
 ludb_conn_t* ludb_pool_connect(ludb_db_type_t t, const char *tag) {
     if(t == ludb_db_oracle) {
+#ifdef DB_ORACLE
         return ludb_oracle_pool_connect(tag);
+#endif
     } else if (t == ludb_db_mongo) {
+#ifdef DB_MONGO
         return ludb_mongo_pool_connect(tag);
+#endif
     } else if (t == ludb_db_redis) {
+#ifdef DB_REDIS
         return ludb_redis_pool_connect(tag);
+#endif
     }
     return NULL;
 }
@@ -126,7 +148,7 @@ int ludb_rest_get_int(ludb_rest_t *res, uint32_t i) {
     return res->get_int(i);
 }
 
-string ludb_rest_get_date(ludb_rest_t *res, uint32_t i, char *buff) {
+string ludb_rest_get_date(ludb_rest_t *res, uint32_t i) {
     return res->get_date(i);
 }
 

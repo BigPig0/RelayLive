@@ -2,16 +2,23 @@
 #include "luapp.hpp"
 #include "ludb.h"
 #include "ludb_batch.h"
+#include "ludb_private.h"
 #include <string>
 using namespace std;
 
 ludb_db_type_t lu_get_type(lua::Str type){
     if(type == "oracle") {
+#ifdef DB_ORACLE
         return ludb_db_oracle;
+#endif
     } else if(type == "mongodb") {
+#ifdef DB_MONGO
         return ludb_db_mongo;
+#endif
     } else if(type == "redis") {
+#ifdef DB_REDIS
         return ludb_db_redis;
+#endif
     }
     return ludb_db_unknow;
 }
@@ -19,16 +26,22 @@ ludb_db_type_t lu_get_type(lua::Str type){
 lua::Bool luaDbInit(lua::Table pra){
     ludb_db_type_t t = lu_get_type(pra["dbtype"]);
     if(t == ludb_db_oracle){
+#ifdef DB_ORACLE
         if(pra.isExist(string("path"))){
             lua::Str path = pra["path"];
             return ludb_init_oracle(path.c_str());
         } else {
             return ludb_init_oracle(NULL);
         }
+#endif
     } else if(t == ludb_db_mongo) {
+#ifdef DB_MONGO
         return ludb_init_mongo();
+#endif
     } else if(t == ludb_db_redis) {
+#ifdef DB_REDIS
         return ludb_init_redis();
+#endif
     }
     return false;
 }
@@ -39,6 +52,7 @@ lua::Bool luaDbClean(lua::Str type){
     ludb_clean(t);
     return true;
 }
+
 lua::Ptr luaConnect(lua::Table pra) {
     lua::Str database = pra["dbpath"];
     lua::Str username = pra["user"];

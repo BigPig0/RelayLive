@@ -2,7 +2,7 @@
 #include "ludb_private.h"
 #include "mongoc.h"
 
-#pragma comment(lib, "libmongoc.lib")
+//#pragma comment(lib, "libmongoc.lib")
 
 static map<string,mongoc_client_t*> mongo_conn_pools; //map<string, mongoc_client_t*>
 

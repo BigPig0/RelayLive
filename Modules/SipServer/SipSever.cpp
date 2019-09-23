@@ -166,12 +166,28 @@ void CSipSever::SubscribeThread()
     CSipMgr::m_pSubscribe->SetPlatform(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
     time_t lastQueryTime, lastSubscribeStat, lastSubscribePos; //上次查询目录的时间
 
-    if(1){
+    if(0){
         Sleep(10000); //延时用来保证先收到注册
         CSipMgr::m_pMessage->QueryDirtionary(platform->strDevCode, platform->strAddrIP, platform->strAddrPort);
 		lastQueryTime = time(NULL);
         Log::debug(" Query dir %s",platform->strDevCode.c_str());
         Sleep(60000); //延时保证查询接受结束再进行订阅
+    } else {
+        vector<DevInfo *> vecDevInfo;
+        for(int i=0; i<10; i++){
+            DevInfo* dev = new DevInfo();
+            char devid[20]={0};
+            sprintf(devid,"%06d", i);
+            dev->strDevID = "devid";
+            dev->strName = "test" + std::to_string(i);
+            dev->strStatus = "ON";
+            dev->strLatitude = "1.12345";
+            dev->strLongitude = "1.123456";
+            dev->strPTZType = std::to_string(i%4);
+            dev->strParentID = "000000";
+        }
+        DeviceMgr::AddDevice(vecDevInfo);
+        Sleep(60000);
     }
     if(m_bSubStat) {
         CSipMgr::m_pSubscribe->SubscribeDirectory(600);

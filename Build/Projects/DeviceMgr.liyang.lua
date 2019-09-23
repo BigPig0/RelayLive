@@ -6,7 +6,7 @@ function GetDevInfo()
     end
     --部门
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, "select t.DEPARTMEN_ID, t.DEPARTMENT_NAME, t.PARENT_ID from VIDEODEPART t")
+    LUDB_EXECUTE_STMT(stmt, "select t.DEPARTMEN_ID, t.DEPARTMENT_NAME, t.PARENT_ID from VIDEODEPART t")
     local rs = LUDB_GET_RES(stmt)
     while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
@@ -19,7 +19,7 @@ function GetDevInfo()
     LUDB_FREE_STMT(stmt)
     --设备
     local stmt2 = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t where t.TYPE = 5")
+    LUDB_EXECUTE_STMT(stmt2, "select t.GUID, t.NAME, t.STATUS, t.LATITUDE, t.LONGITUDE, t.DEPARTMENT from VIDEODEVICE t where t.TYPE = 5")
     local rs2 = LUDB_GET_RES(stmt2)
     while (LUDB_FETCH_NEXT(rs2)) do
         local row = {}
@@ -55,7 +55,7 @@ function UpdateStatus(code, status)
     local date=os.date("%Y%m%d%H%M%S")
 	local sql = string.format("update VIDEODEVICE set STATUS = %d, RESETTIME = '%s' where GUID = '%s'", sta, date, code)
 	print(sql)
-    LUDB_CREATE_STMT(stmt, sql)
+    LUDB_EXECUTE_STMT(stmt, sql)
 	LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
@@ -76,7 +76,7 @@ function UpdatePos(code, lat, lon)
 	local sql = string.format("update VIDEODEVICE set LATITUDE = %s, LONGITUDE = %s where GUID = '%s'", lat, lon, code)
 	print(sql)
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, sql)
+    LUDB_EXECUTE_STMT(stmt, sql)
 	LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
 	
@@ -86,7 +86,7 @@ function UpdatePos(code, lat, lon)
         sql = string.format("insert into CRUISER_GPS_HIS (VEHICLENO, GPSTIME, LONGITUDE, LATITUDE) values ('%s', '%s', %s, %s)", row["Name"], now, lon, lat)
         print(sql)
         local stmt = LUDB_CREATE_STMT(con)
-        LUDB_CREATE_STMT(stmt, sql)
+        LUDB_EXECUTE_STMT(stmt, sql)
         LUDB_COMMIT(con)
         LUDB_FREE_STMT(stmt)
 	end

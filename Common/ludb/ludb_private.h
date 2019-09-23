@@ -1,5 +1,9 @@
 #pragma once
 
+#define DB_ORACLE
+//#define DB_MONGO
+#define DB_REDIS
+
 #include "common.h"
 #include "ludb_public.h"
 #include "uv.h"

@@ -117,13 +117,19 @@ ludb_batch_t::~ludb_batch_t(){
 
 ludb_batch_t* create_ludb_batch(ludb_db_type_t t, const char *tag, const char *sql, int rowNum, int interval, bind_column_t* binds) {
     ludb_batch_t *ret = NULL;
-    if(t == ludb_db_oracle)
+    if(t == ludb_db_oracle) {
+#ifdef DB_ORACLE
         ret = new ludb_oracle_batch(tag,sql,rowNum,interval,binds);
-    else if(t == ludb_db_mongo)
+#endif
+    } else if(t == ludb_db_mongo) {
+#ifdef DB_MONGO
         ret = new ludb_mongo_batch(tag,sql,rowNum,interval,binds);
-    else if(t == ludb_db_redis)
+#endif
+    } else if(t == ludb_db_redis) {
+#ifdef DB_REDIS
         ret = new ludb_redis_batch(tag,sql,rowNum,interval,binds);
-    
+#endif
+    }
     ret->type = t;
     return ret;
 }
