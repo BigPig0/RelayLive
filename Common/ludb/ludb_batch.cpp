@@ -15,7 +15,7 @@ static int move_rows(ludb_batch_t* h) {
     while (!h->recvs.empty() && h->insts.size() < (size_t)h->row_num)
     {
         h->insts.push_back(h->recvs.front());
-        h->recvs.front();
+        h->recvs.pop();
         ++count;
     }
 	if(_cbCatchNum)
@@ -74,8 +74,8 @@ ludb_batch_t::ludb_batch_t(string Tag, string Sql, int RowNum, int Interval, bin
     , running(true)
 {
     for(int i=0; Binds[i].name; i++) {
-        int max_len = binds[i].max_len;
-        switch (binds[i].type)
+        int max_len = Binds[i].max_len;
+        switch (Binds[i].type)
         {
         case column_type_char:
             if (max_len == 0)

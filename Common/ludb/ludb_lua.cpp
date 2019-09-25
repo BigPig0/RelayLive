@@ -155,10 +155,14 @@ lua::Ptr luaBatchInit(lua::Str type, lua::Str tag, lua::Str sql, lua::Int rnum, 
         if(!lua::VarType<lua::Table>(v))
             continue;
         lua::Table col = lua::VarCast<lua::Table>(v);
-        if(!col.isExist(lua::Str("bindname")) || !lua::VarType<lua::Str>(col["bindname"]))
+        if(!col.isExist(lua::Str("bindname")) || !lua::VarType<lua::Str>(col["bindname"])){
+            Log::error("this column lost bindname");
             continue;
-        if(!col.isExist(lua::Str("coltype")) || !lua::VarType<lua::Int>(col["coltype"]))
+        }
+        if(!col.isExist(lua::Str("coltype")) || !lua::VarType<lua::Int>(col["coltype"])){
+            Log::error("this column lost coltype");
             continue;
+        }
 
         string &bindName    = lua::VarCast<lua::Str>(col["bindname"]);
         char *pname         = (char*)malloc(bindName.size()+1);

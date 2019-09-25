@@ -53,7 +53,7 @@ bool ludb_oracle_create_pool(const char *tag, const char *database, const char *
     }
 
     OCI_ConnPool *pool = OCI_PoolCreate(database, usr, pwd, OCI_POOL_SESSION, OCI_SESSION_DEFAULT, min, max, inc);
-    if(pool){
+    if(!pool){
         Log::error("oracle OCI_PoolCreate failed");
         return false;
     }

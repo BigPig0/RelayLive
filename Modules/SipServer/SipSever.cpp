@@ -173,18 +173,21 @@ void CSipSever::SubscribeThread()
         Log::debug(" Query dir %s",platform->strDevCode.c_str());
         Sleep(60000); //延时保证查询接受结束再进行订阅
     } else {
+        double lat = 23.123456;
+        double lon = 128.123456;
         vector<DevInfo *> vecDevInfo;
         for(int i=0; i<10; i++){
             DevInfo* dev = new DevInfo();
             char devid[20]={0};
             sprintf(devid,"%06d", i);
-            dev->strDevID = "devid";
+            dev->strDevID = devid;
             dev->strName = "test" + std::to_string(i);
             dev->strStatus = "ON";
-            dev->strLatitude = "1.12345";
-            dev->strLongitude = "1.123456";
+            dev->strLatitude = to_string(lat+0.01*i);
+            dev->strLongitude = to_string(lon+0.01*i);
             dev->strPTZType = std::to_string(i%4);
             dev->strParentID = "000000";
+            vecDevInfo.push_back(dev);
         }
         DeviceMgr::AddDevice(vecDevInfo);
         Sleep(60000);
