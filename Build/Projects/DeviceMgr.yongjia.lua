@@ -4,7 +4,10 @@
 --得到redis中key名称中的类型字符
 function getDevType(id)
     --print(id)
-    local t = devtype[id]
+	if devtype[id] == nil then
+	    return ""
+	end
+    local t = devtype[id]["type"]
 	--print(t)
     if(t==0) then
 	    return "car"  --移动小车
@@ -23,7 +26,10 @@ end
 --得到数据库中的类型值
 function getDevType2(id)
     --print(id)
-    local t = devtype[id]
+	if devtype[id] == nil then
+	    return ""
+	end
+    local t = devtype[id]["type"]
 	--print(t)
     if(t==0) then
 	    return "0"  --移动小车
@@ -58,10 +64,13 @@ function getDevTypeMap()
     LUDB_EXECUTE_STMT(stmt, "select * from GB28181_DEVTYPE")
 	local rs = LUDB_GET_RES(stmt)
     while (LUDB_FETCH_NEXT(rs)) do
-	    local id = LUDB_GET_STR(rs, 1)
-		local type = LUDB_GET_INT(rs, 2)
-		--print("devid: ",id," devtype: ",type)
-		devtype[id] = type
+	    local devinfo = {}
+	    devinfo["id"] = LUDB_GET_STR(rs, 1)
+		devinfo["type"] = LUDB_GET_INT(rs, 2)
+		devinfo["lon"] = LUDB_GET_INT(rs, 3)
+		devinfo["lat"] = LUDB_GET_INT(rs, 4)
+		--print(devinfo["id"], devinfo["type"], devinfo["lon"], devinfo["lat"])
+		devtype[devinfo["id"]] = devinfo
 	end
 	LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
@@ -83,9 +92,9 @@ function GetDevInfo()
         row["Name"]   = LUDB_GET_STR(rs, 2)
         local status  = LUDB_GET_INT(rs, 3)
 		if(status == 1) then
-			row["Status"] = "ON";
+			row["Status"] = "ON"
 		else
-			row["Status"] = "OFF";
+			row["Status"] = "OFF"
 		end
         row["Latitude"]   = LUDB_GET_STR(rs, 4)
         row["Longitude"]  = LUDB_GET_STR(rs, 5)
@@ -103,20 +112,20 @@ function UpdateStatus(code, status)
 	end
 	local sta = 0
 	if(status) then
-		row["Status"] = "ON";
+		dev["Status"] = "ON";
 		sta = 1 
 	else
-		row["Status"] = "OFF";
+		dev["Status"] = "OFF";
 	end
 	--国标设备实时表更新
-	row = {sta, code}
+	local row = {sta, code}
 	LUDB_ADD_ROW(gbstate, row)
 	--redis
 	local typedir = getDevType(dev["DevID"])
 	if typedir == "" then
 	    return false
 	end
-    local con = LUDB_CONN({dbtype="redis", dbpath="192.168.2.110:6379", user="0", pwd=""})
+    local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="0", pwd=""})
     if (type(con)=="nil") then
         return false
     end
@@ -131,6 +140,7 @@ function UpdateStatus(code, status)
 end
 
 function UpdatePos(code, lat, lon)
+    --[[海康平台没有gps信息
     local dev = devtb[code]
 	if dev == nil then
 	    return false
@@ -139,8 +149,8 @@ function UpdatePos(code, lat, lon)
 	    --不是需要的设备类型
 	    return false
 	end
-	dev["Latitude"] = lat;
-	dev["Longitude"] = lon;
+	dev["Latitude"] = lat
+	dev["Longitude"] = lon
 	--gps历史表插入
     local row = {dev["DevID"], dev["Latitude"], dev["Longitude"], os.date("%Y%m%d%H%M%S"), getDevType2(dev["DevID"]), os.date("%Y%m%d%H")}
     LUDB_ADD_ROW(gpshis, row)
@@ -152,14 +162,14 @@ function UpdatePos(code, lat, lon)
 	if typedir == "" then
 	    return false
 	end
-	local con = LUDB_CONN({dbtype="redis", dbpath="192.168.2.110:6379", user="0", pwd=""})
+	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="0", pwd=""})
 	local stmt = LUDB_CREATE_STMT(con)
 	local sql = string.format("HMSET \"gps:%s:last:%s\" \"lat\" %s \"lon\" %s", typedir, code, lat, lon)
 	print(sql)
     LUDB_EXECUTE_STMT(stmt, sql)
 	LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
-    LUDB_FREE_CONN(con)
+    LUDB_FREE_CONN(con)--]]
     return true
 end
 
@@ -174,22 +184,44 @@ end
 
 function InsertDev(dev)
 	devtb[dev["DevID"]] = dev
-	--国标设备插入
-	local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], getDevType2(dev["DevID"]), getDevSatus(dev["Status"])}
-    LUDB_ADD_ROW(gbdev, row)
+	if dev["Status"] == nil then
+	    --组织节点
+		local pid = ""
+		if dev["ParentID"] ~= nil then
+		    pid = dev["ParentID"]
+		end
+		local row = {dev["DevID"], dev["Name"], "0", "0", "0", "0", pid}
+		LUDB_ADD_ROW(gbdev, row)
+		return true
+	else
+	    --国标设备插入
+	    local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], getDevType2(dev["DevID"]), getDevSatus(dev["Status"])}
+        LUDB_ADD_ROW(gbdev, row)
+	end
+	
+	--从静态库取gps
+	local lon = dev["Longitude"]
+	local lat = dev["Latitude"]
+	if devtype[dev["DevID"]] ~= nil then
+	    lon = devtype[dev["DevID"]]["lon"]
+		lat = devtype[dev["DevID"]]["lat"]
+	end
+	
 	--redis
 	local typedir = getDevType(dev["DevID"])
 	if typedir == "" then
 	    --不是需要的设备类型
 	    return false
 	end
+	local devname = GBK2UTF8(string.gsub(dev["Name"],' ','_'))
+	local depname = "empty"
 	local dep = devtb[dev["ParentID"]]
-	if dep == nil then
-	    return false
+	if dep ~= nil then
+	    depname = GBK2UTF8(string.gsub(dep["Name"],' ','_'))
 	end
-	local con = LUDB_CONN({dbtype="redis", dbpath="192.168.2.110:6379", user="0", pwd=""})
+	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="0", pwd=""})
 	local stmt = LUDB_CREATE_STMT(con)
-	local sql = string.format("HMSET \"gps:%s:last:%s\" \"deviceId\" \"%s\" \"deviceName\" \"%s\" \"lat\" %s \"lon\" %s \"isOnline\" %s \"deptCode\" \"%s\" \"deptName\" \"%s\"", typedir, dev["DevID"], dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], getDevSatus(dev["Status"]), dev["ParentID"], dep["Name"])
+	local sql = string.format("HMSET \"gps:%s:last:%s\" \"deviceId\" \"%s\" \"deviceName\" \"%s\" \"lat\" %s \"lon\" %s \"isOnline\" %s \"deptCode\" \"%s\" \"deptName\" \"%s\"", typedir, dev["DevID"], dev["DevID"], devname, lat, lon, getDevSatus(dev["Status"]), dev["ParentID"], depname)
 	if typedir=="ar" then
 	    sql = sql.." \"url\" \"http://www.baidu.com\""
 	end
@@ -229,8 +261,8 @@ function delGpsHis()
 end
 
 function Init()
-    LUDB_INIT({dbtype="oracle", path="F:\\Downloads\\Orical\\instantclient_11_2"})
-    LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="192.168.2.110/jwt", user="yj_accident", pwd="123", max=5, min=1, inc=2})
+    LUDB_INIT({dbtype="oracle", path="C:\\instantclient_11_2_64"})
+    LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="41.215.241.143:1521/orcl", user="yj_accident", pwd="123", max=5, min=1, inc=2})
 	--gps历史表删除两天前的数据
 	delGpsHis()
     --GPS历史表插入
@@ -244,14 +276,15 @@ function Init()
         {bindname = "GPS_FORMAT_TIME", coltype = LUDB_TYPE_INT}
     })
 	--国标设备表插入
-	sql = "insert into GB28181_HIK (DEVICE_ID, DEVICE_NAME, LAT, LON, TYPE, STATUS) values (:DEVICE_ID, :DEVICE_NAME, :LAT, :LON, :TYPE, :STATUS)"
+	sql = "insert into GB28181_HIK (DEVICE_ID, DEVICE_NAME, LAT, LON, TYPE, STATUS, PARENT_ID) values (:DEVICE_ID, :DEVICE_NAME, :LAT, :LON, :TYPE, :STATUS,:PARENT_ID)"
     gbdev = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
         {bindname = "DEVICE_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30},
         {bindname = "DEVICE_NAME",coltype = LUDB_TYPE_CHR, maxlen = 30},
         {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
         {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20},
         {bindname = "TYPE",       coltype = LUDB_TYPE_INT},
-        {bindname = "STATUS",     coltype = LUDB_TYPE_INT}
+        {bindname = "STATUS",     coltype = LUDB_TYPE_INT},
+		{bindname = "PARENT_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30}
     })
 	--国标设备表更新GPS
 	sql = "update GB28181_HIK set LAT=:LAT, LON=:LON where DEVICE_ID = :DEVICE_ID"

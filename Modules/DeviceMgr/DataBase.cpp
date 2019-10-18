@@ -3,6 +3,11 @@
 #include "ludb.h"
 #include "luapp.hpp"
 #include "DataBase.h"
+#include "EncodeConvert.h"
+
+lua::Str luaGBK2UTF8(lua::Str s) {
+    return EncodeConvert::AtoUTF8(s);
+}
 
 lua::Table DevInfo2Table(DevInfo* dev)
 {
@@ -100,6 +105,8 @@ void CDataBase::Init()
     //    Log::error("data base init failed");
     //    return;
     //}
+    m_lua.setFunc("GBK2UTF8", &luaGBK2UTF8);
+
     ludb_use_lua((void*)&m_lua);
 
     m_lua.run(".","DeviceMgr.lua");

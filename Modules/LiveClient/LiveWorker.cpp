@@ -376,7 +376,9 @@ namespace LiveClient
 
     static void H264DecodeCb(AV_BUFF buff, void* user) {
         CLiveWorker* live = (CLiveWorker*)user;
+#ifdef EXTEND_CHANNLES
         live->ReceiveYUV(buff);
+#endif
     }
 
     CLiveWorker::CLiveWorker(string strCode, int rtpPort)
@@ -409,10 +411,12 @@ namespace LiveClient
             sleep(50);
 
         SAFE_DELETE(m_pOrigin);
+#ifdef EXTEND_CHANNLES
         for(auto it:m_mapChlEx){
             SAFE_DELETE(it.second);
         }
         m_mapChlEx.clear();
+#endif
         GiveBackRtpPort(m_nPort);
         Log::debug("CLiveWorker release");
     }
@@ -448,7 +452,7 @@ namespace LiveClient
             // 原始通道
             if(!m_pOrigin)
                 m_pOrigin = new CLiveChannel;
-            CHECK_POINT(m_pOrigin);
+            CHECK_POINT_BOOL(m_pOrigin);
             m_pOrigin->AddHandle(h, t);
 #endif
         }
@@ -474,6 +478,7 @@ namespace LiveClient
 
         //扩展通道
         bool bExEmpty = true;
+#ifdef EXTEND_CHANNLES
         //MutexLock lock(&m_csChls);
         for(auto it = m_mapChlEx.begin(); it != m_mapChlEx.end();) {
             bool bEmpty = it->second->RemoveHandle(h);
@@ -485,6 +490,7 @@ namespace LiveClient
                 bExEmpty = false;
             }
         }
+#endif
 
         if(bExEmpty && bOriginEmpty) {
             if(m_bOver) {
@@ -506,8 +512,10 @@ namespace LiveClient
         bool bOriginEmpty = !m_pOrigin || m_pOrigin->Empty();
 
         //MutexLock lock(&m_csChls);
-        bool bExEmpty = m_mapChlEx.empty();
-
+        bool bExEmpty = true;
+#ifdef EXTEND_CHANNLES
+        bExEmpty = m_mapChlEx.empty();
+#endif
 
         if(bOriginEmpty && bExEmpty) {
 			Log::debug("need close live stream");
@@ -527,9 +535,11 @@ namespace LiveClient
 		if(m_pOrigin)
 			m_pOrigin->stop();
         //MutexLock lock(&m_csChls);
+#ifdef EXTEND_CHANNLES
         for(auto it:m_mapChlEx){
             it.second->stop();
         }
+#endif
     }
 
     void CLiveWorker::GetClientInfo()
@@ -543,10 +553,12 @@ namespace LiveClient
 		if(m_pOrigin)
 			ret = m_pOrigin->GetClientInfo();
         //MutexLock lock(&m_csChls);
+#ifdef EXTEND_CHANNLES
         for(auto chl : m_mapChlEx){
             vector<ClientInfo> tmp = chl.second->GetClientInfo();
             ret.insert(ret.end(), tmp.begin(), tmp.end());
         }
+#endif
         PushWorkerClientsInfo(ret);
     }
 
