@@ -190,7 +190,7 @@ function InsertDev(dev)
 		if dev["ParentID"] ~= nil then
 		    pid = dev["ParentID"]
 		end
-		local row = {dev["DevID"], dev["Name"], "0", "0", "0", "0", pid}
+		local row = {dev["DevID"], dev["Name"], "", "", "", "", pid}
 		LUDB_ADD_ROW(gbdev, row)
 		return true
 	else
@@ -280,11 +280,11 @@ function Init()
     gbdev = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
         {bindname = "DEVICE_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30},
         {bindname = "DEVICE_NAME",coltype = LUDB_TYPE_CHR, maxlen = 30},
-        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
-        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20},
-        {bindname = "TYPE",       coltype = LUDB_TYPE_INT},
-        {bindname = "STATUS",     coltype = LUDB_TYPE_INT},
-		{bindname = "PARENT_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30}
+        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20, nullable = true},
+        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20, nullable = true},
+        {bindname = "TYPE",       coltype = LUDB_TYPE_INT, maxlen = 0,  nullable = true},
+        {bindname = "STATUS",     coltype = LUDB_TYPE_INT, maxlen = 0,  nullable = true},
+		{bindname = "PARENT_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30, nullable = true}
     })
 	--国标设备表更新GPS
 	sql = "update GB28181_HIK set LAT=:LAT, LON=:LON where DEVICE_ID = :DEVICE_ID"
