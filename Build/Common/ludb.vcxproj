@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\ludb\ludb.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_lua.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_private.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_exp.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_batch.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_mongo.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_oracle.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_public.h" />
+    <ClInclude Include="..\..\Common\ludb\ludb_redis.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Common\ludb\ludb.cpp" />
+    <ClCompile Include="..\..\Common\ludb\ludb_batch.cpp" />
+    <ClCompile Include="..\..\Common\ludb\ludb_lua.cpp" />
+    <ClCompile Include="..\..\Common\ludb\ludb_mongo.cpp" />
+    <ClCompile Include="..\..\Common\ludb\ludb_oracle.cpp" />
+    <ClCompile Include="..\..\Common\ludb\ludb_redis.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ThirdParty\hiredis.vcxproj">
+      <Project>{9d39a3d2-0015-4940-a7f0-abc5f6405efe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\libcstl.vcxproj">
+      <Project>{49a2a162-e5b1-46e9-bf47-cf66a728661a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\libmongoc.vcxproj">
+      <Project>{c46ebe69-f3ac-417b-8594-756d46e14d58}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\lua.vcxproj">
+      <Project>{667f3b9a-5bf5-37b0-9222-33c8f86c89d1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\ocilib.vcxproj">
+      <Project>{bc78ca01-85a5-4c7b-8311-06bd43534b02}</Project>
+    </ProjectReference>
+    <ProjectReference Include="util.vcxproj">
+      <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
+    </ProjectReference>
+    <ProjectReference Include="utilc.vcxproj">
+      <Project>{5d8b3c31-2629-40a1-8c75-8e50224b60a7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4EBD39F9-4927-491A-81C3-B0CB42389024}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;WIN32;_CONSOLE;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;WIN32;_CONSOLE;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

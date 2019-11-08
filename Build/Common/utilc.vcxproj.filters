@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{034eb1af-ec79-46aa-a900-3dc87a27fe06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{b67cdc1b-e6ad-48b1-9772-dfa3a5cf8a0e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../../Common/utilc/netstream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/ring_buff.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/utilc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/utilc_api.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/utilc_def.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/utilc_export.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/linked_list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/doubly_linked_list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/buflist.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/memfile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/utilc/bnf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../Common/utilc/memfile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/netstream.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/ring_buff.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/utilc_api.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/doubly_linked_list.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/buflist.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/utilc/bnf.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

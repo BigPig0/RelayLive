@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{e1be21b5-e0d0-4a69-9c81-2fe45f034020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{75ae4239-2153-4326-8935-d2a9e5908329}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Modules\DeviceMgr\DataBase.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\DeviceMgr\DeviceMgr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Modules\DeviceMgr\DataBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\DeviceMgr\DeviceMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\DeviceMgr\PublicDefine.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

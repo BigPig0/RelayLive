@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{034eb1af-ec79-46aa-a900-3dc87a27fe06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{b67cdc1b-e6ad-48b1-9772-dfa3a5cf8a0e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\ludb\ludb_exp.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_oracle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_mongo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_public.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_private.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_lua.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_batch.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\ludb\ludb_redis.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Common\ludb\ludb_lua.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_batch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_mongo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_oracle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\ludb\ludb_redis.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

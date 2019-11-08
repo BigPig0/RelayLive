@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "common.h"
+#include "Endian.h"
 #include "ts.h"
 #include "crc.h"
 #include "h264.h"
@@ -25,7 +26,7 @@ CTS::~CTS(void)
 int CTS::Code(char* pBuf, uint32_t nLen)
 {
     //Log::debug("ts begin");
-    CHECK_POINT(pBuf);
+    CHECKPOINT_INT(pBuf, -1);
 
     uint8_t  nNalType  = m_nNalType;
     uint64_t nVideoPts = m_nVideoPts;
@@ -69,7 +70,7 @@ int CTS::Code(char* pBuf, uint32_t nLen)
     {
         m_nTsBuffLen = TS_ONE_FILE_SIZE;
         m_pTsBuff = (char*)malloc(TS_ONE_FILE_SIZE);
-        CHECK_POINT(m_pTsBuff)
+        CHECKPOINT_INT(m_pTsBuff,-1)
     }
 
     //分片包的第一个包的负载长度
@@ -257,14 +258,14 @@ int CTS::Code(char* pBuf, uint32_t nLen)
 
 void CTS::SetPID(ts_header_t* pTS, uint16_t uPID)
 {
-    CHECK_POINT_VOID(pTS)
+    CHECKPOINT_VOID(pTS)
     pTS->PID1 = (uPID >> 8)&0x1F;
     pTS->PID2 = uPID & 0xFF;
 }
 
 uint16_t CTS::GetPID(ts_header_t* pTS)
 {
-    CHECK_POINT_INT(pTS,(uint16_t)(-1))
+    CHECKPOINT_INT(pTS,(uint16_t)(-1))
     uint16_t uPID = pTS->PID1;
     uPID = uPID << 8;
     uPID |= pTS->PID2;
@@ -273,26 +274,26 @@ uint16_t CTS::GetPID(ts_header_t* pTS)
 
 void CTS::SetPatProgramNum(ts_pat_program_t* pPatProgram, uint16_t program_number)
 {
-    CHECK_POINT_VOID(pPatProgram)
+    CHECKPOINT_VOID(pPatProgram)
     pPatProgram->program_number = Util::EndianChange16(program_number);
 }
 
 uint16_t CTS::GetPatProgramNum(ts_pat_program_t* pPatProgram)
 {
-    CHECK_POINT_INT(pPatProgram,(uint16_t)(-1));
+    CHECKPOINT_INT(pPatProgram,(uint16_t)(-1));
     return Util::EndianChange16(pPatProgram->program_number);
 }
 
 void CTS::SetPatPID(ts_pat_program_t* pPatProgram, uint16_t network_id_or_program_map_PID)
 {
-    CHECK_POINT_VOID(pPatProgram)
+    CHECKPOINT_VOID(pPatProgram)
     pPatProgram->network_id_or_program_map_PID_1 = (network_id_or_program_map_PID >> 8)&0x1F;
     pPatProgram->network_id_or_program_map_PID_2 = network_id_or_program_map_PID & 0xFF;
 }
 
 uint16_t CTS::GetPatPID(ts_pat_program_t* pPatProgram)
 {
-    CHECK_POINT_INT(pPatProgram,(uint16_t)(-1));
+    CHECKPOINT_INT(pPatProgram,(uint16_t)(-1));
     uint16_t uPID = pPatProgram->network_id_or_program_map_PID_1;
     uPID = uPID << 8;
     uPID |= pPatProgram->network_id_or_program_map_PID_2;
@@ -301,14 +302,14 @@ uint16_t CTS::GetPatPID(ts_pat_program_t* pPatProgram)
 
 void CTS::SetPatSectionLength(ts_pat_t* pPat, uint16_t section_length)
 {
-    CHECK_POINT_VOID(pPat)
+    CHECKPOINT_VOID(pPat)
     pPat->section_length_1 = (section_length >> 8)&0x0F;
     pPat->section_length_2 = section_length & 0xFF;
 }
 
 uint16_t CTS::GetPatSectionLength(ts_pat_t* pPat)
 {
-    CHECK_POINT_INT(pPat,(uint16_t)(-1));
+    CHECKPOINT_INT(pPat,(uint16_t)(-1));
     uint16_t uSectionLen = pPat->section_length_1;
     uSectionLen = uSectionLen << 8;
     uSectionLen |= pPat->section_length_2;
@@ -317,26 +318,26 @@ uint16_t CTS::GetPatSectionLength(ts_pat_t* pPat)
 
 void CTS::SetPatTransportStreamID(ts_pat_t* pPat, uint16_t transport_stream_id)
 {
-    CHECK_POINT_VOID(pPat)
+    CHECKPOINT_VOID(pPat)
     pPat->transport_stream_id = Util::EndianChange16(transport_stream_id);
 }
 
 uint16_t CTS::GetPatTransportStreamID(ts_pat_t* pPat)
 {
-    CHECK_POINT_INT(pPat,(uint16_t)(-1));
+    CHECKPOINT_INT(pPat,(uint16_t)(-1));
     return Util::EndianChange16(pPat->transport_stream_id);
 }
 
 void CTS::SetPmtElementaryPID(ts_pmt_program_t* pPmtProgram, uint16_t elementary_PID)
 {
-    CHECK_POINT_VOID(pPmtProgram)
+    CHECKPOINT_VOID(pPmtProgram)
     pPmtProgram->elementary_PID_1 = (elementary_PID >> 8)&0x1F;
     pPmtProgram->elementary_PID_2 = elementary_PID & 0xFF;
 }
 
 uint16_t CTS::GetPmtElementaryPID(ts_pmt_program_t* pPmtProgram)
 {
-    CHECK_POINT_INT(pPmtProgram,(uint16_t)(-1));
+    CHECKPOINT_INT(pPmtProgram,(uint16_t)(-1));
     uint16_t uElementary_PID = pPmtProgram->elementary_PID_1&0x1F;
     uElementary_PID = uElementary_PID << 8;
     uElementary_PID |= pPmtProgram->elementary_PID_2;
@@ -345,14 +346,14 @@ uint16_t CTS::GetPmtElementaryPID(ts_pmt_program_t* pPmtProgram)
 
 void CTS::SetPmtEsInfoLength(ts_pmt_program_t* pPmtProgram, uint16_t ES_info_length)
 {
-    CHECK_POINT_VOID(pPmtProgram)
+    CHECKPOINT_VOID(pPmtProgram)
     pPmtProgram->ES_info_length_1 = (ES_info_length >> 8)&0x0F;
     pPmtProgram->ES_info_length_2 = ES_info_length & 0xFF;
 }
 
 uint16_t CTS::GetPmtEsInfoLength(ts_pmt_program_t* pPmtProgram)
 {
-    CHECK_POINT_INT(pPmtProgram,(uint16_t)(-1));
+    CHECKPOINT_INT(pPmtProgram,(uint16_t)(-1));
     uint16_t ES_info_length = pPmtProgram->ES_info_length_1&0x0F;
     ES_info_length = ES_info_length << 8;
     ES_info_length |= pPmtProgram->ES_info_length_2;
@@ -361,14 +362,14 @@ uint16_t CTS::GetPmtEsInfoLength(ts_pmt_program_t* pPmtProgram)
 
 void CTS::SetPmtSectionLength(ts_pmt_t* pPmt, uint16_t section_length)
 {
-    CHECK_POINT_VOID(pPmt)
+    CHECKPOINT_VOID(pPmt)
     pPmt->section_length_1 = (section_length >> 8)&0x0F;
     pPmt->section_length_2 = section_length & 0xFF;
 }
 
 uint16_t CTS::GetPmtSectionLength(ts_pmt_t* pPmt)
 {
-    CHECK_POINT_INT(pPmt,(uint16_t)(-1));
+    CHECKPOINT_INT(pPmt,(uint16_t)(-1));
     uint16_t uSectionLen = pPmt->section_length_1&0x0F;
     uSectionLen = uSectionLen << 8;
     uSectionLen |= pPmt->section_length_2;
@@ -387,14 +388,14 @@ uint16_t CTS::GetPmtProgramNum(ts_pmt_t* pPmt)
 
 void CTS::SetPmtPCR_PID(ts_pmt_t* pPmt, uint16_t PCR_PID)
 {
-    CHECK_POINT_VOID(pPmt)
+    CHECKPOINT_VOID(pPmt)
     pPmt->PCR_PID_1 = (PCR_PID >> 8)&0x1F;
     pPmt->PCR_PID_2 = PCR_PID & 0xFF;
 }
 
 uint16_t CTS::GetPmtPCR_PID(ts_pmt_t* pPmt)
 {
-    CHECK_POINT_INT(pPmt,(uint16_t)(-1));
+    CHECKPOINT_INT(pPmt,(uint16_t)(-1));
     uint16_t uRet = pPmt->section_length_1&0x1F;
     uRet = uRet << 8;
     uRet |= pPmt->section_length_2;
@@ -403,14 +404,14 @@ uint16_t CTS::GetPmtPCR_PID(ts_pmt_t* pPmt)
 
 void CTS::SetPmtProgramInfoLength(ts_pmt_t* pPmt, uint16_t program_info_length)
 {
-    CHECK_POINT_VOID(pPmt)
+    CHECKPOINT_VOID(pPmt)
     pPmt->program_info_length_1 = (program_info_length >> 8)&0x0F;
     pPmt->program_info_length_2 = program_info_length & 0xFF;
 }
 
 uint16_t CTS::GetPmtProgramInfoLength(ts_pmt_t* pPmt)
 {
-    CHECK_POINT_INT(pPmt,(uint16_t)(-1));
+    CHECKPOINT_INT(pPmt,(uint16_t)(-1));
     uint16_t uRet = pPmt->program_info_length_1&0x0F;
     uRet = uRet << 8;
     uRet |= pPmt->program_info_length_2;
@@ -419,14 +420,14 @@ uint16_t CTS::GetPmtProgramInfoLength(ts_pmt_t* pPmt)
 
 void CTS::SetAdaptationPCRBase(ts_adaptation_field_pcr* pPcr, uint64_t pcrb)
 {
-    CHECK_POINT_VOID(pPcr)
+    CHECKPOINT_VOID(pPcr)
     pPcr->program_clock_reference_base_1 = Util::EndianChange32((uint32_t)(pcrb >> 1));  //从第2位到第33位
     pPcr->program_clock_reference_base_2 = pcrb&0x01; //第1位
 }
 
 uint64_t CTS::GetAdaptationPCRBase(ts_adaptation_field_pcr* pPcr)
 {
-    CHECK_POINT_INT(pPcr,(uint16_t)(-1))
+    CHECKPOINT_INT(pPcr,(uint16_t)(-1))
     uint64_t uRet = Util::EndianChange32(pPcr->program_clock_reference_base_1);
     uRet = uRet << 1;
     uRet |= pPcr->program_clock_reference_base_2;
@@ -435,14 +436,14 @@ uint64_t CTS::GetAdaptationPCRBase(ts_adaptation_field_pcr* pPcr)
 
 void CTS::SetAdaptationPCRExtension(ts_adaptation_field_pcr* pPcr, uint16_t pcre)
 {
-    CHECK_POINT_VOID(pPcr)
+    CHECKPOINT_VOID(pPcr)
     pPcr->program_clock_reference_extension_1 = pcre >> 8;  //第9位
     pPcr->program_clock_reference_extension_2 = pcre&0xFF;  //第1位到第8位
 }
 
 uint16_t CTS::GetAdaptationPCRExtension(ts_adaptation_field_pcr* pPcr)
 {
-    CHECK_POINT_INT(pPcr,(uint16_t)(-1))
+    CHECKPOINT_INT(pPcr,(uint16_t)(-1))
     uint16_t uRet = pPcr->program_clock_reference_extension_1;
     uRet = uRet << 8;
     uRet |= pPcr->program_clock_reference_extension_2;
@@ -454,7 +455,7 @@ ts_header_t* CTS::CreatPAT(char* pBuff)
     static uchar continuity_counter = 0;
 
     ts_header_t* pTs = (ts_header_t*)pBuff;
-    CHECK_POINT_NULLPTR(pTs);
+    CHECKPOINT_NULLPTR(pTs);
     memset(pTs, 0xFF, TS_PACKET_SIZE);
 
     pTs->sync_byte = TS_SYNC_BYTE;
@@ -499,7 +500,7 @@ ts_header_t* CTS::CreatPMT(char* pBuff)
     static uchar continuity_counter = 0;
 
     ts_header_t* pTs = (ts_header_t*)pBuff;
-    CHECK_POINT_NULLPTR(pTs);
+    CHECKPOINT_NULLPTR(pTs);
     memset(pTs, 0xFF, TS_PACKET_SIZE);
 
     pTs->sync_byte = TS_SYNC_BYTE;
@@ -550,7 +551,7 @@ ts_header_t* CTS::CreatVideoTS(char* pBuff, uchar payload_unit_start_indicator, 
     static uchar continuity_counter = 0;
 
     ts_header_t* pTs = (ts_header_t*)pBuff;
-    CHECK_POINT_NULLPTR(pTs);
+    CHECKPOINT_NULLPTR(pTs);
     memset(pTs, 0xFF, TS_PACKET_SIZE);
 
     pTs->sync_byte = TS_SYNC_BYTE;

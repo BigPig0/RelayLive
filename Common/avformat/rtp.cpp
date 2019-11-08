@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "rtp.h"
 #include "ps.h"
 #include "h264.h"
@@ -82,7 +82,7 @@ int CRtp::InserSortList(char* packetBuf, long packetSize)
 
     // 组成新节点
     rtp_list_node* pNode = new rtp_list_node;
-    CHECK_POINT_INT(pNode, -1);
+    CHECKPOINT_INT(pNode, -1);
     pNode->data         = packetBuf;
     pNode->len          = packetSize;
     pNode->head_len     = nHeaderSize;
@@ -266,7 +266,7 @@ int CRtp::ParseRtpHeader(char* pBuf, long size, int& nHeaderSize, int& nPlayLoad
 
 int CRtp::DelRtpNode(rtp_list_node* pNode)
 {
-    CHECK_POINT_INT(pNode,0);
+    CHECKPOINT_INT(pNode,0);
     SAFE_DELETE(pNode->data);
     pNode->data = nullptr;
     pNode->len = 0;

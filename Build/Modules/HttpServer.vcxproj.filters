@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Modules\HttpServer\HttpServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\HttpServer\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\HttpServer\HttpWebServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\HttpServer\HttpLiveServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\HttpServer\HttpWorker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules\HttpServer\HlsWorker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Modules\HttpServer\HttpServer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\stdafx.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\targetver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\HttpWebServer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\HttpLiveServer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\HttpWorker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules\HttpServer\HlsWorker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

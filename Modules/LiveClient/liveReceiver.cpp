@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "uv.h"
 #include "liveReceiver.h"
 #include "LiveWorker.h"

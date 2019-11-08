@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "rtsp.h"
 #include "utilc.h"
 #include "cstl_easy.h"

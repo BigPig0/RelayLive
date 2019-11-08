@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\alloc.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\context.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\libwebsockets.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\output.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\pollfd.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\service.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\base64-decode.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\lws-ring.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\pipe\ops-pipe.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\header.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\parsers.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\h1\ops-h1.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\ops-ws.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\client-ws.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\client-parser-ws.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\server-ws.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\raw-skt\ops-raw-skt.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\raw-file\ops-raw-file.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\connect.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\client\client.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\client\client-handshake.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\adopt.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\listen\ops-listen.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\sha-1.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-fds.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-file.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-init.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-misc.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-pipe.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-service.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-sockets.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\server.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\lws-spa.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\event-libs\poll\poll.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\event-libs\libuv\libuv.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\win32port\win32helpers\gettimeofday.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\core\private.h">
+      <Filter>Headers Private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\win32port\win32helpers\gettimeofday.h">
+      <Filter>Headers Private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\lws_config.h">
+      <Filter>Headers Public</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\libwebsockets.h">
+      <Filter>Headers Public</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers Private">
+      <UniqueIdentifier>{270FE9AD-2824-38FF-BF79-F3333A074A92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers Public">
+      <UniqueIdentifier>{05124E38-D42A-3318-80A4-8A8AB53DB984}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{35BA3DB8-FD37-3ED1-B4E4-7D3EB90FC457}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

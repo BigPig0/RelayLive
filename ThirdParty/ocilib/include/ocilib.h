@@ -3,7 +3,7 @@
  *
  * Website: http://www.ocilib.net
  *
- * Copyright (c) 2007-2018 Vincent ROGIER <vince.rogier@ocilib.net>
+ * Copyright (c) 2007-2019 Vincent ROGIER <vince.rogier@ocilib.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,8 +91,8 @@ extern "C" {
  * --------------------------------------------------------------------------------------------- */
 
 #define OCILIB_MAJOR_VERSION     4
-#define OCILIB_MINOR_VERSION     5
-#define OCILIB_REVISION_VERSION  1
+#define OCILIB_MINOR_VERSION     6
+#define OCILIB_REVISION_VERSION  2
 
 /* Import mode */
 
@@ -1069,24 +1069,30 @@ typedef unsigned int big_uint;
   #define boolean int
 #endif
 
-/* oracle OCI key versions*/
-
-#define OCI_8_0                             800
-#define OCI_8_1                             810
-#define OCI_9_0                             900
-#define OCI_9_2                             920
-#define OCI_10_1                            1010
-#define OCI_10_2                            1020
-#define OCI_11_1                            1110
-#define OCI_11_2                            1120
-#define OCI_12_1                            1210
-#define OCI_12_2                            1220
-
 /* versions extract macros */
 
 #define OCI_VER_MAJ(v)                      (unsigned int) ((v)/100)
 #define OCI_VER_MIN(v)                      (unsigned int) (((v)/10) - (((v)/100)*10))
 #define OCI_VER_REV(v)                      (unsigned int) ((v) - (((v)/10)*10))
+
+#define OCI_VER_MAKE(x, y, z)               ((x)*100 + (y)*10 + z)
+
+/* oracle OCI key versions*/
+
+#define OCI_8_0                             OCI_VER_MAKE( 8, 0, 0)
+#define OCI_8_1                             OCI_VER_MAKE( 8, 1, 0)
+#define OCI_9_0                             OCI_VER_MAKE( 9, 0, 0)
+#define OCI_9_2                             OCI_VER_MAKE( 9, 2, 0)
+#define OCI_10_1                            OCI_VER_MAKE(10, 1, 0)
+#define OCI_10_2                            OCI_VER_MAKE(10, 2, 0)
+#define OCI_11_1                            OCI_VER_MAKE(11, 1, 0)
+#define OCI_11_2                            OCI_VER_MAKE(11, 2, 0)
+#define OCI_12_1                            OCI_VER_MAKE(12, 1, 0)
+#define OCI_12_2                            OCI_VER_MAKE(12, 2, 0)
+#define OCI_18_1                            OCI_VER_MAKE(18, 1, 0)
+#define OCI_18_2                            OCI_VER_MAKE(18, 2, 0)
+#define OCI_18_3                            OCI_VER_MAKE(18, 3, 0)
+#define OCI_18_4                            OCI_VER_MAKE(18, 4, 0)
 
 /* OCILIB Error types */
 
@@ -1126,8 +1132,9 @@ typedef unsigned int big_uint;
 #define OCI_ERR_ARG_INVALID_VALUE           27
 #define OCI_ERR_XA_ENV_FROM_STRING          28
 #define OCI_ERR_XA_CONN_FROM_STRING         29
+#define OCI_ERR_BIND_EXTERNAL_NOT_ALLOWED   30
 
-#define OCI_ERR_COUNT                       30   
+#define OCI_ERR_COUNT                       31   
 
 
 /* allocated bytes types */
@@ -1314,6 +1321,8 @@ typedef unsigned int big_uint;
 #define OCI_CPF_IS_IDENTITY                 1
 #define OCI_CPF_IS_GEN_ALWAYS               2
 #define OCI_CPF_IS_GEN_BY_DEFAULT_ON_NULL   4
+#define OCI_CPF_IS_LPART                    8
+#define OCI_CPF_IS_CONID                   16
 
 /* Column collation IDs     */
 
@@ -1485,6 +1494,12 @@ typedef unsigned int big_uint;
 #define OCI_TRC_ACTION                      3
 #define OCI_TRC_DETAIL                      4
 #define OCI_TRC_OPERATION                   5
+
+/* Network timeout type */
+
+#define OCI_NTO_SEND                        1
+#define OCI_NTO_RECEIVE                     2
+#define OCI_NTO_CALL                        3
 
 /* HA event type */
 
@@ -1992,7 +2007,7 @@ OCI_EXPORT boolean OCI_API OCI_SetHAHandler
  * @par Example with thread context
  * @include err_ctx.c
  *
- *@par Example of warning handling
+ * @par Example of warning handling
  * @include err_warning.c
  *
  */
@@ -2248,6 +2263,10 @@ OCI_EXPORT boolean OCI_API OCI_IsConnected
  *
  * @param con - Connection handle
  *
+ * @note
+ * Value NULL for parameter \p con is a valid value.
+ * It returns then previously stored data with global scope (program wide)
+ *
  */
 
 OCI_EXPORT void * OCI_API OCI_GetUserData
@@ -2261,6 +2280,10 @@ OCI_EXPORT void * OCI_API OCI_GetUserData
  *
  * @param con  - Connection handle
  * @param data - User data pointer
+ *
+ * @note
+ * Value NULL for parameter \p con is a valid value.
+ * It allows users to associate a pointer to user data with global scope (program wide)
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -2600,6 +2623,7 @@ OCI_EXPORT boolean OCI_API OCI_SetTransaction
  * - OCI_11_1
  * - OCI_11_2
  * - OCI_12_1
+ * - OCI_18_3
  *
  */
 
@@ -2700,6 +2724,77 @@ OCI_EXPORT const otext * OCI_API OCI_GetTrace
 OCI_EXPORT boolean OCI_API OCI_Ping
 (
     OCI_Connection *con
+);
+
+/**
+ * @brief
+ * Set a given timeout for OCI calls that require server round-trips to the given database
+ *
+ * @param con   - Connection handle
+ * @param type  - Type of timeout to set
+ * @param value - Timeout in milliseconds
+ *
+ * Possible values for parameter 'type':
+ * - OCI_NTO_SEND
+ *   - Time to wait for send operations completion to the database server
+ *   - Requires Oracle 12cR1 client
+ * - OCI_NTO_RECEIVE
+ *   - Time to wait for read operations completion from the database server
+ *   - Requires Oracle 12cR1 client
+ * - OCI_NTO_CALL
+ *   - Time to wait for a database round-trip to complete ( Client processing is not taken into account)
+ *   - Requires Oracle 18c client
+ *
+ * OCI client raises an timeout type related error when a given timeout is reached.
+ * 
+ * @note
+ * To disable a given timeout, pass the value 0
+ *
+ * @warning
+ * OCI client is using the following precedence rules when applying timeouts:
+ *   - 1 - Timeout set using OCI_NTO_CALL (all other timeouts are discarded)
+ *   - 2 - Timeouts set using OCI_NTO_SEND and/or OCI_NTO_RECEIVE
+ *   - 3 - Timeouts set in sqlnet.ora file
+ * 
+ * Here is a summary:
+ * 
+ * FLAG            | Min. Version | OCI Error raised | OCI Error description          | sqlnet.ora equivalent |
+ * --------------- | ------------ | ---------------- | ------------------------------ | --------------------- |
+ * OCI_NTO_SEND    | OCI_12_1     | ORA-12608        | TNS: Send timeout occurred     | SQLNET.SEND_TIMEOUT   |
+ * OCI_NTO_RECEIVE | OCI_12_1     | ORA-12609        | TNS: Receive timeout occurred  | SQLNET.RECV_TIMEOUT   | 
+ * OCI_NTO_CALL    | OCI_18_1     | ORA-03136        | inbound connection timed out   |         ---           |  
+ *
+ * @warning
+ * Returns FALSE without throwing any exception if the Oracle client does not support the given flag
+ *
+ */
+
+OCI_EXPORT boolean OCI_API OCI_SetTimeout
+(
+    OCI_Connection *con,
+    unsigned int    type,
+    unsigned int    value
+);
+
+/**
+ * @brief
+ * Returns the requested timeout value for OCI calls that require server round-trips to the given database
+ *
+ * @param con   - Connection handle
+ * @param type  - Type of timeout
+ *
+ * @note:
+ * See OCI_SetTimeout() for more information
+ *
+ * @return
+ * The given timeout value if supported, otherwise 0
+ *
+ */
+
+OCI_EXPORT unsigned int OCI_API OCI_GetTimeout
+(
+    OCI_Connection *con,
+    unsigned int    type
 );
 
 /**
@@ -3813,6 +3908,25 @@ OCI_EXPORT const otext * OCI_API OCI_GetSql
 );
 
 /**
+* @brief
+* Returns the statement SQL_ID from the server
+*
+* @param stmt - Statement handle
+*
+* @note
+* The statement must be executed first
+*
+* @warning
+* Requires Oracle 12cR2 (both client and server side), otherwise it returns NULL
+* 
+*/
+
+OCI_EXPORT const otext* OCI_API OCI_GetSqlIdentifier
+(
+    OCI_Statement *stmt
+);
+
+/**
  * @brief
  * Return the error position (in terms of characters) in the SQL statement
  * where the error occurred in case of SQL parsing error
@@ -4794,7 +4908,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfDates
  * @param data - Timestamp handle
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -4850,7 +4964,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfTimestamps
  * @param data - Interval handle
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -4908,7 +5022,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfIntervals
  * @param data - Lob handle
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -4964,7 +5078,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfLobs
  * @param data - File handle
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -5020,7 +5134,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfFiles
  * @param data - Object handle
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -5075,7 +5189,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfObjects
  * @param data - Collection handle to bind
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -5132,7 +5246,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfColls
  * @param data - Ref handle to bind
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -5186,7 +5300,7 @@ OCI_EXPORT boolean OCI_API OCI_BindArrayOfRefs
  * @param data - Statement handle to bind
  *
  * @note
- * parameter 'data' CANNOT be NULL whatever the statement bind allocation mode
+ * parameter 'data' CANNOT be NULL resulting OCI_BAM_INTERNAL bind allocation mode being NOT supported
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -5854,7 +5968,7 @@ OCI_EXPORT unsigned int OCI_API OCI_BindGetAllocationMode
  *
  * ONLY the following statements can return resultsets that can be fetched by host programs:
  * - Statements executing SQL SELECT
- * - Statements executing SQL UPDATE/DELETE using a RETURNING INTO clause
+ * - Statements executing SQL INSERT/UPDATE/DELETE using a RETURNING INTO clause
  * - Statements binded to PL/SQL OPEN FOR argument
  * - Statements binded to PL/SQL procedure OUT variables
  * - Statements implicitly returned from PL/SQL procedure or blocks (new feature in Oracle 12cR1) using
@@ -6491,18 +6605,21 @@ OCI_EXPORT boolean OCI_API OCI_ColumnGetCharUsed
  *
  * For flags are:
  * - OCI_CPF_NONE : The column has no flags or the OCI client does not support this call
- * - OCI_CPF_IS_IDENTITY :
- *      - If Set, the column is an IDENTITY column
- *      - Otherwise, it is not an IDENTITY column
- * - OCI_CPF_IS_GEN_ALWAYS (only if OCI_CPF_IS_IDENTITY is set) :
- *      - If set, means that the value is "ALWAYS GENERATED"
- *      - Otherwise mens that the value is "GENERATED BY"
- * - OCI_CPF_IS_GEN_BY_DEFAULT_ON_NULL (only if OCI_CPF_IS_IDENTITY is set):
- *      - If set, means that the value is generated by default on NULL
+ * - OCI_CPF_IS_IDENTITY:
+ *    - If Set, the column is an IDENTITY column
+ *    - Otherwise, it is not an IDENTITY column
+ * - OCI_CPF_IS_GEN_ALWAYS:
+ *    - If set, means that the value is "ALWAYS GENERATED"
+ *    - Otherwise mens that the value is "GENERATED BY"
+ * - OCI_CPF_IS_GEN_BY_DEFAULT_ON_NULL:
+ *    - If set, means that the value is generated by default on NULL
+ * - OCI_CPF_IS_LPART:
+ *    - If set, Column is an implicitly generated logical partitioning column for container_map enabled object
+ * - OCI_CPF_IS_CONID:
+ *    - If set, Column is a CON_ID column implicitly generated by CONTAINERS() or is an ORIGIN_CON_ID column implicitly generated for Extended Data Link
  *
  * @note
  * This was introduced in Oracle 12cR1.
- * It is currently used for identifying Identity columns.
  * For earlier versions, it always return OCI_CPF_NONE
  *
  */
@@ -8733,7 +8850,7 @@ OCI_EXPORT OCI_Ref * OCI_API OCI_ElemGetRef
 * @param elem   - Element handle
 * @param value  - Short value
 *
-*@warning
+* @warning
 * OCI_ElemSetBoolean() is only valid value only for collection elements of PL / SQL boolean type
 *
 * @return
@@ -9659,6 +9776,13 @@ OCI_EXPORT unsigned int OCI_API OCI_GetStatementType
  *  - OCI_SFM_DEFAULT
  *  - OCI_SFM_SCROLLABLE
  *
+ * @warning
+ * if Oracle Client is 9iR1:
+ *  - when setting OCI_SFM_SCROLLABLE, OCI_SetPrefetch() is internally called with value 0 
+ *    to disable prefetching (to avoid an oracle bug).
+ *  - when re-setting OCI_SFM_DEFAULT after having set OCI_SFM_SCROLLABLE, OCI_SetPrefetch() 
+ *    is internally called with value OCI_PREFETCH_SIZE
+ * 
  */
 
 OCI_EXPORT boolean OCI_API OCI_SetFetchMode
@@ -9820,6 +9944,10 @@ OCI_EXPORT unsigned int OCI_API OCI_GetFetchSize
  * @note
  * To turn off pre-fetching, set both attributes (size and memory) to 0.
  *
+ * @warning
+ * Prefetch is not working with scrollable cursors in Oracle 9iR1
+ * In that case, argument 'size' is not used and replace by 0.
+ * 
  * @return
  * TRUE on success otherwise FALSE
  *
@@ -10319,6 +10447,9 @@ OCI_EXPORT boolean OCI_API OCI_LobWrite2
  * - Bytes for BLOBs
  * - Characters for CLOBs/NCLOBs
  *
+ * @note
+ * If current offset was beyond the new size, it is then updated to an eof position in order for further write calls to append data
+ *
  * @return
  * TRUE on success otherwise FALSE
  *
@@ -10378,7 +10509,9 @@ OCI_EXPORT unsigned int OCI_API OCI_LobGetChunkSize
  *
  * @note
  * Absolute position starts at 0.
- * Erasing means that spaces overwrite the existing LOB value.
+ * Erasing means "overwriting" the range of values at the given offset with:
+ *   - spaces for CLOB/NCLOB
+ *   - 'zero' bytes for BLOB  
  *
  * @return
  * Number of bytes (BLOB) or characters (CLOB/NCLOB) erased on success
@@ -10696,6 +10829,22 @@ OCI_EXPORT boolean OCI_API OCI_LobEnableBuffering
 */
 
 OCI_EXPORT OCI_Connection * OCI_API OCI_LobGetConnection
+(
+    OCI_Lob *lob
+);
+
+/**
+* @brief
+* Indicates if the given lob belongs to a local or remote database table
+*
+* @param lob - lob handle
+*
+* @warning
+* Requires Oracle 12cR2 (both client and server side), otherwise it returns FALSE
+*
+*/
+
+OCI_EXPORT boolean OCI_API OCI_LobIsRemote
 (
     OCI_Lob *lob
 );
@@ -11492,7 +11641,7 @@ OCI_EXPORT boolean OCI_API OCI_NumberSetContent
 * - OCI_NUM_BIGUINT   : value is a pointer to an unsigned big_uint
 * - OCI_NUM_FLOAT     : value is a pointer to an float
 * - OCI_NUM_DOUBLE    : value is a pointer to a double
-* - OCI_NUM_NUMBER    : value is a pointer to a OCI_Number
+* - OCI_NUM_NUMBER    : value is a pointer to the return value of OCI_NumberGetContent()
 *
 * @return
 * TRUE on success otherwise FALSE
@@ -11839,6 +11988,8 @@ OCI_EXPORT int OCI_API OCI_DateCompare
  * @param date  - Date1 handle
  * @param date2 - Date2 handle
  *
+ * The number of days is the difference of (date2 - date)
+ * 
  * @return
  * Number of days on success otherwise OCI_ERROR on failure
  *
@@ -12291,6 +12442,9 @@ OCI_EXPORT unsigned int OCI_API OCI_TimestampGetType
  *
  * @param tmsp     - Destination Timestamp handle
  * @param tmsp_src - Source Timestamp handle
+ *
+ * @note
+ * Both timestamp handles must be of the same type
  *
  * @return
  * TRUE on success otherwise FALSE
@@ -16238,7 +16392,7 @@ OCI_EXPORT unsigned int OCI_API OCI_DirPathGetErrorRow
  * administrate queues (See Oracle Streams - Advanced Queuing User's Guide for more informations
  * on these privileges)
  *
- *@par Example
+ * @par Example
  * @include queue.c
  *
  */
@@ -17429,7 +17583,7 @@ OCI_EXPORT unsigned int OCI_API OCI_DequeueGetNavigation
  * @param dequeue - Dequeue handle
  * @param timeout - timeout in seconds
  *
- *@note
+ * @note
  * - Any positive values in seconds are valid.
  * - The value 0  is accepted and means OCIDequeueGet() does not wait for
  *   messages and returns immediately if no messages are available

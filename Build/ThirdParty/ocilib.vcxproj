@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\ocilib\include\ocilib.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_checks.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_defs.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_internal.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_types.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_api.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_defs.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_import.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_loader.h" />
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\agent.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\array.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\bind.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\callback.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\collection.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\column.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\connection.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\date.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\define.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\dequeue.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\dirpath.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\element.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\enqueue.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\error.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\event.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\exception.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\file.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\format.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\handle.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\hash.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\interval.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\iterator.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\library.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\list.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\lob.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\long.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\memory.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\msg.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\mutex.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\number.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\object.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\pool.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\queue.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\ref.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\resultset.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\statement.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\string.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\subscription.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\thread.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\threadkey.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\timestamp.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\transaction.c" />
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\typeinfo.c" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BC78CA01-85A5-4C7B-8311-06BD43534B02}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>OCI_CHARSET_ANSI;OCI_IMPORT_RUNTIME;_CRT_SECURE_NO_WARNINGS;WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>OCI_CHARSET_ANSI;OCI_IMPORT_RUNTIME;_CRT_SECURE_NO_WARNINGS;WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/ocilib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

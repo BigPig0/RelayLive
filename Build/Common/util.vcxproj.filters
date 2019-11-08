@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{07cfc907-8095-47d1-9716-25e4483e5c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Setting">
+      <UniqueIdentifier>{89e09a45-9302-433b-af8c-4c5b9abbce4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Log">
+      <UniqueIdentifier>{84ea8413-ca3b-4483-ad69-2ea881867e52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sync">
+      <UniqueIdentifier>{fedc9354-d8ef-48e5-abe1-6ad29ade7baa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XML">
+      <UniqueIdentifier>{0d8eb138-f93b-46cd-aef0-ab47313fc90f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File">
+      <UniqueIdentifier>{f4266b60-16fa-4cc1-96fc-38c347bcdd22}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../../Common/util/Include\base64.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Clock.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\commonDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\crc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\EncodeConvert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Endian.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\ExportDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\FtpCmd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Iconv.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\LastError.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\List.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\MailSlot.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\md5.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\memfile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\MiniDump.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\NetStreamMaker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\ProcessMgr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Singleton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\StringHandle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\WINFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\TimeFormat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/src\stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\AbstractFile.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\File.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Log.h">
+      <Filter>Log</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Profile.h">
+      <Filter>Setting</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Settings.h">
+      <Filter>Setting</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Mutex.h">
+      <Filter>Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Runnable.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\Timer.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\ThreadPool.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\pugixml.hpp">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Common/util/include\pugiconfig.hpp">
+      <Filter>XML</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\util\Include\guid.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../Common/util/Src\base64.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\EncodeConvert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\MailSlot.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\md5.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\memfile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\MiniDump.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\NetStreamMaker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\ProcessMgr.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\StringHandle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\WINFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\AbstractFile.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\File.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\Log.cpp">
+      <Filter>Log</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\Settings.cpp">
+      <Filter>Setting</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\Timer.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\ThreadPool.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Common/util/src\pugixml.cpp">
+      <Filter>XML</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\util\Src\guid.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

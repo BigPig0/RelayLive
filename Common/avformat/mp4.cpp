@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "mp4.h"
 #include "h264.h"
 
@@ -302,7 +302,7 @@ int CMP4::Code(AV_BUFF buff)
     case sps_Nal:
         {
             //Log::debug("save sps size:%d",nLen);
-            CHECK_POINT_INT(m_pSPS,-1);
+            CHECKPOINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
             m_bGotSPS = true;
@@ -311,7 +311,7 @@ int CMP4::Code(AV_BUFF buff)
     case pps_Nal:
         {
             //Log::debug("save pps size:%d",nLen);
-            CHECK_POINT_INT(m_pPPS,-1);
+            CHECKPOINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
             m_bGotPPS = true;
@@ -637,7 +637,7 @@ bool CMP4::MakeMP4Frag(bool bIsKeyFrame)
 
 bool CMP4::MakeVideo(char *data, uint32_t size, bool bIsKeyFrame)
 {
-    CHECK_POINT(m_pMdat);
+    CHECKPOINT_BOOL(m_pMdat);
 
     // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
     if(m_nNodelay == 0 && bIsKeyFrame && m_pMdat->size() > 0) {

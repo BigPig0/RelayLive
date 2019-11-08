@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6197738F-BB03-47B6-8685-677BC2C346BC}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libuv</RootNamespace>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration" />
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/libuv/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Lib />
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;DEBUG;_DEBUG;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/libuv/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <AdditionalOptions>/LTCG %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <OptimizeReferences>true</OptimizeReferences>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;NDEBUG;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv\tree.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv\errno.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv\threadpool.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv\version.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\heap-inl.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\queue.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\uv-common.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\include\uv\win.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\atomicops-inl.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\handle-inl.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\internal.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\req-inl.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\stream-inl.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\winapi.h" />
+    <ClInclude Include="..\..\ThirdParty\libuv\src\win\winsock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ThirdParty\libuv\src\fs-poll.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\inet.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\threadpool.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\uv-data-getter-setters.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\uv-common.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\version.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\async.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\core.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\detect-wakeup.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\dl.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\error.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\fs.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\fs-event.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\getaddrinfo.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\getnameinfo.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\handle.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\loop-watcher.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\pipe.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\thread.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\poll.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\process.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\process-stdio.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\req.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\signal.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\snprintf.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\stream.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\tcp.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\tty.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\timer.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\udp.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\util.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\winapi.c" />
+    <ClCompile Include="..\..\ThirdParty\libuv\src\win\winsock.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

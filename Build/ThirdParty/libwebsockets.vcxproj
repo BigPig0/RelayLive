@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGUID>{61AD327B-12DB-3EDF-A2F2-C0B7A4712A04}</ProjectGUID>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>Win32</Platform>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libwebsockets/;$(SolutionDir)../ThirdParty/libwebsockets/win32port/win32helpers;$(SolutionDir)../thirdParty/libuv/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <CompileAs>CompileAsC</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\build;.;.\win32port\win32helpers;..\thirdParty\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>.\build;.;.\win32port\win32helpers;..\thirdParty\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libwebsockets/;$(SolutionDir)../ThirdParty/libwebsockets/win32port/win32helpers;$(SolutionDir)../thirdParty/libuv/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsC</CompileAs>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\build;.;.\win32port\win32helpers;..\thirdParty\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>.\build;.;.\win32port\win32helpers;..\thirdParty\libuv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\core\private.h" />
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\win32port\win32helpers\gettimeofday.h" />
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\libwebsockets.h" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\alloc.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\context.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\libwebsockets.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\output.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\pollfd.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\service.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\base64-decode.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\lws-ring.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\pipe\ops-pipe.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\header.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\parsers.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\h1\ops-h1.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\ops-ws.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\client-ws.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\client-parser-ws.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\ws\server-ws.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\raw-skt\ops-raw-skt.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\raw-file\ops-raw-file.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\connect.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\client\client.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\client\client-handshake.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\core\adopt.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\listen\ops-listen.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\misc\sha-1.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-fds.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-file.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-init.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-misc.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-pipe.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-service.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\plat\windows\windows-sockets.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\server.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\roles\http\server\lws-spa.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\event-libs\poll\poll.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\event-libs\libuv\libuv.c" />
+    <ClCompile Include="..\..\ThirdParty\libWebSockets\win32port\win32helpers\gettimeofday.c" />
+    <ClInclude Include="..\..\ThirdParty\libWebSockets\lws_config.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "h264.h"
 
 
@@ -108,7 +108,7 @@ bool h264_sps_info(char *buff, uint32_t len, uint32_t *width, uint32_t *height, 
     // 拷贝一份临时数据
     uint32_t nLen = nalue_len;
     uchar* buf = (uchar*)malloc(nLen);
-    CHECK_POINT(buf);
+    CHECKPOINT_BOOL(buf);
     memcpy_s(buf, nLen, nalu, nalue_len);
 
     // 将数据中的003转成00(组包时001和0001转成了0031和00301)
@@ -344,7 +344,7 @@ int CH264::Code(AV_BUFF buff)
     case sps_Nal:
         {
             //Log::debug("save sps size:%d",nLen);
-            CHECK_POINT_INT(m_pSPS,-1);
+            CHECKPOINT_INT(m_pSPS,-1);
             m_pSPS->clear();
             m_pSPS->append_data(pBuf, nLen);
             m_bGotSPS = true;
@@ -353,7 +353,7 @@ int CH264::Code(AV_BUFF buff)
     case pps_Nal:
         {
             //Log::debug("save pps size:%d",nLen);
-            CHECK_POINT_INT(m_pPPS,-1);
+            CHECKPOINT_INT(m_pPPS,-1);
             m_pPPS->clear();
             m_pPPS->append_data(pBuf, nLen);
             m_bGotPPS = true;
@@ -371,7 +371,7 @@ int CH264::Code(AV_BUFF buff)
 
 bool CH264::MakeVideo(char *data,int size,int bIsKeyFrame)
 {
-    CHECK_POINT(m_pData);
+    CHECKPOINT_BOOL(m_pData);
 
     // 延时发送模式，缓存一段数据，每次收到关键帧，将之前缓存的数据一起上抛
     if(m_nNodelay == 0) {

@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{034eb1af-ec79-46aa-a900-3dc87a27fe06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{b67cdc1b-e6ad-48b1-9772-dfa3a5cf8a0e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ThirdParty\ocilib\include\ocilib.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_api.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_defs.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_import.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_loader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\oci_types.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_checks.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_defs.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_internal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ThirdParty\ocilib\src\ocilib_types.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\agent.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\array.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\bind.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\callback.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\collection.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\column.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\connection.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\date.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\define.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\dequeue.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\dirpath.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\element.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\enqueue.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\error.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\event.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\exception.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\file.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\format.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\handle.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\hash.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\interval.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\iterator.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\library.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\list.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\lob.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\long.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\memory.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\msg.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\mutex.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\number.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\object.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\pool.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\queue.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\ref.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\resultset.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\statement.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\string.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\subscription.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\thread.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\threadkey.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\timestamp.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\transaction.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\ThirdParty\ocilib\src\typeinfo.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 #include "Recode.h"
 #ifdef EXTEND_CHANNELS
 #include "utilc.h"
