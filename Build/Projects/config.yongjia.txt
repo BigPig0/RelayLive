@@ -2,7 +2,7 @@
 ;开启的国标sip服务配置
 Code = 13010100002000000002
 ;本机平台编码
-IP = 41.215.219.230
+IP = 41.215.241.145
 ;服务IP
 Port = 5050
 ;服务端口
@@ -36,7 +36,7 @@ PassWord = 123
 
 [RtpClient]
 ;国标接收rtp视频流的配置
-IP = 41.215.219.230
+IP = 41.215.241.145
 ;rtp服务IP
 BeginPort = 50000
 ;rtp起始端口
@@ -57,9 +57,9 @@ Port = 8001
 ;http端口
 wsPort = 8000
 ;websocket端口
-RootPath = D:\code\web
+RootPath = C:\RelayLive\web
 ;根目录
-TmpPath = D:\code\Tmp
+TmpPath = C:\RelayLive\Tmp
 ;临时目录
 DefaultFile = index.html
 ;默认文件名称

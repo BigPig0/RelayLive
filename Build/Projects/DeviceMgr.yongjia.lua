@@ -67,8 +67,9 @@ function getDevTypeMap()
 	    local devinfo = {}
 	    devinfo["id"] = LUDB_GET_STR(rs, 1)
 		devinfo["type"] = LUDB_GET_INT(rs, 2)
-		devinfo["lon"] = LUDB_GET_INT(rs, 3)
-		devinfo["lat"] = LUDB_GET_INT(rs, 4)
+		devinfo["lon"] = LUDB_GET_STR(rs, 3)
+		devinfo["lat"] = LUDB_GET_STR(rs, 4)
+		devinfo["dep"] = LUDB_GET_STR(rs, 5)
 		--print(devinfo["id"], devinfo["type"], devinfo["lon"], devinfo["lat"])
 		devtype[devinfo["id"]] = devinfo
 	end
@@ -106,16 +107,16 @@ function GetDevInfo()
 end
 
 function UpdateStatus(code, status)
-    local dev = devtb[code];
+    local dev = devtb[code]
 	if dev == nil then
 	    return false
 	end
 	local sta = 0
 	if(status) then
-		dev["Status"] = "ON";
+		dev["Status"] = "ON"
 		sta = 1 
 	else
-		dev["Status"] = "OFF";
+		dev["Status"] = "OFF"
 	end
 	--国标设备实时表更新
 	local row = {sta, code}
@@ -125,7 +126,7 @@ function UpdateStatus(code, status)
 	if typedir == "" then
 	    return false
 	end
-    local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="0", pwd=""})
+    local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="9", pwd=""})
     if (type(con)=="nil") then
         return false
     end
@@ -195,7 +196,7 @@ function InsertDev(dev)
 		return true
 	else
 	    --国标设备插入
-	    local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], getDevType2(dev["DevID"]), getDevSatus(dev["Status"])}
+	    local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], getDevType2(dev["DevID"]), getDevSatus(dev["Status"]), dev["ParentID"]}
         LUDB_ADD_ROW(gbdev, row)
 	end
 	
@@ -215,13 +216,21 @@ function InsertDev(dev)
 	end
 	local devname = GBK2UTF8(string.gsub(dev["Name"],' ','_'))
 	local depname = "empty"
-	local dep = devtb[dev["ParentID"]]
-	if dep ~= nil then
-	    depname = GBK2UTF8(string.gsub(dep["Name"],' ','_'))
-	end
-	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="0", pwd=""})
+	--local dep = devtb[dev["ParentID"]]
+	--if dep ~= nil then
+	--    depname = GBK2UTF8(string.gsub(dep["Name"],' ','_'))
+	--end
+	if devtype[dev["DevID"]] ~= nil then
+	    depname = GBK2UTF8(string.gsub(devtype[dev["DevID"]]["dep"],' ','_'))
+	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="9", pwd=""})
 	local stmt = LUDB_CREATE_STMT(con)
-	local sql = string.format("HMSET \"gps:%s:last:%s\" \"deviceId\" \"%s\" \"deviceName\" \"%s\" \"lat\" %s \"lon\" %s \"isOnline\" %s \"deptCode\" \"%s\" \"deptName\" \"%s\"", typedir, dev["DevID"], dev["DevID"], devname, lat, lon, getDevSatus(dev["Status"]), dev["ParentID"], depname)
+	local sql = string.format("HMSET \"gps:%s:last:%s\" \"deviceId\" \"%s\" \"deviceName\" \"%s\" \"isOnline\" %s \"deptCode\" \"%s\" \"deptName\" \"%s\"", typedir, dev["DevID"], dev["DevID"], devname, getDevSatus(dev["Status"]), dev["ParentID"], depname)
+	if typedir=="ar" or typedir == "monitor" then
+	    if lon == "" then lon = "0" end
+		if lat == "" then lat = "0" end
+		local gps = string.format(" \"lat\" %s \"lon\" %s", lat, lon)
+		sql = sql..gps
+	end
 	if typedir=="ar" then
 	    sql = sql.." \"url\" \"http://www.baidu.com\""
 	end
