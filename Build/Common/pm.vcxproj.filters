@@ -9,12 +9,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\processmgr\pm.h">
+    <ClInclude Include="..\..\Common\pm\pm.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Common\processmgr\pm.cpp">
+    <ClCompile Include="..\..\Common\pm\pm.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

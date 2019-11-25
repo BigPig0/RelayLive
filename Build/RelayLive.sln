@@ -66,7 +66,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6131C76D-C
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dbTest", "Test\dbTest.vcxproj", "{01763149-D8C0-49B5-97FF-52029D6AA335}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "processmgr", "Common\processmgr.vcxproj", "{8D161DB0-D6E5-49DE-BE10-527566909DF9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pm", "Common\pm.vcxproj", "{8D161DB0-D6E5-49DE-BE10-527566909DF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\processmgr\pm.h" />
+    <ClInclude Include="..\..\Common\pm\pm.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Common\processmgr\pm.cpp" />
+    <ClCompile Include="..\..\Common\pm\pm.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8D161DB0-D6E5-49DE-BE10-527566909DF9}</ProjectGuid>
