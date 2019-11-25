@@ -2,67 +2,75 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="include">
-      <UniqueIdentifier>{034eb1af-ec79-46aa-a900-3dc87a27fe06}</UniqueIdentifier>
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="src">
-      <UniqueIdentifier>{b67cdc1b-e6ad-48b1-9772-dfa3a5cf8a0e}</UniqueIdentifier>
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../../Common/utilc/netstream.h">
+    <ClInclude Include="..\..\common\utilc\netstream.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/ring_buff.h">
+    <ClInclude Include="..\..\common\utilc\utilc.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/utilc.h">
+    <ClInclude Include="..\..\common\utilc\utilc_api.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/utilc_api.h">
+    <ClInclude Include="..\..\common\utilc\utilc_def.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/utilc_def.h">
+    <ClInclude Include="..\..\common\utilc\utilc_export.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/utilc_export.h">
+    <ClInclude Include="..\..\common\utilc\ring_buff.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/linked_list.h">
+    <ClInclude Include="..\..\common\utilc\bnf.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/doubly_linked_list.h">
+    <ClInclude Include="..\..\common\utilc\buflist.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/buflist.h">
+    <ClInclude Include="..\..\common\utilc\doubly_linked_list.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/memfile.h">
+    <ClInclude Include="..\..\common\utilc\linked_list.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="../../Common/utilc/bnf.h">
+    <ClInclude Include="..\..\common\utilc\utilc_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\utilc\utilc_memfile.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../../Common/utilc/memfile.c">
+    <ClCompile Include="..\..\common\utilc\netstream.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/netstream.c">
+    <ClCompile Include="..\..\common\utilc\utilc_api.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/ring_buff.c">
+    <ClCompile Include="..\..\common\utilc\ring_buff.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/utilc_api.c">
+    <ClCompile Include="..\..\common\utilc\bnf.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/doubly_linked_list.c">
+    <ClCompile Include="..\..\common\utilc\buflist.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/buflist.c">
+    <ClCompile Include="..\..\common\utilc\doubly_linked_list.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="../../Common/utilc/bnf.c">
+    <ClCompile Include="..\..\common\utilc\utilc_string.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\utilc\utilc_memfile.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

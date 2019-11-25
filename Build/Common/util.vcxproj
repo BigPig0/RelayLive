@@ -11,64 +11,48 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../../Common/util/include\AbstractFile.h" />
-    <ClInclude Include="../../Common/util/Include\base64.h" />
-    <ClInclude Include="../../Common/util/include\Clock.h" />
-    <ClInclude Include="../../Common/util/include\common.h" />
-    <ClInclude Include="../../Common/util/include\commonDefine.h" />
-    <ClInclude Include="../../Common/util/include\crc.h" />
-    <ClInclude Include="../../Common/util/include\EncodeConvert.h" />
-    <ClInclude Include="../../Common/util/include\Endian.h" />
-    <ClInclude Include="../../Common/util/include\ExportDefine.h" />
-    <ClInclude Include="../../Common/util/include\File.h" />
-    <ClInclude Include="../../Common/util/include\FtpCmd.h" />
-    <ClInclude Include="../../Common/util/include\Iconv.h" />
-    <ClInclude Include="../../Common/util/include\LastError.h" />
-    <ClInclude Include="../../Common/util/include\List.h" />
-    <ClInclude Include="../../Common/util/include\Log.h" />
-    <ClInclude Include="../../Common/util/include\MailSlot.h" />
-    <ClInclude Include="../../Common/util/include\md5.h" />
-    <ClInclude Include="../../Common/util/include\memfile.h" />
-    <ClInclude Include="../../Common/util/include\MiniDump.h" />
-    <ClInclude Include="../../Common/util/include\Mutex.h" />
-    <ClInclude Include="../../Common/util/include\NetStreamMaker.h" />
-    <ClInclude Include="../../Common/util/include\ProcessMgr.h" />
-    <ClInclude Include="../../Common/util/include\Profile.h" />
-    <ClInclude Include="../../Common/util/include\pugiconfig.hpp" />
-    <ClInclude Include="../../Common/util/include\pugixml.hpp" />
-    <ClInclude Include="../../Common/util/include\Runnable.h" />
-    <ClInclude Include="../../Common/util/include\Settings.h" />
-    <ClInclude Include="../../Common/util/include\Singleton.h" />
-    <ClInclude Include="../../Common/util/include\StringHandle.h" />
-    <ClInclude Include="../../Common/util/include\ThreadPool.h" />
-    <ClInclude Include="../../Common/util/include\Timer.h" />
-    <ClInclude Include="../../Common/util/include\WINFile.h" />
-    <ClInclude Include="../../Common/util/include\TimeFormat.h" />
-    <ClInclude Include="../../Common/util/src\stdafx.h" />
-    <ClInclude Include="..\..\Common\util\Include\guid.h" />
+    <ClInclude Include="..\..\common\util\AbstractFile.h" />
+    <ClInclude Include="..\..\common\util\Clock.h" />
+    <ClInclude Include="..\..\common\util\File.h" />
+    <ClInclude Include="..\..\common\util\Log.h" />
+    <ClInclude Include="..\..\common\util\util_def.h" />
+    <ClInclude Include="..\..\common\util\EncodeConvert.h" />
+    <ClInclude Include="..\..\common\util\Endian.h" />
+    <ClInclude Include="..\..\common\util\util_public.h" />
+    <ClInclude Include="..\..\common\util\guid.h" />
+    <ClInclude Include="..\..\common\util\LastError.h" />
+    <ClInclude Include="..\..\common\util\MailSlot.h" />
+    <ClInclude Include="..\..\common\util\memfile.h" />
+    <ClInclude Include="..\..\common\util\MiniDump.h" />
+    <ClInclude Include="..\..\common\util\Mutex.h" />
+    <ClInclude Include="..\..\common\util\NetStreamMaker.h" />
+    <ClInclude Include="..\..\common\util\Profile.h" />
+    <ClInclude Include="..\..\common\util\Runnable.h" />
+    <ClInclude Include="..\..\common\util\Settings.h" />
+    <ClInclude Include="..\..\common\util\Singleton.h" />
+    <ClInclude Include="..\..\common\util\StringHandle.h" />
+    <ClInclude Include="..\..\common\util\ThreadPool.h" />
+    <ClInclude Include="..\..\common\util\TimeFormat.h" />
+    <ClInclude Include="..\..\common\util\Timer.h" />
+    <ClInclude Include="..\..\common\util\util.h" />
+    <ClInclude Include="..\..\common\util\winfile.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../../Common/util/src\AbstractFile.cpp" />
-    <ClCompile Include="../../Common/util/Src\base64.cpp" />
-    <ClCompile Include="../../Common/util/src\EncodeConvert.cpp" />
-    <ClCompile Include="../../Common/util/src\File.cpp" />
-    <ClCompile Include="../../Common/util/src\Log.cpp" />
-    <ClCompile Include="../../Common/util/src\MailSlot.cpp" />
-    <ClCompile Include="../../Common/util/src\md5.cpp" />
-    <ClCompile Include="../../Common/util/src\memfile.cpp" />
-    <ClCompile Include="../../Common/util/src\MiniDump.cpp" />
-    <ClCompile Include="../../Common/util/src\NetStreamMaker.cpp" />
-    <ClCompile Include="../../Common/util/src\ProcessMgr.cpp" />
-    <ClCompile Include="../../Common/util/src\pugixml.cpp" />
-    <ClCompile Include="../../Common/util/src\Settings.cpp" />
-    <ClCompile Include="../../Common/util/src\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="../../Common/util/src\StringHandle.cpp" />
-    <ClCompile Include="../../Common/util/src\ThreadPool.cpp" />
-    <ClCompile Include="../../Common/util/src\Timer.cpp" />
-    <ClCompile Include="../../Common/util/src\WINFile.cpp" />
-    <ClCompile Include="..\..\Common\util\Src\guid.cpp" />
+    <ClCompile Include="..\..\common\util\AbstractFile.cpp" />
+    <ClCompile Include="..\..\common\util\Clock.cpp" />
+    <ClCompile Include="..\..\common\util\EncodeConvert.cpp" />
+    <ClCompile Include="..\..\common\util\File.cpp" />
+    <ClCompile Include="..\..\common\util\guid.cpp" />
+    <ClCompile Include="..\..\common\util\Log.cpp" />
+    <ClCompile Include="..\..\common\util\MailSlot.cpp" />
+    <ClCompile Include="..\..\common\util\memfile.cpp" />
+    <ClCompile Include="..\..\common\util\MiniDump.cpp" />
+    <ClCompile Include="..\..\common\util\NetStreamMaker.cpp" />
+    <ClCompile Include="..\..\common\util\Settings.cpp" />
+    <ClCompile Include="..\..\common\util\StringHandle.cpp" />
+    <ClCompile Include="..\..\common\util\ThreadPool.cpp" />
+    <ClCompile Include="..\..\common\util\Timer.cpp" />
+    <ClCompile Include="..\..\common\util\winfile.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{642077F6-2CA8-4E04-9B0D-9CFA1E5EFA49}</ProjectGuid>
@@ -110,7 +94,6 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../Common/util/include;$(SolutionDir)../Common/util/include/MemoryPool;$(SolutionDir)../Common/util/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -129,7 +112,6 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../Common/util/include;$(SolutionDir)../Common/util/include/MemoryPool;$(SolutionDir)../Common/util/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

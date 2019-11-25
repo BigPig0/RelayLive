@@ -93,7 +93,7 @@
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -106,7 +106,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/Util/include;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libcstl;$(SolutionDir)../thirdParty/ocilib/include;$(SolutionDir)../thirdParty/libmongoc;$(SolutionDir)../thirdParty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../thirdParty/hiredis;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

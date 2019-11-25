@@ -4,12 +4,13 @@
 //#define DB_MONGO
 #define DB_REDIS
 
-#include "common.h"
+#include "util.h"
 #include "ludb_public.h"
 #include "uv.h"
 #include <string>
 #include <vector>
 #include <queue>
+#include <map>
 using namespace std;
 
 /** Á¬½Ó¾ä±ú */

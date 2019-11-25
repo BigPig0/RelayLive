@@ -6,11 +6,15 @@
 
 static map<string, redisContext*> redis_conn_pools; //map<string, redisContext*>
 
-typedef struct redis_stmt {
+struct redis_stmt_t {
     string      cmd;       // 执行的命令
     int         rsid;      // 记录读取结果取出情况
     redisReply *reply;     // 执行结果
-}redis_stmt_t;
+	redis_stmt_t()
+		: rsid(0)
+		, reply(nullptr)
+	{}
+};
 
 bool ludb_redis_init() {
     static WSADATA wsadata;
@@ -38,10 +42,10 @@ ludb_conn_t* ludb_redis_connect(const char *database, const char *usr, const cha
     redisContext *c = redisConnectWithTimeout(host, port, timeout);
     if (c == NULL || c->err) {
         if (c) {
-            printf("Connection error: %s\n", c->errstr);
+            Log::error("Connection error: %s", c->errstr);
             redisFree(c);
         } else {
-            printf("Connection error: can't allocate redis context\n");
+            Log::error("Connection error: can't allocate redis context");
         }
         return NULL;
     }
@@ -49,7 +53,7 @@ ludb_conn_t* ludb_redis_connect(const char *database, const char *usr, const cha
     char cmd[20] = {0};
     sprintf(cmd, "SELECT %s", usr);
     redisReply *reply = (redisReply*)redisCommand(c, cmd);
-    printf("%s: %s\n", cmd, reply->str);
+    Log::debug("%s: %s", cmd, reply->str);
     freeReplyObject(reply);
 
     ludb_redis_conn *conn = new ludb_redis_conn();
@@ -78,17 +82,17 @@ bool ludb_redis_create_pool(const char *tag, const char *database, const char *u
     redisContext *c = redisConnectWithTimeout(host, port, timeout);
     if (c == NULL || c->err) {
         if (c) {
-            printf("Connection error: %s\n", c->errstr);
+            printf("Connection error: %s", c->errstr);
             redisFree(c);
         } else {
-            printf("Connection error: can't allocate redis context\n");
+            printf("Connection error: can't allocate redis context");
         }
         return NULL;
     }
     char cmd[20] = {0};
     sprintf(cmd, "SELECT %s", usr);
     redisReply *reply = (redisReply*)redisCommand(c, cmd);
-    printf("%s: %s\n", cmd, reply->str);
+    printf("%s: %s", cmd, reply->str);
     freeReplyObject(reply);
 
     redis_conn_pools.insert(make_pair(tag, c));
