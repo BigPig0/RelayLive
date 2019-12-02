@@ -9,11 +9,11 @@
 int main()
 {
     /** Dump设置 */
-    CMiniDump dump("web_server.dmp");
+    CMiniDump dump("hikctrl_server.dmp");
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log_web_server\\web_server.txt");
+    sprintf_s(path, MAX_PATH, ".\\log\\hikctrl_server.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 

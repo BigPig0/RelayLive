@@ -10,21 +10,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Projects\web_server\main.cpp">
+    <ClCompile Include="..\..\Projects\hikctrl_server\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\web_server\server.cpp">
+    <ClCompile Include="..\..\Projects\hikctrl_server\server.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\web_server\web.cpp">
+    <ClCompile Include="..\..\Projects\hikctrl_server\web.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\hikctrl_server\hiksdk.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Projects\web_server\server.h">
+    <ClInclude Include="..\..\Projects\hikctrl_server\server.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Projects\web_server\web.h">
+    <ClInclude Include="..\..\Projects\hikctrl_server\web.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\hikctrl_server\hiksdk.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

@@ -68,6 +68,7 @@ CPM::CPM()
     uv_mutex_init(&m_mutex);
     uv_loop_init(&m_uvloop);
     uv_timer_init(&m_uvloop, &m_timer);
+    m_timer.data = this;
 }
 
 CPM::~CPM(){
@@ -140,7 +141,13 @@ void CPM::AddTasks(std::string path) {
             } else if(!strcmp(attr->string, "args")){
                 p->args = attr->valuestring;
             } else if(!strcmp(attr->string, "daemon")){
-                p->daemon = attr->valuestring;
+                p->daemon = false;
+                if(attr->type == cJSON_Number)
+                    if(attr->valueint > 0)
+                        p->daemon = true;
+                if(attr->type == cJSON_String)
+                    if(!strcmp(attr->valuestring, "yes"))
+                        p->daemon = true;
             } else if(!strcmp(attr->string, "rstime")){
                 p->rstime = attr->valuestring;
             } else if(!strcmp(attr->string, "rsdur")){

@@ -32,7 +32,6 @@ int main(int argc, char* argv[])
     Log::debug("Settings::loadFromProfile ok");
 
     //根据cpu数量设置libuv线程池的线程数量
-    static uv_loop_t *p_loop_uv = nullptr;
     uv_cpu_info_t* cpu_infos;
     int count;
     int err = uv_cpu_info(&cpu_infos, &count);
@@ -48,22 +47,11 @@ int main(int argc, char* argv[])
     }
     uv_free_cpu_info(cpu_infos, count);
 
-    //全局loop
-    p_loop_uv = uv_default_loop();
-
     HikPlat::Init();
 
     /** 创建一个http服务器 */
-    Server::Init((void*)p_loop_uv, port);
+    Server::Init(port);
 
-    Log::debug("hik_tmc_sdk sever start success");
-
-    // 事件循环
-    while(true)
-    {
-        uv_run(p_loop_uv, UV_RUN_DEFAULT);
-        Sleep(1000);
-    }
     Sleep(INFINITE);
     return 0;
 }
