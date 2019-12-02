@@ -1,14 +1,19 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
-#include "util.h"
 #include "server.h"
 #include "hiksdk.h"
+#include "uv.h"
+#include "util.h"
 #include <windows.h>
 #include "MiniDump.h"
-#include "uv.h"
 
-int main()
+int main(int argc, char* argv[])
 {
+    if(argc != 2)
+        return -1;
+    int port = atoi(argv[1]);
+
+
     /** Dump设置 */
     CMiniDump dump("hik_server.dmp");
 
@@ -49,9 +54,9 @@ int main()
     HikPlat::Init();
 
     /** 创建一个http服务器 */
-    Server::Init((void*)p_loop_uv);
+    Server::Init((void*)p_loop_uv, port);
 
-    Log::debug("hik tmc sever start success\r\n");
+    Log::debug("hik_tmc_sdk sever start success");
 
     // 事件循环
     while(true)

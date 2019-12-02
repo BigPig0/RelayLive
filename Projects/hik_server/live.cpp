@@ -18,15 +18,15 @@ namespace Server
         "unkown media type"
     };
 
-    static bool ParseRequest(pss_http_ws_live *pss, bool websocket) {
-        /* http(ws)://IP:port/live?code=123456789&type=flv&hw=640*480
-           http(ws)://IP:port/live?url=AAAAAAA&type=flv&&hw=640*480
+    static bool ParseRequest(pss_http_ws_live *pss) {
+        /* http://IP:port/live?code=123456789&type=flv&hw=640*480
+           ws://IP:port/wslive?url=AAAAAAA&type=flv&&hw=640*480
            type: flv、mp4、h264、hls
            这里path只有 /live/type/stream/code
         */
         char path[MAX_PATH]={0};
         lws_hdr_copy(pss->wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
-        if(websocket)
+        if(pss->isWs)
             Log::debug("new ws-live protocol establised: %s", path);
         else
             Log::debug("new http-live request: %s", path);
@@ -55,7 +55,7 @@ namespace Server
                 strHw = tmp[1];
         }
 
-        pss->pWorker = CreatLiveWorker(strCode, strType, strHw, false, pss);
+        pss->pWorker = CreatLiveWorker(strCode, strType, strHw, pss->isWs, pss);
         
         //某些环境下，获取socket对端ip竟然耗时很多
         char clientName[50]={0};    //播放端的名称
@@ -74,32 +74,34 @@ namespace Server
         uint8_t *p = start;
         struct lws *wsi = pss->wsi;
         pss->send_header = true;
-        if(!pss->pWorker->m_bWebSocket && !pss->error_code){
-            // http 成功
-            lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end);
-            lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
-            lws_add_http_header_by_name(wsi, (const uint8_t *)"Content-Type", (const uint8_t *)pss->pWorker->m_strMIME.c_str(), pss->pWorker->m_strMIME.size(), &p, end);
-            lws_add_http_header_by_name(wsi, (const uint8_t *)"Cache-Control", (const uint8_t *)"no-cache", 8, &p, end);
-            lws_add_http_header_by_name(wsi, (const uint8_t *)"Expires", (const uint8_t *)"-1", 2, &p, end);
-            lws_add_http_header_by_name(wsi, (const uint8_t *)"Pragma", (const uint8_t *)"no-cache", 8, &p, end);
-            if(lws_finalize_write_http_header(wsi, start, &p, end))
-                return false;
-        } else if(!pss->pWorker->m_bWebSocket) {
-            // http 失败
-            if (lws_add_http_common_headers(wsi, HTTP_STATUS_FORBIDDEN, "text/html",
-                LWS_ILLEGAL_HTTP_CONTENT_LEN, &p, end))
-                return false;
-            if (lws_finalize_write_http_header(wsi, start, &p, end))
-                return false;
-            lws_callback_on_writable(wsi);
-        } else if(!pss->error_code) {
-            // websocket 成功
+        if(!pss->error_code){
+            if(pss->pWorker->m_bWebSocket){
+                // http 成功
+                lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Content-Type", (const uint8_t *)pss->pWorker->m_strMIME.c_str(), pss->pWorker->m_strMIME.size(), &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Cache-Control", (const uint8_t *)"no-cache", 8, &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Expires", (const uint8_t *)"-1", 2, &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Pragma", (const uint8_t *)"no-cache", 8, &p, end);
+                if(lws_finalize_write_http_header(wsi, start, &p, end))
+                    return false;
+            }
         } else {
-            // websocket 失败
-            //播放失败，断开连接
-            const char *errors = live_error_str[pss->error_code];
-            int len = strlen(errors);
-            lws_close_reason(wsi, LWS_CLOSE_STATUS_NORMAL,(uint8_t *)errors, len);
+            if(!pss->isWs) {
+                // http 失败
+                if (lws_add_http_common_headers(wsi, HTTP_STATUS_FORBIDDEN, "text/html",
+                    LWS_ILLEGAL_HTTP_CONTENT_LEN, &p, end))
+                    return false;
+                if (lws_finalize_write_http_header(wsi, start, &p, end))
+                    return false;
+                lws_callback_on_writable(wsi);
+            } else {
+                // websocket 失败
+                //播放失败，断开连接
+                const char *errors = live_error_str[pss->error_code];
+                int len = strlen(errors);
+                lws_close_reason(wsi, LWS_CLOSE_STATUS_NORMAL,(uint8_t *)errors, len);
+            }
         }
         return true;
     }
@@ -123,11 +125,15 @@ namespace Server
         pss_http_ws_live *pss = (pss_http_ws_live*)user;
 
         switch (reason) {
+        case LWS_CALLBACK_PROTOCOL_INIT:
+            Log::debug("live http protocol init");
+            break;
         case LWS_CALLBACK_HTTP: 
             {
                 pss->wsi = wsi;
+                pss->isWs = false;
                 
-                if(!ParseRequest(pss, false)){
+                if(!ParseRequest(pss)){
                     WriteHeader(pss);
                 }
 
@@ -135,18 +141,14 @@ namespace Server
             }
         case LWS_CALLBACK_HTTP_WRITEABLE: 
             {
-                if (!pss || !pss->pWorker)
+                if (!pss)
                     break;
 
                 if(!pss->send_header) {
                     WriteHeader(pss);
                     return 0;
                 }
-
-                if (pss->error_code == 0) {
-                    if(!SendBody(pss))
-                        return -1;
-                } else {
+                if(pss->error_code) {
                     const char *errors = live_error_str[pss->error_code];
                     int len = strlen(errors);
                     lws_write(wsi, (uint8_t *)errors, len, LWS_WRITE_HTTP_FINAL);
@@ -154,12 +156,19 @@ namespace Server
                         return -1;
                 }
 
+                if(!pss->pWorker)
+                    break;
+
+                if(!SendBody(pss))
+                    return -1;
+
                 return 0;
             }
         case LWS_CALLBACK_CLOSED_HTTP:
             {
                 if (!pss || !pss->pWorker)
                     break;
+                Log::debug("live http request cloes %s", pss->pWorker->m_strPath.c_str());
                 pss->pWorker->close();
             }
         default:
@@ -181,8 +190,9 @@ namespace Server
         case LWS_CALLBACK_ESTABLISHED:
             {
                 pss->wsi = wsi;
+                pss->isWs = true;
 
-                if(!ParseRequest(pss, true)) {
+                if(!ParseRequest(pss)) {
                     WriteHeader(pss);
                 }
                 return 0;
@@ -218,7 +228,7 @@ namespace Server
             {
                 if (!pss || !pss->pWorker)
                     break;
-				Log::debug("live ws protocol cloes %s", pss->pWorker->m_strPath.c_str());
+				Log::debug("live ws request cloes %s", pss->pWorker->m_strPath.c_str());
 				pss->pWorker->close();
             }
         default:

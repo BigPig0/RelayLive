@@ -1,6 +1,7 @@
-#include "util.h"
+
 #include "libwebsockets.h"
 #include "live.h"
+#include "util.h"
 
 namespace Server
 {
@@ -13,21 +14,21 @@ namespace Server
     static struct lws_http_mount mount_live;   //直播
 
     // 服务器配置
-    static std::string mount_web_origin;  //站点本地位置
-    static std::string mount_web_def; //默认文件
-    static int http_port = 80; //HTTP服务端口
-    static int ws_port = 8000; //web socket服务端口
+    //static std::string mount_web_origin;  //站点本地位置
+    //static std::string mount_web_def; //默认文件
+    //static int http_port = 80; //HTTP服务端口
+    //static int ws_port = 8000; //web socket服务端口
 
     static struct lws_protocols protocols[] = {
-        { "live",   callback_live_http,   sizeof(pss_http_ws_live), 0 },
         { "wslive", callback_live_ws,     sizeof(pss_http_ws_live), 0 },
+        { "live",   callback_live_http,   sizeof(pss_http_ws_live), 0 },
         { NULL, NULL, 0, 0 } 
     };
 
-    static struct lws_protocols wsprotocols[] = {
-        { "websocket", callback_live_ws,  sizeof(pss_http_ws_live), 0 },
-        { NULL, NULL, 0, 0 } 
-    };
+    //static struct lws_protocols wsprotocols[] = {
+    //    { "websocket", callback_live_ws,  sizeof(pss_http_ws_live), 0 },
+    //    { NULL, NULL, 0, 0 } 
+    //};
 
     //覆盖libwebsockets里的日志
     void userLog(int level, const char* line)
@@ -42,7 +43,7 @@ namespace Server
             Log::debug(line);
     }
 
-    int Init(void* uv)
+    int Init(void* uv, int port)
     {
 		g_uv_loop = (uv_loop_t *)uv;
 
@@ -50,13 +51,13 @@ namespace Server
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
         lws_set_log_level(level, userLog);
 
-        mount_web_origin = Settings::getValue("HttpServer","RootPath", "./home");
-        mount_web_def    = Settings::getValue("HttpServer","DefaultFile","index.html");
-        bool bDirVisible = Settings::getValue("HttpServer","DirVisible")=="yes"?true:false;
-        if(bDirVisible)
-            mount_web_def = "This is a not exist file.html";
-        http_port        = Settings::getValue("HttpServer","Port", 80);
-        ws_port          = Settings::getValue("HttpServer","wsPort", 8000);
+        //mount_web_origin = Settings::getValue("HttpServer","RootPath", "./home");
+        //mount_web_def    = Settings::getValue("HttpServer","DefaultFile","index.html");
+        //bool bDirVisible = Settings::getValue("HttpServer","DirVisible")=="yes"?true:false;
+        //if(bDirVisible)
+        //    mount_web_def = "This is a not exist file.html";
+        //http_port        = Settings::getValue("HttpServer","Port", 80);
+        //ws_port          = Settings::getValue("HttpServer","wsPort", 8000);
 
         // 直播请求
         memset(&mount_live, 0, sizeof(mount_live));
@@ -75,7 +76,7 @@ namespace Server
         context = lws_create_context(&info);
 
         //创建http服务器
-        info.port = http_port;
+        info.port = port;
         info.protocols = protocols;
         info.mounts = &mount_live;
         info.vhost_name = "gb28181 relay server";
@@ -84,15 +85,15 @@ namespace Server
             return -1;
         }
 
-        //创建webSocket服务器
-        info.port = ws_port;
-        info.protocols = wsprotocols;
-        info.mounts = NULL;
-        info.vhost_name = "gb28181 relay server websocket";
-        if (!lws_create_vhost(context, &info)) {
-            Log::error("Failed to create websocket vhost\n");
-            return -1;
-        }
+        ////创建webSocket服务器
+        //info.port = port+1;
+        //info.protocols = wsprotocols;
+        //info.mounts = NULL;
+        //info.vhost_name = "gb28181 relay server websocket";
+        //if (!lws_create_vhost(context, &info)) {
+        //    Log::error("Failed to create websocket vhost\n");
+        //    return -1;
+        //}
 
         return 0;
     }

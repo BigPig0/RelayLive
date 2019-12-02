@@ -84,7 +84,8 @@ namespace Server
 
     bool CLiveWorker::Play()
     {
-        if(!HikPlat::Play(this)) {
+        int playhandle = HikPlat::Play(this, m_strCode);
+        if(playhandle < 0) {
             return false;
         }
 
@@ -248,6 +249,7 @@ end:
             return false;
         }
         Log::debug("client stop, delete live worker");
+        HikPlat::Stop(playhandle);
         delete this;
         return true;
     }
@@ -265,7 +267,7 @@ end:
 		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pRing);
 		while(tmp){
             m_SocketBuff.append(tmp->pData, tmp->nLen);
-			simple_ring_cosume(m_pRing, NULL, NULL, 1);
+			simple_ring_cosume(m_pRing);
 			tmp = (AV_BUFF*)simple_ring_get_element(m_pRing);
 		}
 

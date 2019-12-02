@@ -27,6 +27,7 @@ namespace Server
     /** per session structure */
     struct pss_http_ws_live {
         struct lws           *wsi;            // http/ws 连接
+        bool                  isWs;           // 是否为websocket
         MediaType             media_type;     // 当前连接请求的媒体格式类型
         CLiveWorker          *pWorker;        // CFlvWorker对象
         int                   error_code;     // 失败时的错误码
