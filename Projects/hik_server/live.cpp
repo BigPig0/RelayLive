@@ -18,11 +18,9 @@ namespace Server
         "unkown media type"
     };
 
-    static bool ParseRequest(pss_http_ws_live *pss) {
-        /* http://IP:port/live?code=123456789&type=flv&hw=640*480
-           ws://IP:port/wslive?url=AAAAAAA&type=flv&&hw=640*480
-           type: flv、mp4、h264、hls
-           这里path只有 /live/type/stream/code
+    static bool ParseRequest(pss_live *pss) {
+        /* http(ws)://IP:port/live/flv/0/code
+           这里path只有 /live/flv/0/code
         */
         char path[MAX_PATH]={0};
         lws_hdr_copy(pss->wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
@@ -67,7 +65,7 @@ namespace Server
         return true;
     }
 
-    static bool WriteHeader(pss_http_ws_live *pss) {
+    static bool WriteHeader(pss_live *pss) {
         uint8_t buf[LWS_PRE + 2048];    //保存http头内容
         uint8_t *start = &buf[LWS_PRE]; //htpp头域的位置
         uint8_t *end = &buf[sizeof(buf) - LWS_PRE - 1]; //结尾的位置
@@ -106,8 +104,7 @@ namespace Server
         return true;
     }
  
-
-    static bool SendBody(pss_http_ws_live *pss){
+    static bool SendBody(pss_live *pss){
         char *buff;
         CLiveWorker *pWorker = (CLiveWorker *)pss->pWorker;
         int nLen = pWorker->GetVideo(&buff);
@@ -120,15 +117,15 @@ namespace Server
         return true;
     }
 
-    int callback_live_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+    int callback_live(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
     {
-        pss_http_ws_live *pss = (pss_http_ws_live*)user;
+        pss_live *pss = (pss_live*)user;
 
         switch (reason) {
         case LWS_CALLBACK_PROTOCOL_INIT:
-            Log::debug("live http protocol init");
+            Log::debug("live protocol init");
             break;
-        case LWS_CALLBACK_HTTP: 
+        case LWS_CALLBACK_HTTP:     //客户端通过http连接
             {
                 pss->wsi = wsi;
                 pss->isWs = false;
@@ -139,7 +136,18 @@ namespace Server
 
                 return 0;
             }
-        case LWS_CALLBACK_HTTP_WRITEABLE: 
+        case LWS_CALLBACK_ESTABLISHED:  //客户端通过websocket连接
+            {
+                pss->wsi = wsi;
+                pss->isWs = true;
+
+                if(!ParseRequest(pss)) {
+                    WriteHeader(pss);
+                }
+                return 0;
+            }
+            break;
+        case LWS_CALLBACK_HTTP_WRITEABLE: //Http发送数据
             {
                 if (!pss)
                     break;
@@ -164,51 +172,7 @@ namespace Server
 
                 return 0;
             }
-        case LWS_CALLBACK_CLOSED_HTTP:
-            {
-                if (!pss || !pss->pWorker)
-                    break;
-                Log::debug("live http request cloes %s", pss->pWorker->m_strPath.c_str());
-                pss->pWorker->close();
-            }
-        default:
-            break;
-        }
-
-        return lws_callback_http_dummy(wsi, reason, user, in, len);
-    }
-
-    int callback_live_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
-    {
-        pss_http_ws_live *pss = (pss_http_ws_live*)user;
-
-        switch (reason) 
-        {
-        case LWS_CALLBACK_PROTOCOL_INIT:
-            Log::debug("live ws protocol init");
-            break;
-        case LWS_CALLBACK_ESTABLISHED:
-            {
-                pss->wsi = wsi;
-                pss->isWs = true;
-
-                if(!ParseRequest(pss)) {
-                    WriteHeader(pss);
-                }
-                return 0;
-            }
-            break;
-        case LWS_CALLBACK_RECEIVE: 
-            {
-                if (!pss)
-                    break;
-                string strRecv((char*)in,len);
-                Log::debug("live ws protocol recv len:%d", len);
-                Log::debug(strRecv.c_str());
-            }
-            break;
-
-        case LWS_CALLBACK_SERVER_WRITEABLE: 
+        case LWS_CALLBACK_SERVER_WRITEABLE: //websocket发送数据
             {
                 if (!pss || !pss->pWorker)
                     break;
@@ -224,17 +188,33 @@ namespace Server
 
                 return 0;
             }
-        case LWS_CALLBACK_CLOSED:
+        case LWS_CALLBACK_RECEIVE: //websocket收到数据
+            {
+                if (!pss)
+                    break;
+                string strRecv((char*)in,len);
+                Log::debug("live ws protocol recv len:%d", len);
+                Log::debug(strRecv.c_str());
+            }
+            break;
+        case LWS_CALLBACK_CLOSED_HTTP:  //Http连接断开
             {
                 if (!pss || !pss->pWorker)
                     break;
-				Log::debug("live ws request cloes %s", pss->pWorker->m_strPath.c_str());
-				pss->pWorker->close();
+                Log::debug("live http request cloes %s", pss->pWorker->m_strPath.c_str());
+                pss->pWorker->close();
+            }
+        case LWS_CALLBACK_CLOSED:   //WebSocket连接断开
+            {
+                if (!pss || !pss->pWorker)
+                    break;
+                Log::debug("live ws request cloes %s", pss->pWorker->m_strPath.c_str());
+                pss->pWorker->close();
             }
         default:
             break;
         }
 
-        return 0;
+        return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
 };

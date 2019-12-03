@@ -16,10 +16,10 @@
     <ClCompile Include="..\..\Projects\hikctrl_server\server.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\hikctrl_server\web.cpp">
+    <ClCompile Include="..\..\Projects\hikctrl_server\hiksdk.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\hikctrl_server\hiksdk.cpp">
+    <ClCompile Include="..\..\Projects\hikctrl_server\ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -27,10 +27,10 @@
     <ClInclude Include="..\..\Projects\hikctrl_server\server.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Projects\hikctrl_server\web.h">
+    <ClInclude Include="..\..\Projects\hikctrl_server\hiksdk.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Projects\hikctrl_server\hiksdk.h">
+    <ClInclude Include="..\..\Projects\hikctrl_server\ipc.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

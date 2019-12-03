@@ -5,9 +5,11 @@
 #include "live.h"
 #include "hiksdk.h"
 #include "worker.h"
-//#include "utilc.h"
+#include "ipc.h"
 #include "util.h"
 #include "Log.h"
+#include <list>
+#include <sstream>
 
 extern "C"
 {
@@ -36,12 +38,37 @@ namespace Server
         uint32_t    nLen;     //< 数据长度
     }AV_BUFF;
 
+    static list<CLiveWorker*>  _listWorkers;
+    static CriticalSection     _csWorkers;
+
     static void destroy_ring_node(void *_msg)
     {
         AV_BUFF *msg = (AV_BUFF*)_msg;
         free(msg->pData);
         msg->pData = NULL;
         msg->nLen = 0;
+    }
+
+    static string GetClientsInfo() {
+        bool first = true;
+        stringstream ss;
+        for (auto c : _listWorkers) {
+            if(!first) {
+                first = false;
+                ss << ",";
+            }
+            ss << "{\"DeviceID\":\"" << c->m_strCode 
+                << "\",\"Connect\":\"";
+            if(c->m_bWebSocket)
+                ss << "websocket";
+            else
+                ss << "http";
+            ss << "\",\"Media\":\"" << c->m_strType
+                << "\",\"ClientIP\":\"" << c->m_strClientIP
+                << "\",\"Channel\":\"" << c->m_strHw
+                << "\"}";
+        }
+        return ss.str();
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -365,9 +392,13 @@ end:
 	void CLiveWorker::close()
 	{
 		m_bConnect = false;
+        _csWorkers.lock();
+        _listWorkers.remove(this);
+        IPC::SendClients(GetClientsInfo());
+        _csWorkers.unlock();
 	}
     
-    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_http_ws_live *pss) {
+    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss) {
         CLiveWorker *worker = new CLiveWorker();
         worker->m_strCode = strCode;
         worker->m_strType = strType;
@@ -381,6 +412,12 @@ end:
         else if(strType == "mp4")
             worker->m_strMIME = "video/mp4";
         pss->pWorker = worker;
+
+        _csWorkers.lock();
+        _listWorkers.push_back(worker);
+        IPC::SendClients(GetClientsInfo());
+        _csWorkers.unlock();
+
         uv_thread_t tid;
         uv_thread_create(&tid, real_play, (void*)worker);
         Log::debug("RealPlay ok: %s",strCode.c_str());
@@ -400,6 +437,7 @@ end:
             Log::debug(text);
         }
     }
+
 
     void InitFFmpeg(){
         av_log_set_callback(ffmpeg_log_cb);

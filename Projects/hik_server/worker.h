@@ -4,7 +4,7 @@
 
 namespace Server
 {
-    struct pss_http_ws_live;
+    struct pss_live;
     enum MediaType;
     typedef struct _AV_BUFF_ AV_BUFF;
 
@@ -36,7 +36,7 @@ namespace Server
         void cull_lagging_clients();
 
     public:
-        pss_http_ws_live     *m_pPss;           //< 连接会话
+        pss_live     *m_pPss;           //< 连接会话
         std::string           m_strCode;        //< 播放媒体编号
         std::string           m_strType;        // 目标媒体类型 flv mp4 h264
         std::string           m_strHw;          // 目标媒体分辨率 空表示不变
@@ -63,7 +63,7 @@ namespace Server
     };
 
     /** 直播 */
-    CLiveWorker* CreatLiveWorker(std::string strCode, std::string strType, std::string strHw, bool isWs, pss_http_ws_live *pss);
+    CLiveWorker* CreatLiveWorker(std::string strCode, std::string strType, std::string strHw, bool isWs, pss_live *pss);
 
     void InitFFmpeg();
 

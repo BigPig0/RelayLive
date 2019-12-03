@@ -1,15 +1,19 @@
+#include "uv.h"
 #include "util.h"
 #include "tmcp_interface_sdk.h"
-#include "hiksdk.h"
-#include "uv.h"
 
 #pragma comment(lib,"tmcp_interface_sdk.lib")
 
 using namespace Platform ;
-vector<cameraInfo> _cameras;
 
 namespace HikPlat {
-	
+
+    struct cameraInfo {
+        std::string id;
+        std::string name;
+    };
+    static vector<cameraInfo> _cameras;
+
 	static int _loginHandle = 0;
     static uv_mutex_t _mutex;
 
@@ -35,7 +39,7 @@ namespace HikPlat {
 	bool Init() {
 		int ret = Plat_Init();
 		if(ret < 0) {
-			Log::debug("SDK init failed");
+			Log::error("SDK init failed");
 			return false;
 		}
 
@@ -45,7 +49,7 @@ namespace HikPlat {
         string strPort= Settings::getValue("HikSDK", "Port");
 		_loginHandle = Plat_LoginCMS(strIP.c_str(), strUsr.c_str(), strPwd.c_str(), strPort.c_str());
 		if(_loginHandle <= 0) {
-			Log::debug("login failed %d", Plat_GetLastError());
+			Log::error("login failed %d", Plat_GetLastError());
 			return false;
 		}
 
@@ -64,6 +68,24 @@ namespace HikPlat {
 
         uv_mutex_destroy(&_mutex);
 	}
+
+    string GetDevicesJson() {
+        string strResJson = "{\"root\":[";
+        bool bfirst = true;
+        for (auto dev:_cameras) {
+            if(!bfirst) {
+                strResJson += ",";
+            }
+            strResJson += "{\"DeviceID\":\"";
+            strResJson += dev.id;
+            strResJson += "\",\"Name\":\"";
+            strResJson += EncodeConvert::AtoUTF8(dev.name);
+            strResJson += "\"}";
+        }
+        strResJson += "]}";
+
+        return strResJson;
+    }
 
     void DeviceControl(string strDev, int nInOut = 0, int nUpDown = 0, int nLeftRight = 0) {
 

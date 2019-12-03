@@ -2,6 +2,7 @@
 //
 #include "server.h"
 #include "hiksdk.h"
+#include "ipc.h"
 #include "uv.h"
 #include "util.h"
 #include <windows.h>
@@ -12,7 +13,6 @@ int main(int argc, char* argv[])
     if(argc != 2)
         return -1;
     int port = atoi(argv[1]);
-
 
     /** Dump设置 */
     CMiniDump dump("hik_server.dmp");
@@ -48,6 +48,8 @@ int main(int argc, char* argv[])
     uv_free_cpu_info(cpu_infos, count);
 
     HikPlat::Init();
+
+    IPC::Init(port);
 
     /** 创建一个http服务器 */
     Server::Init(port);

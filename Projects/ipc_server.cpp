@@ -36,7 +36,7 @@ int main()
 
     //启动IPC通讯服务
     uv_ipc_handle_t* h = NULL;
-    int ret = uv_ipc_server(&h, "hik_live", NULL);
+    int ret = uv_ipc_server(&h, "ipcsvr", NULL);
     if(ret < 0) {
         printf("ipc server err: %s\n", uv_ipc_strerr(ret));
     }

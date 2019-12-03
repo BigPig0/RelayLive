@@ -23,7 +23,7 @@ namespace HikPlat {
 	bool Init() {
 		int ret = Plat_Init();
 		if(ret < 0) {
-			Log::debug("SDK init failed");
+			Log::error("SDK init failed");
 			return false;
 		}
 
@@ -33,7 +33,7 @@ namespace HikPlat {
         string strPort= Settings::getValue("HikSDK", "Port");
 		_loginHandle = Plat_LoginCMS(strIP.c_str(), strUsr.c_str(), strPwd.c_str(), strPort.c_str());
 		if(_loginHandle <= 0) {
-			Log::debug("login failed %d", Plat_GetLastError());
+			Log::error("login failed %d", Plat_GetLastError());
 			return false;
 		}
 

@@ -88,7 +88,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;libwebsockets.lib;util.lib;utilc.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);$(SolutionDir)../ThirdParty/hik/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
@@ -107,7 +107,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;libwebsockets.lib;util.lib;utilc.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);$(SolutionDir)../ThirdParty/hik/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
@@ -129,7 +129,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);$(SolutionDir)../ThirdParty/hik/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;libwebsockets.lib;util.lib;utilc.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -153,7 +153,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);$(SolutionDir)../ThirdParty/hik/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;libwebsockets.lib;util.lib;utilc.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -161,26 +161,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Modules\HttpServer.vcxproj">
-      <Project>{d99bdf45-2f42-4d81-8795-5357c4a1914f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Modules\LiveClient.vcxproj">
-      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\uvModules\uvIpc.vcxproj">
       <Project>{19eaa0fe-75ff-4bd3-bd0e-d5a8fd6780a9}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Projects\hikctrl_server\hiksdk.cpp" />
+    <ClCompile Include="..\..\Projects\hikctrl_server\ipc.cpp" />
     <ClCompile Include="..\..\Projects\hikctrl_server\main.cpp" />
     <ClCompile Include="..\..\Projects\hikctrl_server\server.cpp" />
-    <ClCompile Include="..\..\Projects\hikctrl_server\web.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\hikctrl_server\hiksdk.h" />
+    <ClInclude Include="..\..\Projects\hikctrl_server\ipc.h" />
     <ClInclude Include="..\..\Projects\hikctrl_server\server.h" />
-    <ClInclude Include="..\..\Projects\hikctrl_server\web.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -81,7 +81,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -100,7 +100,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -121,7 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -145,7 +145,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -167,6 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Projects\hik_server\hiksdk.cpp" />
+    <ClCompile Include="..\..\Projects\hik_server\ipc.cpp" />
     <ClCompile Include="..\..\Projects\hik_server\live.cpp" />
     <ClCompile Include="..\..\Projects\hik_server\server.cpp" />
     <ClCompile Include="..\..\Projects\hik_server\worker.cpp" />
@@ -174,6 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\hik_server\hiksdk.h" />
+    <ClInclude Include="..\..\Projects\hik_server\ipc.h" />
     <ClInclude Include="..\..\Projects\hik_server\live.h" />
     <ClInclude Include="..\..\Projects\hik_server\server.h" />
     <ClInclude Include="..\..\Projects\hik_server\worker.h" />
