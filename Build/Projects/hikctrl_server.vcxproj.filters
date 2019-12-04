@@ -22,6 +22,9 @@
     <ClCompile Include="..\..\Projects\hikctrl_server\ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\hikctrl_server\DB.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\hikctrl_server\server.h">
@@ -31,6 +34,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Projects\hikctrl_server\ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\hikctrl_server\db.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

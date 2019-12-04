@@ -2,6 +2,7 @@
 //
 #include "hiksdk.h"
 #include "ipc.h"
+#include "db.h"
 #include "uv.h"
 #include "util.h"
 #include <windows.h>
@@ -50,6 +51,12 @@ int main(int argc, char* argv[])
 
     /** 进程间通信 */
     IPC::Init();
+
+    /** 数据库 */
+    DB::Init();
+
+    /** 海康SDK */
+    HikPlat::Init();
 
     //全局loop
     p_loop_uv = uv_default_loop();
