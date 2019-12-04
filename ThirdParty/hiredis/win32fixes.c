@@ -60,7 +60,7 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out) {
 }
 
 /* Terminates process, implemented only for SIGKILL */
-int kill(pid_t pid, int sig) {
+int rkill(pid_t pid, int sig) {
 
     if (sig == SIGKILL) {
 
@@ -373,7 +373,7 @@ int pthread_cond_signal(pthread_cond_t *cond) {
 /* marking memory pages as Copy-On-Write so */
 /* child process will have data snapshot.   */
 /* Windows has no support for fork().       */
-int fork(void) {
+int rfork(void) {
   return -1;
  }
 
@@ -452,7 +452,7 @@ time_t gettimeofdaysecs(unsigned int *usec)
     return (tmpres / 1000000UL);
 }
 
-int gettimeofday(struct timeval *tv, struct timezone *tz)
+int rgettimeofday(struct timeval *tv, struct timezone *tz)
 {
   FILETIME ft;
   unsigned __int64 tmpres = 0;

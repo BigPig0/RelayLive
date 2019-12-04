@@ -87,6 +87,8 @@ namespace HikPlat {
 
         Log::debug("camera num %d", DB::_cams.size());
 
+        DB::DevInfo2DB();
+
         uv_mutex_init(&_mutex);
         
 		return true;

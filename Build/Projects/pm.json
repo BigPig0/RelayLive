@@ -1,0 +1,25 @@
+[{
+    "path":"D:\\Code\\RelayLive_rtsp\\out\\Win32_Debug\\hikctrl_server.exe",
+	"args":"8001",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is ctrl server",
+	"exedir":0
+},{
+    "path":"D:\\Code\\RelayLive_rtsp\\out\\Win32_Debug\\hik_server.exe",
+	"args":"8101",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+},{
+    "path":"D:\\Code\\RelayLive_rtsp\\out\\Win32_Debug\\hik_server.exe",
+	"args":"8102",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+}]

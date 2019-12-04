@@ -28,6 +28,8 @@ namespace DB {
                 tb["Status"] = "1";
             else
                 tb["Status"] = "0";
+            if(!dev.second->cell_id.empty())
+                tb["ParentID"] = dev.second->cell_id;
             luafInsertDev(tb);
         }
     }
