@@ -26,11 +26,6 @@ namespace Server
 
         void push_flv_frame(char* pBuff, int nLen);
 
-        /**
-         * 底层通知播放关闭(接收rtp超时、对方关闭等)
-         */
-        void stop();
-
 		void close();
     private:
         void cull_lagging_clients();
@@ -54,10 +49,9 @@ namespace Server
     private:
         //void                 *m_pFormat;     //< 视频格式打包
         ring_buff_t          *m_pPSRing;       //< PS数据队列
-        ring_buff_t          *m_pRing;         //< 目标码流数据队列
+        ring_buff_t          *m_pFlvRing;         //< 目标码流数据队列
         std::string           m_SocketBuff;    //< socket发送的数据缓存
-		bool                  m_bConnect;      //<
-        bool                  m_bStop;
+		bool                  m_bConnect;      //< 客户端连接状态
 
         //int                   m_nType;          //< 0:live直播；1:record历史视频
     };

@@ -73,12 +73,14 @@ namespace Server
 
     //////////////////////////////////////////////////////////////////////////
 
+    // 播放线程
     static void real_play(void* arg){
         CLiveWorker* pLive = (CLiveWorker*)arg;
         pLive->Play();
     }
 
-    static int fill_iobuffer(void * opaque,uint8_t *buf, int bufsize){
+    //读取输入数据的方法
+    static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
         CLiveWorker *lw = (CLiveWorker*)opaque;
         int len = 0;
         while (len == 0) {
@@ -87,6 +89,7 @@ namespace Server
         return len;
     }
 
+    //输出数据的方法
     static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
         CLiveWorker* pLive = (CLiveWorker*)opaque;
         pLive->push_flv_frame((char*)buf, buf_size);
@@ -96,15 +99,14 @@ namespace Server
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
 		, m_bConnect(true)
-        , m_bStop(false)
     {
-        m_pRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
-        m_pPSRing= create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
     }
 
     CLiveWorker::~CLiveWorker()
     {
-        destroy_ring_buff(m_pRing);
+        destroy_ring_buff(m_pFlvRing);
         destroy_ring_buff(m_pPSRing);
         Log::debug("CLiveWorker release");
     }
@@ -200,7 +202,7 @@ namespace Server
         }
 
         bool first = true;
-        while (!m_bStop) {
+        while (m_bConnect) {
             AVStream *in_stream, *out_stream;
             AVPacket pkt;
             av_init_packet(&pkt);
@@ -272,18 +274,23 @@ end:
             char tmp[AV_ERROR_MAX_STRING_SIZE]={0};
             av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret);
             Log::error("Error occurred: %s\n", tmp);
-            stop();
-            return false;
+        }
+        HikPlat::Stop(playhandle);
+        if(m_bConnect) {
+            Log::debug("video source is dropped, need close the client");
+            lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+        }
+        while (m_bConnect){
+            sleep(10);
         }
         Log::debug("client stop, delete live worker");
-        HikPlat::Stop(playhandle);
         delete this;
-        return true;
+        return ret>=0;
     }
 
     int CLiveWorker::GetVideo(char **buff)
     {
-        int wnum = ring_get_count_waiting_elements(m_pRing, NULL);
+        int wnum = ring_get_count_waiting_elements(m_pFlvRing, NULL);
         //没有缓存数据
         if(wnum == 0)
             return 0;
@@ -291,11 +298,11 @@ end:
         m_SocketBuff.clear();
         char pre[LWS_PRE]={0};
         m_SocketBuff.append(pre, LWS_PRE);
-		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pRing);
+		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
 		while(tmp){
             m_SocketBuff.append(tmp->pData, tmp->nLen);
-			simple_ring_cosume(m_pRing);
-			tmp = (AV_BUFF*)simple_ring_get_element(m_pRing);
+			simple_ring_cosume(m_pFlvRing);
+			tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
 		}
 
 		*buff = (char*)m_SocketBuff.c_str();
@@ -313,20 +320,6 @@ end:
             m_strError = error_info;
         }
         lws_callback_on_writable(m_pPss->wsi);
-    }
-
-    void CLiveWorker::stop()
-    {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
-			return;
-		}
-
-        //视频源没有数据并超时
-        Log::debug("no data recived any more, stopped");
-
-        //断开所有客户端连接
-        lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
     }
 
     void CLiveWorker::push_ps_data(char* pBuff, int nLen)
@@ -351,7 +344,7 @@ end:
 
     int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
     {
-        AV_BUFF* tag = (AV_BUFF*)simple_ring_get_element(m_pRing);
+        AV_BUFF* tag = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
         if(tag) {
             memcpy(pBuff, tag->pData, tag->nLen);
             return tag->nLen;
@@ -363,12 +356,12 @@ end:
     void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
     {
         Log::debug("push_flv_frame len:%d", nLen);
-        if(m_bStop) {
+        if(!m_bConnect) {
             Log::error("client has already leave");
             return;
         }
         //内存数据保存至ring-buff
-        int n = (int)ring_get_count_free_elements(m_pRing);
+        int n = (int)ring_get_count_free_elements(m_pFlvRing);
         if (!n) {
             lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
             Log::error("to many data can't send");
@@ -379,7 +372,7 @@ end:
         char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
         memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
         AV_BUFF newTag = {pSaveBuff, nLen};
-        if (!ring_insert(m_pRing, &newTag, 1)) {
+        if (!ring_insert(m_pFlvRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
             Log::error("dropping!");
             return;
@@ -391,11 +384,11 @@ end:
 
 	void CLiveWorker::close()
 	{
-		m_bConnect = false;
         _csWorkers.lock();
         _listWorkers.remove(this);
         IPC::SendClients(GetClientsInfo());
         _csWorkers.unlock();
+		m_bConnect = false;
 	}
     
     CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss) {

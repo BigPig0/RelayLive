@@ -30,37 +30,18 @@ namespace Server
             Log::debug("new http-live request: %s", path);
 
         string strPath = path;
-        size_t parampos = strPath.find('?');
-        if(parampos == string::npos) {
-            Log::error("%s error uri", path);
-            pss->error_code = live_error_uri;
-            return false;
-        }
-        strPath = strPath.substr(parampos+1, strPath.size()-parampos-1);
-        string strCode, strUrl, strHw, strType="flv";
-        vector<string> vecpars = StringHandle::StringSplit(strPath, '&');
-        for(auto par:vecpars) {
-            vector<string> tmp = StringHandle::StringSplit(par, '=');
-            if(tmp.size() != 2)
-                continue;
-            if(tmp[0] == "code")
-                strCode = tmp[1];
-            else if(tmp[0] == "url")
-                strUrl = tmp[1];
-            else if(tmp[0] == "type")
-                strType = tmp[1];
-            else if(tmp[0] == "hw")
-                strHw = tmp[1];
-        }
-
-        pss->pWorker = CreatLiveWorker(strCode, strType, strHw, pss->isWs, pss);
+        string strCode = strPath.substr(12, strPath.size()-12);
+        
+        pss->pWorker = CreatLiveWorker(strCode, "flv", "", pss->isWs, pss);
         
         //某些环境下，获取socket对端ip竟然耗时很多
-        char clientName[50]={0};    //播放端的名称
         char clientIP[50]={0};      //播放端的ip
-        lws_get_peer_addresses(pss->wsi, lws_get_socket_fd(pss->wsi),
-            clientName, sizeof(clientName),
-            clientIP, sizeof(clientIP));
+        if(lws_hdr_copy(pss->wsi, clientIP, MAX_PATH, WSI_TOKEN_X_FORWARDED_FOR) < 0) {
+            char clientName[50]={0};    //播放端的名称
+            lws_get_peer_addresses(pss->wsi, lws_get_socket_fd(pss->wsi),
+                clientName, sizeof(clientName),
+                clientIP, sizeof(clientIP));
+        }
         pss->pWorker->m_strClientIP = clientIP;
         return true;
     }
