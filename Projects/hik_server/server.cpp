@@ -30,7 +30,7 @@ namespace Server
             Log::debug(line);
     }
 
-    int Init(int port) {
+    int Init(void* uv, int port) {
         InitFFmpeg();
         //设置日志
         int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
@@ -39,23 +39,22 @@ namespace Server
         //创建libwebsockets环境
         memset(&info, 0, sizeof info);
         info.pcontext = &context;
+		info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
+		info.foreign_loops = (void**)&uv;
 		info.timeout_secs = 0x1fffffff;
 		info.timeout_secs_ah_idle = 0x1fffffff;
-        info.port = port;
-        info.protocols = protocols;
-        info.vhost_name = "hik server";
         context = lws_create_context(&info);
         Log::debug("hik_tmc_sdk sever start success");
 
-        int n=0;
-        _running = true;
-        while (n >= 0 && _running){
-            n=lws_service(context, 0x1fffffff);
+		info.port = port;
+        info.protocols = protocols;
+		info.mounts = NULL;
+        info.vhost_name = "hik server";
+		if (!lws_create_vhost(context, &info)) {
+            Log::error("Failed to create http vhost\n");
+            return -1;
         }
 
-        // 销毁libwebsockets
-        lws_context_destroy(context);
-        _stop = true;
         return 0;
     }
 

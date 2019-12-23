@@ -394,7 +394,7 @@ bool CPM::NeedRestart(Process* pro, time_t now) {
     double runtimespan = difftime(now, pro->startup);
     //过了重启时间点多久
     double rstimespan = difftime(now, rstime);
-    if(runtimespan > rstimespan)
+    if(now>rstime && runtimespan > rstimespan)
         return true;
 
     return false;

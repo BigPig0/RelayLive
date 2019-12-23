@@ -11,6 +11,7 @@
 #include <list>
 #include <sstream>
 
+#ifdef USE_FFMPEG
 extern "C"
 {
 #define snprintf  _snprintf
@@ -30,6 +31,7 @@ extern "C"
 #pragma comment(lib,"postproc.lib")
 #pragma comment(lib,"swresample.lib")
 #pragma comment(lib,"swscale.lib")
+#endif
 
 namespace Server
 {
@@ -40,6 +42,8 @@ namespace Server
 
     static list<CLiveWorker*>  _listWorkers;
     static CriticalSection     _csWorkers;
+	static uint32_t            _flvbufsize = 1024*16;
+	static uint32_t            _psbufsize = 1024*32;
 
     static void destroy_ring_node(void *_msg)
     {
@@ -79,6 +83,7 @@ namespace Server
         pLive->Play();
     }
 
+#ifdef USE_FFMPEG
     //读取输入数据的方法
     static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
         CLiveWorker *lw = (CLiveWorker*)opaque;
@@ -95,13 +100,16 @@ namespace Server
         pLive->push_flv_frame((char*)buf, buf_size);
         return buf_size;
     }
+#endif
 
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
 		, m_bConnect(true)
+		, m_bFirstStream(true)
+		, m_bCbStream(false)
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
-        m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
     }
 
     CLiveWorker::~CLiveWorker()
@@ -111,6 +119,7 @@ namespace Server
         Log::debug("CLiveWorker release");
     }
 
+#ifdef USE_FFMPEG
     bool CLiveWorker::Play()
     {
         int playhandle = HikPlat::Play(this, m_strCode);
@@ -121,9 +130,12 @@ namespace Server
         AVFormatContext *ifc = NULL;
         AVFormatContext *ofc = NULL;
 
-        unsigned char * iobuffer=(unsigned char *)av_malloc(32768);
-        AVIOContext *avio = avio_alloc_context(iobuffer, 32768, 0, this, fill_iobuffer, NULL, NULL);
+        ifc = avformat_alloc_context();
+        unsigned char * iobuffer=(unsigned char *)av_malloc(_psbufsize);
+        AVIOContext *avio = avio_alloc_context(iobuffer, _psbufsize, 0, this, fill_iobuffer, NULL, NULL);
         ifc->pb = avio;
+		ifc->iformat = av_find_input_format("mpeg");
+
         int ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
         if (ret != 0) {
             char tmp[1024]={0};
@@ -131,6 +143,8 @@ namespace Server
             Log::error("Could not open input file: %d(%s)", ret, tmp);
             goto end;
         }
+		//ifc->probesize = 1024*800;
+		ifc->max_analyze_duration = 2*AV_TIME_BASE;
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
             char tmp[1024]={0};
@@ -149,8 +163,8 @@ namespace Server
             goto end;
         }
 
-        unsigned char* outbuffer=(unsigned char*)av_malloc(65536);
-        AVIOContext *avio_out =avio_alloc_context(outbuffer, 65536,1,this,NULL,write_buffer,NULL);  
+        unsigned char* outbuffer=(unsigned char*)av_malloc(_flvbufsize);
+        AVIOContext *avio_out =avio_alloc_context(outbuffer, _flvbufsize,1,this,NULL,write_buffer,NULL);  
         ofc->pb = avio_out; 
         ofc->flags = AVFMT_FLAG_CUSTOM_IO;
 
@@ -187,6 +201,7 @@ namespace Server
                 Log::error("Failed to copy codec parameters\n");
                 goto end;
             }
+			os->codecpar->codec_id = AV_CODEC_ID_H264;
         }
         Log::debug("show output format info");
         av_dump_format(ofc, 0, NULL, 1);
@@ -201,7 +216,6 @@ namespace Server
             goto end;
         }
 
-        bool first = true;
         while (m_bConnect) {
             AVStream *in_stream, *out_stream;
             AVPacket pkt;
@@ -212,23 +226,12 @@ namespace Server
             //Log::debug("read_index %d",pkt.stream_index);
             in_stream  = ifc->streams[pkt.stream_index];
             if (pkt.stream_index == in_video_index) {
-                //Log::debug("video dts %d", pkt.dts);
-                //Log::debug("video pts %d", pkt.pts);
                 pkt.stream_index = out_video_index;
                 out_stream = ofc->streams[pkt.stream_index];
-                /* copy packet */
-                if(first){
-                    pkt.pts = 0;
-                    pkt.dts = 0;
-                    first = false;
-                } else {
-                    pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-                    pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-                }
+                pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+                pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
                 pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
                 pkt.pos = -1;
-                //Log::debug("video2 dts %d", pkt.dts);
-                //Log::debug("video2 pts %d", pkt.pts);
 
                 int wret = av_interleaved_write_frame(ofc, &pkt);
                 if (wret < 0) {
@@ -278,7 +281,7 @@ end:
         HikPlat::Stop(playhandle);
         if(m_bConnect) {
             Log::debug("video source is dropped, need close the client");
-            lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
+            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
         }
         while (m_bConnect){
             sleep(10);
@@ -287,86 +290,58 @@ end:
         delete this;
         return ret>=0;
     }
-
-    int CLiveWorker::GetVideo(char **buff)
-    {
-        int wnum = ring_get_count_waiting_elements(m_pFlvRing, NULL);
-        //没有缓存数据
-        if(wnum == 0)
-            return 0;
-        
-        m_SocketBuff.clear();
-        char pre[LWS_PRE]={0};
-        m_SocketBuff.append(pre, LWS_PRE);
-		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
-		while(tmp){
-            m_SocketBuff.append(tmp->pData, tmp->nLen);
-			simple_ring_cosume(m_pFlvRing);
-			tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
-		}
-
-		*buff = (char*)m_SocketBuff.c_str();
-        return m_SocketBuff.size();
-    }
-
-    void CLiveWorker::play_answer(int ret, string error_info)
-    {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
-			return;
-		}
-        if(ret){
-            m_pPss->error_code = ret;
-            m_strError = error_info;
-        }
-        lws_callback_on_writable(m_pPss->wsi);
-    }
+#else
+bool CLiveWorker::Play() {
+}
+#endif
 
     void CLiveWorker::push_ps_data(char* pBuff, int nLen)
     {
         //内存数据保存至ring-buff
-        int n = (int)ring_get_count_free_elements(m_pPSRing);
-        if (!n) {
-            Log::error("to many data can't send");
-            return;
-        }
+		int n = (int)ring_get_count_free_elements(m_pPSRing);
+		if (!n) {
+			Log::error("to many ps data can't catch");
+			return;
+		}
 
-        // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(nLen);
-        memcpy(pSaveBuff, pBuff, nLen);
-        AV_BUFF newTag = {pSaveBuff, nLen};
-        if (!ring_insert(m_pPSRing, &newTag, 1)) {
-            destroy_ring_node(&newTag);
-            Log::error("dropping!");
-            return;
-        }
+		// 将数据保存在ring buff
+		char* pSaveBuff = (char*)malloc(nLen);
+		memcpy(pSaveBuff, pBuff, nLen);
+		AV_BUFF newTag = {pSaveBuff, nLen};
+		if (!ring_insert(m_pPSRing, &newTag, 1)) {
+			destroy_ring_node(&newTag);
+			Log::error("dropping!");
+			return;
+		}
     }
 
     int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
     {
-        AV_BUFF* tag = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
-        if(tag) {
-            memcpy(pBuff, tag->pData, tag->nLen);
-            return tag->nLen;
-        }
-
+        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+		if(tag) {
+			int len = tag->nLen;
+			memcpy(pBuff, tag->pData, tag->nLen);
+			simple_ring_cosume(m_pPSRing);
+			return len;
+		}
         return 0;
     }
 
     void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
     {
-        Log::debug("push_flv_frame len:%d", nLen);
         if(!m_bConnect) {
             Log::error("client has already leave");
             return;
         }
         //内存数据保存至ring-buff
         int n = (int)ring_get_count_free_elements(m_pFlvRing);
-        if (!n) {
-            lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
+        if (!n && m_pPss) {
+            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
+			lws_callback_on_writable(m_pPss->wsi);
             Log::error("to many data can't send");
             return;
         }
+       printf("flv_free(%d) ", n);
 
         // 将数据保存在ring buff
         char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
@@ -379,8 +354,24 @@ end:
         }
 
         //向客户端发送数据
-        lws_callback_on_writable(m_pPss->wsi);
+		if(m_pPss)
+			lws_callback_on_writable(m_pPss->wsi);
     }
+
+    int CLiveWorker::get_flv_frame(char **buff)
+    {
+		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
+		if(tmp == NULL)
+			return 0;
+		*buff = tmp->pData + LWS_PRE;
+		return tmp->nLen;
+    }
+
+	void CLiveWorker::next_flv_frame() {
+		simple_ring_cosume(m_pFlvRing);
+		if (ring_get_count_waiting_elements(m_pFlvRing, NULL) && m_pPss)
+			lws_callback_on_writable(m_pPss->wsi);
+	}
 
 	void CLiveWorker::close()
 	{
@@ -389,15 +380,17 @@ end:
         IPC::SendClients(GetClientsInfo());
         _csWorkers.unlock();
 		m_bConnect = false;
+		m_pPss = NULL;
 	}
     
-    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss) {
+    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {
         CLiveWorker *worker = new CLiveWorker();
         worker->m_strCode = strCode;
         worker->m_strType = strType;
         worker->m_strHw   = strHw;
         worker->m_bWebSocket = isWs;
         worker->m_pPss = pss;
+		worker->m_strClientIP = clientIP;
         if(strType == "flv")
             worker->m_strMIME = "video/x-flv";
         else if(strType == "h264")
@@ -417,6 +410,7 @@ end:
         return worker;
     }
 
+#ifdef USE_FFMPEG
     static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
         char text[256];              //日志内容
         memset(text,0,256);
@@ -431,8 +425,8 @@ end:
         }
     }
 
-
     void InitFFmpeg(){
-        av_log_set_callback(ffmpeg_log_cb);
+        //av_log_set_callback(ffmpeg_log_cb);
     }
+#endif
 }

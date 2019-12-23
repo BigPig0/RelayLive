@@ -15,21 +15,33 @@ namespace DB {
     static lua::GlobalFunction<lua::Bool(lua::Table)> luafInsertDev;
 
     void DevInfo2DB() {
-        for(auto dev:_devs) {
+        //for(auto dev:_devs) {
+        //    lua::Table tb;
+        //    if(dev.second->cameras.empty())
+        //        continue;
+        //    tb["DevID"] = dev.second->cameras.begin()->first;
+        //    if(!dev.second->device_name.empty())
+        //        tb["Name"] = dev.second->device_name;
+        //    if(!dev.second->device_type.empty())
+        //        tb["PTZType"] = dev.second->device_type;
+        //    if(dev.second->device_state == "0")
+        //        tb["Status"] = "1";
+        //    else
+        //        tb["Status"] = "0";
+        //    if(!dev.second->cell_id.empty())
+        //        tb["ParentID"] = dev.second->cell_id;
+        //    luafInsertDev(tb);
+        //}
+		for(auto dev:_cams) {
             lua::Table tb;
-            if(dev.second->cameras.empty())
-                continue;
-            tb["DevID"] = dev.second->cameras.begin()->first;
+            tb["DevID"] = dev.first;
             if(!dev.second->device_name.empty())
                 tb["Name"] = dev.second->device_name;
             if(!dev.second->device_type.empty())
                 tb["PTZType"] = dev.second->device_type;
-            if(dev.second->device_state == "0")
-                tb["Status"] = "1";
-            else
-                tb["Status"] = "0";
-            if(!dev.second->cell_id.empty())
-                tb["ParentID"] = dev.second->cell_id;
+            tb["Status"] = "1";
+            if(!dev.second->parent_device_id.empty())
+                tb["ParentID"] = dev.second->parent_device_id;
             luafInsertDev(tb);
         }
     }

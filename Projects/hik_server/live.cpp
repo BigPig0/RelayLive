@@ -20,8 +20,7 @@ namespace Server
 
     static bool ParseRequest(pss_live *pss) {
         /* http(ws)://IP:port/live/flv/0/code
-           这里path只有 /live/flv/0/code
-        */
+           这里path只有 /live/flv/0/code */
         char path[MAX_PATH]={0};
         lws_hdr_copy(pss->wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
         if(pss->isWs)
@@ -29,20 +28,20 @@ namespace Server
         else
             Log::debug("new http-live request: %s", path);
 
-        string strPath = path;
-        string strCode = strPath.substr(12, strPath.size()-12);
-        
-        pss->pWorker = CreatLiveWorker(strCode, "flv", "", pss->isWs, pss);
-        
-        //某些环境下，获取socket对端ip竟然耗时很多
-        char clientIP[50]={0};      //播放端的ip
+        // 请求端的ip, 存在x_forwarded_for时，优先使用，否则获取连接的对端ip
+        char clientIP[50]={0};
         if(lws_hdr_copy(pss->wsi, clientIP, MAX_PATH, WSI_TOKEN_X_FORWARDED_FOR) < 0) {
-            char clientName[50]={0};    //播放端的名称
+            char clientName[50]={0};
             lws_get_peer_addresses(pss->wsi, lws_get_socket_fd(pss->wsi),
                 clientName, sizeof(clientName),
                 clientIP, sizeof(clientIP));
         }
-        pss->pWorker->m_strClientIP = clientIP;
+
+        string strPath = path;
+        string strCode = strPath.substr(12, strPath.size()-12);
+        
+        pss->pWorker = CreatLiveWorker(strCode, "flv", "", pss->isWs, pss, clientIP);
+
         return true;
     }
 
@@ -54,7 +53,7 @@ namespace Server
         struct lws *wsi = pss->wsi;
         pss->send_header = true;
         if(!pss->error_code){
-            if(pss->pWorker->m_bWebSocket){
+            if(!pss->isWs){
                 // http 成功
                 lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end);
                 lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
@@ -63,8 +62,10 @@ namespace Server
                 lws_add_http_header_by_name(wsi, (const uint8_t *)"Expires", (const uint8_t *)"-1", 2, &p, end);
                 lws_add_http_header_by_name(wsi, (const uint8_t *)"Pragma", (const uint8_t *)"no-cache", 8, &p, end);
                 if(lws_finalize_write_http_header(wsi, start, &p, end))
-                    return false;
-            }
+                    return true;
+            } else {
+				lws_callback_on_writable(pss->wsi);
+			}
         } else {
             if(!pss->isWs) {
                 // http 失败
@@ -88,12 +89,13 @@ namespace Server
     static bool SendBody(pss_live *pss){
         char *buff;
         CLiveWorker *pWorker = (CLiveWorker *)pss->pWorker;
-        int nLen = pWorker->GetVideo(&buff);
-        if(nLen <= LWS_PRE)
+        int nLen = pWorker->get_flv_frame(&buff);
+        if(nLen <= 0)
             return true;
 
-        int wlen = lws_write(pss->wsi, (uint8_t *)buff + LWS_PRE, nLen-LWS_PRE, LWS_WRITE_BINARY);
-        lws_callback_on_writable(pss->wsi);
+		printf("send2web(%d)\r\n", nLen);
+        int wlen = lws_write(pss->wsi, (uint8_t *)buff, nLen, LWS_WRITE_BINARY);
+		pWorker->next_flv_frame();
 
         return true;
     }

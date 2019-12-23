@@ -2,7 +2,7 @@
 
 namespace Server
 {
-    int Init(int port);
+    int Init(void* uv, int port);
 
     int Cleanup();
 };

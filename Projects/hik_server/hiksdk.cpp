@@ -7,18 +7,20 @@
 using namespace Platform ;
 
 namespace HikPlat {
-	struct cameraInfo {
-		string id;
-		string name;
-	};
 
 	static void __stdcall StreamCallback(int handle,const char* data,int size,void *pUser){
 		Server::CLiveWorker* lw = (Server::CLiveWorker*)pUser;
-		lw->push_ps_data((char*)data, size);
+		lw->m_bCbStream = !lw->m_bCbStream;
+		if(lw->m_bCbStream) {
+			if(lw->m_bFirstStream) {
+				lw->m_bFirstStream = false;
+			} else {
+				lw->push_ps_data((char*)data, size);
+			}
+		}
 	}
 
 	static int _loginHandle = 0;
-	static vector<cameraInfo> _cameras;
 
 	bool Init() {
 		int ret = Plat_Init();
@@ -49,28 +51,10 @@ namespace HikPlat {
 		Plat_Free();
 	}
 
-	void GetDevices() {
-		int ret = Plat_QueryResource(CAMERA, _loginHandle);
-		if(ret < 0) {
-			Log::debug("query camera failed");
-			return;
-		}
-
-		do {
-			cameraInfo ca;
-			ca.id   = Plat_GetValueStr(Camera::device_id, _loginHandle);
-			ca.name = Plat_GetValueStr(Camera::device_name, _loginHandle);
-			_cameras.push_back(ca);
-		} while (Plat_MoveNext(_loginHandle)==0);
-
-		Log::debug("camera num %d", _cameras.size());
-	}
-
 	int Play(void* user, string devid) {
-        return 1;
 		const char* url = Plat_QueryRealStreamURL(devid.c_str(), _loginHandle, MAIN);
 		if(url == NULL) {
-			Log::debug("get url failed: %d", Plat_GetLastError());
+			Log::error("get url failed: %d", Plat_GetLastError());
 			return -1;
 		}
 		Log::debug(url);

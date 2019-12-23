@@ -1,6 +1,0 @@
-
-[HikSDK]
-IP=
-User=
-Pwd=
-Port=

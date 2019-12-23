@@ -47,7 +47,7 @@ end
 
 --将设备状态值转为数据库和redis中的值
 function getDevSatus(s)
-    if s == "ON" then
+    if s == "ON" or s == "1" then
 	    return "1"
 	end
 	return "0"
@@ -88,7 +88,11 @@ function checkTableKey(tbl, key)
 end
 
 function InsertDev(dev)
-	devtb[dev["DevID"]] = dev
+	--devtb[dev["DevID"]] = dev
+	
+	--sdk获取的设备插入数据库
+	local row = {dev["DevID"], dev["Name"]}
+	LUDB_ADD_ROW(gbdev, row)
 	
 	--从静态库取gps
 	local lon = dev["Longitude"]
@@ -112,6 +116,7 @@ function InsertDev(dev)
 	--end
 	if devtype[dev["DevID"]] ~= nil then
 	    depname = GBK2UTF8(string.gsub(devtype[dev["DevID"]]["dep"],' ','_'))
+	end
 	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="9", pwd=""})
 	local stmt = LUDB_CREATE_STMT(con)
 	local sql = string.format("HMSET \"gps:%s:last:%s\" \"deviceId\" \"%s\" \"deviceName\" \"%s\" \"isOnline\" %s \"deptCode\" \"%s\" \"deptName\" \"%s\"", typedir, dev["DevID"], dev["DevID"], devname, getDevSatus(dev["Status"]), dev["ParentID"], depname)
@@ -140,20 +145,30 @@ function delGpsHis()
     end
     local stmt = LUDB_CREATE_STMT(con)
     LUDB_EXECUTE_STMT(stmt, "delete from gps_history where GPSTIME < sysdate-2")
-	LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
+	stmt = LUDB_CREATE_STMT(con)
+    LUDB_EXECUTE_STMT(stmt, "delete from gb28181_tmp")
+    LUDB_FREE_STMT(stmt)
+    LUDB_COMMIT(con)
     LUDB_FREE_CONN(con)
     return true
 end
 
 function Init()
-    LUDB_INIT({dbtype="oracle", path="C:\\instantclient_11_2_64"})
+    LUDB_INIT({dbtype="oracle", path="C:\\instantclient_11_2"})
     LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="41.215.241.143:1521/orcl", user="yj_accident", pwd="123", max=5, min=1, inc=2})
-	--gps历史表删除两天前的数据
-	delGpsHis()
+    --gps历史表删除两天前的数据
+    delGpsHis()
 	
-	--读取设备类型映射关系
-	getDevTypeMap();
+    --设备信息保存到数据库
+    sql = "insert into GB28181_TMP (DEVICE_ID, DEVICE_NAME) values (:DEVICE_ID, :DEVICE_NAME)"
+    gbdev = LUDB_BATCH_INIT("oracle", "DB", sql, 500, 10, {
+        {bindname = "DEVICE_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30},
+        {bindname = "DEVICE_NAME",coltype = LUDB_TYPE_CHR, maxlen = 50}
+    })
+	
+    --读取设备类型映射关系
+    getDevTypeMap();
     return true
 end
 

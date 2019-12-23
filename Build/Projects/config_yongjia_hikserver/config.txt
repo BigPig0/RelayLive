@@ -1,0 +1,6 @@
+
+[HikSDK]
+IP=41.215.254.4
+User=admin
+Pwd=Yjjj5008
+Port=90
