@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 
 /** 设备目录查询信息应答中的设备信息 */
 struct DevInfo

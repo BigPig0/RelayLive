@@ -5,10 +5,33 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{c0bc9609-eaca-48ad-bacc-bb55c95feb82}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Projects\live_server.cpp">
+    <ClCompile Include="..\..\Projects\live_server\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\live_server\live.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\live_server\server.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\live_server\worker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Projects\live_server\live.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\live_server\server.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\live_server\worker.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

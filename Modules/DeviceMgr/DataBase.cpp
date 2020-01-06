@@ -1,5 +1,5 @@
 //#include "stdafx.h"
-#include "common.h"
+#include "util.h"
 #include "ludb.h"
 #include "luapp.hpp"
 #include "DataBase.h"

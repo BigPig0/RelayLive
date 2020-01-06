@@ -16,7 +16,8 @@
         	
             var video1 = document.getElementById("videoElement"),
             wfs = new Wfs();
-			var playaddr = "ws://" + window.location.hostname + ":8000/live/h264/" +window.location.hash.substr(1);
+			//var playaddr = "ws://" + window.location.hostname + ":8000/live/h264/" +window.location.hash.substr(1);
+			var playaddr = "ws://127.0.0.1:80/live/flv/0/123456";
             wfs.attachMedia(video1, 'wslive', 'H264Raw', playaddr);
         }
     };

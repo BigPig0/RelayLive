@@ -270,7 +270,7 @@ int pthread_detach (pthread_t thread);
 int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
 
 /* Misc Unix -> Win32 */
-int kill(pid_t pid, int sig);
+int rkill(pid_t pid, int sig);
 int fsync (int fd);
 pid_t wait3(int *stat_loc, int options, void *rusage);
 
@@ -281,8 +281,8 @@ int w32initWinSock(void);
 void *mmap(void *start, size_t length, int prot, int flags, int fd, off offset);
 int munmap(void *start, size_t length);
 
-int fork(void);
-int gettimeofday(struct timeval *tv, struct timezone *tz);
+int rfork(void);
+int rgettimeofday(struct timeval *tv, struct timezone *tz);
 time_t gettimeofdaysecs(unsigned int *usec);
 
 /* strtod does not handle Inf and Nan
