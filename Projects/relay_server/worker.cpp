@@ -3,7 +3,6 @@
 #include "libwebsockets.h"
 #include "netstream.h"
 #include "live.h"
-#include "hiksdk.h"
 #include "worker.h"
 #include "ipc.h"
 #include "util.h"
@@ -61,7 +60,7 @@ namespace Server
                 first = false;
                 ss << ",";
             }
-            ss << "{\"DeviceID\":\"" << c->m_strCode 
+            ss << "{\"URL\":\"" << c->m_strUrl 
                 << "\",\"Connect\":\"";
             if(c->m_bWebSocket)
                 ss << "websocket";
@@ -84,16 +83,6 @@ namespace Server
     }
 
 #ifdef USE_FFMPEG
-    //读取输入数据的方法
-    static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
-        CLiveWorker *lw = (CLiveWorker*)opaque;
-        int len = 0;
-        while (len == 0) {
-            len = lw->get_ps_data((char*)buf, bufsize);
-        }
-        return len;
-    }
-
     //输出数据的方法
     static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
         CLiveWorker* pLive = (CLiveWorker*)opaque;
@@ -105,38 +94,23 @@ namespace Server
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
 		, m_bConnect(true)
-		, m_bFirstStream(true)
-		, m_bCbStream(false)
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
-        m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
     }
 
     CLiveWorker::~CLiveWorker()
     {
         destroy_ring_buff(m_pFlvRing);
-        destroy_ring_buff(m_pPSRing);
         Log::debug("CLiveWorker release");
     }
 
 #ifdef USE_FFMPEG
     bool CLiveWorker::Play()
     {
-        int playhandle = HikPlat::Play(this, m_strCode);
-        if(playhandle < 0) {
-            return false;
-        }
-
         AVFormatContext *ifc = NULL;
         AVFormatContext *ofc = NULL;
 
-        ifc = avformat_alloc_context();
-        unsigned char * iobuffer=(unsigned char *)av_malloc(_psbufsize);
-        AVIOContext *avio = avio_alloc_context(iobuffer, _psbufsize, 0, this, fill_iobuffer, NULL, NULL);
-        ifc->pb = avio;
-		ifc->iformat = av_find_input_format("mpeg");
-
-        int ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+        int ret = avformat_open_input(&ifc, m_strUrl.c_str(), NULL, NULL);
         if (ret != 0) {
             char tmp[1024]={0};
             av_strerror(ret, tmp, 1024);
@@ -144,7 +118,7 @@ namespace Server
             goto end;
         }
 		//ifc->probesize = 102400;
-		ifc->max_analyze_duration = 2*AV_TIME_BASE; //探测只允许延时2s
+		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
             char tmp[1024]={0};
@@ -278,7 +252,7 @@ end:
             av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret);
             Log::error("Error occurred: %s\n", tmp);
         }
-        HikPlat::Stop(playhandle);
+
         if(m_bConnect) {
             Log::debug("video source is dropped, need close the client");
             //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
@@ -294,38 +268,6 @@ end:
 bool CLiveWorker::Play() {
 }
 #endif
-
-    void CLiveWorker::push_ps_data(char* pBuff, int nLen)
-    {
-        //内存数据保存至ring-buff
-		int n = (int)ring_get_count_free_elements(m_pPSRing);
-		if (!n) {
-			Log::error("to many ps data can't catch");
-			return;
-		}
-
-		// 将数据保存在ring buff
-		char* pSaveBuff = (char*)malloc(nLen);
-		memcpy(pSaveBuff, pBuff, nLen);
-		AV_BUFF newTag = {pSaveBuff, nLen};
-		if (!ring_insert(m_pPSRing, &newTag, 1)) {
-			destroy_ring_node(&newTag);
-			Log::error("dropping!");
-			return;
-		}
-    }
-
-    int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
-    {
-        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-		if(tag) {
-			int len = tag->nLen;
-			memcpy(pBuff, tag->pData, tag->nLen);
-			simple_ring_cosume(m_pPSRing);
-			return len;
-		}
-        return 0;
-    }
 
     void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
     {
@@ -383,9 +325,9 @@ bool CLiveWorker::Play() {
 		m_pPss = NULL;
 	}
     
-    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {
+    CLiveWorker* CreatLiveWorker(string strURL, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {
         CLiveWorker *worker = new CLiveWorker();
-        worker->m_strCode = strCode;
+        worker->m_strUrl = strURL;
         worker->m_strType = strType;
         worker->m_strHw   = strHw;
         worker->m_bWebSocket = isWs;
@@ -406,7 +348,7 @@ bool CLiveWorker::Play() {
 
         uv_thread_t tid;
         uv_thread_create(&tid, real_play, (void*)worker);
-        Log::debug("RealPlay ok: %s",strCode.c_str());
+        Log::debug("RealPlay ok: %s",strURL.c_str());
         return worker;
     }
 

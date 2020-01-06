@@ -219,6 +219,7 @@ void CPM::Protect() {
             Log::debug("start %s %s", pProcess->path.c_str(), pProcess->args.c_str());
             std::thread t([&](){
                 RunChild(pProcess);
+                m_nNum--;
             });
             t.detach();
         } else if(pProcess->daemon && !Find(pProcess->pid)) { //程序异常退出
@@ -226,21 +227,34 @@ void CPM::Protect() {
             Log::debug("protect %s %s", pProcess->path.c_str(), pProcess->args.c_str());
             std::thread t([&](){
                 RunChild(pProcess);
+                m_nNum--;
             });
             t.detach();
         } else if(NeedRestart(pProcess, now)) { //达到重启时间
             m_nNum++;
             Log::debug("restart 1 %s %s", pProcess->path.c_str(), pProcess->args.c_str());
             std::thread t([&](){
-                RunChild(pProcess);
+                if(Kill(pProcess->pid)) {
+                    pProcess->pid = 0;
+                    RunChild(pProcess);
+                } else {
+                    Log::error("kill process:%d failed[%s %s]", pProcess->pid, pProcess->path.c_str(), pProcess->args.c_str());
+                }
+                m_nNum--;
             });
             t.detach();
-        } else if(pProcess->rsdur > 0 && difftime(now, pProcess->startup) > pProcess->rsdur*216000) {
+        } else if(pProcess->rsdur > 0 && difftime(now, pProcess->startup) > pProcess->rsdur) {
             //运行时间达到重启时长
             m_nNum++;
             Log::debug("restart 2 %s %s", pProcess->path.c_str(), pProcess->args.c_str());
             std::thread t([&](){
-                RunChild(pProcess);
+                if(Kill(pProcess->pid)) {
+                    pProcess->pid = 0;
+                    RunChild(pProcess);
+                } else {
+                    Log::error("kill process:%d failed[%s %s]", pProcess->pid, pProcess->path.c_str(), pProcess->args.c_str());
+                }
+                m_nNum--;
             });
             t.detach();
         }
@@ -270,41 +284,50 @@ bool CPM::Kill(uint64_t pid) {
             Log::debug("kill process %ld sucess", pid);
             return true;
         }
-        if(FALSE == TerminateProcess(h,0)) {
+        BOOL ret = TerminateProcess(h,0);
+        if(FALSE == ret) {
             DWORD dwError = GetLastError();
             Log::error("TerminateProcess failed:%d",dwError);
+        } else {
+            WaitForSingleObject(h, INFINITE);
+            DWORD dwExitCode = 0;
+            GetExitCodeProcess(h, &dwExitCode); 
+            CloseHandle(h);
+            i=0;
+            Log::debug("kill process %ld sucess: %d", pid, dwExitCode);
+            return true;
         }
         CloseHandle(h);
         Sleep(1000);
     }
     //Log::debug("end kill PID:%ld",lPID);
-    HANDLE h=OpenProcess(PROCESS_TERMINATE,FALSE,pid);
-    if(NULL == h) {
-        Log::debug("kill process %ld sucess", pid);
-        return true;
-    }
-
-    CloseHandle(h);
-    Log::warning("process is still exist:%ld(handle:%d)", pid,h);
+    //HANDLE h=OpenProcess(PROCESS_TERMINATE,FALSE,pid);
+    //if(NULL == h) {
+    //    Log::debug("kill process %ld sucess", pid);
+    //    return true;
+    //}
+    //
+    //CloseHandle(h);
+    //Log::warning("process is still exist:%ld(handle:%d)", pid,h);
     return false;
 }
 
 bool CPM::RunChild(Process* pro) {
-    if(pro->pid != 0 && Find(pro->pid) && !Kill(pro->pid)) {
-        Log::error("kill process:%d failed[%s %s]", pro->pid, pro->path.c_str(), pro->args.c_str());
-        m_nNum--;
-        return false;
-    }
+    //if(pro->pid != 0 && Find(pro->pid) && !Kill(pro->pid)) {
+    //    Log::error("kill process:%d failed[%s %s]", pro->pid, pro->path.c_str(), pro->args.c_str());
+    //    m_nNum--;
+    //    return false;
+    //}
 
     if(!CreateChildProcess(pro->path, pro->args, pro->pid)) {
         Log::error("restart process failed[%s %s]", pro->path.c_str(), pro->args.c_str());
-        m_nNum--;
+        //m_nNum--;
         return false;
     }
 
     pro->startup = time(NULL);
 
-    m_nNum--;
+    //m_nNum--;
     return true;
 }
 
@@ -356,6 +379,7 @@ bool CPM::CreateChildProcess(string path, string args, uint64_t& pid) {
     }
     pid = pi.dwProcessId;
     bRes = true;
+    WaitForInputIdle(pi.hProcess, 60000);
     //LogInfo(_T("CreateProcess sucess:%d"), lPID);
 end:
     if(INVALID_HANDLE_VALUE != childStdInWrite)
