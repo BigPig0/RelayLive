@@ -44,16 +44,16 @@ namespace SipServer {
     map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
 
     // 回调函数
-    void (*g_updateStatus)(string strDevID, int nOnline) = NULL;
-    void (*g_updatePostion)(string strDevID, double log, double lat) = NULL;
-    void (*g_addDevice)(DevInfo* dev) = NULL;
-    void (*g_playResult)(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo) = NULL;
+    UPDATE_STATUS_CB   g_updateStatus = NULL;
+    UPDATE_POSITION_CB g_updatePostion = NULL;
+    ADD_DEVICE_CB      g_addDevice = NULL;
+    PLAY_CB            g_playResult = NULL;
 
     static bool    _bFirstReg = true;      //第一次收到register或keeplive
     static time_t  _lastQueryTime = 0;     //上一次查询目录的时间
     static time_t  _lastSubscribe = 0;     //上一次订阅的时间
 
-
+    //从端口表中取出可用的rtp端口
     static int GetRtpPort() {
         int nRet = -1;
         if(!_rtpPorts.empty()){
@@ -63,10 +63,12 @@ namespace SipServer {
         return nRet;
     }
 
+    //将用完的端口返回到端口表中
     static void GiveBackRtpPort(int nPort) {
         _rtpPorts.push_back(nPort);
     }
 
+    //exosip事件处理线程
     static void SeverThread()
     {
         DWORD nThreadID = GetCurrentThreadId();
@@ -189,6 +191,7 @@ namespace SipServer {
         } //while(true)
     }
 
+    //查询订阅操作
     static void SubscribeThread() {
         time_t now = time(nullptr);
         if(_bFirstReg || difftime(now, _lastQueryTime) > 3600){ //距离上一次查询超过一小时重新查询
@@ -228,6 +231,19 @@ namespace SipServer {
             //}
             _pSubscribe->SubscribeMobilepostion(600, _vecMobile);
             Log::debug(" Subscribe all mobile pos %s", g_strCode.c_str());
+        }
+    }
+
+    //下级平台超时检测
+    static void ExpireThread(){
+        while (true)
+        {
+            if(g_bLowStatus) {
+                g_nLowExpire -= 10;
+                if(g_nLowExpire <= 0)
+                    g_bLowStatus = false;
+            }
+            sleep(10000);
         }
     }
 
@@ -461,6 +477,8 @@ namespace SipServer {
 #endif
         strResJson = StringHandle::StringTrimRight(strResJson,',');
         strResJson += "}";
+
+        return strResJson;
     }
 
     void TransDevInfo(string json, DevInfo *dev, bool utf82ansi) {
@@ -615,11 +633,17 @@ namespace SipServer {
             return false;
         }
 
-        // 监听服务
+        // exosip服务
         thread th([](){
             SeverThread();
         });
         th.detach();
+
+        //下级平台超时检测
+        thread tt([](){
+            ExpireThread();
+        });
+        tt.detach();
 
         return true;
     }
@@ -688,19 +712,19 @@ namespace SipServer {
         return true;
     }
 
-    void SetUpdateStatusCB(void (*cb)(string strDevID, int nOnline)) {
+    void SetUpdateStatusCB(UPDATE_STATUS_CB cb) {
         g_updateStatus = cb;
     }
 
-    void SetUpdatePostionCB(void (*cb)(string strDevID, double log, double lat)) {
+    void SetUpdatePostionCB(UPDATE_POSITION_CB cb) {
         g_updatePostion = cb;
     }
 
-    void SetDeviceCB(void (*cb)(DevInfo* dev)) {
+    void SetDeviceCB(ADD_DEVICE_CB cb) {
         g_addDevice = cb;
     }
 
-    void SetPlayCB(void (*cb)(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo)) {
+    void SetPlayCB(PLAY_CB cb) {
         g_playResult = cb;
     }
 };

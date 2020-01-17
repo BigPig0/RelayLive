@@ -1,4 +1,5 @@
 #pragma once
+#include "SipServer.h"
 #include <string>
 
 namespace IPC {
@@ -21,4 +22,9 @@ namespace IPC {
      * 获取设备列表的json
      */
     std::string GetDevsJson();
+
+    /**
+     * 设备信息缓存
+     */
+    void AddDev(SipServer::DevInfo *dev);
 };

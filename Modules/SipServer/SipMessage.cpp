@@ -7,36 +7,36 @@
 using namespace SipServer;
 using namespace std;
 
-struct msgPublic
-{
-    string strCmdType;  //< 命令类型
-    string strSN;       //< 命令序列号 
-    string strDeviceID; //< 源设备/系统编码
-};
-
-/** 通知命令 */
-struct msgNotify : public msgPublic
-{
-};
-
-/** 应答命令 */
-struct msgResponse : public msgPublic
-{
-};
-
-/** 状态信息报送 */
-struct msgKeepAlive : public msgNotify
-{
-    string         strStatus;   //< 是否正常工作
-    vector<string> vecDeviceID; //< 故障设备列表
-};
-
-/** 设备目录查询信息应答 */
-struct msgDevDirQuery : public msgResponse
-{
-    string            strSumNum;   //< 查询结果总数
-    vector<DevInfo*>  vecDevInfo;  //< 设备列表
-};
+//struct msgPublic
+//{
+//    string strCmdType;  //< 命令类型
+//    string strSN;       //< 命令序列号 
+//    string strDeviceID; //< 源设备/系统编码
+//};
+//
+///** 通知命令 */
+//struct msgNotify : public msgPublic
+//{
+//};
+//
+///** 应答命令 */
+//struct msgResponse : public msgPublic
+//{
+//};
+//
+///** 状态信息报送 */
+//struct msgKeepAlive : public msgNotify
+//{
+//    string         strStatus;   //< 是否正常工作
+//    //vector<string> vecDeviceID; //< 故障设备列表
+//};
+//
+///** 设备目录查询信息应答 */
+//struct msgDevDirQuery : public msgResponse
+//{
+//    string            strSumNum;   //< 查询结果总数
+//    //vector<DevInfo*>  vecDevInfo;  //< 设备列表
+//};
 
 struct SipMessageInfo
 {
@@ -48,7 +48,6 @@ struct SipMessageInfo
     string content;                // 消息体
     string strCmdType;             // 消息类型
     map<string,string> mapBody;    // 消息体解析
-    msgPublic* pMsgBody;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -56,11 +55,12 @@ struct SipMessageInfo
 /**
  * 解析状态信息报送
  */
-static msgPublic* ParseKeepAlive(pugi::xml_node& root)
+static void ParseKeepAlive(pugi::xml_node& root)
 {
-    msgKeepAlive *pRet = new msgKeepAlive;
+    //msgKeepAlive *pRet = new msgKeepAlive;
     string nodeName;
     string nodeValue;
+    string devID, status;
 
     LogDebug("<%s>",root.name());
     //遍历历子节点
@@ -68,16 +68,18 @@ static msgPublic* ParseKeepAlive(pugi::xml_node& root)
     {
         nodeName  = node.name();
         if (nodeName == "CmdType") {
-            pRet->strCmdType = node.child_value();
+            //pRet->strCmdType = node.child_value();
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         } else if(nodeName == "SN") {
-            pRet->strSN = node.child_value();
+            //pRet->strSN = node.child_value();
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         } else if (nodeName == "DeviceID") {
-            pRet->strDeviceID = node.child_value();
+            /*pRet->strDeviceID*/
+            devID = node.child_value();
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         } else if (nodeName == "Status") {
-            pRet->strStatus = node.child_value();
+            //pRet->strStatus
+            status= node.child_value();
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         } else if (!nodeName.empty()) {
             Log::error("%s uncatch", nodeName.c_str());
@@ -88,15 +90,14 @@ static msgPublic* ParseKeepAlive(pugi::xml_node& root)
 
     // 平台保活
     g_nLowExpire = 120;
-    return pRet;
+    //return pRet;
 }
 
 /**
  * 解析设备目录信息查询报文
  */
-static msgPublic* ParseCatalog(pugi::xml_node& root)
+static void ParseCatalog(pugi::xml_node& root)
 {
-    msgDevDirQuery *pRet = new msgDevDirQuery;
     string nodeName;
     string nodeValue;
 
@@ -109,13 +110,13 @@ static msgPublic* ParseCatalog(pugi::xml_node& root)
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         }
         if (nodeName == "CmdType") {
-            pRet->strCmdType = node.child_value();
+            //pRet->strCmdType = node.child_value();
         } else if(nodeName == "SN") {
-            pRet->strSN = node.child_value();
+            //pRet->strSN = node.child_value();
         } else if (nodeName == "DeviceID") {
-            pRet->strDeviceID = node.child_value();
+            //pRet->strDeviceID = node.child_value();
         } else if (nodeName == "SumNum") {
-            pRet->strSumNum = node.child_value();
+            //pRet->strSumNum = node.child_value();
         } else if (nodeName == "DeviceList") {
             stringstream ss;
             ss << "<" << nodeName;
@@ -227,7 +228,12 @@ static msgPublic* ParseCatalog(pugi::xml_node& root)
                 }// for Item Node
                 LogDebug("</Item>");
 
-                pRet->vecDevInfo.push_back(pDevCtrl);
+                if(g_mapDevice.count(pDevCtrl->strDevID) == 0)
+                    g_mapDevice.insert(make_pair(pDevCtrl->strDevID, pDevCtrl));
+                else {
+                    delete g_mapDevice[pDevCtrl->strDevID];
+                    g_mapDevice[pDevCtrl->strDevID] = pDevCtrl;
+                }
                 if(g_addDevice)
                     g_addDevice(pDevCtrl);
             } // for DeviceList Node
@@ -236,15 +242,15 @@ static msgPublic* ParseCatalog(pugi::xml_node& root)
         }// DeviceList
     }// for root Node
     LogDebug("</%s>",root.name());
-    return pRet;
+    //return pRet;
 }
 
 /**
  * 目录信息订阅后收到的推送报文
  */
-static msgPublic* ParseNotifyCatalog(pugi::xml_node& root)
+static void ParseNotifyCatalog(pugi::xml_node& root)
 {
-    msgDevDirQuery *pRet = new msgDevDirQuery;
+    //msgDevDirQuery *pRet = new msgDevDirQuery;
     string nodeName;
     string nodeValue;
 
@@ -257,13 +263,13 @@ static msgPublic* ParseNotifyCatalog(pugi::xml_node& root)
             LogDebug("<%s>%s</%s>",nodeName.c_str(),node.child_value(),nodeName.c_str());
         }
         if (nodeName == "CmdType") {
-            pRet->strCmdType = node.child_value();
+            //pRet->strCmdType = node.child_value();
         } else if(nodeName == "SN") {
-            pRet->strSN = node.child_value();
+            //pRet->strSN = node.child_value();
         } else if (nodeName == "DeviceID") {
-            pRet->strDeviceID = node.child_value();
+            //pRet->strDeviceID = node.child_value();
         } else if (nodeName == "SumNum") {
-            pRet->strSumNum = node.child_value();
+            //pRet->strSumNum = node.child_value();
         } else if (nodeName == "DeviceList") {
             stringstream ss;
             ss << "<" << nodeName;
@@ -298,22 +304,29 @@ static msgPublic* ParseNotifyCatalog(pugi::xml_node& root)
                 }// for Item Node
                 LogDebug("</Item>");
 
-                pRet->vecDevInfo.push_back(pDevCtrl);
+                //更新了状态
+                if(g_updateStatus && !pDevCtrl->strStatus.empty()) {
+                    g_updateStatus(pDevCtrl->strDevID, pDevCtrl->strStatus);
+                }
+                // 更新了GPS
+                if(g_updatePostion && !pDevCtrl->strLongitude.empty() && !pDevCtrl->strLatitude.empty()) {
+                    g_updatePostion(pDevCtrl->strDevID, pDevCtrl->strLongitude, pDevCtrl->strLatitude);
+                }
             } // for DeviceList Node
 
             LogDebug("</DeviceList>");
         }// DeviceList
     }// for root Node
     LogDebug("</%s>",root.name());
-    return pRet;
+    //return pRet;
 }
 
 /**
  * 位置信息订阅后收到的推送报文
  */
-static msgPublic* ParseMobilePosition(pugi::xml_node& root)
+static void ParseMobilePosition(pugi::xml_node& root)
 {
-    msgDevDirQuery *pRet = new msgDevDirQuery;
+    //msgDevDirQuery *pRet = new msgDevDirQuery;
     string nodeName;
     string nodeValue;
 
@@ -325,9 +338,9 @@ static msgPublic* ParseMobilePosition(pugi::xml_node& root)
     {
         nodeName  = node.name();
         if (nodeName == "CmdType") {
-            pRet->strCmdType = node.child_value();
+            //pRet->strCmdType = node.child_value();
         } else if(nodeName == "SN") {
-            pRet->strSN = node.child_value();
+            //pRet->strSN = node.child_value();
         } else if (nodeName == "DeviceID") {
             dev.strDevID = node.child_value();
         } else if (nodeName == "Longitude") {
@@ -336,8 +349,10 @@ static msgPublic* ParseMobilePosition(pugi::xml_node& root)
             dev.strLatitude = node.child_value();
         }
     }
-    pRet->vecDevInfo.push_back(pDevCtrl);
-    return pRet;
+    if(g_updatePostion) {
+        g_updatePostion(pDevCtrl->strDevID, pDevCtrl->strLongitude, pDevCtrl->strLatitude);
+    }
+    //return pRet;
 }
 
 /**
@@ -346,7 +361,7 @@ static msgPublic* ParseMobilePosition(pugi::xml_node& root)
  * @param root[in]   输入xml根节点
  * @return 报文命令类型CmdType
  */
-static string ParseNotify(msgPublic** ppMsg, pugi::xml_node& root)
+static string ParseNotify(pugi::xml_node& root)
 {
     // 查找CmdType节点
     pugi::xml_node nodeCmdType = root.child("CmdType");
@@ -358,30 +373,18 @@ static string ParseNotify(msgPublic** ppMsg, pugi::xml_node& root)
     string strCmdType = nodeCmdType.child_value();
     if (strCmdType == "Keepalive"){
         Log::debug("this is a keepalive message");
-        *ppMsg = ParseKeepAlive(root);
-        return strCmdType;
+        ParseKeepAlive(root);
     } else if(strCmdType == "Catalog") {
         Log::debug("this is a Catalog message");
-        *ppMsg = ParseNotifyCatalog(root);
-        msgDevDirQuery* pInfo = (msgDevDirQuery*)*ppMsg;
-        for(auto& dev:pInfo->vecDevInfo) {
-            if(g_updateStatus)
-                g_updateStatus(dev->strDevID, dev->strStatus=="ON");
-        }
+        ParseNotifyCatalog(root);
     } else if(strCmdType == "MobilePosition") {
         Log::debug("this is a MobilePosition message");
-        *ppMsg = ParseMobilePosition(root);
-        msgDevDirQuery* pInfo = (msgDevDirQuery*)*ppMsg;
-        for(auto& dev:pInfo->vecDevInfo) {
-            if(g_updatePostion) {
-                g_updatePostion(dev->strDevID, stod(dev->strLongitude), stod(dev->strLatitude));
-            }
-        }
+        ParseMobilePosition(root);
     } else {
         Log::error("this notify message is not parse cmdtype");
     }
 
-    return "";
+    return strCmdType;
 }
 
 /**
@@ -390,7 +393,7 @@ static string ParseNotify(msgPublic** ppMsg, pugi::xml_node& root)
  * @param root[in]   输入xml根节点
  * @return 报文命令类型CmdType
  */
-static string ParseResponse(msgPublic** ppMsg, pugi::xml_node& root)
+static string ParseResponse(pugi::xml_node& root)
 {
     // 查找CmdType节点
     pugi::xml_node nodeCmdType = root.child("CmdType");
@@ -403,10 +406,7 @@ static string ParseResponse(msgPublic** ppMsg, pugi::xml_node& root)
     if (strCmdType == "Catalog") {
         // 目录查询的应答消息
         Log::debug("this is a Catalog message");
-        *ppMsg = ParseCatalog(root);
-
-        // 解析结果并保存
-        msgDevDirQuery* pInfo = (msgDevDirQuery*)*ppMsg;
+        ParseCatalog(root);
         return strCmdType;
     }
 
@@ -420,7 +420,7 @@ static string ParseResponse(msgPublic** ppMsg, pugi::xml_node& root)
  * @param szBody[in] 输入报文体内容
  * @return 报文类型 报文类型+CmdType
  */
-static string ParseMsgBody(msgPublic** ppMsg, const char* szBody)
+static string ParseMsgBody(const char* szBody)
 {
     pugi::xml_document doc;
     do
@@ -440,11 +440,11 @@ static string ParseMsgBody(msgPublic** ppMsg, const char* szBody)
         string strRoot = node.name(); 
         if (strRoot == "Notify") {
             // 通知类
-            string strCmdType = ParseNotify(ppMsg, node);
+            string strCmdType = ParseNotify(node);
             return strCmdType;
         } else if (strRoot == "Response") {
             // 应答类
-            string strCmdType = ParseResponse(ppMsg, node);
+            string strCmdType = ParseResponse(node);
             return strCmdType;
         }
 
@@ -478,7 +478,7 @@ static void parserMessageInfo(osip_message_t*request, int iReqId, SipMessageInfo
     if (body != nullptr && nullptr != body->body)
     {
         msgInfo.content = body->body;
-        msgInfo.strCmdType = ParseMsgBody(&msgInfo.pMsgBody, body->body);
+        msgInfo.strCmdType = ParseMsgBody(body->body);
     }
 }
 
@@ -573,6 +573,8 @@ void CSipMessage::QueryDirtionary()
     } else {
         Log::warning("send Query message QueryDirtionary\r\n");
     }
+
+    g_mapDevice.clear();
 }
 
 void CSipMessage::QueryDeviceStatus(string devID)

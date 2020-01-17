@@ -1,7 +1,6 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
 #include "util.h"
-#include "DeviceMgr.h"
 #include "SipServer.h"
 #include "MiniDump.h"
 #include "ipc.h"
@@ -31,14 +30,6 @@ int main()
 
     /** 进程间通信 */
     IPC::Init();
-
-    /** 初始化设备模块 */
-    if (!DeviceMgr::Init())
-    {
-        Log::error("DeviceManagerInstance init failed");
-        return -1;
-    }
-    Log::debug("DeviceMgr::Init ok");
 
     /** 初始化SIP服务器 */
     if (!SipServer::Init())

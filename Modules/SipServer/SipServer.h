@@ -113,23 +113,27 @@ namespace SipServer {
      * 设备状态更新回调
      * @cb 回调函数
      * @cb @strDevID 设备ID
-     * @cb @nOnline 在线状态 0离线 1在线
+     * @cb @nOnline 在线状态
      */
-    void SetUpdateStatusCB(void (*cb)(string strDevID, int nOnline));
+    typedef void (*UPDATE_STATUS_CB)(string strDevID, string strOnline);
+    void SetUpdateStatusCB(UPDATE_STATUS_CB cb);
 
     /**
      * 设置GPS更新回调
      */
-    void SetUpdatePostionCB(void (*cb)(string strDevID, double log, double lat));
+    typedef void (*UPDATE_POSITION_CB)(string strDevID, string strLog, string strLat);
+    void SetUpdatePostionCB(UPDATE_POSITION_CB cb);
 
     /**
      * 设置新增设备回调
      */
-    void SetDeviceCB(void (*cb)(DevInfo* dev));
+    typedef void (*ADD_DEVICE_CB)(DevInfo* dev);
+    void SetDeviceCB(ADD_DEVICE_CB cb);
 
     /**
      * 播放请求回调
      */
-    void SetPlayCB(void (*cb)(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo));
+    typedef void (*PLAY_CB)(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo);
+    void SetPlayCB(PLAY_CB cb);
 };
 

@@ -18,12 +18,18 @@
     <ClCompile Include="..\..\Projects\livectrl_server\ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\livectrl_server\script.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\livectrl_server\server.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Projects\livectrl_server\ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\livectrl_server\script.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

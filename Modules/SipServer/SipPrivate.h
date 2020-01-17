@@ -13,6 +13,7 @@
 // TODO: 在此处引用程序需要的其他头文件  
 #include "util.h"
 #include "utilc.h"
+#include "SipServer.h"
 
 #include <stdlib.h>   
 #include <iostream>
@@ -56,10 +57,10 @@ namespace SipServer {
     extern map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
     extern eXosip_t*      g_pExContext;          //exosip实例
 
-    extern void (*g_updateStatus)(string strDevID, int nOnline);
-    extern void (*g_updatePostion)(string strDevID, double log, double lat);
-    extern void (*g_addDevice)(DevInfo* dev);
-    extern void (*g_playResult)(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo);
+    extern UPDATE_STATUS_CB   g_updateStatus;
+    extern UPDATE_POSITION_CB g_updatePostion;
+    extern ADD_DEVICE_CB      g_addDevice;
+    extern PLAY_CB            g_playResult;
 
     extern void AutoQuery();
 
