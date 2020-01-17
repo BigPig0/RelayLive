@@ -9,25 +9,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Modules\SipServer\stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Modules\SipServer\SipRegister.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipInstance.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipSever.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Modules\SipServer\SipMessage.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipMsgParser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Modules\SipServer\SipSubscribe.cpp">
@@ -36,39 +21,15 @@
     <ClCompile Include="..\..\Modules\SipServer\SipInvite.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipCall.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules\SipServer\SipConfig.cpp">
+    <ClCompile Include="..\..\Modules\SipServer\SipServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Modules\SipServer\stdafx.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\targetver.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipHeaders.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Modules\SipServer\SipRegister.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipInstance.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipSever.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Modules\SipServer\SipMessage.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipMsgParser.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Modules\SipServer\SipSubscribe.h">
@@ -77,11 +38,11 @@
     <ClInclude Include="..\..\Modules\SipServer\SipInvite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipCall.h">
+    <ClInclude Include="..\..\Modules\SipServer\SipServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Modules\SipServer\SipConfig.h">
-      <Filter>源文件</Filter>
+    <ClInclude Include="..\..\Modules\SipServer\SipPrivate.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #pragma once
-#include "SipMsgParser.h"
+
+namespace SipServer {
 
 /**
  * 会话邀请
@@ -7,18 +8,14 @@
 class CSipInvite
 {
 public:
-    CSipInvite(eXosip_t* pSip);
-    ~CSipInvite(void);
-
     /**
      * 发送会话邀请
-     * @param pPlatform[in] 下级平台信息
-     * @param pDevInfo[in] 视频设备信息
+     * @param strDevID[in] 视频设备编码
      * @param nRTPPort[in] 接收rtp的端口
      * @return call-id
      */
-    int SendInvite(PlatFormInfo* pPlatform, DevInfo* pDevInfo, int nRTPPort);
-    int SendRecordInvite(PlatFormInfo* pPlatform, DevInfo* pDevInfo, int nRTPPort, string beginTime, string endTime);
+    int SendInvite(string strProName, uint32_t nID, string strCode, int nRTPPort);
+    int SendRecordInvite(string strProName, uint32_t nID, string strCode, int nRTPPort, string beginTime, string endTime);
 
     /**
      * 接收到200OK返回
@@ -27,25 +24,29 @@ public:
     void OnInviteFailed(eXosip_event_t *osipEvent);
 
     /**
-     * 结束会话
+     * 结束会话,指定端口的会话
      */
-    void SendBye(int cid, int did);
+    bool StopSipCall(uint32_t nRtpPort);
 
     /**
-     * 
+     * 结束指定liveserver的所有会话
+     */
+    vector<uint32_t> StopSipCallAll(string strProName);
+
+    /**
+     * 收到新建会话
      */
     void OnCallNew(eXosip_event_t *osipEvent);
 
     /**
-     * 
+     * 收到对方发起关闭
      */
     void OnCallClose(eXosip_event_t *osipEvent);
 
     /**
-     * 
+     * 收到会话结束
      */
     void OnCallClear(eXosip_event_t *osipEvent);
-private:
-    eXosip_t*      m_pExContext;
 };
 
+};

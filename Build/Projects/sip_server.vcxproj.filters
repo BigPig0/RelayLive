@@ -4,10 +4,21 @@
     <Filter Include="src">
       <UniqueIdentifier>{af670b3a-6985-4e57-8dba-a7c10d3fd4d4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{dcf96883-a2e4-45aa-b117-eeafeb98ce85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Projects\sip_server.cpp">
+    <ClCompile Include="..\..\Projects\sip_server\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\ipc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Projects\sip_server\ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -26,9 +26,9 @@ namespace Server
 		char pra[MAX_PATH]={0};
 		lws_hdr_copy(pss->wsi, pra, MAX_PATH, WSI_TOKEN_HTTP_URI_ARGS);
         if(pss->isWs)
-            Log::debug("new ws-live protocol establised: %s", path);
+            Log::debug("new ws-live protocol establised: %s%s", path, pra);
         else
-            Log::debug("new http-live request: %s %s", path,pra);
+            Log::debug("new http-live request: %s%s", path, pra);
 
         // 请求端的ip, 存在x_forwarded_for时，优先使用，否则获取连接的对端ip
         char clientIP[50]={0};

@@ -44,7 +44,7 @@ namespace Server
 		info.timeout_secs = 0x1fffffff;
 		info.timeout_secs_ah_idle = 0x1fffffff;
         context = lws_create_context(&info);
-        Log::debug("hik_tmc_sdk sever start success");
+        Log::debug("relay sever start success");
 
 		info.port = port;
         info.protocols = protocols;

@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "ring_buff.h"
 

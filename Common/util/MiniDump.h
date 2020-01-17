@@ -4,7 +4,7 @@
 class UTIL_API CMiniDump
 {
 public:
-    CMiniDump(LPCTSTR szFileName);
+    CMiniDump(string szFileName);
     ~CMiniDump(void);
     void SetCallback(void (*p)());
 };

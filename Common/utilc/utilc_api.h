@@ -17,7 +17,7 @@ typedef unsigned long long uint64_t;
 #else
 #include <stdint.h>
 #endif
-#include <windows.h>
+//#include <windows.h>
 #endif
 
 #include <string.h>

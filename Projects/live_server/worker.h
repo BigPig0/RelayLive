@@ -1,61 +1,56 @@
 #pragma once
+#include "ring_buff.h"
+#include "util.h"
+#include <string>
+#include <list>
 
 namespace Server
 {
-    struct pss_http_ws_live;
+    struct pss_live;
     enum MediaType;
 
-    class CHttpWorker
+    class CLiveWorker
     {
     public:
-        CHttpWorker(string strCode, HandleType t, int nChannel, bool isWs);
-        ~CHttpWorker();
+        CLiveWorker();
+        ~CLiveWorker();
 
-        /** 请求端获取视频数据 */
-        int GetVideo(char **buff);
+        bool Play();
 
-        virtual void play_answer(int ret, string error_info);
+        void push_ps_data(char* pBuff, int nLen);
+        int get_ps_data(char* pBuff, int &nLen);
 
-        /**
-         * 底层推送H264进来
-         */
-        virtual void push_video_stream(AV_BUFF buff);
-
-        /**
-         * 底层通知播放关闭(接收rtp超时、对方关闭等)
-         */
-        virtual void stop();
-
-        /**
-         * 封装媒体类型
-         */
-        void MediaCb(AV_BUFF buff);
+        void push_flv_frame(char* pBuff, int nLen);
+        int get_flv_frame(char **buff);   /** 请求端获取视频数据 */
+		void next_flv_frame();
 
 		void close();
     private:
         void cull_lagging_clients();
 
     public:
-        pss_http_ws_live     *m_pPss;           //< 连接会话
-        string                m_strCode;        //< 播放媒体编号
-        HandleType            m_eHandleType;    //< 表明是哪一种类型
-        string                m_strMIME;        //< mime type
-        //MediaType             m_eMediaType;
-        int                   m_nChannel;       //< 通道 0:原始码流  1:小码流
+        pss_live     *m_pPss;           //< 连接会话
+        std::string           m_strCode;        //< 播放媒体编号
+        std::string           m_strType;        // 目标媒体类型 flv mp4 h264
+        std::string           m_strHw;          // 目标媒体分辨率 空表示不变
+        std::string           m_strMIME;        //< mime type
         bool                  m_bWebSocket;     //< false:http请求，true:websocket
 
-        string                m_strPath;        //< 播放端请求地址
-        string                m_strClientName;  //< 播放端的名称
-        string                m_strClientIP;    //< 播放端的ip
-        string                m_strError;       //< sip服务器返回的播放请求失败原因
+        std::string           m_strPath;        //< 播放端请求地址
+        std::string           m_strClientName;  //< 播放端的名称
+        std::string           m_strClientIP;    //< 播放端的ip
+        std::string           m_strError;       //< sip服务器返回的播放请求失败原因
 
     private:
-        void                    *m_pFormat;     //< 视频格式打包
-        struct lws_ring         *m_pRing;       //< 缓存媒体内容的缓冲区
-        AV_BUFF                  m_SocketBuff;  //< socket发送的数据缓存
-		bool                     m_bConnect;       //<
-
-        int                   m_nType;          //< 0:live直播；1:record历史视频
+        ring_buff_t          *m_pPSRing;       //< PS数据队列
+        ring_buff_t          *m_pFlvRing;         //< 目标码流数据队列
+        std::string           m_SocketBuff;    //< socket发送的数据缓存
+		bool                  m_bConnect;      //< 客户端连接状态
     };
+
+    /** 直播 */
+    CLiveWorker* CreatLiveWorker(std::string strCode, std::string strType, std::string strHw, bool isWs, pss_live *pss, string clientIP);
+
+    void InitFFmpeg();
 
 };

@@ -8,7 +8,7 @@
 //#error "The following code only works for x86!"  
 #endif
 
-LPTSTR  g_szDumpFileName = nullptr;
+string  g_szDumpFileName = nullptr;
 
 void (*callback)() = nullptr;
 
@@ -52,9 +52,9 @@ inline BOOL CALLBACK MiniDumpCallback(PVOID                            pParam,
     return FALSE;  
 }  
 
-inline void CreateMiniDump(PEXCEPTION_POINTERS pep, LPCTSTR strFileName)  
+inline void CreateMiniDump(PEXCEPTION_POINTERS pep, string strFileName)  
 {  
-    HANDLE hFile = CreateFile(strFileName, GENERIC_READ | GENERIC_WRITE,  
+    HANDLE hFile = CreateFileA(strFileName.c_str(), GENERIC_READ | GENERIC_WRITE,  
         FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);  
 
     if((hFile != NULL) && (hFile != INVALID_HANDLE_VALUE))  
@@ -116,9 +116,9 @@ void InitMinDump()
     DisableSetUnhandledExceptionFilter();  
 }
 
-CMiniDump::CMiniDump(LPCTSTR szFileName)
+CMiniDump::CMiniDump(string szFileName)
 {
-    g_szDumpFileName = (LPTSTR)szFileName;
+    g_szDumpFileName = szFileName;
     //InitMinDump();
     SetErrorMode(SEM_NOGPFAULTERRORBOX);
 }

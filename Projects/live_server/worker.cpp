@@ -1,13 +1,49 @@
-#include "stdafx.h"
-#include "uv.h"
-#include "HttpLiveServer.h"
-#include "HttpWorker.h"
 
+#include "uv.h"
+#include "libwebsockets.h"
 #include "netstream.h"
+#include "live.h"
+#include "rtp.h"
+#include "worker.h"
+#include "ipc.h"
+#include "util.h"
+#include "Log.h"
+#include <list>
+#include <sstream>
+
+#ifdef USE_FFMPEG
+extern "C"
+{
+#define snprintf  _snprintf
+#define __STDC_FORMAT_MACROS
+#include "libavdevice/avdevice.h"
+#include "libavcodec/avcodec.h"  
+#include "libavformat/avformat.h"  
+#include "libswscale/swscale.h"  
+#include "libavutil/imgutils.h"
+#include "libavutil/timestamp.h"
+}
+#pragma comment(lib,"avcodec.lib")
+#pragma comment(lib,"avdevice.lib")
+#pragma comment(lib,"avfilter.lib")
+#pragma comment(lib,"avformat.lib")
+#pragma comment(lib,"avutil.lib")
+#pragma comment(lib,"postproc.lib")
+#pragma comment(lib,"swresample.lib")
+#pragma comment(lib,"swscale.lib")
+#endif
 
 namespace Server
 {
-    extern int g_nNodelay;            //< 视频格式打包是否立即发送 1:每个帧都立即发送  0:每个关键帧及其后面的非关键帧收到后一起发送
+    typedef struct _AV_BUFF_ {
+        char       *pData;    //< 数据内容
+        uint32_t    nLen;     //< 数据长度
+    }AV_BUFF;
+
+    static list<CLiveWorker*>  _listWorkers;
+    static CriticalSection     _csWorkers;
+	static uint32_t            _flvbufsize = 1024*16;
+	static uint32_t            _psbufsize = 1024*32;
 
     static void destroy_ring_node(void *_msg)
     {
@@ -17,205 +53,382 @@ namespace Server
         msg->nLen = 0;
     }
 
-    static void AVCallback(AV_BUFF buff, void* pUser){
-        CHttpWorker* pLive = (CHttpWorker*)pUser;
-        pLive->MediaCb(buff);
+    static string GetClientsInfo() {
+        bool first = true;
+        stringstream ss;
+        for (auto c : _listWorkers) {
+            if(!first) {
+                first = false;
+                ss << ",";
+            }
+            ss << "{\"DeviceID\":\"" << c->m_strCode 
+                << "\",\"Connect\":\"";
+            if(c->m_bWebSocket)
+                ss << "websocket";
+            else
+                ss << "http";
+            ss << "\",\"Media\":\"" << c->m_strType
+                << "\",\"ClientIP\":\"" << c->m_strClientIP
+                << "\",\"Channel\":\"" << c->m_strHw
+                << "\"}";
+        }
+        return ss.str();
     }
 
     //////////////////////////////////////////////////////////////////////////
 
-    CHttpWorker::CHttpWorker(string strCode, HandleType t, int nChannel, bool isWs)
-        : m_strCode(strCode)
-        , m_nType(0)
-        , m_pLive(nullptr)
-        , m_eHandleType(t)
-        , m_nChannel(nChannel)
-        , m_bWebSocket(isWs)
+    // 播放线程
+    static void real_play(void* arg){
+        CLiveWorker* pLive = (CLiveWorker*)arg;
+        pLive->Play();
+    }
+
+#ifdef USE_FFMPEG
+    //读取输入数据的方法
+    static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
+        CLiveWorker *lw = (CLiveWorker*)opaque;
+        int len = 0;
+        while (len == 0) {
+            len = lw->get_ps_data((char*)buf, bufsize);
+        }
+        return len;
+    }
+
+    //输出数据的方法
+    static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
+        CLiveWorker* pLive = (CLiveWorker*)opaque;
+        pLive->push_flv_frame((char*)buf, buf_size);
+        return buf_size;
+    }
+#endif
+
+    CLiveWorker::CLiveWorker()
+        : m_bWebSocket(false)
 		, m_bConnect(true)
     {
-        m_pRing  = lws_ring_create(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
+    }
 
-        if (t == h264_handle) {
-            CH264 *tmp = new CH264(AVCallback, this);
-            tmp->SetNodelay(g_nNodelay);
-            m_pFormat = tmp;
-        } else if(t == flv_handle) {
-            CFlv *tmp = new CFlv(AVCallback, this);
-            tmp->SetNodelay(g_nNodelay);
-            m_pFormat = tmp;
-        } else if(t == fmp4_handle){
-            CMP4 *tmp = new CMP4(AVCallback, this);
-            tmp->SetNodelay(g_nNodelay);
-            m_pFormat = tmp;
+    CLiveWorker::~CLiveWorker()
+    {
+        destroy_ring_buff(m_pFlvRing);
+        destroy_ring_buff(m_pPSRing);
+        Log::debug("CLiveWorker release");
+    }
+
+#ifdef USE_FFMPEG
+    bool CLiveWorker::Play()
+    {
+        IPC::PlayRequest req = IPC::RealPlay(m_strCode);
+        if(req.ret <= 0) {
+            Log::error("play %s failed: %s", m_strCode.c_str(), req.info.c_str());
+            return false;
         }
 
-        m_SocketBuff.eType = AV_TYPE::NONE;
-        m_SocketBuff.pData = nullptr;
-        m_SocketBuff.nLen = 0;
+        void *playHandle = RtpDecode::Play(this, req.info, req.port);
 
-        m_pLive = LiveClient::GetWorker(strCode);
-		if(m_pLive)
-			m_pLive->AddHandle(this, t, nChannel);
-    }
 
-    CHttpWorker::~CHttpWorker()
-    {
+        AVFormatContext *ifc = NULL;
+        AVFormatContext *ofc = NULL;
 
-        SAFE_FREE(m_SocketBuff.pData);
+        ifc = avformat_alloc_context();
+        unsigned char * iobuffer=(unsigned char *)av_malloc(_psbufsize);
+        AVIOContext *avio = avio_alloc_context(iobuffer, _psbufsize, 0, this, fill_iobuffer, NULL, NULL);
+        ifc->pb = avio;
+		ifc->iformat = av_find_input_format("mpeg");
 
-        lws_ring_destroy(m_pRing);
-        Log::debug("CHttpWorker release");
-    }
+        int ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+        if (ret != 0) {
+            char tmp[1024]={0};
+            av_strerror(ret, tmp, 1024);
+            Log::error("Could not open input file: %d(%s)", ret, tmp);
+            goto end;
+        }
+		//ifc->probesize = 102400;
+		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
+        ret = avformat_find_stream_info(ifc, NULL);
+        if (ret < 0) {
+            char tmp[1024]={0};
+            av_strerror(ret, tmp, 1024);
+            Log::error("Failed to retrieve input stream information %d(%s)", ret, tmp);
+            goto end;
+        }
+        Log::debug("show input format info");
+        av_dump_format(ifc, 0, "nothing", 0);
 
-    int CHttpWorker::GetVideo(char **buff)
-    {
-        int wnum = lws_ring_get_count_waiting_elements(m_pRing, NULL);
-        //没有缓存数据
-        if(wnum == 0)
-            return 0;
-        //只有一个缓存数据
-        if(wnum == 1) {
-            AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
-            if(!tmp) {
-                return 0;
+        //输出 自定义回调
+        ret = avformat_alloc_output_context2(&ofc, NULL, m_strType.c_str(), NULL);
+        if (!ofc) {
+            Log::error("Could not create output context\n");
+            ret = AVERROR_UNKNOWN;
+            goto end;
+        }
+
+        unsigned char* outbuffer=(unsigned char*)av_malloc(_flvbufsize);
+        AVIOContext *avio_out =avio_alloc_context(outbuffer, _flvbufsize,1,this,NULL,write_buffer,NULL);  
+        ofc->pb = avio_out; 
+        ofc->flags = AVFMT_FLAG_CUSTOM_IO;
+
+        AVOutputFormat *ofmt = ofc->oformat;
+        ofmt->flags |= AVFMT_NOFILE;
+
+        //根据输入流信息生成输出流信息
+        int in_video_index = -1, in_audio_index = -1, in_subtitle_index = -1;
+        int out_video_index = -1, out_audio_index = -1, out_subtitle_index = -1;
+        for (unsigned int i = 0, j = 0; i < ifc->nb_streams; i++) {
+            AVStream *is = ifc->streams[i];
+            if (is->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
+                in_video_index = i;
+                out_video_index = j++;
+                //} else if (is->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                //    in_audio_index = i;
+                //    out_audio_index = j++;
+                //} else if (is->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+                //    in_subtitle_index = i;
+                //    out_subtitle_index = j++;
+            } else {
+                continue;
             }
-            uint32_t tlen = LWS_PRE +  tmp->nLen;         //LWS_PRE 多申请一段空间，供websocket发送使用
-            if(m_SocketBuff.nLen < tlen){
-                m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
-                m_SocketBuff.nLen = tlen;
+
+            AVStream *os = avformat_new_stream(ofc, NULL);
+            if (!os) {
+                Log::error("Failed allocating output stream\n");
+                ret = AVERROR_UNKNOWN;
+                goto end;
             }
-            memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
-            memcpy(m_SocketBuff.pData+LWS_PRE, tmp->pData, tmp->nLen);
-            *buff = m_SocketBuff.pData;
-            lws_ring_consume(m_pRing, NULL, NULL, 1);
-            return tlen;
+
+            ret = avcodec_parameters_copy(os->codecpar, is->codecpar);
+            if (ret < 0) {
+                Log::error("Failed to copy codec parameters\n");
+                goto end;
+            }
+			os->codecpar->codec_id = AV_CODEC_ID_H264;
+        }
+        Log::debug("show output format info");
+        av_dump_format(ofc, 0, NULL, 1);
+
+        //Log::debug("index:%d %d %d %d",in_video_index, in_audio_index, out_video_index, out_audio_index);
+
+        ret = avformat_write_header(ofc, NULL);
+        if (ret < 0) {
+            char tmp[1024]={0};
+            av_strerror(ret, tmp, 1024);
+            Log::error("Error avformat_write_header %d:%s \n", ret, tmp);
+            goto end;
         }
 
-        //多个缓存数据
-		AV_BUFF *tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
-		if(!tmp) {
-			return 0;
-		}
-		net_stream_maker_t *sm = create_net_stream_maker();
-		while(tmp){
-			net_stream_append_data(sm, tmp->pData, tmp->nLen);
-			lws_ring_consume(m_pRing, NULL, NULL, 1);
-			tmp = (AV_BUFF*)lws_ring_get_element(m_pRing, NULL);
-		}
+        while (m_bConnect) {
+            AVStream *in_stream, *out_stream;
+            AVPacket pkt;
+            av_init_packet(&pkt);
+            ret = av_read_frame(ifc, &pkt);
+            if (ret < 0)
+                break;
+            //Log::debug("read_index %d",pkt.stream_index);
+            in_stream  = ifc->streams[pkt.stream_index];
+            if (pkt.stream_index == in_video_index) {
+                pkt.stream_index = out_video_index;
+                out_stream = ofc->streams[pkt.stream_index];
+                pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+                pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+                pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
+                pkt.pos = -1;
 
-		uint32_t tlen = LWS_PRE +  get_net_stream_len(sm);          //LWS_PRE 多申请一段空间，供websocket发送使用
-        if(m_SocketBuff.nLen < tlen){
-            m_SocketBuff.pData = (char*)realloc(m_SocketBuff.pData, tlen);
-            m_SocketBuff.nLen = tlen;
+                int wret = av_interleaved_write_frame(ofc, &pkt);
+                if (wret < 0) {
+                    char tmp[1024]={0};
+                    av_strerror(ret, tmp, 1024);
+                    Log::error("video error muxing packet %d:%s \n", ret, tmp);
+                    //break;
+                }
+            } //else if (pkt.stream_index == in_audio_index) {
+            //    //Log::debug("audio dts %d pts %d", pkt.dts, pkt.pts);
+            //    pkt.stream_index = out_audio_index;
+            //    out_stream = ofc->streams[pkt.stream_index];
+            //    /* copy packet */
+            //    pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+            //    pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+            //    pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
+            //    pkt.pos = -1;
+            //    //Log::debug("audio2 dts %d pts %d", pkt.dts, pkt.pts);
+            //
+            //    int wret = av_interleaved_write_frame(ofc, &pkt);
+            //    if (wret < 0) {
+            //        char tmp[1024]={0};
+            //        av_strerror(ret, tmp, 1024);
+            //        Log::error("audio error muxing packet %d:%s \n", ret, tmp);
+            //        //break;
+            //    }
+            //}
+            av_packet_unref(&pkt);
         }
-        memset(m_SocketBuff.pData, 0, m_SocketBuff.nLen);
-		memcpy(m_SocketBuff.pData+LWS_PRE, get_net_stream_data(sm), get_net_stream_len(sm));
-		destory_net_stream_maker(sm);
 
-		*buff = m_SocketBuff.pData;
-        return tlen;
-    }
+        av_write_trailer(ofc);
+end:
+        /** 关闭输入 */
+        avformat_close_input(&ifc);
 
-    void CHttpWorker::play_answer(int ret, string error_info)
-    {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
-			return;
-		}
-        if(ret){
-            m_pPss->error_code = ret;
-            m_strError = error_info;
+        /* 关闭输出 */
+        if (ofc && !(ofmt->flags & AVFMT_NOFILE))
+            avio_closep(&ofc->pb);
+        avformat_free_context(ofc);
+
+        /** 返回码 */
+        if (ret < 0 /*&& ret != AVERROR_EOF*/) {
+            char tmp[AV_ERROR_MAX_STRING_SIZE]={0};
+            av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret);
+            Log::error("Error occurred: %s\n", tmp);
         }
-        lws_callback_on_writable(m_pPss->wsi);
-    }
-
-    void CHttpWorker::push_video_stream(AV_BUFF buff)
-    {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
-			return;
-		}
-        if (m_eHandleType == h264_handle) {
-            CH264 *tmp = (CH264 *)m_pFormat;
-            tmp->Code(buff);
-        } else if(m_eHandleType == flv_handle) {
-            CFlv *tmp = (CFlv *)m_pFormat;
-            tmp->Code(buff);
-        } else if(m_eHandleType == fmp4_handle){
-            CMP4 *tmp = (CMP4 *)m_pFormat;
-            tmp->Code(buff);
+        RtpDecode::Stop(playHandle);
+        if(m_bConnect) {
+            Log::debug("video source is dropped, need close the client");
+            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
         }
+        while (m_bConnect){
+            sleep(10);
+        }
+        Log::debug("client stop, delete live worker");
+        delete this;
+        return ret>=0;
     }
+#else
+bool CLiveWorker::Play() {
+}
+#endif
 
-    void CHttpWorker::stop()
+    void CLiveWorker::push_ps_data(char* pBuff, int nLen)
     {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
+        //内存数据保存至ring-buff
+		int n = (int)ring_get_count_free_elements(m_pPSRing);
+		if (!n) {
+			Log::error("to many ps data can't catch");
 			return;
 		}
 
-        //视频源没有数据并超时
-        Log::debug("no data recived any more, stopped");
-
-        //断开所有客户端连接
-        lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
-    }
-
-    void CHttpWorker::MediaCb(AV_BUFF buff)
-    {
-		if(!m_bConnect){
-			Log::debug("connect has stoped");
+		// 将数据保存在ring buff
+		char* pSaveBuff = (char*)malloc(nLen);
+		memcpy(pSaveBuff, pBuff, nLen);
+		AV_BUFF newTag = {pSaveBuff, nLen};
+		if (!ring_insert(m_pPSRing, &newTag, 1)) {
+			destroy_ring_node(&newTag);
+			Log::error("dropping!");
 			return;
 		}
-        int n = (int)lws_ring_get_count_free_elements(m_pRing);
-        //Log::debug("ring free space %d", n);
-        if (!n) {
+    }
+
+    int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
+    {
+        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+		if(tag) {
+			int len = tag->nLen;
+			memcpy(pBuff, tag->pData, tag->nLen);
+			simple_ring_cosume(m_pPSRing);
+			return len;
+		}
+        return 0;
+    }
+
+    void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
+    {
+        if(!m_bConnect) {
+            Log::error("client has already leave");
             return;
         }
+        //内存数据保存至ring-buff
+        int n = (int)ring_get_count_free_elements(m_pFlvRing);
+        if (!n && m_pPss) {
+            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
+			lws_callback_on_writable(m_pPss->wsi);
+            Log::error("to many data can't send");
+            return;
+        }
+       printf("flv_free(%d) ", n);
 
         // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(buff.nLen);
-        memcpy(pSaveBuff, buff.pData, buff.nLen);
-        AV_BUFF newTag = {buff.eType, pSaveBuff, buff.nLen, 0, 0};
-
-        if (!lws_ring_insert(m_pRing, &newTag, 1)) {
+        char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
+        memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
+        AV_BUFF newTag = {pSaveBuff, nLen};
+        if (!ring_insert(m_pFlvRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
             Log::error("dropping!");
             return;
         }
 
-        //向所有播放链接发送数据
-        lws_callback_on_writable(m_pPss->wsi);
+        //向客户端发送数据
+		if(m_pPss)
+			lws_callback_on_writable(m_pPss->wsi);
     }
 
-    LiveClient::ClientInfo CHttpWorker::get_clients_info()
+    int CLiveWorker::get_flv_frame(char **buff)
     {
-        LiveClient::ClientInfo info;
-        info.devCode = m_strCode;
-        if(m_bWebSocket){
-            info.connect = "Web Socket";
-        } else {
-            info.connect = "Http";
-        }
-        if(m_eHandleType == HandleType::flv_handle)
-            info.media = "flv";
-        else if(m_eHandleType == HandleType::fmp4_handle)
-            info.media = "mp4";
-        else if(m_eHandleType == HandleType::h264_handle)
-            info.media = "h264";
-        else if(m_eHandleType == HandleType::ts_handle)
-            info.media = "hls";
-        else 
-            info.media = "unknown";
-		info.channel = m_nChannel;
-        info.clientIP = m_strClientIP;
-        return info;
+		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
+		if(tmp == NULL)
+			return 0;
+		*buff = tmp->pData + LWS_PRE;
+		return tmp->nLen;
     }
 
-	void CHttpWorker::close()
-	{
-		m_bConnect = false;
-		if(m_pLive)
-			m_pLive->RemoveHandle(this);
+	void CLiveWorker::next_flv_frame() {
+		simple_ring_cosume(m_pFlvRing);
+		if (ring_get_count_waiting_elements(m_pFlvRing, NULL) && m_pPss)
+			lws_callback_on_writable(m_pPss->wsi);
 	}
+
+	void CLiveWorker::close()
+	{
+        _csWorkers.lock();
+        _listWorkers.remove(this);
+        IPC::SendClients(GetClientsInfo());
+        _csWorkers.unlock();
+		m_bConnect = false;
+		m_pPss = NULL;
+	}
+    
+    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {
+        CLiveWorker *worker = new CLiveWorker();
+        worker->m_strCode = strCode;
+        worker->m_strType = strType;
+        worker->m_strHw   = strHw;
+        worker->m_bWebSocket = isWs;
+        worker->m_pPss = pss;
+		worker->m_strClientIP = clientIP;
+        if(strType == "flv")
+            worker->m_strMIME = "video/x-flv";
+        else if(strType == "h264")
+            worker->m_strMIME = "video/h264";
+        else if(strType == "mp4")
+            worker->m_strMIME = "video/mp4";
+        pss->pWorker = worker;
+
+        _csWorkers.lock();
+        _listWorkers.push_back(worker);
+        IPC::SendClients(GetClientsInfo());
+        _csWorkers.unlock();
+
+        uv_thread_t tid;
+        uv_thread_create(&tid, real_play, (void*)worker);
+        Log::debug("RealPlay ok: %s",strCode.c_str());
+        return worker;
+    }
+
+#ifdef USE_FFMPEG
+    static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
+        char text[256];              //日志内容
+        memset(text,0,256);
+        vsprintf_s(text, 256, fmt, vl);
+
+        if(level <= AV_LOG_ERROR){
+            Log::error(text);
+        } else if(level == AV_LOG_WARNING) {
+            Log::warning(text);
+        } else {
+            Log::debug(text);
+        }
+    }
+
+    void InitFFmpeg(){
+        //av_log_set_callback(ffmpeg_log_cb);
+    }
+#endif
 }

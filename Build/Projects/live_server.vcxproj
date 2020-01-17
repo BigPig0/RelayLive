@@ -1,17 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -29,18 +21,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
@@ -52,26 +33,14 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -79,34 +48,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreSpecificDefaultLibraries>
-      </IgnoreSpecificDefaultLibraries>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -119,9 +69,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -130,55 +80,29 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>
-      </IgnoreSpecificDefaultLibraries>
-      <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/libUV/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/uvIpc;$(SolutionDir)../Modules/DeviceMgr;$(SolutionDir)../Modules/SipServer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)../ThirdParty/ffmpeg/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;LiveClient.lib;HttpServer.lib;RtspServer.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;libuv.lib;libcstl.lib;Util.lib;utilc.lib;libwebsockets.lib;uvIpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Modules\HttpServer.vcxproj">
-      <Project>{d99bdf45-2f42-4d81-8795-5357c4a1914f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Modules\LiveClient.vcxproj">
-      <Project>{a84623a7-d5eb-4241-8468-7fb658a8a562}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\uvModules\uvIpc.vcxproj">
       <Project>{19eaa0fe-75ff-4bd3-bd0e-d5a8fd6780a9}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Projects\live_server\ipc.cpp" />
     <ClCompile Include="..\..\Projects\live_server\live.cpp" />
     <ClCompile Include="..\..\Projects\live_server\main.cpp" />
+    <ClCompile Include="..\..\Projects\live_server\rtp.cpp" />
     <ClCompile Include="..\..\Projects\live_server\server.cpp" />
     <ClCompile Include="..\..\Projects\live_server\worker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Projects\live_server\ipc.h" />
     <ClInclude Include="..\..\Projects\live_server\live.h" />
+    <ClInclude Include="..\..\Projects\live_server\rtp.h" />
     <ClInclude Include="..\..\Projects\live_server\server.h" />
     <ClInclude Include="..\..\Projects\live_server\worker.h" />
   </ItemGroup>

@@ -5,6 +5,7 @@
 #include "util_public.h"
 #include "Runnable.h"
 #include "Mutex.h"
+#include "LastError.h"
 #include <stdint.h>
 
 /**

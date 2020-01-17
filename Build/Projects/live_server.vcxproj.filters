@@ -22,6 +22,12 @@
     <ClCompile Include="..\..\Projects\live_server\worker.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\live_server\ipc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\live_server\rtp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\live_server\live.h">
@@ -31,6 +37,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Projects\live_server\worker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\live_server\ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\live_server\rtp.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
