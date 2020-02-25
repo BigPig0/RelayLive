@@ -17,14 +17,20 @@ namespace IPC {
             uint32_t id = 0;
             uint32_t port = 0;
             int  ret = 0;
-            char szInfo[50] = {0}; // 成功时sdp信息，失败时错误描述
-            sscanf(data, "id=%d&port=%d&ret=%d&error=%s",id, &port, &ret, szInfo);
+            char szInfo[250] = {0}; // 成功时sdp信息，失败时错误描述
+            sscanf(data, "id=%d&port=%d&ret=%d&error=",&id, &port, &ret);
+
+			string info(data, len);
+			size_t pos = info.find("error=");
+			if(pos != string::npos){
+				info = info.substr(pos+6, info.size()-pos-6);
+			}
 
             auto it = _PlayRequests.find(id);
             if(it != _PlayRequests.end()) {
                 it->second->port = port;
                 it->second->ret = ret;
-                it->second->info = szInfo;
+                it->second->info = info;
                 it->second->finish = true;
             }
         } 

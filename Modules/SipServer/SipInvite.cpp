@@ -45,8 +45,8 @@ static SipCall* FindByCallID(int nCID) {
 int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int nRTPPort)
 {
     string strFrom = GetFormatHeader(g_strCode , g_strSipIP , g_nSipPort);
-    string strTo   = GetFormatHeader(g_strLowCode, g_strLowIP, g_nLowPort);
-    string strSubject = GetSubjectHeader(g_strCode, strCode, false);
+    string strTo   = GetFormatHeader(strCode, g_strLowIP, g_nLowPort);
+    string strSubject = GetSubjectHeader(strCode, g_strCode, false);
 
     Log::debug("invite %s %d", strCode.c_str(), nRTPPort);
 
@@ -89,12 +89,12 @@ int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int 
     if (ret <= 0) {
         Log::error("send invite failed:%d",ret);
     }
-    osip_message_free(cinvMsg);
+    //osip_message_free(cinvMsg);
     eXosip_unlock(g_pExContext);
 
 
     SipCall *call = new SipCall();
-    call->m_nCallID = nCallID;
+    call->m_nCallID = ret/*nCallID*/;
     call->m_nDialogID = -1;
     call->m_nRtpPort = nRTPPort;
     call->m_strDevCode = strCode;
@@ -103,7 +103,7 @@ int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int 
     call->m_nInvite = 0;
     call->m_bRecord = false;
     MutexLock lock(&m_csGlobalCall);
-    m_mapGlobalCall.insert(make_pair(nCallID, call));
+    m_mapGlobalCall.insert(make_pair(ret/*nCallID*/, call));
     m_mapDeviceCall.insert(make_pair(nRTPPort,call));
 
     return ret;
@@ -112,8 +112,8 @@ int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int 
 int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, string strCode, int nRTPPort, string beginTime, string endTime)
 {
     string strFrom = GetFormatHeader(g_strCode , g_strSipIP , g_nSipPort);
-    string strTo   = GetFormatHeader(g_strLowCode, g_strLowIP, g_nLowPort);
-    string strSubject = GetSubjectHeader(g_strCode, strCode, true);
+    string strTo   = GetFormatHeader(strCode, g_strLowIP, g_nLowPort);
+    string strSubject = GetSubjectHeader(strCode, g_strCode, true);
 
     Log::debug("CSipInvite::SendInvite");
 
@@ -157,7 +157,7 @@ int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, string strCode
     {
         Log::error("CSipInvite::SendInvite send failed:%d",ret);
     }
-    osip_message_free(cinvMsg);
+    //osip_message_free(cinvMsg);
 
     SipCall *call = new SipCall();
     call->m_nCallID = nCallID;
@@ -204,9 +204,11 @@ void CSipInvite::OnInviteOK(eXosip_event_t *osipEvent)
     if (ret < 0){
         Log::error("send invite ok ack failed:%d",ret);
     }
-    osip_message_free(cackMsg);
+    //osip_message_free(cackMsg);
     eXosip_unlock(g_pExContext);
 
+	if(g_playResult)
+		g_playResult(pCall->m_strProName, true, pCall->m_nID, pCall->m_nRtpPort, pCall->m_strBody);
     //Sleep(30000);
     //eXosip_call_terminate(m_pExContext,osipEvent->cid,osipEvent->did);
 }
@@ -236,7 +238,7 @@ void CSipInvite::OnInviteFailed(eXosip_event_t *osipEvent)
     if (ret < 0) {
         Log::error("send invite failed ack failed:%d",ret);
     }
-    osip_message_free(cackMsg);
+    //osip_message_free(cackMsg);
     eXosip_unlock(g_pExContext);
 }
 
@@ -340,7 +342,7 @@ void CSipInvite::OnCallNew(eXosip_event_t *osipEvent)
     if (ret < 0) {
         Log::error("eXosip_call_send_ack failed:%d",ret);
     }
-    osip_message_free(cackMsg);
+    //osip_message_free(cackMsg);
     eXosip_unlock(g_pExContext);
 }
 
@@ -367,7 +369,7 @@ void CSipInvite::OnCallClose(eXosip_event_t *osipEvent)
     if (ret < 0) {
         Log::error("eXosip_call_send_ack failed:%d",ret);
     }
-    osip_message_free(cackMsg);
+    //osip_message_free(cackMsg);
     eXosip_unlock(g_pExContext);
 }
 

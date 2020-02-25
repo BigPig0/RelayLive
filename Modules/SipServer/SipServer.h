@@ -2,6 +2,7 @@
  * Sip·şÎñÆ÷
  */
 #pragma once
+#include "utilc_api.h"
 #include <string>
 using namespace std;
 

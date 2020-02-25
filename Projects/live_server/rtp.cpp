@@ -47,27 +47,28 @@ namespace RtpDecode {
     class CRtpPacket {
     public:
         uint8_t     m_nType;    //类型 0rtp 1ps
-        char       *m_pData;   //内容
+        uint8_t    *m_pData;   //内容
         uint32_t    m_nLen;    //长度
         //CRtpPacket *m_pPre;
         //CRtpPacket *m_pNext;
         //rtp头信息
-        uint8_t v;  	 /* packet type */
-        uint8_t p;  	 /* padding flag */
-        uint8_t x;  	 /* header extension flag */
-        uint8_t cc; 	 /* CSRC count */
-        uint8_t m;	     /* marker bit */
-        uint8_t pt;  	 /* payload type */
-        uint16_t seq;	 /* sequence number */
-        uint32_t ts;	 /* timestamp */
-        uint32_t ssrc;	 /* synchronization source */
+        uint8_t     v;  	 /* packet type */
+        uint8_t     p;  	 /* padding flag */
+        uint8_t     x;  	 /* header extension flag */
+        uint8_t     cc; 	 /* CSRC count */
+        uint8_t     m;	     /* marker bit */
+        uint8_t     pt;  	 /* payload type */
+        uint16_t    seq;	 /* sequence number */
+        uint32_t    ts;	     /* timestamp */
+        uint32_t    ssrc;	 /* synchronization source */
         //解析rtp头
-        uint32_t m_nHeaderLen;     //头长度
-        uint32_t m_nPlayloadLen;   //载荷长度
-        bool     m_bIsPsHeader;    //载荷内容是否是PS头
+        uint32_t    m_nHeaderLen;     //头长度
+		uint8_t    *m_pPlayload;      //载荷
+        uint32_t    m_nPlayloadLen;   //载荷长度
+        bool        m_bIsPsHeader;    //载荷内容是否是PS头
         //ps信息
-        uint16_t seqBegin;
-        uint16_t seqEnd;
+        uint16_t    seqBegin;
+        uint16_t    seqEnd;
 
         CRtpPacket();
         ~CRtpPacket();
@@ -105,6 +106,8 @@ namespace RtpDecode {
         : m_nType(0)
         , m_pData(NULL)
         , m_nLen(0)
+		, m_pPlayload(NULL)
+		, m_nPlayloadLen(0)
         //, m_pPre(NULL)
         //, m_pNext(NULL)
         , m_bIsPsHeader(false)
@@ -116,36 +119,36 @@ namespace RtpDecode {
     }
 
     bool CRtpPacket::Parse(char *buf, uint32_t size) {
-        m_pData = buf;
+        m_pData = (uint8_t*)buf;
         m_nLen = size;
 
         if(m_nLen < 12)
             return false;
 
         /** 解析rtp头 */
-        v = m_pData[0]>6;
-        p = (m_pData[0]>5)&0X1;
-        x = (m_pData[0]>4)&0X1;
+        v = ((uint8_t)m_pData[0])>>6;
+        p = (((uint8_t)m_pData[0])>>5)&0X1;
+        x = (((uint8_t)m_pData[0])>>4)&0X1;
         cc = m_pData[0]&0XF;
-        m = m_pData[1]>7;
-        pt = m_pData[1]&0X8F;
-        seq = m_pData[2];
+        m = ((uint8_t)m_pData[1])>>7;
+        pt = m_pData[1]&0X7F;
+        seq = (uint8_t)m_pData[2];
         seq <<= 8;
-        seq |= m_pData[3];
-        ts = m_pData[4];
+        seq |= (uint8_t)m_pData[3];
+        ts = (uint8_t)m_pData[4];
         ts <<= 8;
-        ts |= m_pData[5];
+        ts |= (uint8_t)m_pData[5];
         ts <<= 8;
-        ts |= m_pData[6];
+        ts |= (uint8_t)m_pData[6];
         ts <<= 8;
-        ts |= m_pData[7];
-        ssrc = m_pData[8];
+        ts |= (uint8_t)m_pData[7];
+        ssrc = (uint8_t)m_pData[8];
         ssrc <<= 8;
-        ssrc |= m_pData[9];
+        ssrc |= (uint8_t)m_pData[9];
         ssrc <<= 8;
-        ssrc |= m_pData[10];
+        ssrc |= (uint8_t)m_pData[10];
         ssrc <<= 8;
-        ssrc |= m_pData[11];
+        ssrc |= (uint8_t)m_pData[11];
 
         seqBegin = seqEnd = seq;
 
@@ -154,6 +157,7 @@ namespace RtpDecode {
 
         // 报文头和载荷的长度
         m_nHeaderLen = 12;
+		m_pPlayload = m_pData + m_nHeaderLen;
         m_nPlayloadLen = m_nLen - 12;
         if(cc) {
             uint32_t ccLen = 4 * cc;
@@ -186,8 +190,7 @@ namespace RtpDecode {
 
         //判断载荷是否为PS头
         if(m_nPlayloadLen > 4) {
-            char *platload = m_pData + m_nHeaderLen;
-            if (platload[0] == 0 && platload[1] == 0 && platload[2] == 1 && platload[3] == 0xBA)
+            if (m_pPlayload[0] == 0 && m_pPlayload[1] == 0 && m_pPlayload[2] == 1 && m_pPlayload[3] == 0xBA)
                 m_bIsPsHeader = true;
         }
         return true;
@@ -326,6 +329,9 @@ namespace RtpDecode {
             return;
         }
 
+		if(pack->pt != 96)
+			return;
+
         Sequence thisSeq(pack->seq);
 
         // 过早的数据抛弃
@@ -356,7 +362,7 @@ namespace RtpDecode {
         bool fullframe = false;
         for (; it_pos != it_end; ++it_pos) {
             pack = it_pos->second;
-            if(it_pos == it_first && pack->m_nType == 0 && !pack->m_bIsPsHeader) {
+            if(it_pos == it_first && pack->m_nType == 0 && pack->m_bIsPsHeader) {
                 it_first = it_pos;
                 findFirst = true;
             } else {
@@ -365,11 +371,14 @@ namespace RtpDecode {
                         findFirst = false;
                     }
                     if(pack->m_bIsPsHeader) {
+						//Log::debug("ps header");
                         if(findFirst) {
+							//Log::debug("full ps");
                             fullframe = true;
                             it_last = it_pos;
                             break; //跳出循环去组帧
                         } else {
+							//Log::debug("full ps 2");
                             it_first = it_pos;
                             findFirst = true;
                         }
@@ -391,20 +400,21 @@ namespace RtpDecode {
 
         //存在完成的帧，进行组帧
         if(fullframe) {
+			//Log::debug("make ps");
             uint32_t nPsLen = 0;
             for (it_pos = it_first; it_pos != it_last; ++it_pos) {
                 nPsLen += it_pos->second->m_nPlayloadLen;
             }
-            char *pPsBuff = (char*)calloc(1, nPsLen);
+            uint8_t *pPsBuff = (uint8_t*)calloc(1, nPsLen);
             CRtpPacket *ps = new CRtpPacket();
             ps->m_nType = 1;
             ps->m_pData = pPsBuff;
             ps->m_nLen = nPsLen;
-            ps->seqBegin = pack->seq = it_first->second->seq;
+            ps->seqBegin = ps->seq = it_first->second->seq;
             ps->seqEnd = it_last->second->seq-1;
             uint32_t nLen = 0;
-            for (it_pos = it_first; it_pos != it_last; ++it_pos) {
-                memcpy(pPsBuff+nLen, it_pos->second->m_pData+it_pos->second->m_nHeaderLen, it_pos->second->m_nPlayloadLen);
+            for (it_pos = it_first; it_pos != it_last; /*++it_pos*/) {
+                memcpy(pPsBuff+nLen, it_pos->second->m_pPlayload, it_pos->second->m_nPlayloadLen);
                 nLen += it_pos->second->m_nPlayloadLen;
                 delete it_pos->second;
                 it_pos = m_PacketList.erase(it_pos);
@@ -416,9 +426,14 @@ namespace RtpDecode {
         //丢弃过早的rtp包或上抛完成的PS
         it_pos = m_PacketList.begin();
         it_end = m_PacketList.end();
+		auto lastpack = it_end;
+		if(it_pos != it_end) {
+			lastpack --;
+		}
         for (; it_pos != it_end; ) {
             if(it_pos->second->m_nType == 0) {
-                if(it_end->second->ts - it_pos->second->ts > 3600) {
+                if(lastpack->second->ts - it_pos->second->ts > 3600) {
+					Log::error("old pack drop");
                     delete it_pos->second;
                     it_pos = m_PacketList.erase(it_pos);
                 } else {
@@ -427,7 +442,8 @@ namespace RtpDecode {
             } else {
                 // 此处上抛PS
                 Server::CLiveWorker* lw = (Server::CLiveWorker*)m_pUser;
-                lw->push_ps_data(it_pos->second->m_pData, it_pos->second->m_nLen);
+                lw->push_ps_data((char*)it_pos->second->m_pData, it_pos->second->m_nLen);
+				//delete it_pos->second;
                 it_pos = m_PacketList.erase(it_pos);
             }
         }

@@ -111,7 +111,7 @@ vector<SipServer::DevInfo*> GetDevInfo()
         it.getKeyValue(&k, &v);
         if(!lua::VarType<lua::Table>(v))
             continue;
-        DevInfo *dev = new DevInfo;
+        SipServer::DevInfo *dev = new SipServer::DevInfo();
         lua::Table row = lua::VarCast<lua::Table>(v);
         for(auto rit = row.getBegin(); !rit.isEnd(); rit++){
             lua::Var k2,v2;

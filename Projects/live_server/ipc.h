@@ -1,4 +1,5 @@
 #pragma once
+#include "utilc_api.h"
 #include <string>
 
 namespace IPC {

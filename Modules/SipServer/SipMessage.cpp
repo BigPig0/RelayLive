@@ -516,10 +516,12 @@ static void sendMessageAnswer(SipMessageInfo& info)
             //发送消息体
             ::eXosip_message_send_answer(g_pExContext,info.requestId, iStatus, answer);
             //Log::warning("保活应答 发送200报文");
-            osip_message_free(answer);
+            //osip_message_free(answer);
 
-            if (info.strCmdType == "Keepalive")
+            if (info.strCmdType == "Keepalive") {
+				g_bLowStatus    = true;
                 AutoQuery();
+			}
         }
     }
     eXosip_unlock(g_pExContext);
@@ -567,7 +569,7 @@ void CSipMessage::QueryDirtionary()
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, qdmMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(qdmMsg);
+    //osip_message_free(qdmMsg);
     if (ret <= 0){
         Log::error("CSipMessage::QueryDirtionary send failed:%d\r\n",ret);
     } else {
@@ -609,7 +611,7 @@ void CSipMessage::QueryDeviceStatus(string devID)
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, qdmMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(qdmMsg);
+    //osip_message_free(qdmMsg);
     if (ret <= 0) {
         Log::error("CSipMessage::QueryDeviceStatus send failed:%d\r\n",ret);
     } else {
@@ -649,7 +651,7 @@ void CSipMessage::QueryDeviceInfo(string devID)
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, qdmMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(qdmMsg);
+    //osip_message_free(qdmMsg);
     if (ret <= 0) {
         Log::error("CSipMessage::QueryDeviceInfo send failed:%d\r\n",ret);
     } else {
@@ -691,7 +693,7 @@ void CSipMessage::QueryRecordInfo(string devID, string strStartTime, string strE
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, qdmMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(qdmMsg);
+    //osip_message_free(qdmMsg);
     if (ret <= 0) {
         Log::error("CSipMessage::QueryRecordInfo send failed:%d\r\n",ret);
     } else {
@@ -732,7 +734,7 @@ void CSipMessage::QueryMobilePosition(string devID)
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, qdmMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(qdmMsg);
+    //osip_message_free(qdmMsg);
     if (ret <= 0) {
         Log::error("CSipMessage::QueryMobilePosition send failed:%d\r\n",ret);
     } else {
@@ -812,7 +814,7 @@ void CSipMessage::DeviceControl(string strDevCode,
     eXosip_lock(g_pExContext);
     int ret = eXosip_message_send_request(g_pExContext, dcMsg);
     eXosip_unlock(g_pExContext);
-    osip_message_free(dcMsg);
+    //osip_message_free(dcMsg);
     if (ret <= 0) {
         Log::error("eXosip_message_send_request failed:%d\r\n",ret);
     } else {

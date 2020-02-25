@@ -27,9 +27,10 @@ namespace Server
 		void close();
     private:
         void cull_lagging_clients();
+		bool is_key(char* pBuff, int nLen);
 
     public:
-        pss_live     *m_pPss;           //< 连接会话
+        pss_live             *m_pPss;           //< 连接会话
         std::string           m_strCode;        //< 播放媒体编号
         std::string           m_strType;        // 目标媒体类型 flv mp4 h264
         std::string           m_strHw;          // 目标媒体分辨率 空表示不变
@@ -43,9 +44,10 @@ namespace Server
 
     private:
         ring_buff_t          *m_pPSRing;       //< PS数据队列
-        ring_buff_t          *m_pFlvRing;         //< 目标码流数据队列
+        ring_buff_t          *m_pFlvRing;      //< 目标码流数据队列
         std::string           m_SocketBuff;    //< socket发送的数据缓存
 		bool                  m_bConnect;      //< 客户端连接状态
+		bool                  m_bParseKey;     //< 
     };
 
     /** 直播 */

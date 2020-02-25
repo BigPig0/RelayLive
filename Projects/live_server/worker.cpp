@@ -43,7 +43,7 @@ namespace Server
     static list<CLiveWorker*>  _listWorkers;
     static CriticalSection     _csWorkers;
 	static uint32_t            _flvbufsize = 1024*16;
-	static uint32_t            _psbufsize = 1024*32;
+	static uint32_t            _psbufsize = 1024*1024;
 
     static void destroy_ring_node(void *_msg)
     {
@@ -102,12 +102,15 @@ namespace Server
     }
 #endif
 
+	FILE *_f = NULL;
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
 		, m_bConnect(true)
+		, m_bParseKey(false)
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
         m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
+		_f = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps.dat", "wb");
     }
 
     CLiveWorker::~CLiveWorker()
@@ -121,7 +124,7 @@ namespace Server
     bool CLiveWorker::Play()
     {
         IPC::PlayRequest req = IPC::RealPlay(m_strCode);
-        if(req.ret <= 0) {
+        if(req.ret != 0) {
             Log::error("play %s failed: %s", m_strCode.c_str(), req.info.c_str());
             return false;
         }
@@ -146,7 +149,7 @@ namespace Server
             goto end;
         }
 		//ifc->probesize = 102400;
-		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
+		//ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
             char tmp[1024]={0};
@@ -299,6 +302,15 @@ bool CLiveWorker::Play() {
 
     void CLiveWorker::push_ps_data(char* pBuff, int nLen)
     {
+		//static int num = 0;
+		//char path[MAX_PATH] = {0};
+		//sprintf(path, "D:\\code\\RelayLive_new\\out\\x64_Debug\\ps\\%04d.ps", num++);
+		//FILE *f = fopen(path, "wb");
+		//fwrite(pBuff, 1, nLen, f);
+		//fclose(f);
+		//fwrite(pBuff, 1, nLen, _f);
+		//fflush(_f);
+		//return;
         //内存数据保存至ring-buff
 		int n = (int)ring_get_count_free_elements(m_pPSRing);
 		if (!n) {
@@ -321,6 +333,16 @@ bool CLiveWorker::Play() {
     {
         AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
 		if(tag) {
+			if(!m_bParseKey) {
+				if(is_key(pBuff, nLen))
+					m_bParseKey = true;
+				else {
+					simple_ring_cosume(m_pPSRing);
+					return 0;
+				}
+			}
+			fwrite(tag->pData, 1, tag->nLen, _f);
+		    fflush(_f);
 			int len = tag->nLen;
 			memcpy(pBuff, tag->pData, tag->nLen);
 			simple_ring_cosume(m_pPSRing);
@@ -383,6 +405,16 @@ bool CLiveWorker::Play() {
         _csWorkers.unlock();
 		m_bConnect = false;
 		m_pPss = NULL;
+	}
+
+	bool CLiveWorker::is_key(char* pBuff, int nLen) {
+		if(nLen <= 4) return false;
+		uint8_t *data = (uint8_t*)pBuff;
+		for(int i=0; i <nLen-4; ++i) {
+			if(data[i] == 0 && data[i+1] == 0 && data[i+2] == 1 && data[i+3] == 0x67)
+				return true;
+		}
+		return false;
 	}
     
     CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {

@@ -20,7 +20,7 @@ namespace SipServer {
     static CSipSubscribe* _pSubscribe;
     static CSipMessage*   _pMessage;
     static CSipInvite*    _pInvite;
-    eXosip_t*             g_pExContext;
+    eXosip_t*             g_pExContext = NULL;
 
     /** Sip服务器配置 */
     string         g_strCode;      //本平台国标编码
@@ -28,12 +28,12 @@ namespace SipServer {
     uint32_t       g_nSipPort;     //本平台Sip监听端口
     bool           g_bRegAuthor;   //本平台是否开启注册鉴权
 
-    bool           _bSubStat;      //是否订阅设备状态
-    bool           _bSubPos;       //是否订阅设备位置
-    bool           _bSubPosDev;    //按设备订阅移动设备位置
-    vector<string> _vecMobile;     //移动设备部门
-    string         _rtpIP;        //< RTP服务IP
-    list<int>      _rtpPorts;     //< RTP可用端口，使用时从中取出，使用结束重新放入
+    static bool           _bSubStat;      //是否订阅设备状态
+    static bool           _bSubPos;       //是否订阅设备位置
+    static bool           _bSubPosDev;    //按设备订阅移动设备位置
+    static vector<string> _vecMobile;     //移动设备部门
+    static string         _rtpIP;        //< RTP服务IP
+    static list<int>      _rtpPorts;     //< RTP可用端口，使用时从中取出，使用结束重新放入
 
     // 下级服务器状态
     string         g_strLowCode;          //下级平台国标编码
@@ -193,6 +193,7 @@ namespace SipServer {
 
     //查询订阅操作
     static void SubscribeThread() {
+		sleep(5000);
         time_t now = time(nullptr);
         if(_bFirstReg || difftime(now, _lastQueryTime) > 3600){ //距离上一次查询超过一小时重新查询
             _bFirstReg = false;
@@ -573,10 +574,14 @@ namespace SipServer {
     bool Init()
     {
         // SIP配置
-        g_strCode        = Settings::getValue("SipSever","Code");
+        g_strCode       = Settings::getValue("SipSever","Code");
         g_strSipIP      = Settings::getValue("SipSever","IP");
         g_nSipPort      = Settings::getValue("SipSever","Port", 5060);
-        g_bRegAuthor     = Settings::getValue("SipSever","RegAuthor",0)>0;
+        g_bRegAuthor    = Settings::getValue("SipSever","RegAuthor",0)>0;
+		g_strLowCode    = Settings::getValue("PlatFormInfo","Code");
+		g_strLowIP      = Settings::getValue("PlatFormInfo","IP");
+		g_nLowPort      = Settings::getValue("PlatFormInfo","Port", 5060);
+		g_nLowExpire    = 9999999;
         _bSubStat       = Settings::getValue("PlatFormInfo","SubscribeStatus",0)>0;
         _bSubPos        = Settings::getValue("PlatFormInfo","SubscribePos",0)>0;
         _bSubPosDev     = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0;

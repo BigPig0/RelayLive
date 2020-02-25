@@ -27,4 +27,14 @@ namespace IPC {
      * 设备信息缓存
      */
     void AddDev(SipServer::DevInfo *dev);
+
+    /**
+     * 刷新设备查询
+     */
+    void DevsFresh();
+
+    /**
+     * 设备控制
+     */
+    void DevControl(string strDev, int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
 };

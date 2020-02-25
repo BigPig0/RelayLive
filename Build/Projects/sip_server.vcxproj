@@ -17,6 +17,11 @@
   <ItemGroup>
     <ClInclude Include="..\..\Projects\sip_server\ipc.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\sipServer.vcxproj">
+      <Project>{e9a98601-1181-4e67-b68e-d5c5c1e53e19}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2262E19B-E22D-4003-98C9-A1F237B2FE85}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

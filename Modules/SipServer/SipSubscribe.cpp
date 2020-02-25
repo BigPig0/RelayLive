@@ -46,12 +46,12 @@ void CSipSubscribe::SubscribeDirectory(const int expires)
     if (ret <= 0)
     {
         Log::error("CSubscribe::SendSubscribe send failed:%d",ret);
-        osip_message_free(subMsg);
+        //osip_message_free(subMsg);
         eXosip_unlock(g_pExContext);
         return;
     }
 
-    osip_message_free(subMsg);
+    //osip_message_free(subMsg);
     eXosip_unlock(g_pExContext);
     return;
 }
@@ -100,12 +100,12 @@ void CSipSubscribe::SubscribeAlarm(const int expires)
     if (ret <= 0)
     {
         Log::error("CSubscribe::SendSubscribeAlarm send failed:%d",ret);
-        osip_message_free(subMsg);
+        //osip_message_free(subMsg);
         eXosip_unlock(g_pExContext);
         return;
     }
 
-    osip_message_free(subMsg);
+    //osip_message_free(subMsg);
     eXosip_unlock(g_pExContext);
     return;
 }
@@ -162,12 +162,12 @@ void CSipSubscribe::SubscribeMobilepostion(const int expires, string strDevCode)
     if (ret <= 0)
     {
         Log::error("CSubscribe::SendSubscribeMobilepostion send failed:%d",ret);
-        osip_message_free(subMsg);
+        //osip_message_free(subMsg);
         eXosip_unlock(g_pExContext);
         return;
     }
 
-    osip_message_free(subMsg);
+    //osip_message_free(subMsg);
     eXosip_unlock(g_pExContext);
     return;
 }

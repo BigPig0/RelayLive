@@ -12,38 +12,6 @@ namespace IPC {
     map<string, SipServer::DevInfo*> _mapDevs;
     CriticalSection          _csDevs;
 
-    std::string GetClientsJson() {
-        MutexLock lock(&_csClients);
-        stringstream ss;
-        ss << "{\"root\":[";
-        bool first = true;
-        for(auto c:_mapClients){  
-            if(!first) {
-                first = false;
-                ss << ",";
-            }
-            ss << c.second;
-        }
-        ss << "]}";
-        return ss.str();
-    }
-
-    std::string GetDevsJson() {
-        MutexLock lock(&_csDevs);
-        stringstream ss;
-        ss << "{\"root\":[";
-        bool first = true;
-        for(auto c:_mapDevs){  
-            if(!first) {
-                first = false;
-                ss << ",";
-            }
-            ss << FormatDevInfo(c.second, true);
-        }
-        ss << "]}";
-        return ss.str();
-    }
-
     void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
         if(!strcmp(msg,"close")) {
             // livesvr¹Ø±Õ
@@ -111,4 +79,49 @@ namespace IPC {
         uv_ipc_close(h);
     }
 
+    std::string GetClientsJson() {
+        MutexLock lock(&_csClients);
+        stringstream ss;
+        ss << "{\"root\":[";
+        bool first = true;
+        for(auto c:_mapClients){  
+            if(!first) {
+                ss << ",";
+            } else {
+                first = false;
+			}
+            ss << c.second;
+        }
+        ss << "]}";
+        return ss.str();
+    }
+
+    std::string GetDevsJson() {
+        MutexLock lock(&_csDevs);
+        stringstream ss;
+        ss << "{\"root\":[";
+        bool first = true;
+        for(auto c:_mapDevs){  
+            if(!first) {
+                ss << ",";
+            } else {
+				first = false;
+			}
+            ss << FormatDevInfo(c.second, true);
+        }
+        ss << "]}";
+        return ss.str();
+    }
+
+    void AddDev(SipServer::DevInfo *dev){
+
+    }
+
+    void DevsFresh() {
+
+    }
+
+    void DevControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
+
+    }
 }

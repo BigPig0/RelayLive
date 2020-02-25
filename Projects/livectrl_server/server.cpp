@@ -1,14 +1,15 @@
 
 #include "libwebsockets.h"
 #include "util.h"
+#include "ipc.h"
 
 namespace Server
 {
     /** per session structure */
     struct pss_live {
         struct lws           *wsi;            // http/ws 连接
-        int                   error_code;     // 失败时的错误码
         bool                  send_header;    // 应答是否写入header
+        string               *response_body;
     };
 
     int callback_ctrl(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
@@ -21,18 +22,25 @@ namespace Server
             break;
         case LWS_CALLBACK_HTTP:     //客户端通过http连接
             {
+                uint8_t buf[LWS_PRE + 2048];    //保存http头内容
+                uint8_t *start = &buf[LWS_PRE]; //htpp头域的位置
+                uint8_t *end = &buf[sizeof(buf) - LWS_PRE - 1]; //结尾的位置
+                uint8_t *p = start;
+
                 pss->wsi = wsi;
+                pss->response_body = new string();
 
                 char path[MAX_PATH]={0};
                 lws_hdr_copy(wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
                 Log::debug("new http-live request: %s", path);
 
                 if(!strcmp(path, "/device/clients")) {
-                    
+                    *pss->response_body = IPC::GetClientsJson();
                 } else if(!strcmp(path, "/device/devlist")) {
-                    
+                    *pss->response_body = IPC::GetDevsJson();
                 } else if(!strcmp(path, "/device/refresh")) {
-
+                    IPC::DevsFresh();
+                    *pss->response_body = "ok";
                 } else if(!strncmp(path, "/device/control", 8)) {
                     // 设备ID
                     char szDev[30]={0};
@@ -55,16 +63,16 @@ namespace Server
                         }
                         n++;
                     }
-                    LiveClient::DeviceControl(szDev, io, ud, lr);
-
+                    IPC::DevControl(szDev, io, ud, lr);
                     *pss->response_body = "ok";
-                    lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->response_body->size(), &p, end);
-                    lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
-                    if (lws_finalize_write_http_header(wsi, start, &p, end))
-                        return 1;
-
-                    lws_callback_on_writable(wsi);
                 }
+
+                lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->response_body->size(), &p, end);
+                lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
+                if (lws_finalize_write_http_header(wsi, start, &p, end))
+                    return 1;
+
+                lws_callback_on_writable(wsi);
                 return 0;
             }
         case LWS_CALLBACK_HTTP_WRITEABLE: //Http发送数据
@@ -72,22 +80,8 @@ namespace Server
                 if (!pss)
                     break;
 
-                if(!pss->send_header) {
-                    WriteHeader(pss);
-                    return 0;
-                }
-                if(pss->error_code) {
-                    const char *errors = live_error_str[pss->error_code];
-                    int len = strlen(errors);
-                    lws_write(wsi, (uint8_t *)errors, len, LWS_WRITE_HTTP_FINAL);
-                    if (lws_http_transaction_completed(wsi))
-                        return -1;
-                }
-
-                if(!pss->pWorker)
-                    break;
-
-                if(!SendBody(pss))
+                lws_write(wsi, (uint8_t *)pss->response_body->c_str(), pss->response_body->size(), LWS_WRITE_HTTP_FINAL);
+                if (lws_http_transaction_completed(wsi))
                     return -1;
 
                 return 0;
@@ -96,7 +90,7 @@ namespace Server
             {
                 if (!pss)
                     break;
-                Log::debug("live http request cloes %s", pss->pWorker->m_strPath.c_str());
+                delete pss->response_body;
             }
         default:
             break;

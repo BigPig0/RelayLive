@@ -28,18 +28,11 @@ namespace Server
 		char pra[MAX_PATH]={0};
 		lws_hdr_copy(pss->wsi, pra, MAX_PATH, WSI_TOKEN_HTTP_URI_ARGS);
         if(pss->isWs)
-            Log::debug("new ws-live protocol establised: %s%s", path, pra);
+            Log::debug("new ws-live protocol establised: %s?%s", path, pra);
         else
-            Log::debug("new http-live request: %s%s", path, pra);
+            Log::debug("new http-live request: %s?%s", path, pra);
 
         string strPath = pra;
-        size_t parampos = strPath.find('?');
-        if(parampos == string::npos) {
-            Log::error("%s error uri", path);
-            pss->error_code = live_error_uri;
-            return false;
-        }
-        strPath = strPath.substr(parampos+1, strPath.size()-parampos-1);
         string strCode, strUrl, strHw, strType="flv";
         vector<string> vecpars = StringHandle::StringSplit(strPath, '&');
         for(auto par:vecpars) {

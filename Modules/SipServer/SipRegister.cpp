@@ -245,9 +245,9 @@ static void sendRegisterAnswer(SipRegisterInfo& info)
             Log::warning("注册应答 发送200报文");
 
             //下级平台信息
-            g_strLowCode    = info.contactCode;
-            g_strLowIP      = info.contactIP;
-            g_nLowPort      = info.contactPort;
+            //g_strLowCode    = info.contactCode;
+            //g_strLowIP      = info.contactIP;
+            //g_nLowPort      = info.contactPort;
             g_nLowExpire    = info.expires;
             g_bLowStatus    = true;
 

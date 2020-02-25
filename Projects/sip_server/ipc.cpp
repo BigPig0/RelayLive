@@ -86,12 +86,13 @@ namespace IPC {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;
         }
-        return true;
 
         SipServer::SetDeviceCB(on_device);
         SipServer::SetUpdateStatusCB(on_update_status);
         SipServer::SetUpdatePostionCB(on_update_postion);
         SipServer::SetPlayCB(on_play_cb);
+
+        return true;
     }
 
     void Cleanup() {
