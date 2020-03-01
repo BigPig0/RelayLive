@@ -43,7 +43,8 @@ namespace Server
     static list<CLiveWorker*>  _listWorkers;
     static CriticalSection     _csWorkers;
 	static uint32_t            _flvbufsize = 1024*16;
-	static uint32_t            _psbufsize = 1024*1024;
+	static uint32_t            _psbufsize = 1024*32;
+	FILE *_f = NULL, *_f2 = NULL, *_f3 = NULL;
 
     static void destroy_ring_node(void *_msg)
     {
@@ -91,6 +92,8 @@ namespace Server
         while (len == 0) {
             len = lw->get_ps_data((char*)buf, bufsize);
         }
+		//fwrite(buf, 1, len, _f2);
+		//fflush(_f2);
         return len;
     }
 
@@ -102,15 +105,20 @@ namespace Server
     }
 #endif
 
-	FILE *_f = NULL;
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
 		, m_bConnect(true)
 		, m_bParseKey(false)
+		, m_pTmpBuff(NULL)
+		, m_nTmpBuffSize(0)
+		, m_nTmpBuffTotalSize(0)
+		, m_nTmpBuffReaded(0)
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
         m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
-		_f = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps.dat", "wb");
+		//_f = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps.dat", "wb");
+		//_f2 = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps2.dat", "wb");
+		//_f3 = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps3.dat", "wb");
     }
 
     CLiveWorker::~CLiveWorker()
@@ -149,7 +157,7 @@ namespace Server
             goto end;
         }
 		//ifc->probesize = 102400;
-		//ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
+		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
             char tmp[1024]={0};
@@ -318,6 +326,9 @@ bool CLiveWorker::Play() {
 			return;
 		}
 
+		//fwrite(pBuff, 1, nLen, _f3);
+		//fflush(_f3);
+
 		// 将数据保存在ring buff
 		char* pSaveBuff = (char*)malloc(nLen);
 		memcpy(pSaveBuff, pBuff, nLen);
@@ -327,28 +338,51 @@ bool CLiveWorker::Play() {
 			Log::error("dropping!");
 			return;
 		}
+		//Log::debug("push ps %x, %d, %d", newTag.pData, newTag.nLen, ring_get_count_free_elements(m_pPSRing));
     }
 
     int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
     {
-        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-		if(tag) {
-			if(!m_bParseKey) {
-				if(is_key(pBuff, nLen))
-					m_bParseKey = true;
-				else {
-					simple_ring_cosume(m_pPSRing);
-					return 0;
-				}
+		if(m_nTmpBuffReaded >= m_nTmpBuffSize) {
+			AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+			if(!tag) 
+				return 0;
+
+			if(!m_pTmpBuff) {
+				m_pTmpBuff = (char*)malloc(tag->nLen);
+				m_nTmpBuffTotalSize = tag->nLen;
+			} else if(m_nTmpBuffTotalSize < tag->nLen) {
+				free(m_pTmpBuff);
+				m_pTmpBuff = (char*)malloc(tag->nLen);
+				m_nTmpBuffTotalSize = tag->nLen;
 			}
-			fwrite(tag->pData, 1, tag->nLen, _f);
-		    fflush(_f);
-			int len = tag->nLen;
-			memcpy(pBuff, tag->pData, tag->nLen);
+			memcpy(m_pTmpBuff, tag->pData, tag->nLen);
+			m_nTmpBuffSize = tag->nLen;
+			m_nTmpBuffReaded = 0;
 			simple_ring_cosume(m_pPSRing);
-			return len;
+
+			//Log::debug("get ps %x, %d, %d", tag->pData, tag->nLen, ring_get_count_free_elements(m_pPSRing));
+
+			//if(!m_bParseKey) {
+			//	if(is_key(tag->pData, tag->nLen)){
+			//		m_bParseKey = true;
+			//	} else {
+			//		Log::warning("no key frame before this");
+			//		simple_ring_cosume(m_pPSRing);
+			//		return 0;
+			//	}
+			//}
+			//fwrite(tag->pData, 1, tag->nLen, _f);
+			//fflush(_f);
 		}
-        return 0;
+
+		int len = m_nTmpBuffSize - m_nTmpBuffReaded;
+		if(len > nLen)
+			len = nLen;
+		memcpy(pBuff, m_pTmpBuff+m_nTmpBuffReaded, len);
+		m_nTmpBuffReaded += len;
+
+        return len;
     }
 
     void CLiveWorker::push_flv_frame(char* pBuff, int nLen)

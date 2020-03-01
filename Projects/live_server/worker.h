@@ -48,6 +48,10 @@ namespace Server
         std::string           m_SocketBuff;    //< socket发送的数据缓存
 		bool                  m_bConnect;      //< 客户端连接状态
 		bool                  m_bParseKey;     //< 
+		char                 *m_pTmpBuff;
+		int                   m_nTmpBuffSize;
+		int                   m_nTmpBuffTotalSize;
+		int                   m_nTmpBuffReaded;
     };
 
     /** 直播 */
