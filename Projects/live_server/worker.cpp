@@ -19,9 +19,13 @@ extern "C"
 #include "libavdevice/avdevice.h"
 #include "libavcodec/avcodec.h"  
 #include "libavformat/avformat.h"  
+#include "libavfilter/avfilter.h"
+#include "libavfilter/buffersink.h"
+#include "libavfilter/buffersrc.h"
 #include "libswscale/swscale.h"  
 #include "libavutil/imgutils.h"
 #include "libavutil/timestamp.h"
+#include "libavutil/opt.h"
 }
 #pragma comment(lib,"avcodec.lib")
 #pragma comment(lib,"avdevice.lib")
@@ -70,7 +74,7 @@ namespace Server
                 ss << "http";
             ss << "\",\"Media\":\"" << c->m_strType
                 << "\",\"ClientIP\":\"" << c->m_strClientIP
-                << "\",\"Channel\":\"" << c->m_strHw
+                << "\",\"Channel\":\"" << c->m_nWidth << "*" << c->m_nHeight
                 << "\"}";
         }
         return ss.str();
@@ -107,6 +111,8 @@ namespace Server
 
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
+        , m_nWidth(0)
+        , m_nHeight(0)
 		, m_bConnect(true)
 		, m_bParseKey(false)
 		, m_pTmpBuff(NULL)
@@ -140,9 +146,23 @@ namespace Server
         void *playHandle = RtpDecode::Play(this, req.info, req.port);
 
 
-        AVFormatContext *ifc = NULL;
-        AVFormatContext *ofc = NULL;
+        AVFormatContext *ifc = NULL;               //输入封装
+        AVFormatContext *ofc = NULL;               //输出封装
+        AVStream        *istream_video = NULL;     //输入视频码流
+        AVStream        *ostream_video = NULL;     //输出视频码流
+        AVCodecContext  *decode_ctx = NULL;        //输入视频解码
+        AVCodecContext  *encode_ctx = NULL;        //输出视频编码
+        AVFrame         *frame = NULL;             //原始码流解码帧
+        AVFrame         *filt_frame = NULL;        //filter缩放后的帧
+        AVFilterGraph   *filter_graph = NULL;      //filter对象
+        AVFilterContext *buffersink_ctx = NULL;    //输入filter
+        AVFilterContext *buffersrc_ctx = NULL;     //输出filter
+        bool            recodec_video = false;     //视频码流是否需要重新解编码
+        bool            scale_video = false;       //视频图像是否需要缩放
+        int             in_video_index = -1;
+        int             out_video_index = 0;
 
+        //打开输入流
         ifc = avformat_alloc_context();
         unsigned char * iobuffer=(unsigned char *)av_malloc(_psbufsize);
         AVIOContext *avio = avio_alloc_context(iobuffer, _psbufsize, 0, this, fill_iobuffer, NULL, NULL);
@@ -168,10 +188,55 @@ namespace Server
         Log::debug("show input format info");
         av_dump_format(ifc, 0, "nothing", 0);
 
-        //输出 自定义回调
+        AVCodec *dec;
+        in_video_index = av_find_best_stream(ifc, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
+        if (in_video_index < 0) {
+            Log::error( "Cannot find a video stream in the input file");
+            goto end;
+        }
+        istream_video = ifc->streams[in_video_index];
+
+        if (istream_video->codecpar->codec_id != AV_CODEC_ID_H264)
+            recodec_video = true;
+        if ( (m_nWidth > 0  && istream_video->codecpar->width > m_nWidth)
+            || (m_nHeight > 0 && istream_video->codecpar->height > m_nHeight)
+        ) {
+            recodec_video = true;
+            scale_video = true;
+        }
+
+        if(recodec_video){
+            //需要重新编解码
+            decode_ctx = avcodec_alloc_context3(dec);
+            avcodec_parameters_to_context(decode_ctx, istream_video->codecpar);
+            decode_ctx->time_base.num = 1;
+            decode_ctx->time_base.den = 25;
+
+            /* init the video decoder */
+            if ((ret = avcodec_open2(decode_ctx, dec, NULL)) < 0) {
+                Log::error("Cannot open video decoder");
+                return ret;
+            }
+
+            frame = av_frame_alloc();
+            if (!frame) {
+                Log::error("Could not allocate frame");
+                goto end;
+            }
+        }
+        if(scale_video) {
+            filt_frame = av_frame_alloc();
+            if (filt_frame) {
+                Log::error("Could not allocate filter_frame");
+                goto end;
+            }
+        }
+
+
+        //打开输出流
         ret = avformat_alloc_output_context2(&ofc, NULL, m_strType.c_str(), NULL);
         if (!ofc) {
-            Log::error("Could not create output context\n");
+            Log::error("Could not create output context");
             ret = AVERROR_UNKNOWN;
             goto end;
         }
@@ -184,74 +249,219 @@ namespace Server
         AVOutputFormat *ofmt = ofc->oformat;
         ofmt->flags |= AVFMT_NOFILE;
 
-        //根据输入流信息生成输出流信息
-        int in_video_index = -1, in_audio_index = -1, in_subtitle_index = -1;
-        int out_video_index = -1, out_audio_index = -1, out_subtitle_index = -1;
-        for (unsigned int i = 0, j = 0; i < ifc->nb_streams; i++) {
-            AVStream *is = ifc->streams[i];
-            if (is->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
-                in_video_index = i;
-                out_video_index = j++;
-                //} else if (is->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-                //    in_audio_index = i;
-                //    out_audio_index = j++;
-                //} else if (is->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-                //    in_subtitle_index = i;
-                //    out_subtitle_index = j++;
-            } else {
-                continue;
-            }
-
-            AVStream *os = avformat_new_stream(ofc, NULL);
-            if (!os) {
-                Log::error("Failed allocating output stream\n");
-                ret = AVERROR_UNKNOWN;
-                goto end;
-            }
-
-            ret = avcodec_parameters_copy(os->codecpar, is->codecpar);
-            if (ret < 0) {
-                Log::error("Failed to copy codec parameters\n");
-                goto end;
-            }
-			os->codecpar->codec_id = AV_CODEC_ID_H264;
+        //输出流中的视频流
+        ostream_video = avformat_new_stream(ofc, NULL);
+        if (!ostream_video) {
+            Log::error("Failed allocating output stream");
+            ret = AVERROR_UNKNOWN;
+            goto end;
         }
+
+        ret = avcodec_parameters_copy(ostream_video->codecpar, istream_video->codecpar);
+        if (ret < 0) {
+            Log::error("Failed to copy codec parameters");
+            goto end;
+        }
+        ostream_video->codecpar->codec_id = AV_CODEC_ID_H264;
+        if(scale_video) {
+            ostream_video->codecpar->width = m_nWidth;
+            ostream_video->codecpar->height = m_nHeight;
+        }
+
+        if(recodec_video) {
+            // 视频重新编码为h264
+            AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+            encode_ctx = avcodec_alloc_context3(codec);
+            avcodec_parameters_to_context(encode_ctx, ostream_video->codecpar);
+
+            encode_ctx->bit_rate = 400000;
+            encode_ctx->width = ostream_video->codecpar->width;
+            encode_ctx->height = ostream_video->codecpar->height;
+            encode_ctx->time_base.num = 1;
+            encode_ctx->time_base.den = 25;
+            encode_ctx->framerate.num = 25;
+            encode_ctx->framerate.den = 1;
+            encode_ctx->gop_size = 15;
+            encode_ctx->has_b_frames = 0;
+            encode_ctx->max_b_frames = 0;
+            encode_ctx->qmin = 34;
+            encode_ctx->qmax = 50;
+
+            av_opt_set(encode_ctx->priv_data, "preset",  "slow", 0);
+            av_opt_set(encode_ctx->priv_data, "tune",    "zerolatency", 0);
+            av_opt_set(encode_ctx->priv_data, "profile", "main", 0);
+
+            ret = avcodec_open2(encode_ctx, codec, NULL);
+            if (ret < 0) {
+                Log::error("can not open encoder");
+                goto end;
+            }
+        }
+
         Log::debug("show output format info");
         av_dump_format(ofc, 0, NULL, 1);
-
-        //Log::debug("index:%d %d %d %d",in_video_index, in_audio_index, out_video_index, out_audio_index);
 
         ret = avformat_write_header(ofc, NULL);
         if (ret < 0) {
             char tmp[1024]={0};
             av_strerror(ret, tmp, 1024);
-            Log::error("Error avformat_write_header %d:%s \n", ret, tmp);
+            Log::error("Error avformat_write_header %d:%s", ret, tmp);
             goto end;
         }
 
+        if(scale_video) {
+            //初始化缩放视频的filter
+            filter_graph = avfilter_graph_alloc();
+
+            //源filter
+            char args[512]={0};
+            sprintf(args, "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+                decode_ctx->width, decode_ctx->height, decode_ctx->pix_fmt,
+                istream_video->time_base.num, istream_video->time_base.den,
+                decode_ctx->sample_aspect_ratio.num, decode_ctx->sample_aspect_ratio.den);
+            const AVFilter *buffersrc  = avfilter_get_by_name("buffer");
+            ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
+            if (ret < 0) {
+                Log::error("Cannot create buffer source");
+                goto end;
+            }
+
+            //sink filter
+            const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+            AVBufferSinkParams *buffersink_params = av_buffersink_params_alloc();
+            enum AVPixelFormat pix_fmts[] = { encode_ctx->pix_fmt, AV_PIX_FMT_NONE };
+            buffersink_params->pixel_fmts = pix_fmts;
+            ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", NULL, buffersink_params, filter_graph);
+            av_free(buffersink_params);
+            if (ret < 0) {
+                Log::error("Cannot create buffer sink");
+                goto end;
+            }
+
+            //Endpoints for the filter graph
+            AVFilterInOut *outputs = avfilter_inout_alloc();
+            outputs->name       = av_strdup("in");
+            outputs->filter_ctx = buffersrc_ctx;
+            outputs->pad_idx    = 0;
+            outputs->next       = NULL;
+
+            AVFilterInOut *inputs  = avfilter_inout_alloc();
+            inputs->name       = av_strdup("out");
+            inputs->filter_ctx = buffersink_ctx;
+            inputs->pad_idx    = 0;
+            inputs->next       = NULL;
+
+            char filter_descr[20]={0};
+            sprintf(filter_descr, "scale=%d:%d", m_nWidth, m_nHeight);
+            ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL);
+            if (ret < 0){
+                Log::error("Cannot filter graph parse ptr");
+                goto end;
+            }
+
+            ret = avfilter_graph_config(filter_graph, NULL);
+            if (ret < 0){
+                Log::error("Cannot filter graph config");
+                goto end;
+            }
+        }
+
         while (m_bConnect) {
-            AVStream *in_stream, *out_stream;
             AVPacket pkt;
             av_init_packet(&pkt);
+
             ret = av_read_frame(ifc, &pkt);
             if (ret < 0)
                 break;
-            //Log::debug("read_index %d",pkt.stream_index);
-            in_stream  = ifc->streams[pkt.stream_index];
-            if (pkt.stream_index == in_video_index) {
-                pkt.stream_index = out_video_index;
-                out_stream = ofc->streams[pkt.stream_index];
-                pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-                pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-                pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
-                pkt.pos = -1;
 
-                int wret = av_interleaved_write_frame(ofc, &pkt);
-                if (wret < 0) {
-                    char tmp[1024]={0};
-                    av_strerror(ret, tmp, 1024);
-                    Log::error("video error muxing packet %d:%s \n", ret, tmp);
-                    //break;
+            if (pkt.stream_index == in_video_index) {
+                // 视频数据
+                if(recodec_video) {
+                    // 解码原始码流
+                    ret = avcodec_send_packet(decode_ctx, &pkt);
+                    if (ret < 0) {
+                        Log::error("decoding video stream failed");
+                        goto end;
+                    }
+
+                    while (ret >= 0) {
+                        ret = avcodec_receive_frame(decode_ctx, frame);
+                        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                            break;
+                        } else if (ret < 0) {
+                            Log::error("Error while receiving a frame from the decoder\n");
+                            goto end;
+                        }
+
+                        frame->pts = frame->best_effort_timestamp;
+
+                        if(scale_video) {
+                            // 需要通过filter缩放帧
+                            ret = av_buffersrc_add_frame_flags(buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF);
+                            if (ret < 0) {
+                                Log::error("Error while feeding the filtergraph");
+                                goto end;
+                            }
+                            while (true) {
+                                ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
+                                if (ret < 0) {
+                                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                                        ret = 0;
+                                    }
+                                    break;
+                                }
+                                
+                                //缩放后的视频帧编码并写入输出
+                                AVPacket enc_pkt;
+                                av_init_packet(&enc_pkt);
+                                ret = avcodec_send_frame(encode_ctx, filt_frame);
+                                if (ret < 0)
+                                    return ret;
+
+                                while (ret >= 0) {
+                                    ret = avcodec_receive_packet(encode_ctx, &enc_pkt);
+                                    if (ret < 0)
+                                        return 0;
+
+                                    enc_pkt.stream_index = out_video_index;
+                                    ret = av_interleaved_write_frame(ofc, &enc_pkt);
+
+                                    av_packet_unref(&enc_pkt);
+                                }
+                                av_frame_unref(filt_frame);
+                            }
+                        } else {
+                            // 不需要缩放，直接重编码并写入输出
+                            AVPacket enc_pkt;
+                            av_init_packet(&enc_pkt);
+                            ret = avcodec_send_frame(encode_ctx, frame);
+                            if (ret < 0)
+                                return ret;
+
+                            while (ret >= 0) {
+                                ret = avcodec_receive_packet(encode_ctx, &enc_pkt);
+                                if (ret < 0)
+                                    return 0;
+
+                                enc_pkt.stream_index = out_video_index;
+                                ret = av_interleaved_write_frame(ofc, &enc_pkt);
+
+                                av_packet_unref(&enc_pkt);
+                            }
+                        }
+
+                        av_frame_unref(frame);
+                    }
+                } else {
+                    // 将原始码流写到输出
+                    pkt.stream_index = out_video_index;
+                    int wret = av_interleaved_write_frame(ofc, &pkt);
+                    if (wret < 0) {
+                        char tmp[1024]={0};
+                        av_strerror(ret, tmp, 1024);
+                        Log::error("video error muxing packet %d:%s", ret, tmp);
+                        //break;
+                    }
                 }
             } //else if (pkt.stream_index == in_audio_index) {
             //    //Log::debug("audio dts %d pts %d", pkt.dts, pkt.pts);
@@ -277,10 +487,17 @@ namespace Server
 
         av_write_trailer(ofc);
 end:
-        /** 关闭输入 */
-        avformat_close_input(&ifc);
+        /** 清理filter */
+        av_frame_free(&frame);
+        av_frame_free(&filt_frame);
+        avfilter_graph_free(&filter_graph);
 
-        /* 关闭输出 */
+        /** 关闭解码 */
+        avcodec_close(decode_ctx);
+        avcodec_close(encode_ctx);
+
+        /* 关闭输入输出 */
+        avformat_close_input(&ifc);
         if (ofc && !(ofmt->flags & AVFMT_NOFILE))
             avio_closep(&ofc->pb);
         avformat_free_context(ofc);
@@ -289,9 +506,12 @@ end:
         if (ret < 0 /*&& ret != AVERROR_EOF*/) {
             char tmp[AV_ERROR_MAX_STRING_SIZE]={0};
             av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret);
-            Log::error("Error occurred: %s\n", tmp);
+            Log::error("Error occurred: %s", tmp);
         }
+
+        //关闭rtp
         RtpDecode::Stop(playHandle);
+
         if(m_bConnect) {
             Log::debug("video source is dropped, need close the client");
             //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
@@ -455,7 +675,8 @@ bool CLiveWorker::Play() {
         CLiveWorker *worker = new CLiveWorker();
         worker->m_strCode = strCode;
         worker->m_strType = strType;
-        worker->m_strHw   = strHw;
+        if(!strHw.empty() && strHw.find('*') != string::npos)
+            sscanf(strHw.c_str(), "%d*%d", &worker->m_nWidth, &worker->m_nHeight);
         worker->m_bWebSocket = isWs;
         worker->m_pPss = pss;
 		worker->m_strClientIP = clientIP;

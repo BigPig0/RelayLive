@@ -33,7 +33,9 @@ namespace Server
         pss_live             *m_pPss;           //< 连接会话
         std::string           m_strCode;        //< 播放媒体编号
         std::string           m_strType;        // 目标媒体类型 flv mp4 h264
-        std::string           m_strHw;          // 目标媒体分辨率 空表示不变
+        //std::string           m_strHw;          // 目标媒体分辨率 空表示不变
+        int                   m_nWidth;
+        int                   m_nHeight;
         std::string           m_strMIME;        //< mime type
         bool                  m_bWebSocket;     //< false:http请求，true:websocket
 
