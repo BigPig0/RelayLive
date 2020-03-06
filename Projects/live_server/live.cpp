@@ -34,9 +34,9 @@ namespace Server
 
         string strPath = pra;
         string strCode, strUrl, strHw, strType="flv";
-        vector<string> vecpars = StringHandle::StringSplit(strPath, '&');
-        for(auto par:vecpars) {
-            vector<string> tmp = StringHandle::StringSplit(par, '=');
+		int n = 0;
+		while (lws_hdr_copy_fragment(pss->wsi, pra, MAX_PATH, WSI_TOKEN_HTTP_URI_ARGS, n++) >= 0) {
+            vector<string> tmp = StringHandle::StringSplit(pra, '=');
             if(tmp.size() != 2)
                 continue;
             if(tmp[0] == "code")

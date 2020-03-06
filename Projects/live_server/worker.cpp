@@ -176,7 +176,7 @@ namespace Server
             Log::error("Could not open input file: %d(%s)", ret, tmp);
             goto end;
         }
-		//ifc->probesize = 102400;
+		ifc->probesize = 51200;
 		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
@@ -226,7 +226,7 @@ namespace Server
         }
         if(scale_video) {
             filt_frame = av_frame_alloc();
-            if (filt_frame) {
+            if (!filt_frame) {
                 Log::error("Could not allocate filter_frame");
                 goto end;
             }
@@ -384,13 +384,13 @@ namespace Server
                         goto end;
                     }
 
-                    while (ret >= 0) {
+                    while (true) {
                         ret = avcodec_receive_frame(decode_ctx, frame);
                         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                             break;
                         } else if (ret < 0) {
                             Log::error("Error while receiving a frame from the decoder\n");
-                            goto end;
+                            break;
                         }
 
                         frame->pts = frame->best_effort_timestamp;
@@ -410,21 +410,32 @@ namespace Server
                                     }
                                     break;
                                 }
-                                
+
                                 //缩放后的视频帧编码并写入输出
                                 AVPacket enc_pkt;
                                 av_init_packet(&enc_pkt);
                                 ret = avcodec_send_frame(encode_ctx, filt_frame);
                                 if (ret < 0)
-                                    return ret;
+                                    break;
 
-                                while (ret >= 0) {
+                                while (true) {
                                     ret = avcodec_receive_packet(encode_ctx, &enc_pkt);
                                     if (ret < 0)
-                                        return 0;
+                                        break;
+
 
                                     enc_pkt.stream_index = out_video_index;
+									enc_pkt.pts = av_rescale_q_rnd(pkt.pts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+									enc_pkt.dts = av_rescale_q_rnd(pkt.dts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+									enc_pkt.duration = av_rescale_q(pkt.duration, istream_video->time_base, ostream_video->time_base);
+									enc_pkt.pos = -1;
                                     ret = av_interleaved_write_frame(ofc, &enc_pkt);
+									if (ret < 0) {
+										char tmp[1024]={0};
+										av_strerror(ret, tmp, 1024);
+										Log::error("video error muxing packet %d:%s", ret, tmp);
+										//break;
+									}
 
                                     av_packet_unref(&enc_pkt);
                                 }
@@ -436,15 +447,25 @@ namespace Server
                             av_init_packet(&enc_pkt);
                             ret = avcodec_send_frame(encode_ctx, frame);
                             if (ret < 0)
-                                return ret;
+                                break;
 
-                            while (ret >= 0) {
+                            while (true) {
                                 ret = avcodec_receive_packet(encode_ctx, &enc_pkt);
                                 if (ret < 0)
-                                    return 0;
+                                    break;
 
                                 enc_pkt.stream_index = out_video_index;
+								enc_pkt.pts = av_rescale_q_rnd(pkt.pts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+								enc_pkt.dts = av_rescale_q_rnd(pkt.dts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+								enc_pkt.duration = av_rescale_q(pkt.duration, istream_video->time_base, ostream_video->time_base);
+								enc_pkt.pos = -1;
                                 ret = av_interleaved_write_frame(ofc, &enc_pkt);
+								if (ret < 0) {
+									char tmp[1024]={0};
+									av_strerror(ret, tmp, 1024);
+									Log::error("video error muxing packet %d:%s", ret, tmp);
+									//break;
+								}
 
                                 av_packet_unref(&enc_pkt);
                             }
@@ -455,8 +476,12 @@ namespace Server
                 } else {
                     // 将原始码流写到输出
                     pkt.stream_index = out_video_index;
-                    int wret = av_interleaved_write_frame(ofc, &pkt);
-                    if (wret < 0) {
+					pkt.pts = av_rescale_q_rnd(pkt.pts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+					pkt.dts = av_rescale_q_rnd(pkt.dts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+					pkt.duration = av_rescale_q(pkt.duration, istream_video->time_base, ostream_video->time_base);
+					pkt.pos = -1;
+                    ret = av_interleaved_write_frame(ofc, &pkt);
+                    if (ret < 0) {
                         char tmp[1024]={0};
                         av_strerror(ret, tmp, 1024);
                         Log::error("video error muxing packet %d:%s", ret, tmp);
@@ -611,6 +636,7 @@ bool CLiveWorker::Play() {
             Log::error("client has already leave");
             return;
         }
+
         //内存数据保存至ring-buff
         int n = (int)ring_get_count_free_elements(m_pFlvRing);
         if (!n && m_pPss) {
