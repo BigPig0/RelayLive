@@ -65,13 +65,22 @@ namespace SipServer {
     void SIP_API Cleanup();
 
     /**
-     * 开启一个实时播放
+     * 建立一个请求准备
      * @param[in] strProName 进程名称
      * @param[in] nID 请求ID
      * @param[in] strDev 设备编码
      * @return true:成功 false:失败
      */
-    bool SIP_API RealPlay(string strProName, uint32_t nID, string strDev);
+    bool SIP_API PlayInit(string strProName, uint32_t nID, string strDev);
+
+    /**
+     * 开启一个实时播放
+     * @param[in] strProName 进程名称
+     * @param[in] nID 请求ID
+     * @param[in] nPort 播放端口
+     * @return true:成功 false:失败
+     */
+    bool SIP_API RealPlay(string strProName, uint32_t nID, uint32_t nPort);
 
     /**
      * 关闭一个实时播放
@@ -93,7 +102,7 @@ namespace SipServer {
      * @param session 会话session
      * @return true:成功 false:失败
      */
-    bool SIP_API RecordPlay(string strProName, string strDev, string startTime, string endTime);
+    bool SIP_API RecordPlay(string strProName, uint32_t nPort, string startTime, string endTime);
 
     /**
      * 云台控制
@@ -130,6 +139,12 @@ namespace SipServer {
      */
     typedef void (*ADD_DEVICE_CB)(DevInfo* dev);
     void SetDeviceCB(ADD_DEVICE_CB cb);
+
+    /**
+     * 建立请求回调
+     */
+    typedef void (*PLAY_INIT_CB)(string strProName, uint32_t nID, uint32_t nPort);
+    void SetInitCB(PLAY_INIT_CB cb);
 
     /**
      * 播放请求回调

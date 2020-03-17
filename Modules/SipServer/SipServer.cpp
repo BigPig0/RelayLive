@@ -47,6 +47,7 @@ namespace SipServer {
     UPDATE_STATUS_CB   g_updateStatus = NULL;
     UPDATE_POSITION_CB g_updatePostion = NULL;
     ADD_DEVICE_CB      g_addDevice = NULL;
+    PLAY_INIT_CB       g_playInit = NULL;
     PLAY_CB            g_playResult = NULL;
 
     static bool    _bFirstReg = true;      //第一次收到register或keeplive
@@ -658,13 +659,34 @@ namespace SipServer {
         SAFE_DELETE(_pSubscribe);
     }
 
-    bool RealPlay(string strProName, uint32_t nID, string strDev)
+    bool PlayInit(string strProName, uint32_t nID, string strDev)
     {
-        Log::debug("start real play strDev:%s", strDev.c_str());
+        Log::debug("init real play strDev:%s", strDev.c_str());
+
+        // rtp客户端端口
+        int nPort = GetRtpPort(); 
+        if(nPort == -1) {
+            Log::error("failed get rtp port");
+            if(g_playInit)
+                g_playInit(strProName, nID, nPort);
+            return false;
+        }
 
         // 创建会话邀请
-        int nPort = GetRtpPort();           // rtp客户端端口
-        if (!_pInvite->SendInvite(strProName, nID, strDev, nPort))
+        _pInvite->InviteInit(strProName, nID, strDev, nPort);
+
+        if(g_playInit)
+            g_playInit(strProName, nID, nPort);
+
+        return true;
+    }
+
+    bool RealPlay(string strProName, uint32_t nID, uint32_t nPort)
+    {
+        Log::debug("start real play port:%d", nPort);
+
+        // 创建会话邀请
+        if (!_pInvite->SendInvite(strProName, nID, nPort))
         {
             Log::error("creat sip call failed");
             return false;
@@ -672,13 +694,12 @@ namespace SipServer {
         return true;
     }
 
-    bool RecordPlay(string strProName, uint32_t nID, string strDev, string startTime, string endTime)
+    bool RecordPlay(string strProName, uint32_t nID, uint32_t nPort, string startTime, string endTime)
     {
-        Log::debug("start SipInstance::RealPlay strDev:%s",strDev.c_str());
-        int nPort = GetRtpPort();           // rtp客户端端口
+        Log::debug("start SipInstance::RealPlay port:%d", nPort);
 
         // 创建会话邀请
-        if (!_pInvite->SendRecordInvite(strProName, nID, strDev, nPort, startTime, endTime)) {
+        if (!_pInvite->SendRecordInvite(strProName, nID, nPort, startTime, endTime)) {
             return false;
         }
         return true;
@@ -727,6 +748,10 @@ namespace SipServer {
 
     void SetDeviceCB(ADD_DEVICE_CB cb) {
         g_addDevice = cb;
+    }
+
+    void SetInitCB(PLAY_INIT_CB cb) {
+        g_playInit = cb;
     }
 
     void SetPlayCB(PLAY_CB cb) {

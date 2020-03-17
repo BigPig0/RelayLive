@@ -101,12 +101,12 @@ static void parserRegisterInfo(osip_message_t* request, int iReqId, SipRegisterI
     regInfo.method    = request->sip_method;
     regInfo.fromCode  = request->from->url->username;
     regInfo.fromeIP   = request->from->url->host;
-    regInfo.fromPort  = stoi(request->from->url->port);
-    regInfo.from      = GetFormatHeader(request->from->url->username, request->from->url->host, stoi(request->from->url->port));
+    regInfo.fromPort  = sz2int(request->from->url->port);
+    regInfo.from      = GetFormatHeader(request->from->url->username, request->from->url->host, sz2int(request->from->url->port));
     regInfo.proxyCode = request->to->url->username;
     regInfo.proxyIP   = request->to->url->host;
-    regInfo.proxyPort = stoi(request->to->url->port);
-    regInfo.proxy     = GetFormatHeader(request->to->url->username, request->to->url->host, stoi(request->to->url->port));
+    regInfo.proxyPort = sz2int(request->to->url->port);
+    regInfo.proxy     = GetFormatHeader(request->to->url->username, request->to->url->host, sz2int(request->to->url->port));
 
     //»ñÈ¡expires
     osip_header_t* header = NULL;
@@ -121,8 +121,8 @@ static void parserRegisterInfo(osip_message_t* request, int iReqId, SipRegisterI
     if (NULL != contact) {
         regInfo.contactCode = contact->url->username;
         regInfo.contactIP   = contact->url->host;
-        regInfo.contactPort = stoi(contact->url->port);
-        regInfo.contact     = GetContractFormatHeader(contact->url->username, contact->url->host, stoi(contact->url->port), regInfo.expires);
+        regInfo.contactPort = sz2int(contact->url->port);
+        regInfo.contact     = GetContractFormatHeader(contact->url->username, contact->url->host, sz2int(contact->url->port), regInfo.expires);
     }
 
     //via×Ö¶Î

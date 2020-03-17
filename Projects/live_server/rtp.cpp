@@ -9,6 +9,13 @@ using namespace Server;
 #define PACK_MAX_SIZE        1700                // rtp包最大长度
 
 namespace RtpDecode {
+    typedef struct _UDP_BUFF_ {
+        char       *pData;    //< 数据内容
+        uint32_t    nLen;     //< 数据长度
+        string      ip;       //< 发送方ip
+        int         port;     //< 发送方端口
+    }UDP_BUFF;
+
     struct Sequence {
         uint16_t seq;
         Sequence():seq(0){}
@@ -78,7 +85,8 @@ namespace RtpDecode {
     class CRtpStream {
     public:
         uv_loop_t   m_uvLoop;
-        uv_async_t  m_uvAsync;
+        uv_async_t  m_uvAsStop;          // 结束任务通知
+        uv_async_t  m_uvAsParse;         // 解析RTP通知
         uv_udp_t    m_uvSkt;             // rtp接收
         uv_timer_t  m_uvTimer;           // 接收超时定时器
         string      m_strRemoteIP;       // 发送方IP
@@ -87,6 +95,8 @@ namespace RtpDecode {
         void       *m_pUser;             // 用户对象
         bool        m_bRun;
         int         m_nHandleNum;        // 启动的uv句柄数，这些句柄通过uv_close关闭
+        ring_buff_t *m_pUdpCatch;        // rtp数据缓存
+        bool        m_bBegin;            // 收到sip应答，开始处理
 
         //CRtpPacket *m_listHead;
         //CRtpPacket *m_listTail;
@@ -95,9 +105,13 @@ namespace RtpDecode {
         uint16_t    m_nDoneSeq;          // 完成组帧的序列号，小于该值的包丢掉
         bool        m_bDoneFirst;        // 完成组第一帧
 
-        CRtpStream(void* usr, uint32_t port, string remoteIP, uint32_t remotePort);
+        CRtpStream(void* usr, uint32_t port);
+        ~CRtpStream();
 
-        void AddPacket(char* data, uint32_t len);
+        void Begin(string remoteIP, uint32_t remotePort);   //开始rtp组装
+        void CtachPacket(char* data, uint32_t len, string ip, int port); //UDP接收到的包存放到缓存
+        void PickUpPacket();                                //从缓存中取udp包来处理
+        void AddPacket(char* data, uint32_t len);           //处理rtp包
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -206,7 +220,7 @@ namespace RtpDecode {
     static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags) {
         CRtpStream *dec = (CRtpStream*)handle->data;
         if(nread < 0){
-            Log::error("read error: %s",uv_strerror(nread));
+            Log::error("read error: %s",uv_strerror((int)nread));
             free(buf->base);
         }
         if(nread == 0)
@@ -217,16 +231,11 @@ namespace RtpDecode {
         int port = ntohs(addr_in->sin_port);
         char ipv4addr[64]={0};
         uv_ip4_name(addr_in, ipv4addr, 64);
-        string ip = ipv4addr;
-        if(dec->m_nRemotePort != port || dec->m_strRemoteIP != ip) {
-            //Log::error("this is not my rtp data");
-            return;
-        }
+
+        dec->CtachPacket(buf->base, (uint32_t)nread, ipv4addr, port);
 
         //重置超时计时器
         uv_timer_again(&dec->m_uvTimer);
-
-        dec->AddPacket(buf->base, nread);
     }
 
     /** 超时定时器到时回调 */
@@ -248,7 +257,7 @@ namespace RtpDecode {
     }
 
     /** 外部线程通知回调，在loop回调中关闭用到的uv句柄 */
-    static void async_cb(uv_async_t* handle){
+    static void async_stop_cb(uv_async_t* handle){
         CRtpStream *dec = (CRtpStream*)handle->data;
         int ret = uv_udp_recv_stop(&dec->m_uvSkt);
         if(ret < 0) {
@@ -262,7 +271,15 @@ namespace RtpDecode {
         }
         uv_close((uv_handle_t*)&dec->m_uvTimer, udp_uv_close_cb);
 
-        uv_close((uv_handle_t*)&dec->m_uvAsync, udp_uv_close_cb);
+        uv_close((uv_handle_t*)&dec->m_uvAsStop, udp_uv_close_cb);
+
+        uv_close((uv_handle_t*)&dec->m_uvAsParse, udp_uv_close_cb);
+    }
+
+    /** 通知解析rtp报文 */
+    static void async_parse_cb(uv_async_t* handle){
+        CRtpStream *dec = (CRtpStream*)handle->data;
+        dec->PickUpPacket();
     }
 
     /** event loop thread */
@@ -277,18 +294,17 @@ namespace RtpDecode {
     }
 
 
-    CRtpStream::CRtpStream(void* usr, uint32_t port, string remoteIP, uint32_t remotePort)
+    CRtpStream::CRtpStream(void* usr, uint32_t port)
         : m_pUser(usr)
         , m_nPort(port)
-        , m_strRemoteIP(remoteIP)
-        , m_nRemotePort(remotePort)
         , m_bRun(true)
-        , m_nHandleNum(0) 
-        //, m_listHead(NULL)
-        //, m_listTail(NULL)
+        , m_nHandleNum(0)
         , m_nDoneSeq(0)
         , m_bDoneFirst(false)
+        , m_bBegin(false)
     {
+        m_pUdpCatch = create_ring_buff(sizeof(UDP_BUFF), 1000, NULL);
+
         uv_loop_init(&m_uvLoop);
 
         //udp接收
@@ -312,14 +328,63 @@ namespace RtpDecode {
         m_nHandleNum++;
 
         //异步操作
-        m_uvAsync.data = (void*)this;
-        uv_async_init(&m_uvLoop, &m_uvAsync, async_cb);
+        m_uvAsStop.data = (void*)this;
+        uv_async_init(&m_uvLoop, &m_uvAsStop, async_stop_cb);
         m_nHandleNum++;
+
+        m_uvAsParse.data = (void*)this;
+        uv_async_init(&m_uvLoop, &m_uvAsParse, async_parse_cb);
+        m_nHandleNum++;
+        
 
         //udp 接收loop线程
         uv_thread_t tid;
         uv_thread_create(&tid, run_loop_thread, this);
     };
+
+    CRtpStream::~CRtpStream() {
+        destroy_ring_buff(m_pUdpCatch);
+    }
+
+    void CRtpStream::Begin(string remoteIP, uint32_t remotePort) {
+        m_strRemoteIP = remoteIP;
+        m_nRemotePort = remotePort;
+        m_bBegin = true;
+    }
+
+    void CRtpStream::CtachPacket(char* data, uint32_t len, string ip, int port) {
+        int n = (int)ring_get_count_free_elements(m_pUdpCatch);
+        if(!n) {
+            free(data);
+            return;
+        }
+
+        UDP_BUFF tmp = {data, len, ip, port};
+        if(!ring_insert(m_pUdpCatch, &tmp, 1)) {
+            free(data);
+            return;
+        }
+
+        //解析rtp数据
+        if(m_bBegin) {
+            uv_async_send(&m_uvAsParse);
+        }
+    }
+
+    void CRtpStream::PickUpPacket() {
+        UDP_BUFF *tmp = (UDP_BUFF*)simple_ring_get_element(m_pUdpCatch);
+        if(tmp == NULL)
+            return;
+
+        if(m_nRemotePort != tmp->port || m_strRemoteIP != tmp->ip) {
+            //Log::error("this is not my rtp data");
+            return;
+        }
+        
+        AddPacket(tmp->pData, tmp->nLen);
+
+        uv_async_send(&m_uvAsParse);
+    }
 
     void CRtpStream::AddPacket(char* data, uint32_t len) {
         CRtpPacket *pack = new CRtpPacket();
@@ -453,7 +518,7 @@ namespace RtpDecode {
 
     static void ParseSdp(string sdp, string &rip, uint32_t &rport) {
         //从sdp解析出视频源ip和端口
-        bnf_t* sdp_bnf = create_bnf(sdp.c_str(), sdp.size());
+        bnf_t* sdp_bnf = create_bnf(sdp.c_str(), (uint32_t)sdp.size());
         char *sdp_line = NULL;
         char remoteIP[25]={0};
         int remotePort = 0;
@@ -484,25 +549,21 @@ namespace RtpDecode {
         destory_bnf(sdp_bnf);
     }
 
-    bool Init() {
-
-        return true;
-    }
-
-    void Cleanup() {
-
-    }
-
-    void* Play(void* user, std::string sdp, uint32_t port) {
-        string remoteIP;
-        uint32_t remotePort;
-        ParseSdp(sdp, remoteIP, remotePort);
-        CRtpStream *ret = new CRtpStream(user, port, remoteIP, remotePort);
+    void* Creat(void* user, uint32_t port) {
+        CRtpStream *ret = new CRtpStream(user, port);
         return ret;
     }
 
-    void Stop(void* ret) {
-        CRtpStream *dec = (CRtpStream*)ret;
-        uv_async_send(&dec->m_uvAsync);
+    void Play(void* h, std::string sdp) {
+        string remoteIP;
+        uint32_t remotePort;
+        ParseSdp(sdp, remoteIP, remotePort);
+        CRtpStream *dec = (CRtpStream*)h;
+        dec->Begin(remoteIP, remotePort);
+    }
+
+    void Stop(void* h) {
+        CRtpStream *dec = (CRtpStream*)h;
+        uv_async_send(&dec->m_uvAsStop);
     }
 };

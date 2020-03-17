@@ -65,6 +65,23 @@ namespace SipServer {
     extern void AutoQuery();
 
     inline
+    uint32_t sz2int(char* value) {
+        if(NULL == value)
+            return 0;
+        int ret = 0;
+        sscanf(value, "%d", &ret);
+        return ret;
+    }
+
+    inline
+    string sz2str(char* value) {
+        if(NULL == value)
+            return "";
+        string ret(value);
+        return ret;
+    }
+
+    inline
     string GetFormatHeader(string code, string ip, uint32_t port = 0) {
             std::stringstream stream;
             stream << "<sip:" << code << "@" << ip;

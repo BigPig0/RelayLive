@@ -9,13 +9,20 @@ class CSipInvite
 {
 public:
     /**
+     * 建立邀请准备
+     */
+    void InviteInit(string strProName, uint32_t nID, string strCode, int nRTPPort);
+
+    /**
      * 发送会话邀请
+     * @param strProName[in] 发起请求的进程名称
+     * @param nID[in] 请求ID
      * @param strDevID[in] 视频设备编码
      * @param nRTPPort[in] 接收rtp的端口
      * @return call-id
      */
-    int SendInvite(string strProName, uint32_t nID, string strCode, int nRTPPort);
-    int SendRecordInvite(string strProName, uint32_t nID, string strCode, int nRTPPort, string beginTime, string endTime);
+    int SendInvite(string strProName, uint32_t nID, int nRTPPort);
+    int SendRecordInvite(string strProName, uint32_t nID, int nRTPPort, string beginTime, string endTime);
 
     /**
      * 接收到200OK返回

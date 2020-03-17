@@ -11,15 +11,30 @@ namespace IPC {
 
     static void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len)
     {
-        if (!strcmp(msg,"live_play")) {
-            // 请求播放 devcode=123&id=0
+        if (!strcmp(msg,"live_init")) {
+            //建立播放请求 devcode=123&id=0
             data[len] = 0;
             char        szDevCode[30] = {0}; // 设备编码
             uint32_t    nID = 0;
 
             sscanf(data, "devcode=%[^&]&id=%d",szDevCode, &nID);
 
-            bool bplay = SipServer::RealPlay(name, nID, szDevCode);
+            bool bplay = SipServer::PlayInit(name, nID, szDevCode);
+            if(!bplay) {
+                stringstream ss;
+                ss << "id=" <<nID << "&port=0&ret=-1&error=sip play failed";
+                string str = ss.str();
+                uv_ipc_send(h, name, "live_init_answer", (char*)str.c_str(), str.size());
+            }
+        } else if (!strcmp(msg,"live_play")) {
+            // 请求播放 devcode=123&id=0
+            data[len] = 0;
+            uint32_t    nPort = 0;
+            uint32_t    nID = 0;
+
+            sscanf(data, "port=%d&id=%d", &nPort, &nID);
+
+            bool bplay = SipServer::RealPlay(name, nID, nPort);
             if(!bplay){
                 stringstream ss;
                 ss << "id=" <<nID << "&port=0&ret=-1&error=sip play failed";
@@ -65,6 +80,13 @@ namespace IPC {
         uv_ipc_send(h, "livectrlsvr", "update_pos", (char*)str.c_str(), str.size());
     }
 
+    static void on_play_init_cb(string strProName, uint32_t nID, uint32_t nPort) {
+        stringstream ss;
+        ss << "id=" << nID << "&port=" << nPort;
+        string str = ss.str();
+        uv_ipc_send(h, (char*)strProName.c_str(), "live_init_answer", (char*)str.c_str(), str.size());
+    }
+
     static void on_play_cb(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo) {
         if(bRet) {
             std::stringstream ss;
@@ -90,6 +112,7 @@ namespace IPC {
         SipServer::SetDeviceCB(on_device);
         SipServer::SetUpdateStatusCB(on_update_status);
         SipServer::SetUpdatePostionCB(on_update_postion);
+        SipServer::SetInitCB(on_play_init_cb);
         SipServer::SetPlayCB(on_play_cb);
 
         return true;

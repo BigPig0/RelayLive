@@ -35,20 +35,53 @@ static SipCall* FindByCallID(int nCID) {
     auto it = m_mapGlobalCall.find(nCID);
     if (it == m_mapGlobalCall.end())
     {
-        Log::error("find cid %d",nCID);
+        Log::error("can't find cid %d",nCID);
         return nullptr;
     }
 
     return it->second;
 }
 
-int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int nRTPPort)
-{
-    string strFrom = GetFormatHeader(g_strCode , g_strSipIP , g_nSipPort);
-    string strTo   = GetFormatHeader(strCode, g_strLowIP, g_nLowPort);
-    string strSubject = GetSubjectHeader(strCode, g_strCode, false);
+static SipCall* FindByPort(uint32_t port) {
+    Log::debug("port is %d", port);
+    MutexLock lock(&m_csGlobalCall);
+    auto it = m_mapDeviceCall.find(port);
+    if (it == m_mapDeviceCall.end())
+    {
+        Log::error("can't find cid %d", port);
+        return nullptr;
+    }
 
-    Log::debug("invite %s %d", strCode.c_str(), nRTPPort);
+    return it->second;
+}
+
+void CSipInvite::InviteInit(string strProName, uint32_t nID, string strCode, int nRTPPort) {
+    Log::debug("InviteInit %s: %s %d", strProName.c_str(), strCode.c_str(), nRTPPort);
+
+    SipCall *call = new SipCall();
+    call->m_nCallID = -1;
+    call->m_nDialogID = -1;
+    call->m_nRtpPort = nRTPPort;
+    call->m_strDevCode = strCode;
+    call->m_strProName = strProName;
+    call->m_nID = nID;
+    call->m_nInvite = 0;
+    call->m_bRecord = false;
+    MutexLock lock(&m_csGlobalCall);
+    m_mapDeviceCall.insert(make_pair(nRTPPort,call));
+}
+
+int CSipInvite::SendInvite(string strProName, uint32_t nID, int nRTPPort)
+{
+    SipCall* pCall = FindByPort(nRTPPort);
+    if(NULL == pCall)
+        return -1;
+
+    string strFrom = GetFormatHeader(g_strCode , g_strSipIP , g_nSipPort);
+    string strTo   = GetFormatHeader(pCall->m_strDevCode, g_strLowIP, g_nLowPort);
+    string strSubject = GetSubjectHeader(pCall->m_strDevCode, g_strCode, false);
+
+    Log::debug("invite %s %d", pCall->m_strDevCode.c_str(), nRTPPort);
 
     osip_message_t *cinvMsg = NULL;
     int nIviteID = eXosip_call_build_initial_invite(g_pExContext, &cinvMsg, strTo.c_str(), 
@@ -92,28 +125,22 @@ int CSipInvite::SendInvite(string strProName, uint32_t nID, string strCode, int 
     //osip_message_free(cinvMsg);
     eXosip_unlock(g_pExContext);
 
-
-    SipCall *call = new SipCall();
-    call->m_nCallID = ret/*nCallID*/;
-    call->m_nDialogID = -1;
-    call->m_nRtpPort = nRTPPort;
-    call->m_strDevCode = strCode;
-    call->m_strProName = strProName;
-    call->m_nID = nID;
-    call->m_nInvite = 0;
-    call->m_bRecord = false;
+    pCall->m_nCallID = ret;
     MutexLock lock(&m_csGlobalCall);
-    m_mapGlobalCall.insert(make_pair(ret/*nCallID*/, call));
-    m_mapDeviceCall.insert(make_pair(nRTPPort,call));
+    m_mapGlobalCall.insert(make_pair(ret, pCall));
 
     return ret;
 }
 
-int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, string strCode, int nRTPPort, string beginTime, string endTime)
+int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, int nRTPPort, string beginTime, string endTime)
 {
+    SipCall* pCall = FindByPort(nRTPPort);
+    if(NULL == pCall)
+        return -1;
+
     string strFrom = GetFormatHeader(g_strCode , g_strSipIP , g_nSipPort);
-    string strTo   = GetFormatHeader(strCode, g_strLowIP, g_nLowPort);
-    string strSubject = GetSubjectHeader(strCode, g_strCode, true);
+    string strTo   = GetFormatHeader(pCall->m_strDevCode, g_strLowIP, g_nLowPort);
+    string strSubject = GetSubjectHeader(pCall->m_strDevCode, g_strCode, true);
 
     Log::debug("CSipInvite::SendInvite");
 
@@ -153,26 +180,15 @@ int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, string strCode
 
     eXosip_lock(g_pExContext);
     int ret = eXosip_call_send_initial_invite(g_pExContext, cinvMsg);
-    if (ret <= 0)
-    {
+    if (ret <= 0) {
         Log::error("CSipInvite::SendInvite send failed:%d",ret);
     }
     //osip_message_free(cinvMsg);
-
-    SipCall *call = new SipCall();
-    call->m_nCallID = nCallID;
-    call->m_nDialogID = -1;
-    call->m_nRtpPort = nRTPPort;
-    call->m_strDevCode = strCode;
-    call->m_strProName = strProName;
-    call->m_nID = nID;
-    call->m_nInvite = 0;
-    call->m_bRecord = true;
-    call->m_strBeginTime = beginTime;
-    call->m_strEndTime = endTime;
+    pCall->m_nCallID = ret;
+    pCall->m_strBeginTime = beginTime;
+    pCall->m_strEndTime = endTime;
     MutexLock lock(&m_csGlobalCall);
-    m_mapGlobalCall.insert(make_pair(nCallID, call));
-    m_mapDeviceCall.insert(make_pair(nRTPPort,call));
+    m_mapGlobalCall.insert(make_pair(ret, pCall));
 
     eXosip_unlock(g_pExContext);
     return ret;

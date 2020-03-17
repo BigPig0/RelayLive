@@ -467,8 +467,8 @@ static void parserMessageInfo(osip_message_t*request, int iReqId, SipMessageInfo
 		*/
 
     msgInfo.method = request->sip_method;
-    msgInfo.from   = GetFormatHeader(request->from->url->username, request->from->url->host, atoi(request->from->url->port));
-    msgInfo.to     = GetFormatHeader(request->to->url->username, request->to->url->host, atoi(request->to->url->port));
+    msgInfo.from   = GetFormatHeader(request->from->url->username, request->from->url->host, sz2int(request->from->url->port));
+    msgInfo.to     = GetFormatHeader(request->to->url->username, request->to->url->host, sz2int(request->to->url->port));
     msgInfo.requestId = iReqId;
     msgInfo.callId = request->call_id->number;
 

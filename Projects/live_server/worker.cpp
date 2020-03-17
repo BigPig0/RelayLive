@@ -46,7 +46,7 @@ namespace Server
 
     static list<CLiveWorker*>  _listWorkers;
     static CriticalSection     _csWorkers;
-	static uint32_t            _flvbufsize = 1024*16;
+	static uint32_t            _flvbufsize = 1024*32;
 	static uint32_t            _psbufsize = 1024*32;
 	FILE *_f = NULL, *_f2 = NULL, *_f3 = NULL;
 
@@ -120,7 +120,7 @@ namespace Server
 		, m_nTmpBuffTotalSize(0)
 		, m_nTmpBuffReaded(0)
     {
-        m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 100, destroy_ring_node);
+        m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
         m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
 		//_f = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps.dat", "wb");
 		//_f2 = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps2.dat", "wb");
@@ -137,15 +137,26 @@ namespace Server
 #ifdef USE_FFMPEG
     bool CLiveWorker::Play()
     {
-        IPC::PlayRequest req = IPC::RealPlay(m_strCode);
-        if(req.ret != 0) {
-            Log::error("play %s failed: %s", m_strCode.c_str(), req.info.c_str());
+        // 通知sip server创建播放请求实例，并获取本地udp端口
+        IPC::PlayRequest *req = IPC::CreateReal(m_strCode);
+
+        // 创建RTP解码实例，并开始监听本地udp端口
+        void *playHandle = RtpDecode::Creat(this, req->port);
+
+        //通知sip server发送请求，并获取应答信息
+        IPC::RealPlay(req);
+        if(req->ret != 0) {
+            Log::error("play %s failed: %s", m_strCode.c_str(), req->info.c_str());
+            IPC:DestoryRequest(req);
             return false;
         }
 
-        void *playHandle = RtpDecode::Play(this, req.info, req.port);
+        //根据应答信息开始解析rtp
+        RtpDecode::Play(playHandle, req->info);
 
+        IPC::DestoryRequest(req);
 
+        //通过ffmpeg将ps流转为flv
         AVFormatContext *ifc = NULL;               //输入封装
         AVFormatContext *ofc = NULL;               //输出封装
         AVStream        *istream_video = NULL;     //输入视频码流
@@ -176,7 +187,7 @@ namespace Server
             Log::error("Could not open input file: %d(%s)", ret, tmp);
             goto end;
         }
-		ifc->probesize = 51200;
+		//ifc->probesize = 25600;
 		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {

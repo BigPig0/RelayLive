@@ -8,11 +8,25 @@ namespace IPC {
 
     
     static std::map<uint32_t, PlayRequest*> _PlayRequests;
+    static CriticalSection _csPlayReqs;
     static uint32_t _ID = 0;
 
     void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
-        if (!strcmp(msg,"live_play_answer")) {
-            //播放请求回调 id=123rtpport=80&ret=0&info=XXXX
+        if (!strcmp(msg,"live_init_answer")) {
+            //播放初始化回调 id=123&port=80&ret=0
+            data[len] = 0;
+            uint32_t id = 0;
+            uint32_t port = 0;
+            sscanf(data, "id=%d&port=%d",&id, &port);
+
+            MutexLock lock(&_csPlayReqs);
+            auto it = _PlayRequests.find(id);
+            if(it != _PlayRequests.end()) {
+                it->second->port = port;
+                it->second->finish = true;
+            }
+        } else if (!strcmp(msg,"live_play_answer")) {
+            //播放请求回调 id=123&port=80&ret=0&info=XXXX
             data[len] = 0;
             uint32_t id = 0;
             uint32_t port = 0;
@@ -26,6 +40,7 @@ namespace IPC {
 				info = info.substr(pos+6, info.size()-pos-6);
 			}
 
+            MutexLock lock(&_csPlayReqs);
             auto it = _PlayRequests.find(id);
             if(it != _PlayRequests.end()) {
                 it->second->port = port;
@@ -57,30 +72,60 @@ namespace IPC {
         uv_ipc_send(h, "livectrlsvr", "clients", (char*)info.c_str(), info.size());
     }
 
-    PlayRequest RealPlay(std::string code) {
-        PlayRequest req;
-        req.code   = code;
-        req.id     = _ID++;
-        req.ret    = 0;
-        req.finish = false;
-        _PlayRequests.insert(make_pair(req.id, &req));
+    PlayRequest* CreateReal(std::string code) {
+        PlayRequest *req = new PlayRequest();
+        req->code   = code;
+        req->id     = _ID++;
+        req->ret    = 0;
+        req->finish = false;
 
-        time_t send_time = time(NULL);
+        MutexLock lock(&_csPlayReqs);
+        _PlayRequests.insert(make_pair(req->id, req));
 
-        std::string msg = "devcode=" + code + "&id=" + to_string(req.id);
-        uv_ipc_send(h, "sipsvr", "live_play", (char*)msg.c_str(), msg.size());
+        std::string msg = "devcode=" + code + "&id=" + to_string(req->id);
+        uv_ipc_send(h, "sipsvr", "live_init", (char*)msg.c_str(), msg.size());
 
         // 等待返回结果
-        while (!req.finish) {
+        time_t send_time = time(NULL);
+        while (!req->finish) {
             time_t now = time(NULL);
-            if(difftime(now, send_time) > 30) {
-                req.finish = true;
-                req.ret = 0;
-                req.info = "time out";
+            if(difftime(now, send_time) > 5) {
+                req->finish = true;
+                req->ret = 0;
+                req->info = "time out";
             }
         }
 
         //返回播放结果
         return req;
+    }
+
+    void RealPlay(PlayRequest* req) {
+        req->ret    = 0;
+        req->finish = false;
+
+        time_t send_time = time(NULL);
+
+        std::string msg = "port=" + to_string(req->port) + "&id=" + to_string(req->id);
+        uv_ipc_send(h, "sipsvr", "live_play", (char*)msg.c_str(), msg.size());
+
+        // 等待返回结果
+        while (!req->finish) {
+            time_t now = time(NULL);
+            if(difftime(now, send_time) > 30) {
+                req->finish = true;
+                req->ret = 0;
+                req->info = "time out";
+            }
+        }
+    }
+
+    void DestoryRequest(PlayRequest *req) {
+        MutexLock lock(&_csPlayReqs);
+        auto fit = _PlayRequests.find(req->id);
+        if(fit != _PlayRequests.end()) {
+            _PlayRequests.erase(fit);
+        }
+        delete req;
     }
 }

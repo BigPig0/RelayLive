@@ -25,17 +25,15 @@ namespace Server
         */
         char path[MAX_PATH]={0};
         lws_hdr_copy(pss->wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
-		char pra[MAX_PATH]={0};
-		lws_hdr_copy(pss->wsi, pra, MAX_PATH, WSI_TOKEN_HTTP_URI_ARGS);
-        if(pss->isWs)
-            Log::debug("new ws-live protocol establised: %s?%s", path, pra);
-        else
-            Log::debug("new http-live request: %s?%s", path, pra);
 
-        string strPath = pra;
+		char pra[MAX_PATH]={0};
+        string strPrama;
         string strCode, strUrl, strHw, strType="flv";
 		int n = 0;
 		while (lws_hdr_copy_fragment(pss->wsi, pra, MAX_PATH, WSI_TOKEN_HTTP_URI_ARGS, n++) >= 0) {
+            if(!strPrama.empty())
+                strPrama += "&";
+            strPrama += pra;
             vector<string> tmp = StringHandle::StringSplit(pra, '=');
             if(tmp.size() != 2)
                 continue;
@@ -48,6 +46,10 @@ namespace Server
             else if(tmp[0] == "hw")
                 strHw = tmp[1];
         }
+        if(pss->isWs)
+            Log::debug("new ws-live protocol establised: %s?%s", path, strPrama.c_str());
+        else
+            Log::debug("new http-live request: %s?%s", path, strPrama.c_str());
 
         // 请求端的ip, 存在x_forwarded_for时，优先使用，否则获取连接的对端ip
         char clientIP[50]={0};
