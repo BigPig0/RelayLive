@@ -6,6 +6,8 @@
 #include <list>
 #include <sstream>
 
+extern std::string GetDevsJson();
+
 namespace IPC {
     uv_ipc_handle_t* h = NULL;
 
@@ -48,36 +50,25 @@ namespace IPC {
         } else if(!strcmp(msg,"close")) {
             //关闭所有正在进行的播放
             SipServer::StopPlayAll(name);
-        } else if(!strcmp(msg,"QueryDirtionary")) {
+        } else if(!strcmp(msg,"dev_fresh")) {
             //查询目录设备
             SipServer::QueryDirtionary();
-        } else if(!strcmp(msg, "DeviceControl")) {
+        } else if(!strcmp(msg, "dev_ctrl")) {
             //相机云台控制
             data[len] = 0;
             char szDevCode[30]={0};
             int nInOut=0, nUpDown=0, nLeftRight=0;
             sscanf(data, "dev=%[^&]&io=%d&ud=%d&lr=%d", szDevCode, &nInOut, &nUpDown, &nLeftRight);
             SipServer::DeviceControl(szDevCode, nInOut, nUpDown, nLeftRight);
-        }
-    }
-    
-    static void on_device(SipServer::DevInfo* dev) {
-        string str = FormatDevInfo(dev);
-        uv_ipc_send(h, "livectrlsvr", "add_device", (char*)str.c_str(), str.size());
-    }
-
-    static void on_update_status(string strDevID, string strStatus) {
-        stringstream ss;
-        ss << "devid=" << strDevID << "&status=" << strStatus;
-        string str = ss.str();
-        uv_ipc_send(h, "livectrlsvr", "update_status", (char*)str.c_str(), str.size());
-    }
-
-    static void on_update_postion(string strDevID, string log, string lat) {
-        stringstream ss;
-        ss << "devid=" << strDevID << "&log=" << log << "&lat=" << lat;
-        string str = ss.str();
-        uv_ipc_send(h, "livectrlsvr", "update_pos", (char*)str.c_str(), str.size());
+        } else if(!strcmp(msg, "dev_get")) {
+			data[len] = 0;
+			uint32_t    nID = 0;
+			sscanf(data, "id=%d", &nID);
+			stringstream ss;
+			ss << "id=" <<nID << "&json=" << GetDevsJson();
+			string str = ss.str();
+			uv_ipc_send(h, name, "dev_get_answer", (char*)str.c_str(), str.size());
+		}
     }
 
     static void on_play_init_cb(string strProName, uint32_t nID, uint32_t nPort) {
@@ -109,9 +100,6 @@ namespace IPC {
             return false;
         }
 
-        SipServer::SetDeviceCB(on_device);
-        SipServer::SetUpdateStatusCB(on_update_status);
-        SipServer::SetUpdatePostionCB(on_update_postion);
         SipServer::SetInitCB(on_play_init_cb);
         SipServer::SetPlayCB(on_play_cb);
 

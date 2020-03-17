@@ -79,8 +79,9 @@ namespace IPC {
         req->ret    = 0;
         req->finish = false;
 
-        MutexLock lock(&_csPlayReqs);
+        _csPlayReqs.lock();
         _PlayRequests.insert(make_pair(req->id, req));
+		_csPlayReqs.unlock();
 
         std::string msg = "devcode=" + code + "&id=" + to_string(req->id);
         uv_ipc_send(h, "sipsvr", "live_init", (char*)msg.c_str(), msg.size());
@@ -89,7 +90,7 @@ namespace IPC {
         time_t send_time = time(NULL);
         while (!req->finish) {
             time_t now = time(NULL);
-            if(difftime(now, send_time) > 5) {
+            if(difftime(now, send_time) > 30) {
                 req->finish = true;
                 req->ret = 0;
                 req->info = "time out";
@@ -128,4 +129,9 @@ namespace IPC {
         }
         delete req;
     }
+
+	void Stop(uint32_t port) {
+		std::string msg = to_string(port);
+		uv_ipc_send(h, "sipsvr", "stop_play", (char*)msg.c_str(), msg.size());
+	}
 }

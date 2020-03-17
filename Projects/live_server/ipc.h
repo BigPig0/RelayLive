@@ -41,4 +41,6 @@ namespace IPC {
      * É¾³ýÇëÇóÊµÀý
      */
     void DestoryRequest(PlayRequest *req);
+
+	void Stop(uint32_t port);
 };

@@ -314,6 +314,7 @@ vector<uint32_t> CSipInvite::StopSipCallAll(string strProName) {
         ret.push_back(pCall->m_nRtpPort);
         int nCallID = pCall->m_nCallID;
         int nDialogID = pCall->m_nDialogID;
+		Log::debug("Stop call port:%d, code:%s", pCall->m_nRtpPort, pCall->m_strDevCode.c_str());
         delete pCall;
         auto findCall = m_mapGlobalCall.find(nCallID);
         if (findCall != m_mapGlobalCall.end()) {

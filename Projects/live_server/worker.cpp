@@ -139,6 +139,7 @@ namespace Server
     {
         // 通知sip server创建播放请求实例，并获取本地udp端口
         IPC::PlayRequest *req = IPC::CreateReal(m_strCode);
+		uint32_t port = req->port;
 
         // 创建RTP解码实例，并开始监听本地udp端口
         void *playHandle = RtpDecode::Creat(this, req->port);
@@ -187,7 +188,7 @@ namespace Server
             Log::error("Could not open input file: %d(%s)", ret, tmp);
             goto end;
         }
-		//ifc->probesize = 25600;
+		ifc->probesize = 25600;
 		ifc->max_analyze_duration = 1*AV_TIME_BASE; //探测只允许延时1s
         ret = avformat_find_stream_info(ifc, NULL);
         if (ret < 0) {
@@ -523,6 +524,9 @@ namespace Server
 
         av_write_trailer(ofc);
 end:
+		/* 关闭sip播放 */
+		IPC::Stop(port);
+
         /** 清理filter */
         av_frame_free(&frame);
         av_frame_free(&filt_frame);

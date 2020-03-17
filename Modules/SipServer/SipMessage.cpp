@@ -228,12 +228,12 @@ static void ParseCatalog(pugi::xml_node& root)
                 }// for Item Node
                 LogDebug("</Item>");
 
-                if(g_mapDevice.count(pDevCtrl->strDevID) == 0)
-                    g_mapDevice.insert(make_pair(pDevCtrl->strDevID, pDevCtrl));
-                else {
-                    delete g_mapDevice[pDevCtrl->strDevID];
-                    g_mapDevice[pDevCtrl->strDevID] = pDevCtrl;
-                }
+                //if(g_mapDevice.count(pDevCtrl->strDevID) == 0)
+                //    g_mapDevice.insert(make_pair(pDevCtrl->strDevID, pDevCtrl));
+                //else {
+                //    delete g_mapDevice[pDevCtrl->strDevID];
+                //    g_mapDevice[pDevCtrl->strDevID] = pDevCtrl;
+                //}
                 if(g_addDevice)
                     g_addDevice(pDevCtrl);
             } // for DeviceList Node
@@ -576,7 +576,7 @@ void CSipMessage::QueryDirtionary()
         Log::warning("send Query message QueryDirtionary\r\n");
     }
 
-    g_mapDevice.clear();
+    //g_mapDevice.clear();
 }
 
 void CSipMessage::QueryDeviceStatus(string devID)

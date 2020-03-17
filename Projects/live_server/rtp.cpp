@@ -219,12 +219,11 @@ namespace RtpDecode {
     /** udp接收数据，读取一个包 */
     static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags) {
         CRtpStream *dec = (CRtpStream*)handle->data;
-        if(nread < 0){
+        if(nread <= 0){
             Log::error("read error: %s",uv_strerror((int)nread));
             free(buf->base);
+			return;
         }
-        if(nread == 0)
-            return;
 
         //udp来源不匹配，将数据抛弃
         struct sockaddr_in* addr_in =(struct sockaddr_in*)addr;
@@ -378,10 +377,12 @@ namespace RtpDecode {
 
         if(m_nRemotePort != tmp->port || m_strRemoteIP != tmp->ip) {
             //Log::error("this is not my rtp data");
-            return;
+			simple_ring_cosume(m_pUdpCatch);
+			return;
         }
         
-        AddPacket(tmp->pData, tmp->nLen);
+		AddPacket(tmp->pData, tmp->nLen);
+		simple_ring_cosume(m_pUdpCatch);
 
         uv_async_send(&m_uvAsParse);
     }
@@ -497,7 +498,7 @@ namespace RtpDecode {
 		}
         for (; it_pos != it_end; ) {
             if(it_pos->second->m_nType == 0) {
-                if(lastpack->second->ts - it_pos->second->ts > 3600) {
+                if(lastpack->second->ts - it_pos->second->ts > 36000) {
 					Log::error("old pack drop");
                     delete it_pos->second;
                     it_pos = m_PacketList.erase(it_pos);

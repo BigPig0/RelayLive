@@ -41,7 +41,7 @@ namespace SipServer {
     uint32_t       g_nLowPort;            //下级平台Sip监听端口
     bool           g_bLowStatus = false;  //下级平台在线状态
     uint32_t       g_nLowExpire;          //下级平台超时时间
-    map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
+    //map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
 
     // 回调函数
     UPDATE_STATUS_CB   g_updateStatus = NULL;

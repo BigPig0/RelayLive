@@ -34,6 +34,7 @@ namespace Server
                 lws_hdr_copy(wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
                 Log::debug("new http-live request: %s", path);
 
+				enum http_status status = HTTP_STATUS_OK;
                 if(!strcmp(path, "/device/clients")) {
                     *pss->response_body = IPC::GetClientsJson();
                 } else if(!strcmp(path, "/device/devlist")) {
@@ -41,7 +42,7 @@ namespace Server
                 } else if(!strcmp(path, "/device/refresh")) {
                     IPC::DevsFresh();
                     *pss->response_body = "ok";
-                } else if(!strncmp(path, "/device/control", 8)) {
+                } else if(!strncmp(path, "/device/control", 15)) {
                     // Éè±¸ID
                     char szDev[30]={0};
                     sscanf(path, "/device/control/%s", szDev);
@@ -65,9 +66,12 @@ namespace Server
                     }
                     IPC::DevControl(szDev, io, ud, lr);
                     *pss->response_body = "ok";
-                }
+                } else {
+					status = HTTP_STATUS_BAD_REQUEST;
+					*pss->response_body = "bad request";
+				}
 
-                lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "text/html", pss->response_body->size(), &p, end);
+                lws_add_http_common_headers(wsi, status, "text/html", pss->response_body->size(), &p, end);
                 lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
                 if (lws_finalize_write_http_header(wsi, start, &p, end))
                     return 1;

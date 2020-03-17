@@ -24,11 +24,6 @@ namespace IPC {
     std::string GetDevsJson();
 
     /**
-     * 设备信息缓存
-     */
-    void AddDev(SipServer::DevInfo *dev);
-
-    /**
      * 刷新设备查询
      */
     void DevsFresh();

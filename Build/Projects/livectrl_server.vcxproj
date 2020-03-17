@@ -94,12 +94,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\Projects\livectrl_server\ipc.cpp" />
     <ClCompile Include="..\..\Projects\livectrl_server\main.cpp" />
-    <ClCompile Include="..\..\Projects\livectrl_server\script.cpp" />
     <ClCompile Include="..\..\Projects\livectrl_server\server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\livectrl_server\ipc.h" />
-    <ClInclude Include="..\..\Projects\livectrl_server\script.h" />
     <ClInclude Include="..\..\Projects\livectrl_server\server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

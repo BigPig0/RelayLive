@@ -15,9 +15,15 @@
     <ClCompile Include="..\..\Projects\sip_server\ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\script.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\sip_server\ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\script.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

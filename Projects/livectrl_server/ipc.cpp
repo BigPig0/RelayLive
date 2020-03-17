@@ -6,11 +6,19 @@
 #include <sstream>
 
 namespace IPC {
+	struct DevRequest {
+		uint32_t    id;    //请求ID
+		int         ret;   //请求结果，0失败， 1成功
+		std::string info;  //应答的信息
+		bool        finish;//是否收到应答，默认false，收到应答置为true
+	};
+
     uv_ipc_handle_t* h = NULL;
     map<string, string>      _mapClients;
     CriticalSection          _csClients;
-    map<string, SipServer::DevInfo*> _mapDevs;
+	map<uint32_t, DevRequest*> _mapDevs;
     CriticalSection          _csDevs;
+	static uint32_t          _ID = 0;
 
     void on_ipc_recv(uv_ipc_handle_t* h, void* user, char* name, char* msg, char* data, int len) {
         if(!strcmp(msg,"close")) {
@@ -28,40 +36,23 @@ namespace IPC {
             } else {
                 _mapClients.insert(make_pair(name, string(data, len)));
             }
-        } else if(!strcmp(msg,"add_device")) {
-            // sipsvr发送的设备信息
-            SipServer::DevInfo *dev = new SipServer::DevInfo;
-            SipServer::TransDevInfo(string(data, len), dev);
-            MutexLock lock(&_csDevs);
-            if(_mapDevs.count(dev->strDevID) > 0) {
-                delete _mapDevs[dev->strDevID];
-                _mapDevs[dev->strDevID] = dev;
-            } else {
-                _mapDevs.insert(make_pair(dev->strDevID, dev));
-            }
-        } else if(!strcmp(msg,"update_status")) {
-            // sipsvr发送的设备状态更新信息 devid=XXX&status=XXX
-            data[len] = 0;
-            char devid[50] = {0};
-            char status[10] = {0};
-            scanf(data, "devid=[^&]&status=%s", devid, status);
-            MutexLock lock(&_csDevs);
-            if(_mapDevs.count(devid) > 0) {
-                _mapDevs[devid]->strStatus = status;
-            }
-        } else if(!strcmp(msg,"update_pos")) {
-            // sipsvr发送的设备gps更新信息
-            data[len] = 0;
-            char devid[50] = {0};
-            char lat[20] = {0};
-            char lon[20] = {0};
-            scanf(data, "devid=[^&]&log=[^&]&lat=%s", devid, lon, lat);
-            MutexLock lock(&_csDevs);
-            if(_mapDevs.count(devid) > 0) {
-                _mapDevs[devid]->strLatitude = lat;
-                _mapDevs[devid]->strLongitude = lon;
-            }
-        }
+        }  else if(!strcmp(msg, "dev_get_answer")) {
+			data[len] = 0;
+			uint32_t id = 0;
+			sscanf(data, "id=%d&",&id);
+			char *pos = strstr(data, "json=");
+			string devs;
+			if(pos)
+				devs = pos + 5;
+
+			_csDevs.lock();
+			auto fit = _mapDevs.find(id);
+			if(fit != _mapDevs.end()) {
+				fit->second->info = devs;
+				fit->second->finish = true;
+			}
+			_csDevs.unlock();
+		}
     }
 
     bool Init() {
@@ -97,31 +88,45 @@ namespace IPC {
     }
 
     std::string GetDevsJson() {
-        MutexLock lock(&_csDevs);
-        stringstream ss;
-        ss << "{\"root\":[";
-        bool first = true;
-        for(auto c:_mapDevs){  
-            if(!first) {
-                ss << ",";
-            } else {
-				first = false;
+		DevRequest *req = new DevRequest;
+		req->id = _ID++;
+		req->ret = 0;
+		req->finish = false;
+		_csDevs.lock();
+		_mapDevs.insert(make_pair(req->id, req));
+		_csDevs.unlock();
+		std::string str = "id=" + to_string(req->id);
+		uv_ipc_send(h, "sipsvr", "dev_get", (char*)str.c_str(), str.size());
+		
+		// 等待返回结果
+		time_t send_time = time(NULL);
+		while (!req->finish) {
+			time_t now = time(NULL);
+			if(difftime(now, send_time) > 30) {
+				req->finish = true;
+				req->ret = 0;
+				req->info = "time out";
 			}
-            ss << FormatDevInfo(c.second, true);
-        }
-        ss << "]}";
-        return ss.str();
-    }
+		}
 
-    void AddDev(SipServer::DevInfo *dev){
+		string ret = req->info;
+		_csDevs.lock();
+		auto fit = _mapDevs.find(req->id);
+		if(fit != _mapDevs.end())
+			_mapDevs.erase(fit);
+		_csDevs.unlock();
+		delete req;
 
+        return ret;
     }
 
     void DevsFresh() {
-
+		std::string str = "fresh";
+		uv_ipc_send(h, "sipsvr", "dev_fresh", (char*)str.c_str(), str.size());
     }
 
     void DevControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
-
+		std::string msg = "dev=" + strDev + "&io=" + to_string(nInOut) + "&ud=" + to_string(nUpDown) + "&lr=" + to_string(nLeftRight);
+		uv_ipc_send(h, "sipsvr", "dev_ctrl", (char*)msg.c_str(), msg.size());
     }
 }

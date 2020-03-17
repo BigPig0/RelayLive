@@ -54,7 +54,7 @@ namespace SipServer {
     extern uint32_t       g_nLowPort;            //下级平台Sip监听端口
     extern bool           g_bLowStatus;          //下级平台在线状态
     extern uint32_t       g_nLowExpire;          //下级平台超时时间
-    extern map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
+    //extern map<string,DevInfo*> g_mapDevice;     //下级平台推送的设备
     extern eXosip_t*      g_pExContext;          //exosip实例
 
     extern UPDATE_STATUS_CB   g_updateStatus;
