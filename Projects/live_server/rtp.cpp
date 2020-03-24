@@ -56,8 +56,6 @@ namespace RtpDecode {
         uint8_t     m_nType;    //类型 0rtp 1ps
         uint8_t    *m_pData;   //内容
         uint32_t    m_nLen;    //长度
-        //CRtpPacket *m_pPre;
-        //CRtpPacket *m_pNext;
         //rtp头信息
         uint8_t     v;  	 /* packet type */
         uint8_t     p;  	 /* padding flag */
@@ -98,8 +96,6 @@ namespace RtpDecode {
         ring_buff_t *m_pUdpCatch;        // rtp数据缓存
         bool        m_bBegin;            // 收到sip应答，开始处理
 
-        //CRtpPacket *m_listHead;
-        //CRtpPacket *m_listTail;
         std::map<Sequence, CRtpPacket *>
                     m_PacketList;
         uint16_t    m_nDoneSeq;          // 完成组帧的序列号，小于该值的包丢掉
@@ -122,13 +118,11 @@ namespace RtpDecode {
         , m_nLen(0)
 		, m_pPlayload(NULL)
 		, m_nPlayloadLen(0)
-        //, m_pPre(NULL)
-        //, m_pNext(NULL)
         , m_bIsPsHeader(false)
     {}
 
     CRtpPacket::~CRtpPacket() {
-        if(m_nType && m_pData)
+        if(!m_nType && m_pData) //rtp的内存释放掉, ps的内存worker里面直接使用
             free(m_pData);
     }
 
@@ -343,6 +337,7 @@ namespace RtpDecode {
 
     CRtpStream::~CRtpStream() {
         destroy_ring_buff(m_pUdpCatch);
+		Log::debug("~CRtpStream()");
     }
 
     void CRtpStream::Begin(string remoteIP, uint32_t remotePort) {
@@ -376,7 +371,8 @@ namespace RtpDecode {
             return;
 
         if(m_nRemotePort != tmp->port || m_strRemoteIP != tmp->ip) {
-            //Log::error("this is not my rtp data");
+            Log::error("this is not my rtp data");
+			free(tmp->pData);
 			simple_ring_cosume(m_pUdpCatch);
 			return;
         }
@@ -509,7 +505,7 @@ namespace RtpDecode {
                 // 此处上抛PS
                 Server::CLiveWorker* lw = (Server::CLiveWorker*)m_pUser;
                 lw->push_ps_data((char*)it_pos->second->m_pData, it_pos->second->m_nLen);
-				//delete it_pos->second;
+				delete it_pos->second;
                 it_pos = m_PacketList.erase(it_pos);
             }
         }

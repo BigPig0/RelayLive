@@ -1,6 +1,7 @@
 #pragma once
 #include "ring_buff.h"
 #include "util.h"
+#include "NetStreamMaker.h"
 #include <string>
 #include <list>
 
@@ -30,29 +31,25 @@ namespace Server
 		bool is_key(char* pBuff, int nLen);
 
     public:
-        live_session         *m_pPss;           //< 连接会话
-        std::string           m_strCode;        //< 播放媒体编号
+        live_session         *m_pPss;           // 连接会话
+        std::string           m_strCode;        // 播放媒体编号
         std::string           m_strType;        // 目标媒体类型 flv mp4 h264
-        //std::string           m_strHw;          // 目标媒体分辨率 空表示不变
-        int                   m_nWidth;
-        int                   m_nHeight;
-        std::string           m_strMIME;        //< mime type
-        bool                  m_bWebSocket;     //< false:http请求，true:websocket
+        int                   m_nWidth;         // 目标媒体分辨率宽度 0表示不需要改变
+        int                   m_nHeight;        // 目标媒体分辨率高度 0表示不需要改变
+        std::string           m_strMIME;        // mime type，使用http进行请求时需要
+        bool                  m_bWebSocket;     // false:http请求，true:websocket
 
-        std::string           m_strPath;        //< 播放端请求地址
-        std::string           m_strClientName;  //< 播放端的名称
-        std::string           m_strClientIP;    //< 播放端的ip
-        std::string           m_strError;       //< sip服务器返回的播放请求失败原因
+        std::string           m_strPath;        // 播放端请求地址
+        std::string           m_strClientIP;    // 播放端的ip
+        std::string           m_strError;       // sip服务器返回的播放请求失败原因
 
     private:
-        ring_buff_t          *m_pPSRing;       //< PS数据队列
-        ring_buff_t          *m_pFlvRing;      //< 目标码流数据队列
-        std::string           m_SocketBuff;    //< socket发送的数据缓存
-		bool                  m_bConnect;      //< 客户端连接状态
-		bool                  m_bParseKey;     //< 
-		char                 *m_pTmpBuff;
-		int                   m_nTmpBuffSize;
-		int                   m_nTmpBuffTotalSize;
+        ring_buff_t          *m_pPSRing;       // PS数据队列
+        ring_buff_t          *m_pFlvRing;      // 目标码流数据队列
+        std::string           m_SocketBuff;    // socket发送的数据缓存
+		bool                  m_bConnect;      // 客户端连接状态
+		bool                  m_bParseKey;     // 是否取得第一个关键帧
+		CNetStreamMaker       m_PsStream;
 		int                   m_nTmpBuffReaded;
     };
 

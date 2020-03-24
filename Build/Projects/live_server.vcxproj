@@ -50,7 +50,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ssl;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ssl;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -71,7 +71,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/hik/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../thirdparty/libwebsockets;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ssl;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../thirdParty/ffmpeg/include;$(SolutionDir)../thirdParty/libuv/include;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ssl;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

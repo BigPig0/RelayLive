@@ -188,7 +188,6 @@ namespace Server
 		, connected(true)
 		, handlecount(2)
     {
-		Log::debug("CLiveSession %x", this);
         socket.data = this;
         uv_tcp_init(&uvLoopLive, &socket);
         asWrite.data = this;
@@ -220,7 +219,10 @@ namespace Server
 
             if(!strcasecmp(Connection.c_str(), "Upgrade") && !strcasecmp(Upgrade.c_str(), "websocket")) {
                 isWs = true;
-            }
+				Log::debug("Websocket req: %s", path.c_str());
+            } else {
+				Log::debug("Http req: %s", path.c_str());
+			}
 
             //½âÎöÇëÇó
             if(!ParsePath()) {
@@ -275,7 +277,7 @@ namespace Server
 
     void CLiveSession::OnSend() {
         if(writing){
-            printf("==");
+            printf("== ");
             return;
         }
 
@@ -404,6 +406,7 @@ namespace Server
         string tmp = SecWebSocketKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
         tmp = (char*)sha1.Comput((uint8_t*)tmp.c_str(), tmp.size());
         SecWebSocketAccept = Base64::Encode((uint8_t*)tmp.c_str(), tmp.size());
+		Log::debug("%s --> %s", SecWebSocketKey.c_str(), SecWebSocketAccept.c_str());
     }
 
     void CLiveSession::WriteFailResponse() {

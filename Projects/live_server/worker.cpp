@@ -1,7 +1,5 @@
 
 #include "uv.h"
-#include "libwebsockets.h"
-#include "netstream.h"
 #include "server.h"
 #include "rtp.h"
 #include "worker.h"
@@ -11,7 +9,6 @@
 #include <list>
 #include <sstream>
 
-#ifdef USE_FFMPEG
 extern "C"
 {
 #define snprintf  _snprintf
@@ -35,7 +32,6 @@ extern "C"
 #pragma comment(lib,"postproc.lib")
 #pragma comment(lib,"swresample.lib")
 #pragma comment(lib,"swscale.lib")
-#endif
 
 namespace Server
 {
@@ -88,7 +84,6 @@ namespace Server
         pLive->Play();
     }
 
-#ifdef USE_FFMPEG
     //读取输入数据的方法
     static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
         CLiveWorker *lw = (CLiveWorker*)opaque;
@@ -105,7 +100,6 @@ namespace Server
         pLive->push_flv_frame((char*)buf, buf_size);
         return buf_size;
     }
-#endif
 
     CLiveWorker::CLiveWorker()
         : m_bWebSocket(false)
@@ -113,9 +107,6 @@ namespace Server
         , m_nHeight(0)
 		, m_bConnect(true)
 		, m_bParseKey(false)
-		, m_pTmpBuff(NULL)
-		, m_nTmpBuffSize(0)
-		, m_nTmpBuffTotalSize(0)
 		, m_nTmpBuffReaded(0)
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
@@ -126,10 +117,9 @@ namespace Server
     {
         destroy_ring_buff(m_pFlvRing);
         destroy_ring_buff(m_pPSRing);
-        Log::debug("CLiveWorker release");
+        Log::debug("~CLiveWorker()");
     }
 
-#ifdef USE_FFMPEG
     bool CLiveWorker::Play()
     {
         // 通知sip server创建播放请求实例，并获取本地udp端口
@@ -520,7 +510,9 @@ namespace Server
         av_write_trailer(ofc);
 end:
 		/* 关闭sip播放 */
-		IPC::Stop(port);
+        IPC::Stop(port);
+        //关闭rtp
+        RtpDecode::Stop(playHandle);
 
         /** 清理filter */
         av_frame_free(&frame);
@@ -544,12 +536,8 @@ end:
             Log::error("Error occurred: %s", tmp);
         }
 
-        //关闭rtp
-        RtpDecode::Stop(playHandle);
-
         if(m_bConnect) {
             Log::debug("video source is dropped, need close the client");
-            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_CLOSE_SEND, LWS_TO_KILL_ASYNC);
         }
         while (m_bConnect){
             sleep(10);
@@ -558,22 +546,9 @@ end:
         delete this;
         return ret>=0;
     }
-#else
-bool CLiveWorker::Play() {
-}
-#endif
 
     void CLiveWorker::push_ps_data(char* pBuff, int nLen)
     {
-		//static int num = 0;
-		//char path[MAX_PATH] = {0};
-		//sprintf(path, "D:\\code\\RelayLive_new\\out\\x64_Debug\\ps\\%04d.ps", num++);
-		//FILE *f = fopen(path, "wb");
-		//fwrite(pBuff, 1, nLen, f);
-		//fclose(f);
-		//fwrite(pBuff, 1, nLen, _f);
-		//fflush(_f);
-		//return;
         //内存数据保存至ring-buff
 		int n = (int)ring_get_count_free_elements(m_pPSRing);
 		if (!n) {
@@ -581,13 +556,8 @@ bool CLiveWorker::Play() {
 			return;
 		}
 
-		//fwrite(pBuff, 1, nLen, _f3);
-		//fflush(_f3);
-
 		// 将数据保存在ring buff
-		char* pSaveBuff = (char*)malloc(nLen);
-		memcpy(pSaveBuff, pBuff, nLen);
-		AV_BUFF newTag = {pSaveBuff, nLen};
+		AV_BUFF newTag = {pBuff, nLen};
 		if (!ring_insert(m_pPSRing, &newTag, 1)) {
 			destroy_ring_node(&newTag);
 			Log::error("dropping!");
@@ -598,43 +568,33 @@ bool CLiveWorker::Play() {
 
     int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
     {
-		if(m_nTmpBuffReaded >= m_nTmpBuffSize) {
+		if(m_nTmpBuffReaded >= m_PsStream.size()) {
 			AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
 			if(!tag) 
 				return 0;
 
-			if(!m_pTmpBuff) {
-				m_pTmpBuff = (char*)malloc(tag->nLen);
-				m_nTmpBuffTotalSize = tag->nLen;
-			} else if(m_nTmpBuffTotalSize < tag->nLen) {
-				free(m_pTmpBuff);
-				m_pTmpBuff = (char*)malloc(tag->nLen);
-				m_nTmpBuffTotalSize = tag->nLen;
-			}
-			memcpy(m_pTmpBuff, tag->pData, tag->nLen);
-			m_nTmpBuffSize = tag->nLen;
+			m_PsStream.clear();
+			m_PsStream.append_data(tag->pData, tag->nLen);
 			m_nTmpBuffReaded = 0;
 			simple_ring_cosume(m_pPSRing);
 
 			//Log::debug("get ps %x, %d, %d", tag->pData, tag->nLen, ring_get_count_free_elements(m_pPSRing));
 
-			//if(!m_bParseKey) {
-			//	if(is_key(tag->pData, tag->nLen)){
-			//		m_bParseKey = true;
-			//	} else {
-			//		Log::warning("no key frame before this");
-			//		simple_ring_cosume(m_pPSRing);
-			//		return 0;
-			//	}
-			//}
-			//fwrite(tag->pData, 1, tag->nLen, _f);
-			//fflush(_f);
+            if(!m_bParseKey) {
+                if(is_key(m_PsStream.get(), m_PsStream.size())){
+                    m_bParseKey = true;
+                } else {
+                    Log::warning("no key frame before this");
+                    m_PsStream.clear();
+                    return 0;
+                }
+            }
 		}
 
-		int len = m_nTmpBuffSize - m_nTmpBuffReaded;
+		int len = m_PsStream.size() - m_nTmpBuffReaded;
 		if(len > nLen)
 			len = nLen;
-		memcpy(pBuff, m_pTmpBuff+m_nTmpBuffReaded, len);
+		memcpy(pBuff, m_PsStream.get()+m_nTmpBuffReaded, len);
 		m_nTmpBuffReaded += len;
 
         return len;
@@ -653,11 +613,11 @@ bool CLiveWorker::Play() {
             Log::error("to many data can't send");
             return;
         }
-       printf("flv_free(%d) ", n);
+       printf("flv%d ", n);
 
         // 将数据保存在ring buff
-        char* pSaveBuff = (char*)malloc(nLen + LWS_PRE);
-        memcpy(pSaveBuff + LWS_PRE, pBuff, nLen);
+        char* pSaveBuff = (char*)malloc(nLen);
+        memcpy(pSaveBuff, pBuff, nLen);
         AV_BUFF newTag = {pSaveBuff, nLen};
         if (!ring_insert(m_pFlvRing, &newTag, 1)) {
             destroy_ring_node(&newTag);
@@ -675,7 +635,7 @@ bool CLiveWorker::Play() {
 		AV_BUFF *tmp = (AV_BUFF*)simple_ring_get_element(m_pFlvRing);
 		if(tmp == NULL)
 			return 0;
-		*buff = tmp->pData + LWS_PRE;
+		*buff = tmp->pData;
 		return tmp->nLen;
     }
 
@@ -731,7 +691,6 @@ bool CLiveWorker::Play() {
         return worker;
     }
 
-#ifdef USE_FFMPEG
     static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
         char text[256];              //日志内容
         memset(text,0,256);
@@ -749,5 +708,4 @@ bool CLiveWorker::Play() {
     void InitFFmpeg(){
         //av_log_set_callback(ffmpeg_log_cb);
     }
-#endif
 }
