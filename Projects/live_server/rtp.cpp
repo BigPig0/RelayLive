@@ -429,7 +429,7 @@ namespace RtpDecode {
                 findFirst = true;
             } else {
                 if(pack->m_nType == 0){
-                    if(findFirst && it_last->first.seq + 1 != it_pos->first.seq) {
+                    if(findFirst && (uint16_t)(it_last->first.seq + 1) != it_pos->first.seq) {
                         findFirst = false;
                     }
                     if(pack->m_bIsPsHeader) {
@@ -447,7 +447,7 @@ namespace RtpDecode {
                     }
                 } else {
                     // PS
-                    if(findFirst && it_last->first.seq + 1 != it_pos->first.seq) {
+                    if(findFirst && (uint16_t)(it_last->first.seq + 1) != it_pos->first.seq) {
                         findFirst = false;
                     }
                     if(findFirst) {

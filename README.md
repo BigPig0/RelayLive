@@ -14,9 +14,11 @@
 * * config.txt 海康平台登陆配置
 * * 配置示例在Build/projects/config_yongjia_hikserver
 * 客户端请求格式为 http(ws)://IP:port/live/flv/0/[code]
+* sdk只有32位的，导致整个项目工具层都增加了32位的编译。只验证海康相机上抛的是标准PS流，大华相机的是其私有码流无法识别。
+* 这个对接的实际意义不是很大，国标对接延时上来后，不太需要这种方法了。
 
 ### 对接视频流
-* relay_server: 将视频流转为ws-flv，流可以为rtsp、rtmp、hls等
+* relay_server: 将视频流转为ws-flv，流可以为rtsp、rtmp、hls等（理论上可以，只使用过rtsp）
 * relayctrl_server: 查看客户端信息
 * * 配置示例在Build/projects/config_kunshan_tecc
 * 客户端请求格式为 http(ws)://IP:port/live?url=[rtsp地址]
@@ -38,10 +40,17 @@
 ## 编译方法
 * 平台: Windows vs2012
 * 用vs打开build/RelayLive.sln,按顺序编译ThirdParty、Common、Modules、Projects下的项目。
+* 编译前需要在属性管理器中将Microsoft.Cpp.x64.user(或Microsoft.Cpp.Win32.user)中修改以下：(或者在每个项目属性中都修改一次)
+* * 常规-输出目录：$(SolutionDir)..\out\$(Platform)_$(Configuration)\
+* * 常规-中间目录：$(SolutionDir)..\out\Temp\$(Platform)_$(Configuration)\$(ProjectName)\
+* * 链接器-常规-附加库目录：$(OutDir);%(AdditionalLibraryDirectories)
 * 在输出目录部署配置文件pm.json,config.txt和脚本文件 XXX.lua。(文件在/Build/projects下有示例)
 * 从thirdParty拷贝ffmpeg的dll到输出目录。
+* 最好用64位进行编译使用，如需32位，可能需要一些修改
 * 部署数据库，数据库的操作在XXX.lua中。
 * 使用ipc_server启动
+* http-flv和websocket-flv都可以，但最好使用websocket-flv，免的出现跨域问题
+* 只保留了视频，音频丢弃了。
 
 ## nginx
 * 页面demo静态文件通过nginx来访问
@@ -52,7 +61,7 @@
 * exosip: http://savannah.nongnu.org/projects/exosip
 * exosip-vs: https://github.com/BigPig0/exOsip-vs.git
 * ffmpeg: http://ffmpeg.org/
-* libwebsockets: https://github.com/warmcat/libwebsockets.git
+* libwebsockets: https://github.com/warmcat/libwebsockets.git [确实有一些问题，把这个库去掉后稳定多了]
 * libuv: https://github.com/libuv/libuv.git
 * luapp: https://github.com/ToyAuthor/luapp.git
 * libcstl: https://github.com/activesys/libcstl.git
