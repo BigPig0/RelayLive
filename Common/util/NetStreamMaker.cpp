@@ -102,6 +102,29 @@ void CNetStreamMaker::append_double(double val)
     append_be64( dbl2int( val ) );
 }
 
+void CNetStreamMaker::rewrite_data(uint32_t start, char* data, uint32_t size)
+{
+    unsigned ns = start + size;
+
+    if( ns > m_nMax ) {
+        void *dp;
+        unsigned dn = 16;
+       
+        while( ns > dn ) {
+            dn <<= 1;
+        }
+
+        dp = realloc( m_pData, dn );
+        if( !dp ) {
+            return;
+        }
+
+        m_pData = (char*)dp;
+        m_nMax = dn;
+    }
+    memcpy(m_pData + start, data, size);
+}
+
 void CNetStreamMaker::rewrite_byte(uint32_t start, uint8_t  val)
 {
     *(m_pData + start) = val;

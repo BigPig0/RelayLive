@@ -50,20 +50,20 @@ int main(int argc, char* argv[])
     IPC::Init(port);
 
     /** 创建一个http服务器 */
-    static uv_loop_t *p_loop_uv = nullptr;
-    p_loop_uv = uv_default_loop();
+    //static uv_loop_t *p_loop_uv = nullptr;
+    //p_loop_uv = uv_default_loop();
 
     /** 创建一个http服务器 */
-    Server::Init((void*)p_loop_uv, port);
+    Server::Init(/*(void*)p_loop_uv*/NULL, port);
 
     Log::debug("live sever start success\r\n");
 
     // 事件循环
-    while(true)
-    {
-        uv_run(p_loop_uv, UV_RUN_DEFAULT);
-        Sleep(1000);
-    }
+    //while(true)
+    //{
+    //    uv_run(p_loop_uv, UV_RUN_DEFAULT);
+    //    Sleep(1000);
+    //}
 
     Sleep(INFINITE);
     return 0;

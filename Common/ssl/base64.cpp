@@ -1,8 +1,9 @@
 #include "base64.h"
 
+#include <iostream>
 using namespace std;
 
-string CBase64::Encode(const unsigned char* Data,int DataByte)
+string Base64::Encode(const uint8_t* Data, uint32_t DataByte)
 {
     //±àÂë±í
     const char EncodeTable[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -43,7 +44,7 @@ string CBase64::Encode(const unsigned char* Data,int DataByte)
     return strEncode;
 }
 
-string CBase64::Decode(const char* Data,int DataByte,int& OutByte)
+string Base64::Decode(const char* Data, uint32_t DataByte, uint32_t& OutByte)
 {
     //½âÂë±í
     const char DecodeTable[] =

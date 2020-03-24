@@ -1,12 +1,11 @@
-#ifndef _MD5_H_
-#define _MD5_H_
+#pragma once
 
-#include "ExportDefine.h"
+#include "ssl_export.h"
 #include <iostream>
 #include <string>
 using namespace std;
 
-class COMMON_API MD5
+class _SSL_API MD5
 {
     public:
         typedef unsigned char uchar8; //make sure it is 8bit
@@ -88,5 +87,3 @@ class COMMON_API MD5
 
     if you want to comput the md5 of a file, you can use the interface of this program.
 */
-
-#endif

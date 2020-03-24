@@ -2,7 +2,7 @@
 #include "uv.h"
 #include "libwebsockets.h"
 #include "netstream.h"
-#include "live.h"
+#include "server.h"
 #include "rtp.h"
 #include "worker.h"
 #include "ipc.h"
@@ -48,7 +48,6 @@ namespace Server
     static CriticalSection     _csWorkers;
 	static uint32_t            _flvbufsize = 1024*32;
 	static uint32_t            _psbufsize = 1024*32;
-	FILE *_f = NULL, *_f2 = NULL, *_f3 = NULL;
 
     static void destroy_ring_node(void *_msg)
     {
@@ -63,9 +62,10 @@ namespace Server
         stringstream ss;
         for (auto c : _listWorkers) {
             if(!first) {
-                first = false;
                 ss << ",";
-            }
+            } else {
+                first = false;
+			}
             ss << "{\"DeviceID\":\"" << c->m_strCode 
                 << "\",\"Connect\":\"";
             if(c->m_bWebSocket)
@@ -96,8 +96,6 @@ namespace Server
         while (len == 0) {
             len = lw->get_ps_data((char*)buf, bufsize);
         }
-		//fwrite(buf, 1, len, _f2);
-		//fflush(_f2);
         return len;
     }
 
@@ -122,9 +120,6 @@ namespace Server
     {
         m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
         m_pPSRing   = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
-		//_f = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps.dat", "wb");
-		//_f2 = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps2.dat", "wb");
-		//_f3 = fopen("D:\\code\\RelayLive_new\\out\\x64_Debug\\ps3.dat", "wb");
     }
 
     CLiveWorker::~CLiveWorker()
@@ -655,8 +650,6 @@ bool CLiveWorker::Play() {
         //内存数据保存至ring-buff
         int n = (int)ring_get_count_free_elements(m_pFlvRing);
         if (!n && m_pPss) {
-            //lws_set_timeout(m_pPss->wsi, PENDING_TIMEOUT_LAGGING, LWS_TO_KILL_ASYNC);
-			lws_callback_on_writable(m_pPss->wsi);
             Log::error("to many data can't send");
             return;
         }
@@ -673,8 +666,8 @@ bool CLiveWorker::Play() {
         }
 
         //向客户端发送数据
-		if(m_pPss)
-			lws_callback_on_writable(m_pPss->wsi);
+		if(m_pPss && m_bConnect)
+            m_pPss->AsyncSend();
     }
 
     int CLiveWorker::get_flv_frame(char **buff)
@@ -688,8 +681,6 @@ bool CLiveWorker::Play() {
 
 	void CLiveWorker::next_flv_frame() {
 		simple_ring_cosume(m_pFlvRing);
-		if (ring_get_count_waiting_elements(m_pFlvRing, NULL) && m_pPss)
-			lws_callback_on_writable(m_pPss->wsi);
 	}
 
 	void CLiveWorker::close()
@@ -712,10 +703,10 @@ bool CLiveWorker::Play() {
 		return false;
 	}
     
-    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, pss_live *pss, string clientIP) {
+    CLiveWorker* CreatLiveWorker(string strCode, string strType, string strHw, bool isWs, live_session *pss, string clientIP) {
         CLiveWorker *worker = new CLiveWorker();
         worker->m_strCode = strCode;
-        worker->m_strType = strType;
+        worker->m_strType = strType.empty()?"flv":strType;
         if(!strHw.empty() && strHw.find('*') != string::npos)
             sscanf(strHw.c_str(), "%d*%d", &worker->m_nWidth, &worker->m_nHeight);
         worker->m_bWebSocket = isWs;

@@ -1,5 +1,6 @@
 #pragma once
 #include "util_public.h"
+#include <stdint.h>
 
 /**
  * 本类的作用是生成一个网络数据流，可以向里面添加数据
@@ -44,6 +45,7 @@ public:
      * @param start[in] 需要修改的数据的起始位置
      * @param val[in] 新的值
      */
+    void rewrite_data(uint32_t start, char* data, uint32_t size);
     void rewrite_byte(uint32_t start, uint8_t  val);
     void rewrite_be16(uint32_t start, uint16_t val);
     void rewrite_be24(uint32_t start, uint32_t val);

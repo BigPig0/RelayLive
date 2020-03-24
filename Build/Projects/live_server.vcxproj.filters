@@ -13,9 +13,6 @@
     <ClCompile Include="..\..\Projects\live_server\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\live_server\live.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Projects\live_server\server.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -30,9 +27,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Projects\live_server\live.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Projects\live_server\server.h">
       <Filter>include</Filter>
     </ClInclude>

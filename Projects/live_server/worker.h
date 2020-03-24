@@ -6,7 +6,7 @@
 
 namespace Server
 {
-    struct pss_live;
+    struct live_session;
     enum MediaType;
 
     class CLiveWorker
@@ -30,7 +30,7 @@ namespace Server
 		bool is_key(char* pBuff, int nLen);
 
     public:
-        pss_live             *m_pPss;           //< 连接会话
+        live_session         *m_pPss;           //< 连接会话
         std::string           m_strCode;        //< 播放媒体编号
         std::string           m_strType;        // 目标媒体类型 flv mp4 h264
         //std::string           m_strHw;          // 目标媒体分辨率 空表示不变
@@ -57,7 +57,7 @@ namespace Server
     };
 
     /** 直播 */
-    CLiveWorker* CreatLiveWorker(std::string strCode, std::string strType, std::string strHw, bool isWs, pss_live *pss, string clientIP);
+    CLiveWorker* CreatLiveWorker(std::string strCode, std::string strType, std::string strHw, bool isWs, live_session *pss, string clientIP);
 
     void InitFFmpeg();
 

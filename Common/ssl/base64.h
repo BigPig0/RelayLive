@@ -1,29 +1,28 @@
-#ifndef BASE64_H__
-#define BASE64_H__
+#pragma once
 
-#include "ExportDefine.h"
-#include <iostream>
+#include "ssl_export.h"
 #include <string>
-using namespace std;
+#include <stdint.h>
 
-class COMMON_API CBase64
+class _SSL_API Base64
 {
 public:
-    /*编码
-    DataByte
-        [in]输入的数据长度,以字节为单位
-    */
-    static std::string Encode(const unsigned char* Data,int DataByte);
-    /*解码
-    DataByte
-        [in]输入的数据长度,以字节为单位
-    OutByte
-        [out]输出的数据长度,以字节为单位,请不要通过返回值计算
-        输出数据的长度
-    */
-    static std::string Decode(const char* Data,int DataByte,int& OutByte);
-};
+    /*
+     * 编码
+     * @param Data[in] 输入原始数据
+     * @param DataByte[in] 输入的数据长度,以字节为单位
+     * @return 编码后的数据
+     */
+    static std::string Encode(const uint8_t* Data, uint32_t DataByte);
 
-#endif
+    /*
+     * 解码
+     * @param Data[in] 输入原始数据
+     * @param DataByte[in] 输入的数据长度,以字节为单位
+     * @param OutByte[out] 输出的数据长度,以字节为单位,请不要通过返回值计算
+     * @return 解码后的数据  
+     */
+    static std::string Decode(const char* Data, uint32_t DataByte, uint32_t& OutByte);
+};
 
 

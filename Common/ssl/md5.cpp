@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include"md5.h"
 
 #include<iostream>
@@ -8,6 +7,7 @@ const int S[4][4] = {7, 12, 17, 22,
     5, 9, 14, 20,
     4, 11, 16, 23,
     6, 10, 15, 21};
+
 void MD5::init()
 {
     A = 0x67452301;
