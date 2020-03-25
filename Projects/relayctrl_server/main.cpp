@@ -1,10 +1,9 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
+#include "server.h"
 #include "ipc.h"
 #include "uv.h"
 #include "util.h"
-#include <windows.h>
-#include "server.h"
 #include "MiniDump.h"
 
 int main(int argc, char* argv[])
@@ -24,11 +23,9 @@ int main(int argc, char* argv[])
 
     /** 加载配置文件 */
     if (!Settings::loadFromProfile(".\\config.txt"))
-    {
-        Log::error("配置文件错误");
-        return -1;
-    }
-    Log::debug("Settings::loadFromProfile ok");
+        Log::error("Settings::loadFromProfile failed");
+    else
+        Log::debug("Settings::loadFromProfile ok");
 
     //根据cpu数量设置libuv线程池的线程数量
     uv_cpu_info_t* cpu_infos;
@@ -41,7 +38,6 @@ int main(int argc, char* argv[])
         sprintf(szThreadNum, "%d", count*2+1);
         Log::debug("thread pool size is %s", szThreadNum);
         //设置环境变量的值
-        //::SetEnvironmentVariableW(L"UV_THREADPOOL_SIZE",szCpuNum); 
         uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
     }
     uv_free_cpu_info(cpu_infos, count);
@@ -49,21 +45,11 @@ int main(int argc, char* argv[])
     /** 进程间通信 */
     IPC::Init();
 
-    //全局loop
-    static uv_loop_t *p_loop_uv = nullptr;
-    p_loop_uv = uv_default_loop();
-
     /** 创建一个http服务器 */
-    Server::Init((void*)p_loop_uv, port);
+    Server::Init(port);
 
-    Log::debug("relay ctrl sever start success\r\n");
+    Log::debug("relayctrl sever @%d start success\r\n", port);
 
-    // 事件循环
-    while(true)
-    {
-        uv_run(p_loop_uv, UV_RUN_DEFAULT);
-        Sleep(1000);
-    }
     Sleep(INFINITE);
     return 0;
 }

@@ -34,9 +34,16 @@ int main()
     Log::open(Log::Print::both, Log::Level::debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
+    /** 加载配置文件 */
+    if (!Settings::loadFromProfile(".\\config.txt"))
+        Log::error("Settings::loadFromProfile failed");
+    else
+        Log::debug("Settings::loadFromProfile ok");
+
     //启动IPC通讯服务
     uv_ipc_handle_t* h = NULL;
-    int ret = uv_ipc_server(&h, "ipcsvr", NULL);
+    string ipc_name = Settings::getValue("IPC","name","ipcsvr");
+    int ret = uv_ipc_server(&h, (char*)ipc_name.c_str(), NULL);
     if(ret < 0) {
         printf("ipc server err: %s\n", uv_ipc_strerr(ret));
     }

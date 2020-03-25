@@ -13,9 +13,6 @@
     <ClCompile Include="..\..\Projects\relay_server\ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Projects\relay_server\live.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Projects\relay_server\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -28,9 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\relay_server\ipc.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Projects\relay_server\live.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Projects\relay_server\server.h">

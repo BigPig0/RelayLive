@@ -57,7 +57,8 @@ namespace IPC {
 
     bool Init() {
         /** 进程间通信 */
-        int ret = uv_ipc_client(&h, "ipcsvr", NULL, "livectrlsvr", on_ipc_recv, NULL);
+        string ipc_name = Settings::getValue("IPC","name","ipcsvr");
+        int ret = uv_ipc_client(&h, (char*)ipc_name.c_str(), NULL, "livectrlsvr", on_ipc_recv, NULL);
         if(ret < 0) {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;
@@ -125,7 +126,7 @@ namespace IPC {
 		uv_ipc_send(h, "sipsvr", "dev_fresh", (char*)str.c_str(), str.size());
     }
 
-    void DevControl(string strDev, int nInOut, int nUpDown, int nLeftRight) {
+    void DevControl(std::string strDev, int nInOut, int nUpDown, int nLeftRight) {
 		std::string msg = "dev=" + strDev + "&io=" + to_string(nInOut) + "&ud=" + to_string(nUpDown) + "&lr=" + to_string(nLeftRight);
 		uv_ipc_send(h, "sipsvr", "dev_ctrl", (char*)msg.c_str(), msg.size());
     }

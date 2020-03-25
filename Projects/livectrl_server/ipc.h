@@ -1,5 +1,4 @@
 #pragma once
-#include "SipServer.h"
 #include <string>
 
 namespace IPC {
@@ -31,5 +30,5 @@ namespace IPC {
     /**
      * …Ë±∏øÿ÷∆
      */
-    void DevControl(string strDev, int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
+    void DevControl(std::string strDev, int nInOut = 0, int nUpDown = 0, int nLeftRight = 0);
 };

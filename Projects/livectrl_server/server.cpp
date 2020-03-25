@@ -1,164 +1,306 @@
 
-#include "libwebsockets.h"
+#include "uv.h"
 #include "util.h"
+#include "utilc.h"
 #include "ipc.h"
+#include <sstream>
+
+uv_loop_t  uvLoopLive;
+uv_tcp_t   uvTcpServer;
+
+class CHttpSession
+{
+public:
+    CHttpSession();
+    ~CHttpSession();
+
+    void OnRecv(char* data, int len);
+    void OnClose();
+
+    bool ParseHeader();    //解析报文头
+    bool ParsePath();      //解析报文头中的uri
+    void WriteFailResponse(); //报文不合法时的应答
+
+    string                strRemoteIP;          //客户端IP地址
+    uint32_t              nRemotePort;          //客户端port
+    uv_tcp_t              socket;               //tcp连接
+    char                  readBuff[1024];       //读取客户端内容缓存
+    string                dataCatch;            //读取到的数据
+    bool                  parseHeader;          //是否解析协议头
+    bool                  connected;
+
+    string                method;               //解析出请求的方法
+    string                path;                 //解析出请求的uri
+    string                version;              //解析出请求的协议版本
+    string                Connection;           //报文头中的字段值
+    uint32_t              ContentLen;           //报文内容长度
+
+    string                rsBuff;               //应答协议数据
+    string                writeBuff;            //缓存要发送的数据
+    bool                  writing;              //正在发送
+    uv_write_t            writeReq;             //发送请求
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+static void on_uv_close(uv_handle_t* handle) {
+    CHttpSession *skt = (CHttpSession*)handle->data;
+    Log::warning("on close client [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
+    delete skt;
+}
+
+static void on_uv_shutdown(uv_shutdown_t* req, int status) {
+    CHttpSession *skt = (CHttpSession*)req->data;
+    Log::warning("on shutdown client [%s:%d]", skt->strRemoteIP.c_str(), skt->nRemotePort);
+    delete req;
+    uv_close((uv_handle_t*)&skt->socket, on_uv_close);
+}
+
+static void on_uv_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf){
+    CHttpSession *skt = (CHttpSession*)handle->data;
+    *buf = uv_buf_init(skt->readBuff, 1024);
+}
+
+static void on_uv_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+    CHttpSession *skt = (CHttpSession*)stream->data;
+    if(nread < 0) {
+        skt->connected = false;
+        if(nread == UV__ECONNRESET || nread == UV_EOF) {
+            //对端发送了FIN
+            Log::warning("remote close socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
+            uv_close((uv_handle_t*)&skt->socket, on_uv_close);
+        } else {
+            uv_shutdown_t* req = new uv_shutdown_t;
+            req->data = skt;
+            Log::error("Read error %s", uv_strerror((int)nread));
+            Log::warning("remote shutdown socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
+            uv_shutdown(req, stream, on_uv_shutdown);
+        }
+        return;
+    }
+
+    skt->OnRecv(buf->base, (int)nread);
+}
+
+static void on_uv_write(uv_write_t* req, int status) {
+    CHttpSession *skt = (CHttpSession*)req->data;
+    skt->writing = false;
+}
+
+/** 接收到客户端发送来的连接 */
+static void on_connection(uv_stream_t* server, int status) {
+    if(status != 0) {
+        Log::error("status:%d %s", status, uv_strerror(status));
+        return;
+    }
+
+    CHttpSession *sess = new CHttpSession();
+    int ret = uv_accept(server, (uv_stream_t*)(&sess->socket));
+    if(ret != 0) {
+        delete sess;
+        return;
+    }
+
+    //socket远端ip和端口
+    struct sockaddr peername;
+    int namelen = sizeof(struct sockaddr);
+    ret = uv_tcp_getpeername(&sess->socket, &peername, &namelen);
+    if(peername.sa_family == AF_INET) {
+        struct sockaddr_in* sin = (struct sockaddr_in*)&peername;
+        char addr[46] = {0};
+        uv_ip4_name(sin, addr, 46);
+        sess->strRemoteIP = addr;
+        sess->nRemotePort = sin->sin_port;
+    } else if(peername.sa_family == AF_INET6) {
+        struct sockaddr_in6* sin6 = (struct sockaddr_in6*)&peername;
+        char addr[46] = {0};
+        uv_ip6_name(sin6, addr, 46);
+        sess->strRemoteIP = addr;
+        sess->nRemotePort = sin6->sin6_port;
+    }
+
+    uv_read_start((uv_stream_t*)&sess->socket, on_uv_alloc, on_uv_read);
+}
+
+static void run_loop_thread(void* arg) {
+    uv_run(&uvLoopLive, UV_RUN_DEFAULT);
+    uv_loop_close(&uvLoopLive);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+CHttpSession::CHttpSession()
+    : parseHeader(false)
+    , nRemotePort(0)
+    , writing(false)
+    , connected(true)
+    , ContentLen(0)
+{
+    socket.data = this;
+    uv_tcp_init(&uvLoopLive, &socket);
+    writeReq.data = this;
+}
+
+CHttpSession::~CHttpSession() {
+    Log::debug("~CHttpSession()");
+}
+
+void CHttpSession::OnRecv(char* data, int len) {
+    dataCatch.append(data, len);
+
+    // http头解析
+    if(!parseHeader && dataCatch.find("\r\n\r\n") != std::string::npos) {
+        if(!ParseHeader()) {
+            Log::error("error request");
+            WriteFailResponse();
+            return;
+        }
+        parseHeader = true;
+
+        Log::debug("Http req: %s", path.c_str());
+
+        //解析请求
+        if(!ParsePath()) {
+            Log::error("error path:%s", path.c_str());
+            WriteFailResponse();
+            return;
+        } else {
+            stringstream ss;
+            ss << version << " 200 OK\r\n"
+                "Connection: close\r\n"
+                "Access-Control-Allow-Origin: *\r\n"
+                "Content-Length: " << writeBuff.size() << "\r\n"
+                "\r\n";
+            rsBuff = ss.str();
+
+            writing = true;
+            uv_buf_t buff[] = {
+                uv_buf_init((char*)rsBuff.c_str(), rsBuff.size()),
+                uv_buf_init((char*)writeBuff.c_str(), writeBuff.size()),
+            };
+            uv_write(&writeReq, (uv_stream_t*)&socket, buff, 2, on_uv_write);
+        }
+    } else {
+        if(dataCatch.size() >= ContentLen) {
+            parseHeader = false;
+        }
+    }
+}
+
+bool CHttpSession::ParseHeader() {
+    size_t pos1 = dataCatch.find("\r\n");        //第一行的结尾
+    size_t pos2 = dataCatch.find("\r\n\r\n");    //头的结尾位置
+    string reqline = dataCatch.substr(0, pos1);  //第一行的内容
+    vector<string> reqlines = StringHandle::StringSplit(reqline, ' ');
+    if(reqlines.size() != 3)
+        return false;
+
+
+    method = reqlines[0].c_str();
+    path = reqlines[1];
+    version = reqlines[2].c_str();
+    string rawHeaders = dataCatch.substr(pos1+2, pos2-pos1);
+    dataCatch = dataCatch.substr(pos2+4, dataCatch.size()-pos2-4);
+
+    vector<string> headers = StringHandle::StringSplit(rawHeaders, "\r\n");
+    for(auto &hh : headers) {
+        string name, value;
+        bool b = false;
+        for(auto &c:hh){
+            if(!b) {
+                if(c == ':'){
+                    b = true;
+                } else {
+                    name.push_back(c);
+                }
+            } else {
+                if(!value.empty() || c != ' ')
+                    value.push_back(c);
+            }
+        }
+
+        if(!strcasecmp(name.c_str(), "Connection")) {
+            Connection = value;
+        } else if(!strcasecmp(name.c_str(), "Content-Length")) {
+            ContentLen = stoi(value);
+        }
+    }
+    return true;
+}
+
+bool CHttpSession::ParsePath() {
+    vector<string> uri = StringHandle::StringSplit(path, '?');
+    if(uri.size() != 2 && uri.size() != 1)
+        return false;
+
+    if(!strcasecmp(uri[0].c_str(), "/device/clients")) {
+        writeBuff = IPC::GetClientsJson();
+    } else if(!strcasecmp(uri[0].c_str(), "/device/devlist")) {
+        writeBuff = IPC::GetDevsJson();
+    } else if(!strcasecmp(uri[0].c_str(), "/device/refresh")) {
+        IPC::DevsFresh();
+        writeBuff = "ok";
+    } else if(uri.size() == 2 && !strcasecmp(uri[0].c_str(), "/device/control")) {
+        string strDev;
+        int nInOut = 0, nUpDown = 0, nLeftRight = 0;
+        vector<string> param = StringHandle::StringSplit(uri[1], '&');
+        for(auto p:param) {
+            vector<string> kv = StringHandle::StringSplit(p, '=');
+            if(kv.size() != 2)
+                continue;
+            if(kv[0] == "code") 
+                strDev = kv[1];
+            else if(kv[0] == "ud")
+                nUpDown = stoi(kv[1]);
+            else if(kv[0] == "lr"){
+                nLeftRight = stoi(kv[1]);
+            } else if(kv[0] == "io")
+                nInOut = stoi(kv[1]);
+        }
+        IPC::DevControl(strDev, nInOut, nUpDown, nLeftRight);
+        writeBuff = "ok";
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+void CHttpSession::WriteFailResponse() {
+    stringstream ss;
+    ss << version << " 400 Bad request\r\n"
+        "Connection: close\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Content-Length: 0\r\n"
+        "\r\n";
+    rsBuff = ss.str();
+
+    writing = true;
+    uv_buf_t buff = uv_buf_init((char*)rsBuff.c_str(), rsBuff.size());
+    uv_write(&writeReq, (uv_stream_t*)&socket, &buff, 1, on_uv_write);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void start_service(uint32_t port) {
+    uv_loop_init(&uvLoopLive);
+    uv_tcp_init(&uvLoopLive, &uvTcpServer);
+    struct sockaddr_in addr;
+    uv_ip4_addr("0.0.0.0", port, &addr);
+    uv_tcp_bind(&uvTcpServer, (const sockaddr*)&addr, 0);
+    uv_listen((uv_stream_t*)&uvTcpServer, 512, on_connection);
+    uv_thread_t tid;
+    uv_thread_create(&tid, run_loop_thread, NULL);
+}
 
 namespace Server
 {
-    /** per session structure */
-    struct pss_live {
-        struct lws           *wsi;            // http/ws 连接
-        bool                  send_header;    // 应答是否写入header
-        string               *response_body;
-    };
-
-    int callback_ctrl(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
-    {
-        pss_live *pss = (pss_live*)user;
-
-        switch (reason) {
-        case LWS_CALLBACK_PROTOCOL_INIT:
-            Log::debug("live protocol init");
-            break;
-        case LWS_CALLBACK_HTTP:     //客户端通过http连接
-            {
-                uint8_t buf[LWS_PRE + 2048];    //保存http头内容
-                uint8_t *start = &buf[LWS_PRE]; //htpp头域的位置
-                uint8_t *end = &buf[sizeof(buf) - LWS_PRE - 1]; //结尾的位置
-                uint8_t *p = start;
-
-                pss->wsi = wsi;
-                pss->response_body = new string();
-
-                char path[MAX_PATH]={0};
-                lws_hdr_copy(wsi, path, MAX_PATH, WSI_TOKEN_GET_URI);
-                Log::debug("new http-live request: %s", path);
-
-				enum http_status status = HTTP_STATUS_OK;
-                if(!strcmp(path, "/device/clients")) {
-                    *pss->response_body = IPC::GetClientsJson();
-                } else if(!strcmp(path, "/device/devlist")) {
-                    *pss->response_body = IPC::GetDevsJson();
-                } else if(!strcmp(path, "/device/refresh")) {
-                    IPC::DevsFresh();
-                    *pss->response_body = "ok";
-                } else if(!strncmp(path, "/device/control", 15)) {
-                    // 设备ID
-                    char szDev[30]={0};
-                    sscanf(path, "/device/control/%s", szDev);
-
-                    // 参数
-                    int ud=0, lr=0, io=0;
-                    char buf[20];
-                    int n = 0;
-                    while (lws_hdr_copy_fragment(wsi, buf, sizeof(buf), WSI_TOKEN_HTTP_URI_ARGS, n) > 0) {
-                        char arg[10]={0};
-                        int argv = 0;
-                        sscanf(buf, "%[^=]=%d", arg, &argv);
-                        if(!strcmp(arg, "ud")) {
-                            ud = argv;
-                        } else if(!strcmp(arg, "lr")) {
-                            lr = argv;
-                        } else if(!strcmp(arg, "io")) {
-                            io = argv;
-                        }
-                        n++;
-                    }
-                    IPC::DevControl(szDev, io, ud, lr);
-                    *pss->response_body = "ok";
-                } else {
-					status = HTTP_STATUS_BAD_REQUEST;
-					*pss->response_body = "bad request";
-				}
-
-                lws_add_http_common_headers(wsi, status, "text/html", pss->response_body->size(), &p, end);
-                lws_add_http_header_by_name(wsi, (const uint8_t *)"Access-Control-Allow-Origin", (const uint8_t *)"*", 1, &p, end);
-                if (lws_finalize_write_http_header(wsi, start, &p, end))
-                    return 1;
-
-                lws_callback_on_writable(wsi);
-                return 0;
-            }
-        case LWS_CALLBACK_HTTP_WRITEABLE: //Http发送数据
-            {
-                if (!pss)
-                    break;
-
-                lws_write(wsi, (uint8_t *)pss->response_body->c_str(), pss->response_body->size(), LWS_WRITE_HTTP_FINAL);
-                if (lws_http_transaction_completed(wsi))
-                    return -1;
-
-                return 0;
-            }
-        case LWS_CALLBACK_CLOSED_HTTP:  //Http连接断开
-            {
-                if (!pss)
-                    break;
-                delete pss->response_body;
-            }
-        default:
-            break;
-        }
-
-        return lws_callback_http_dummy(wsi, reason, user, in, len);
-    }
-
-    static struct lws_context_creation_info info;  //libwebsockets配置信息
-    static struct lws_context *context;            //libwebsockets句柄
-
-    static struct lws_protocols protocols[] = {
-        { "ctrl",   callback_ctrl,   sizeof(pss_live), 0 },
-        { NULL, NULL, 0, 0 } 
-    };
-
-    // 状态
-    static bool _running = false;
-    static bool _stop = false;
-
-    //覆盖libwebsockets里的日志
-    void userLog(int level, const char* line) {
-        if(level & LLL_ERR)
-            Log::error(line);
-        else if(level & LLL_WARN)
-            Log::warning(line);
-        else if(level & LLL_NOTICE)
-            Log::debug(line);
-        else
-            Log::debug(line);
-    }
-
-    int Init(void* uv, int port) {
-        //设置日志
-        int level = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
-        lws_set_log_level(level, userLog);
-
-        //创建libwebsockets环境
-        memset(&info, 0, sizeof info);
-        info.pcontext = &context;
-		info.options = LWS_SERVER_OPTION_LIBUV | LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
-		info.foreign_loops = (void**)&uv;
-		info.timeout_secs = 30;
-		info.timeout_secs_ah_idle = 5;
-        context = lws_create_context(&info);
-        Log::debug("live sever start success");
-
-		info.port = port;
-        info.protocols = protocols;
-		info.mounts = NULL;
-        info.vhost_name = "live server";
-		if (!lws_create_vhost(context, &info)) {
-            Log::error("Failed to create http vhost\n");
-            return -1;
-        }
-
+    int Init(int port) {
+        start_service(port);
         return 0;
     }
 
     int Cleanup() {
-        _running = false;
-        while (!_stop) {
-            Sleep(10);
-        }
         return 0;
     }
 };

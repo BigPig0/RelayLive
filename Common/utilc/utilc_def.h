@@ -1,5 +1,7 @@
 #ifndef _UTIL_CDEF_
 #define _UTIL_CDEF_
+#include <stdlib.h>
+#include <stdio.h>
 
 #define SAFE_MALLOC(t, p)         t *p = (t*)calloc(1,sizeof(t))
 #define SAFE_MALLOC_COUNT(t, p, c) t *p = (t*)calloc(c, sizeof(t))

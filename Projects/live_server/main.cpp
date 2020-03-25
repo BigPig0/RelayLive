@@ -25,12 +25,10 @@ int main(int argc, char* argv[])
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
-    //if (!Settings::loadFromProfile(".\\config.txt"))
-    //{
-    //    Log::error("配置文件错误");
-    //    return -1;
-    //}
-    //Log::debug("Settings::loadFromProfile ok");
+    if (!Settings::loadFromProfile(".\\config.txt"))
+        Log::error("Settings::loadFromProfile failed");
+    else
+        Log::debug("Settings::loadFromProfile ok");
 
     //根据cpu数量设置libuv线程池的线程数量
     uv_cpu_info_t* cpu_infos;
@@ -50,20 +48,9 @@ int main(int argc, char* argv[])
     IPC::Init(port);
 
     /** 创建一个http服务器 */
-    //static uv_loop_t *p_loop_uv = nullptr;
-    //p_loop_uv = uv_default_loop();
+    Server::Init(port);
 
-    /** 创建一个http服务器 */
-    Server::Init(/*(void*)p_loop_uv*/NULL, port);
-
-    Log::debug("live sever start success\r\n");
-
-    // 事件循环
-    //while(true)
-    //{
-    //    uv_run(p_loop_uv, UV_RUN_DEFAULT);
-    //    Sleep(1000);
-    //}
+    Log::debug("live sever @%d start success\r\n", port);
 
     Sleep(INFINITE);
     return 0;

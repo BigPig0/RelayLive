@@ -55,7 +55,8 @@ namespace IPC {
         /** 进程间通信 */
         char name[20]={0};
         sprintf(name, "livesvr%d", port);
-        int ret = uv_ipc_client(&h, "ipcsvr", NULL, name, on_ipc_recv, NULL);
+        string ipc_name = Settings::getValue("IPC","name","ipcsvr");
+        int ret = uv_ipc_client(&h, (char*)ipc_name.c_str(), NULL, name, on_ipc_recv, NULL);
         if(ret < 0) {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;

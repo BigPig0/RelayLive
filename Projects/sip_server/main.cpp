@@ -56,11 +56,9 @@ int main()
 
     /** 加载配置文件 */
     if (!Settings::loadFromProfile(".\\config.txt"))
-    {
-        Log::error("配置文件错误");
-        return -1;
-    }
-    Log::debug("Settings::loadFromProfile ok");
+        Log::error("Settings::loadFromProfile failed");
+    else
+        Log::debug("Settings::loadFromProfile ok");
 
     /** 进程间通信 */
     IPC::Init();

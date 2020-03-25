@@ -1,8 +1,27 @@
 #pragma once
+#include <string>
+#include <stdint.h>
 
-namespace Server
-{
-    int Init(void* uv, int port);
+class ILiveSession {
+public:
+    virtual void AsyncSend() = 0;
+};
 
-    int Cleanup();
+/**
+ * uri中解析出参数
+ */
+struct RequestParam {
+    std::string           strUrl;               // 原始视频地址，必填项
+    std::string           strType;              // 媒体类型，默认为flv
+    uint32_t              nWidth;               // 视频宽度，默认为0，不缩放视频
+    uint32_t              nHeight;              // 视频高度，默认为0，不缩放视频
+    uint32_t              nProbSize;            // 探测PS流的大小，默认为25600
+    uint32_t              nProbTime;            // 探测PS流的时间，默认为1秒
+};
+
+namespace Server {
+
+int Init(int port);
+
+int Cleanup();
 };

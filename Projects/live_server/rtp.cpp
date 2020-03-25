@@ -4,8 +4,6 @@
 #include "worker.h"
 #include <map>
 
-using namespace Server;
-
 #define PACK_MAX_SIZE        1700                // rtp包最大长度
 
 namespace RtpDecode {
@@ -503,8 +501,8 @@ namespace RtpDecode {
                 }
             } else {
                 // 此处上抛PS
-                Server::CLiveWorker* lw = (Server::CLiveWorker*)m_pUser;
-                lw->push_ps_data((char*)it_pos->second->m_pData, it_pos->second->m_nLen);
+                CLiveWorker* worker = (CLiveWorker*)m_pUser;
+                worker->push_ps_data((char*)it_pos->second->m_pData, it_pos->second->m_nLen);
 				delete it_pos->second;
                 it_pos = m_PacketList.erase(it_pos);
             }
