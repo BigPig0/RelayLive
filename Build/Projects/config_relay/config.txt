@@ -1,0 +1,7 @@
+
+[IPC]
+name= relayipcsvr
+
+[FFMPEG]
+probsize = 5000000
+probsize = 2

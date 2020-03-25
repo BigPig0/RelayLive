@@ -1,0 +1,70 @@
+[SipSever]
+;开启的国标sip服务配置
+Code = 32058200001130000003
+;本机平台编码
+IP = 32.81.129.15
+;服务IP
+Port = 5060
+;服务端口
+RegAuthor = false
+;注册是否需要鉴权
+
+[PlatFormInfo]
+;对接的国标下级平台配置
+Code = 32058200001130000001
+;对方下级平台的编码
+IP = 32.81.129.42
+;对方下级平台的IP
+Port = 5060
+;对方下级平台的端口
+SubscribeStatus = 1
+;是否订阅设备状态
+SubscribePos = 0
+;是否订阅设备位置
+SubscribePosDev = 0
+;是否订阅设备位置
+
+[DataBase]
+;连接数据库设备信息的配置
+Path = C:\instantclient_11_2_32
+Addr = 32.81.129.13/orcl
+User = basic
+PassWord = 123
+
+
+[RtpClient]
+;国标接收rtp视频流的配置
+IP = 32.81.129.15
+;rtp服务IP
+BeginPort = 50000
+;rtp起始端口
+PortNum = 1000
+;rtp端口数量
+CatchPacketNum = 1000
+;rtp包缓存数量
+Filter = 0
+;0-ps,1-h264
+
+[HttpServer]
+;开启http服务相关配置
+IP = 0.0.0.0
+;服务器IP
+Port = 10080
+;http端口
+wsPort = 18000
+;websocket端口
+RootPath = E:\wlla\web
+;根目录
+TmpPath = C:\Tmp
+;临时目录
+DefaultFile = index.html
+;默认文件名称
+DirVisible = yes
+;是否可以显示目录，yes表示可以，no或其他表示不能
+
+[RtspServer]
+;开启rtsp服务相关配置
+IP = 0.0.0.0
+Port = 5540
+RtpPort = 51000
+RtpPortNum = 1000

@@ -1,0 +1,67 @@
+[SipSever]
+;开启的国标sip服务配置
+Code = 13010100002000000002
+;本机平台编码
+IP = 41.215.241.145
+;服务IP
+Port = 5050
+;服务端口
+RegAuthor = false
+;注册是否需要鉴权
+
+[PlatFormInfo]
+;对接的国标下级平台配置
+Code = 13010100002000000001
+;对方下级平台的编码
+IP = 41.215.254.4
+;对方下级平台的IP
+Port = 7100
+;对方下级平台的端口
+SubscribeStatus = 1
+;是否订阅设备状态
+SubscribePos = 0
+;是否订阅设备位置
+SubscribePosDev = 0
+;是否订阅设备位置
+SubscribePosDepart = 00
+;订阅设备所在的组织
+
+[DataBase]
+;连接数据库设备信息的配置
+Path =C:\instantclient_11_2_64
+Addr = 41.215.241.143:1521/orcl
+User = YJ_ACCIDENT
+PassWord = 123
+
+
+[RtpClient]
+;国标接收rtp视频流的配置
+IP = 41.215.241.145
+;rtp服务IP
+BeginPort = 50000
+;rtp起始端口
+PortNum = 1000
+;rtp端口数量
+CatchPacketNum = 1000
+;rtp包缓存数量
+Filter = 0
+;0-ps,1-h264
+Nodelay = 0
+;是否缓存数据
+
+[HttpServer]
+;开启http服务相关配置
+IP = 0.0.0.0
+;服务器IP
+Port = 8001
+;http端口
+wsPort = 8000
+;websocket端口
+RootPath = C:\RelayLive\web
+;根目录
+TmpPath = C:\RelayLive\Tmp
+;临时目录
+DefaultFile = index.html
+;默认文件名称
+DirVisible = yes
+;是否可以显示目录，yes表示可以，no或其他表示不能
