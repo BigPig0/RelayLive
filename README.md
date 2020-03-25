@@ -46,8 +46,8 @@
 * 平台: Windows vs2012
 * 用vs打开build/RelayLive.sln,按顺序编译ThirdParty、Common、Modules、Projects下的项目。
 * 编译前需要在属性管理器中将Microsoft.Cpp.x64.user(或Microsoft.Cpp.Win32.user)中修改以下：(或者在每个项目属性中都修改一次)
-* * 常规-输出目录：$(SolutionDir)..\\out\\$(Platform)_$(Configuration)\\
-* * 常规-中间目录：$(SolutionDir)..\\out\\Temp\\$(Platform)_$(Configuration)\\$(ProjectName)\\
+* * 常规-输出目录：\$(SolutionDir)..\\out\\\$(Platform)_\$(Configuration)\\
+* * 常规-中间目录：\$(SolutionDir)..\\out\\Temp\\\$(Platform)_\$(Configuration)\\\$(ProjectName)\\
 * * 链接器-常规-附加库目录：$(OutDir);%(AdditionalLibraryDirectories)
 * 在输出目录部署配置文件pm.json,config.txt和脚本文件 XXX.lua。(文件在/Build/projects下有示例)
 * 从thirdParty拷贝ffmpeg的dll到输出目录。
