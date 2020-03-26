@@ -18,5 +18,5 @@ namespace Script {
     bool InsertDev(SipServer::DevInfo* dev);
 
     /** 清空数据库设备表 */
-    bool CleanDev();
+    bool CleanDev(int64_t t);
 }

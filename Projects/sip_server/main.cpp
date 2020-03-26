@@ -10,34 +10,51 @@
 #include <map>
 #include <sstream>
 
-std::map<string, SipServer::DevInfo*> g_mapDevice;
-CriticalSection                        _csDevs;
+std::map<string, SipServer::DevInfo*> g_mapDevs;
+CriticalSection                       g_csDevs;
+bool                                  _useScript = false;   //是否启用lua脚本
 
-static void on_device(SipServer::DevInfo* dev) {
-	//Script::InsertDev(dev);
-	MutexLock lock(&_csDevs);
-	if(g_mapDevice.count(dev->strDevID) == 0)
-	    g_mapDevice.insert(make_pair(dev->strDevID, dev));
+// 每天执行一次清理数据库操作
+void on_clean_everyday(time_t t) {
+    struct tm * timeinfo = localtime(&t);
+    if(_useScript)
+        Script::CleanDev(timeinfo->tm_hour);
+}
+
+// 查询目录得到设备信息应答
+void on_device(SipServer::DevInfo* dev) {
+	if(_useScript)
+        Script::InsertDev(dev);
+
+	MutexLock lock(&g_csDevs);
+	if(g_mapDevs.count(dev->strDevID) == 0)
+	    g_mapDevs.insert(make_pair(dev->strDevID, dev));
 	else {
-	    delete g_mapDevice[dev->strDevID];
-	    g_mapDevice[dev->strDevID] = dev;
+	    delete g_mapDevs[dev->strDevID];
+	    g_mapDevs[dev->strDevID] = dev;
 	}
 }
 
-static void on_update_status(string strDevID, string strStatus) {
-	//Script::UpdateStatus(strDevID, strStatus);
-	MutexLock lock(&_csDevs);
-	auto fit = g_mapDevice.find(strDevID);
-	if(fit != g_mapDevice.end()) {
+// 更新设备在线状态
+void on_update_status(string strDevID, string strStatus) {
+    if(_useScript)
+	    Script::UpdateStatus(strDevID, strStatus);
+
+	MutexLock lock(&g_csDevs);
+	auto fit = g_mapDevs.find(strDevID);
+	if(fit != g_mapDevs.end()) {
 		fit->second->strStatus = strStatus;
 	}
 }
 
-static void on_update_postion(string strDevID, string log, string lat) {
-	//Script::UpdatePos(strDevID, lat, log);
-	MutexLock lock(&_csDevs);
-	auto fit = g_mapDevice.find(strDevID);
-	if(fit != g_mapDevice.end()) {
+// 更新设备gps
+void on_update_postion(string strDevID, string log, string lat) {
+    if(_useScript)
+	    Script::UpdatePos(strDevID, lat, log);
+
+	MutexLock lock(&g_csDevs);
+	auto fit = g_mapDevs.find(strDevID);
+	if(fit != g_mapDevs.end()) {
 		fit->second->strLongitude = log;
 		fit->second->strLatitude = lat;
 	}
@@ -64,11 +81,11 @@ int main()
     IPC::Init();
 
 	/** 数据库脚本 */
-	//Script::Init();
-
-	SipServer::SetDeviceCB(on_device);
-	SipServer::SetUpdateStatusCB(on_update_status);
-	SipServer::SetUpdatePostionCB(on_update_postion);
+    string use = Settings::getValue("Script", "use", "false");
+    if(use == "yes" || use == "1")
+        _useScript = true;
+    if(_useScript)
+	    Script::Init();
 
     /** 初始化SIP服务器 */
     if (!SipServer::Init())
@@ -83,11 +100,11 @@ int main()
 }
 
 std::string GetDevsJson() {
-	MutexLock lock(&_csDevs);
+	MutexLock lock(&g_csDevs);
 	stringstream ss;
 	ss << "{\"root\":[";
 	bool first = true;
-	for(auto c:g_mapDevice){  
+	for(auto c:g_mapDevs){  
 		if(!first) {
 			ss << ",";
 		} else {

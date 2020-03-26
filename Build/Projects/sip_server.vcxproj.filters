@@ -18,12 +18,45 @@
     <ClCompile Include="..\..\Projects\sip_server\script.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\SipInvite.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\SipMessage.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\SipRegister.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\SipServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Projects\sip_server\SipSubscribe.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Projects\sip_server\ipc.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Projects\sip_server\script.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipMessage.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipSubscribe.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipServer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipRegister.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipPrivate.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Projects\sip_server\SipInvite.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

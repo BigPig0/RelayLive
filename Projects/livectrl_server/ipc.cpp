@@ -1,7 +1,6 @@
 #include "util.h"
 #include "ipc.h"
 #include "uvIpc.h"
-#include "SipServer.h"
 #include <map>
 #include <sstream>
 

@@ -3,31 +3,47 @@
 #include "luapp.hpp"
 #include "script.h"
 #include "EncodeConvert.h"
+#include "SipPrivate.h"
 #include "SipServer.h"
 
 namespace Script {
 
-lua::State<>           m_lua;
-lua::GlobalFunction<lua::Bool()> luafInit;
-lua::GlobalFunction<lua::Bool()> luafCleanup;
-lua::GlobalFunction<lua::Table()> 
-    luafGetDevInfo;
-lua::GlobalFunction<lua::Bool(lua::Str, lua::Str)> 
-    luafUpdateStatus;
-lua::GlobalFunction<lua::Bool(lua::Str, lua::Str, lua::Str)> 
-    luafUpdatePos;
-lua::GlobalFunction<lua::Bool(lua::Table)> 
-    luafInsertDev;
-lua::GlobalFunction<lua::Bool()>
-    luafDeleteDev;
-lua::GlobalFunction<lua::Table(lua::Table)>
-    luafTransDevPos;
+// lua环境句柄
+lua::State<>           _lua;
 
+// 以下为lua脚本所定义的函数
+lua::GlobalFunction<lua::Bool()>
+    luafInit;                 // 初始化
+lua::GlobalFunction<lua::Bool()>
+    luafCleanup;              // 清理
+lua::GlobalFunction<lua::Table()> 
+    luafGetDevInfo;           // 从数据库获取以前存下的设备信息
+lua::GlobalFunction<lua::Bool(lua::Str, lua::Str)> 
+    luafUpdateStatus;         // 更新设备在线状态
+lua::GlobalFunction<lua::Bool(lua::Str, lua::Str, lua::Str)> 
+    luafUpdatePos;            // 更新设备gps
+lua::GlobalFunction<lua::Bool(lua::Table)> 
+    luafInsertDev;            // 新增设备
+lua::GlobalFunction<lua::Bool(lua::Int)>
+    luafDeleteDev;            // 删除数据库中的设备
+lua::GlobalFunction<lua::Table(lua::Table)>
+    luafTransDevPos;          // gps转换
+
+//一下函数为设置到lua脚本的函数
 lua::Str luaGBK2UTF8(lua::Str s) {
     return EncodeConvert::AtoUTF8(s);
 }
+lua::Bool luaLogDebug(lua::Str s) {
+    Log::debug(s.c_str());
+    return true;
+}
+lua::Bool luaLogError(lua::Str s) {
+    Log::error(s.c_str());
+    return true;
+}
 
-lua::Table DevInfo2Table(SipServer::DevInfo* dev) {
+// 设备信息转为lua格式
+static lua::Table DevInfo2Table(SipServer::DevInfo* dev) {
     lua::Table tb;
     if(!dev->strDevID.empty())
         tb["DevID"] = dev->strDevID;
@@ -102,10 +118,10 @@ lua::Table DevInfo2Table(SipServer::DevInfo* dev) {
     return tb;
 }
 
-vector<SipServer::DevInfo*> GetDevInfo()
-{
-    vector<SipServer::DevInfo*> vecRet;
+// 执行lua脚本从数据库获取以前存下的设备信息
+static void GetDevInfo() {
     lua::Table rows = luafGetDevInfo();
+    MutexLock lock(&g_csDevs);
     for(auto it = rows.getBegin(); !it.isEnd(); it++){
         lua::Var k,v;
         it.getKeyValue(&k, &v);
@@ -221,37 +237,39 @@ vector<SipServer::DevInfo*> GetDevInfo()
                 dev->strSVCTimeSupportType = value;
             }
         }
-        vecRet.push_back(dev);
+        g_mapDevs.insert(make_pair(dev->strDevID, dev));
     }
-    return vecRet;
 }
 
 void Init() {
-    m_lua.setFunc("GBK2UTF8", &luaGBK2UTF8);
+    // 将函数映射到脚本里
+    _lua.setFunc("GBK2UTF8", &luaGBK2UTF8);
+    _lua.setFunc("LOGDEBUG", &luaLogDebug);
+    _lua.setFunc("LOGERROR", &luaLogError);
 
-    ludb_use_lua((void*)&m_lua);
+    // ludb模块注册lua句柄，并将ludb中的一些函数映射到脚本里
+    ludb_use_lua((void*)&_lua);
 
-    m_lua.run(".","livectrl.lua");
-    m_lua.getFunc("Init",        &luafInit);
-    m_lua.getFunc("Cleanup",     &luafCleanup);
-    m_lua.getFunc("GetDevInfo",  &luafGetDevInfo);
-    m_lua.getFunc("UpdateStatus",&luafUpdateStatus);
-    m_lua.getFunc("UpdatePos",   &luafUpdatePos);
-    m_lua.getFunc("InsertDev",   &luafInsertDev);
-    m_lua.getFunc("DeleteDev",   &luafDeleteDev);
-    m_lua.getFunc("TransDevPos", &luafTransDevPos);
+    // 启动脚本，并将一些脚本里面的函数映射出来
+    string script = Settings::getValue("Script", "path", "livectrl.lua");
+    _lua.run(".", script);
+    _lua.getFunc("Init",        &luafInit);
+    _lua.getFunc("Cleanup",     &luafCleanup);
+    _lua.getFunc("GetDevInfo",  &luafGetDevInfo);
+    _lua.getFunc("UpdateStatus",&luafUpdateStatus);
+    _lua.getFunc("UpdatePos",   &luafUpdatePos);
+    _lua.getFunc("InsertDev",   &luafInsertDev);
+    _lua.getFunc("DeleteDev",   &luafDeleteDev);
+    _lua.getFunc("TransDevPos", &luafTransDevPos);
 
     // 调用脚本进行初始化
     if(!luafInit()){
-        Log::error("data base init failed");
+        Log::error("lua script init failed");
         return;
     }
 
     // 脚本从数据库读取设备
-    vector<SipServer::DevInfo*> devInfo = GetDevInfo();
-    for(auto &dev:devInfo) {
-
-    }
+    GetDevInfo();
 }
 
 void Cleanup() {
@@ -270,8 +288,8 @@ bool InsertDev(SipServer::DevInfo* dev) {
     return luafInsertDev(DevInfo2Table(dev));
 }
 
-bool CleanDev() {
-    return luafDeleteDev();
+bool CleanDev(int64_t t) {
+    return luafDeleteDev(t);
 }
 
 }

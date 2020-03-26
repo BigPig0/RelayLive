@@ -71,14 +71,14 @@ namespace IPC {
 		}
     }
 
-    static void on_play_init_cb(string strProName, uint32_t nID, uint32_t nPort) {
+    void on_play_init_cb(string strProName, uint32_t nID, uint32_t nPort) {
         stringstream ss;
         ss << "id=" << nID << "&port=" << nPort;
         string str = ss.str();
         uv_ipc_send(h, (char*)strProName.c_str(), "live_init_answer", (char*)str.c_str(), str.size());
     }
 
-    static void on_play_cb(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo) {
+    void on_play_cb(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo) {
         if(bRet) {
             std::stringstream ss;
             ss << "id=" <<nID << "&port=" << nPort << "&ret=0&error=" << strInfo;
@@ -100,9 +100,6 @@ namespace IPC {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;
         }
-
-        SipServer::SetInitCB(on_play_init_cb);
-        SipServer::SetPlayCB(on_play_cb);
 
         return true;
     }
