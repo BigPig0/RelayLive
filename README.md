@@ -5,14 +5,14 @@
 
 ## 说明:
 * ipc_server: 进程间通讯和进程保护的工具
-  * pm.json 配置文件，需要启动的程序信息。
+  + pm.json 配置文件，需要启动的程序信息。
 
 ### 对接海康SDK
 * hik_server: 使用海康sdk播放视频并转为ws-flv
 * hikctrl_server: 查看平台设备信息、客户端信息
-  * hikctrl.lua 数据库脚本
-  * config.txt 海康平台登陆配置
-  * 配置示例在Build/projects/config_yongjia_hikserver
+  + hikctrl.lua 数据库脚本
+  + config.txt 海康平台登陆配置
+* 配置示例在Build/projects/config_hik_XXX
 * 客户端请求格式为 http(ws)://IP:port/live/flv/0/[code]
 * sdk只有32位的，导致整个项目工具层都增加了32位的编译。只验证海康相机上抛的是标准PS流，大华相机的是其私有码流无法识别。
 * 这个对接的实际意义不是很大，国标对接延时上来后，不太需要这种方法了。 不再更新。
@@ -20,15 +20,16 @@
 ### 对接视频流
 * relay_server: 将视频流转为ws-flv，流可以为rtsp、rtmp、hls等（理论上可以，只使用过rtsp）
 * relayctrl_server: 查看客户端信息
-  * 配置示例在Build/projects/config_kunshan_tecc
+* 配置示例在Build/projects/config_relay_XXX
 * 客户端请求格式为 http(ws)://IP:port/live?url=[rtsp地址]&hw=[960*480]&type=[flv]&probsize=102400&probtime=2 
-  * url 原始视频地址
-  * 其他参数见下
+  + url 原始视频地址
+  + 其他参数见下
 
 ### 对接国标gb28181平台
 * sip_server: sip服务器，用来与下级平台交互
 * live_server: 将下级推送的基于PS的rtp流转为ws-flv
 * livectrl_server: 查看设备信息、客户端信息、设备控制
+* 配置示例在Build/projects/config_gb28181_XXX
 * 客户端请求格式为 http(ws)://IP:port/live?code=[code]&hw=[960*480]&type=[flv]&probsize=102400&probtime=2 
   * code 相机的国标编码,必填项
   * hw 可选参数, 用来缩放视频大小, 默认不进行缩放. 用来缩小视频,只有填写的值小于视频原始值才生效

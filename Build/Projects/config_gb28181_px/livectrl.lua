@@ -1,11 +1,11 @@
 function GetDevInfo()
-    local ret = {}
+    devtb = {}
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
-        return ret
+        return devtb
     end
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, "select t.RECORDER_CODE, t.RECORDER_NAME, t.STATUS, t.LAT, t.LON from ENFORCEMENT_RECORDER t")
+    LUDB_EXECUTE_STMT(stmt, "select t.CODE, t.NAME, t.STATUS, t.LAT, t.LON from RECORDER t")
     local rs = LUDB_GET_RES(stmt)
     while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
@@ -19,14 +19,22 @@ function GetDevInfo()
         end
         row["Latitude"]   = LUDB_GET_STR(rs, 4)
         row["Longitude"]  = LUDB_GET_STR(rs, 5)
-        table.insert(ret, row)
+        --table.insert(devtb, row)
+		devtb[row["DevID"]] = row
     end
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
-    return ret
+    return devtb
 end
 
 function UpdateStatus(code, status)
+    if devtb[code] ~= nil then
+	    if devtb[code]["Status"] == status then
+		    return true;
+		end
+		devtb[code]["Status"] = status
+	end
+	
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
@@ -35,7 +43,7 @@ function UpdateStatus(code, status)
     if status then 
         sta = 1 
     end
-    local sql = string.format("update ENFORCEMENT_RECORDER set STATUS = %d where RECORDER_CODE = '%s'", sta, code)
+    local sql = string.format("update RECORDER set STATUS = %d where CODE = '%s'", sta, code)
     print(sql)
     local stmt = LUDB_CREATE_STMT(con)
     LUDB_EXECUTE_STMT(stmt, sql)
@@ -46,6 +54,14 @@ function UpdateStatus(code, status)
 end
 
 function UpdatePos(code, lat, lon)
+    if devtb[code] ~= nil then
+	    if devtb[code]["Latitude"] == lat and devtb[code]["Longitude"] == lon then
+		    return true;
+		end
+		devtb[code]["Latitude"] = lat
+		devtb[code]["Longitude"] = lon
+	end
+	
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
@@ -56,7 +72,7 @@ function UpdatePos(code, lat, lon)
     if string.len(lon)>9 then
         lon = string.sub(lon, 0, 9)
     end
-    local sql = string.format("update ENFORCEMENT_RECORDER set LAT = %s, LON = %s where RECORDER_CODE = '%s'", lat, lon, code)
+    local sql = string.format("update RECORDER set LAT = %s, LON = %s where CODE = '%s'", lat, lon, code)
     print(sql)
     local stmt = LUDB_CREATE_STMT(con)
     LUDB_EXECUTE_STMT(stmt, sql)
@@ -67,11 +83,27 @@ function UpdatePos(code, lat, lon)
 end
 
 function InsertDev(dev)
+	local code = "";
+	if dev["DevID"] ~= nil then
+        code = dev["DevID"]
+    end
+	local name = "";
+	if dev["Name"] ~= nil then
+	    name = dev["Name"]
+	end
+	local lat = "";
+	if dev["Latitude"] ~= nil then
+	    lat = dev["Latitude"]
+	end
+	local lon = "";
+	if dev["Longitude"] ~= nil then
+	    lon = dev["Longitude"]
+	end
     local status = "0"
     if(dev["Status"] == "ON") then
         status = "1"
     end
-    local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], status}
+    local row = {code, name, lat, lon, status}
     LUDB_ADD_ROW(devHelp, row)
     return true
 end
@@ -85,7 +117,7 @@ function DeleteDev(hour)
         return false
     end
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE ENFORCEMENT_RECORDER")
+    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE RECORDER")
     LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
@@ -93,15 +125,15 @@ function DeleteDev(hour)
 end
 
 function Init()
-    LUDB_INIT({dbtype="oracle", path="E:/instantclient_11_2"})
+    LUDB_INIT({dbtype="oracle", path="C:/instantclient_12_1_64"})
     LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="172.31.7.7/pxzhjt", user="basic", pwd="123", max=5, min=1, inc=2})
     --设备表插入工具
-    local sql = "insert into ENFORCEMENT_RECORDER (RECORDER_CODE, RECORDER_NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
-    devHelp = LUDB_BATCH_INIT("DB", sql, 50, 10, {
-        {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 64},
-        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 64},
-        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
-        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20},
+    local sql = "insert into RECORDER (CODE, NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
+    devHelp = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
+        {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 30},
+        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 100},
+        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 10},
+        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 10},
         {bindname = "STATUS",     coltype = LUDB_TYPE_INT}
     })
     return true
@@ -115,11 +147,11 @@ function Cleanup()
 end
 
 function TransDevPos(dev)
-    local lat = "0"
+    local lat = ""
     if(dev["Latitude"] ~= nil) then
         lat = dev["Latitude"]
     end
-    local lon = "0"
+    local lon = ""
     if(dev["Longitude"] ~= nil) then
         lon = dev["Longitude"]
     end

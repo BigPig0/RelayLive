@@ -1,0 +1,49 @@
+[{
+    "path":"E:\\RelayLive\\livectrl_server.exe",
+	"args":"18001",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is ctrl server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\sip_server.exe",
+	"args":"",
+	"daemon":"yes",
+	"rstime":"05:01:00",
+	"rsdur":0,
+	"remark":"this is a sip server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18101",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18102",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18103",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18104",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+}]
