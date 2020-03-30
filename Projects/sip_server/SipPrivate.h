@@ -47,7 +47,7 @@ namespace IPC {
     extern void on_play_cb(string strProName, bool bRet, uint32_t nID, uint32_t nPort, string strInfo);
 }
 
-extern void on_clean_everyday(time_t t);
+extern void on_hour_event(time_t t);
 extern void on_device(SipServer::DevInfo* dev);
 extern void on_update_status(string strDevID, string strStatus);
 extern void on_update_postion(string strDevID, string log, string lat);

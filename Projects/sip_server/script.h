@@ -20,6 +20,6 @@ namespace Script {
 	/** 转换gps坐标 */
 	bool TransPos(SipServer::DevInfo* dev);
 
-    /** 清空数据库设备表 */
-    bool CleanDev(int64_t t);
+    /** 每个小时进入一次的触发事件 */
+    bool HourEvent(int64_t t);
 }

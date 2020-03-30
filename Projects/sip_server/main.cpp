@@ -14,11 +14,11 @@ std::map<string, SipServer::DevInfo*> g_mapDevs;
 CriticalSection                       g_csDevs;
 bool                                  _useScript = false;   //是否启用lua脚本
 
-// 每天执行一次清理数据库操作
-void on_clean_everyday(time_t t) {
+// 每个小时进入一次的触发事件
+void on_hour_event(time_t t) {
     struct tm * timeinfo = localtime(&t);
     if(_useScript)
-        Script::CleanDev(timeinfo->tm_hour);
+        Script::HourEvent(timeinfo->tm_hour);
 }
 
 // 查询目录得到设备信息应答

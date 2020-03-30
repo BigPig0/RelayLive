@@ -110,7 +110,7 @@ function InsertDev(dev)
     return true
 end
 
-function DeleteDev(hour)
+function HourEvent(hour)
     if hour ~= 1 then
         return true
     end

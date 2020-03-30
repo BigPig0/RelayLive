@@ -193,7 +193,7 @@ namespace SipServer {
         time_t now = time(nullptr);
 
         if(isFirst || difftime(now, _lastQueryTime) > 3600){ //距离上一次查询超过一小时重新查询
-            on_clean_everyday(now);
+            on_hour_event(now);
             _pMessage->QueryDirtionary();
             _lastQueryTime = time(NULL);
             Log::debug(" Query dir %s",g_strCode.c_str());

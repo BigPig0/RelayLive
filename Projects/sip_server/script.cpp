@@ -25,7 +25,7 @@ lua::GlobalFunction<lua::Bool(lua::Str, lua::Str, lua::Str)>
 lua::GlobalFunction<lua::Bool(lua::Table)> 
     luafInsertDev;            // 新增设备
 lua::GlobalFunction<lua::Bool(lua::Int)>
-    luafDeleteDev;            // 删除数据库中的设备
+    luafHourEvent;            // 每个小时进入一次的触发事件
 lua::GlobalFunction<lua::Table(lua::Table)>
     luafTransDevPos;          // gps转换
 
@@ -259,7 +259,7 @@ void Init() {
     _lua.getFunc("UpdateStatus",&luafUpdateStatus);
     _lua.getFunc("UpdatePos",   &luafUpdatePos);
     _lua.getFunc("InsertDev",   &luafInsertDev);
-    _lua.getFunc("DeleteDev",   &luafDeleteDev);
+    _lua.getFunc("HourEvent",   &luafHourEvent);
     _lua.getFunc("TransDevPos", &luafTransDevPos);
 
     // 调用脚本进行初始化
@@ -310,8 +310,8 @@ bool TransPos(SipServer::DevInfo* dev) {
 	return true;
 }
 
-bool CleanDev(int64_t t) {
-    return luafDeleteDev(t);
+bool HourEvent(int64_t t) {
+    return luafHourEvent(t);
 }
 
 }
