@@ -17,6 +17,9 @@ namespace Script {
     /** 向库中插入新的设备 */
     bool InsertDev(SipServer::DevInfo* dev);
 
+	/** 转换gps坐标 */
+	bool TransPos(SipServer::DevInfo* dev);
+
     /** 清空数据库设备表 */
     bool CleanDev(int64_t t);
 }

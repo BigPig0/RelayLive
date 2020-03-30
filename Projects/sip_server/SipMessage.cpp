@@ -187,7 +187,9 @@ static void ParseCatalog(pugi::xml_node& root)
                         dev.strLatitude = devNode.child_value();
                     } else if (nodeName == "BusinessGroupID") {
                         dev.strBusinessGroupID = devNode.child_value();
-                    } else if (nodeName == "Info") {
+					} else if (nodeName == "CatalogType") {
+					} else if (nodeName == "RecLocation") {
+					} else if (nodeName == "Info") {
                         LogDebug("<Info>");
                         for (pugi::xml_node infoNode = devNode.first_child(); infoNode; infoNode=infoNode.next_sibling())
                         {
@@ -217,7 +219,7 @@ static void ParseCatalog(pugi::xml_node& root)
                             } else if (nodeName == "SVCTimeSupportMode") {
                                 dev.strSVCTimeSupportType = infoNode.child_value();
                             } else {
-                                Log::error("node[%s] is not catched",nodeName.c_str());
+                                Log::error("info node[%s] is not catched",nodeName.c_str());
                             }
                         }// for Info Node
                         LogDebug("</Info>");

@@ -23,13 +23,17 @@ void on_clean_everyday(time_t t) {
 
 // 查询目录得到设备信息应答
 void on_device(SipServer::DevInfo* dev) {
-	if(_useScript)
-        Script::InsertDev(dev);
-
 	MutexLock lock(&g_csDevs);
-	if(g_mapDevs.count(dev->strDevID) == 0)
+	if(g_mapDevs.count(dev->strDevID) == 0) {
 	    g_mapDevs.insert(make_pair(dev->strDevID, dev));
-	else {
+		if(_useScript)
+			Script::InsertDev(dev);
+	} else {
+		if(_useScript && !dev->strLatitude.empty() && dev->strLatitude != "0" && dev->strLatitude != g_mapDevs[dev->strDevID]->strLatitude
+			&& !dev->strLongitude.empty() && dev->strLongitude != "0" && dev->strLongitude != g_mapDevs[dev->strDevID]->strLongitude)
+			Script::UpdatePos(dev->strDevID, dev->strLatitude, dev->strLongitude);
+		if(_useScript && !dev->strStatus.empty() && dev->strStatus != g_mapDevs[dev->strDevID]->strStatus)
+			Script::UpdateStatus(dev->strDevID, dev->strStatus);
 	    delete g_mapDevs[dev->strDevID];
 	    g_mapDevs[dev->strDevID] = dev;
 	}

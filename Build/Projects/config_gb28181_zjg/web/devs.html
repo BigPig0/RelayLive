@@ -13,7 +13,7 @@
 <body ng-app="myApp" ng-controller="myCtrl">
   <div style="width: 80%;margin: 20px auto;">
     <div class="row clearfix" style="margin-bottom: 20px;">
-	    <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">订阅</button>
+	    <button type="button" class="btn btn-primary pull-right" ng-click="fresh()">订阅</button>
         <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛选</button>
     </div>
     
@@ -50,17 +50,24 @@
 <script src="lib/angular.min.js"></script>
 <script src="lib/jquery-1.11.3.min.js"></script>
 <script>
-  var _test = false;
-  var url = _test ? 'data/data.json' : './device/devlist';
   var app = angular.module('myApp', []);
   app.controller('myCtrl', function($scope,$http) {
+    $scope.fresh=function(){
+	    $http({
+            method: 'GET',
+            url: './device/refresh',
+            dataType: 'text',
+        }).then(function successCallback(response) {
+        }, function errorCallback(response) {
+        });
+	}
+	
     $http({
         method: 'GET',
-        url: url,
+        url: './device/devlist',
         dataType: 'json',
     }).then(function successCallback(response) {
-      $scope.data = response.data.root;
-      
+        $scope.data = response.data.root;
     }, function errorCallback(response) {
     });
   });

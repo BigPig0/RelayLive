@@ -13,7 +13,7 @@
 <body ng-app="myApp" ng-controller="myCtrl">
   <div style="width: 80%;margin: 20px auto;">
     <div class="row clearfix" style="margin-bottom: 20px;">
-	    <button type="button" class="btn btn-primary pull-right" ng-click="">订阅</button>
+	    <button type="button" class="btn btn-primary pull-right" ng-click="fresh()">订阅</button>
         <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛选</button>
     </div>
     
@@ -52,6 +52,16 @@
 <script>
   var app = angular.module('myApp', []);
   app.controller('myCtrl', function($scope,$http) {
+    $scope.fresh=function(){
+	    $http({
+            method: 'GET',
+            url: './device/refresh',
+            dataType: 'text',
+        }).then(function successCallback(response) {
+        }, function errorCallback(response) {
+        });
+	}
+	
     $http({
         method: 'GET',
         url: './device/devlist',

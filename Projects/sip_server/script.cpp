@@ -288,6 +288,28 @@ bool InsertDev(SipServer::DevInfo* dev) {
     return luafInsertDev(DevInfo2Table(dev));
 }
 
+bool TransPos(SipServer::DevInfo* dev) {
+	lua::Table tb;
+	if(!dev->strLatitude.empty())
+		tb["Latitude"] = dev->strLatitude;
+	if(!dev->strLongitude.empty())
+		tb["Longitude"] = dev->strLongitude;
+	lua::Table tr = luafTransDevPos(tb);
+	for(auto rit = tr.getBegin(); !rit.isEnd(); rit++){
+		lua::Var k2,v2;
+		rit.getKeyValue(&k2, &v2);
+		lua::Str key = lua::VarCast<lua::Str>(k2);
+		if(key == "Latitude"){
+			lua::Str value = lua::VarCast<lua::Str>(v2);
+			dev->strLatitude = value;
+		} else if(key == "Longitude"){
+			lua::Str value = lua::VarCast<lua::Str>(v2);
+			dev->strLongitude = value;
+		} 
+	}
+	return true;
+}
+
 bool CleanDev(int64_t t) {
     return luafDeleteDev(t);
 }
