@@ -42,6 +42,8 @@ name= ipcsvr
 [FFMPEG]
 probsize = 25600
 probsize = 1
+incatch = 16384
+outcatch = 16384
 
 [Script]
 use = yes

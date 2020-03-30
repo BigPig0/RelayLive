@@ -166,6 +166,16 @@ static void run_loop_thread(void* arg) {
 
 //////////////////////////////////////////////////////////////////////////
 
+RequestParam::RequestParam()
+    : strType("flv")
+    , nWidth(0)
+    , nHeight(0)
+    , nProbSize(Settings::getValue("FFMPEG","probsize",25600))
+    , nProbTime(Settings::getValue("FFMPEG","probtime",1))
+    , nInCatch(Settings::getValue("FFMPEG","incatch",1024*16))
+    , nOutCatch(Settings::getValue("FFMPEG","outcatch",1024*16))
+{}
+
 CLiveSession::CLiveSession()
     : parseHeader(false)
     , isWs(false)
@@ -175,11 +185,6 @@ CLiveSession::CLiveSession()
 	, connected(true)
 	, handlecount(2)
 {
-    Params.strType = "flv";
-    Params.nWidth = 0;
-    Params.nHeight = 0;
-    Params.nProbSize = Settings::getValue("FFMPEG","probsize",25600);
-    Params.nProbTime = Settings::getValue("FFMPEG","probtime",1);
     socket.data = this;
     uv_tcp_init(&uvLoopLive, &socket);
     asWrite.data = this;
@@ -396,6 +401,10 @@ bool CLiveSession::ParsePath() {
             Params.nProbSize = stoi(kv[1]);
         else if(kv[0] == "probtime")
             Params.nProbTime = stoi(kv[1]);
+        else if(kv[0] == "incatch")
+            Params.nInCatch = stoi(kv[1]);
+        else if(kv[0] == "outcatch")
+            Params.nOutCatch = stoi(kv[1]);
     }
     return true;
 }

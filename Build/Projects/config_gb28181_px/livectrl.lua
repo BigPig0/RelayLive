@@ -20,7 +20,7 @@ function GetDevInfo()
         row["Latitude"]   = LUDB_GET_STR(rs, 4)
         row["Longitude"]  = LUDB_GET_STR(rs, 5)
         --table.insert(devtb, row)
-		devtb[row["DevID"]] = row
+        devtb[row["DevID"]] = row
     end
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)

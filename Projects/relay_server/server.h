@@ -17,6 +17,9 @@ struct RequestParam {
     uint32_t              nHeight;              // 视频高度，默认为0，不缩放视频
     uint32_t              nProbSize;            // 探测PS流的大小，默认为25600
     uint32_t              nProbTime;            // 探测PS流的时间，默认为1秒
+    uint32_t              nInCatch;             // 输入缓存大小 默认1024*16
+    uint32_t              nOutCatch;            // 输出缓存大小 默认1024*16
+    RequestParam();
 };
 
 namespace Server {

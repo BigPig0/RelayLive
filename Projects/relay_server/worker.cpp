@@ -176,12 +176,12 @@ bool CLiveWorker::Play()
             Log::error("Could not allocate frame");
             goto end;
         }
-    }
-    if(scale_video) {
-        filt_frame = av_frame_alloc();
-        if (!filt_frame) {
-            Log::error("Could not allocate filter_frame");
-            goto end;
+        if(scale_video) {
+            filt_frame = av_frame_alloc();
+            if (!filt_frame) {
+                Log::error("Could not allocate filter_frame");
+                goto end;
+            }
         }
     }
 
@@ -194,8 +194,8 @@ bool CLiveWorker::Play()
         goto end;
     }
 
-    unsigned char* outbuffer=(unsigned char*)av_malloc(_flvbufsize);
-    AVIOContext *avio_out =avio_alloc_context(outbuffer, _flvbufsize,1,this,NULL,write_buffer,NULL);  
+    unsigned char* outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
+    AVIOContext *avio_out =avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);  
     ofc->pb = avio_out; 
     ofc->flags = AVFMT_FLAG_CUSTOM_IO;
 
@@ -209,46 +209,51 @@ bool CLiveWorker::Play()
         ret = AVERROR_UNKNOWN;
         goto end;
     }
-
-    ret = avcodec_parameters_copy(ostream_video->codecpar, istream_video->codecpar);
-    if (ret < 0) {
-        Log::error("Failed to copy codec parameters");
-        goto end;
-    }
-    ostream_video->codecpar->codec_id = AV_CODEC_ID_H264;
-    if(scale_video) {
-        ostream_video->codecpar->width = m_pParam->nWidth;
-        ostream_video->codecpar->height = m_pParam->nHeight;
-    }
+    ostream_video->id = ofc->nb_streams-1;
 
     if(recodec_video) {
         // 视频重新编码为h264
         AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
         encode_ctx = avcodec_alloc_context3(codec);
-        avcodec_parameters_to_context(encode_ctx, ostream_video->codecpar);
+		encode_ctx->bit_rate = 400000;
+		encode_ctx->width = scale_video?m_pParam->nWidth:decode_ctx->width;
+		encode_ctx->height = scale_video?m_pParam->nHeight:decode_ctx->height;
+		encode_ctx->time_base.num = 1;
+		encode_ctx->time_base.den = 25;
+		encode_ctx->framerate.num = 25;
+		encode_ctx->framerate.den = 1;
+		encode_ctx->gop_size = 15;
+		encode_ctx->has_b_frames = 0;
+		encode_ctx->max_b_frames = 0;
+		encode_ctx->qmin = 34;
+		encode_ctx->qmax = 50;
+		encode_ctx->pix_fmt = decode_ctx->pix_fmt;
+		encode_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-        encode_ctx->bit_rate = 400000;
-        encode_ctx->width = ostream_video->codecpar->width;
-        encode_ctx->height = ostream_video->codecpar->height;
-        encode_ctx->time_base.num = 1;
-        encode_ctx->time_base.den = 25;
-        encode_ctx->framerate.num = 25;
-        encode_ctx->framerate.den = 1;
-        encode_ctx->gop_size = 15;
-        encode_ctx->has_b_frames = 0;
-        encode_ctx->max_b_frames = 0;
-        encode_ctx->qmin = 34;
-        encode_ctx->qmax = 50;
-
-        av_opt_set(encode_ctx->priv_data, "preset",  "slow", 0);
+        av_opt_set(encode_ctx->priv_data, "preset",  "superfast", 0);
         av_opt_set(encode_ctx->priv_data, "tune",    "zerolatency", 0);
-        av_opt_set(encode_ctx->priv_data, "profile", "main", 0);
+        av_opt_set(encode_ctx->priv_data, "profile", "baseline", 0);
 
         ret = avcodec_open2(encode_ctx, codec, NULL);
         if (ret < 0) {
             Log::error("can not open encoder");
             goto end;
         }
+
+        ret = avcodec_parameters_from_context(ostream_video->codecpar, encode_ctx);
+        if (ret < 0) {
+            Log::error("Failed to get codec parameters from context");
+            goto end;
+        }
+
+        ostream_video->time_base = encode_ctx->time_base;
+    } else {
+        ret = avcodec_parameters_copy(ostream_video->codecpar, istream_video->codecpar);
+        if (ret < 0) {
+            Log::error("Failed to copy codec parameters");
+            goto end;
+        }
+        ostream_video->time_base = istream_video->time_base;
     }
 
     Log::debug("show output format info");

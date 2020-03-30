@@ -40,8 +40,6 @@ typedef struct _AV_BUFF_ {
 
 static list<CLiveWorker*>  _listWorkers;
 static CriticalSection     _csWorkers;
-static uint32_t            _flvbufsize = 1024*16;
-static uint32_t            _psbufsize = 1024*16;
 
 static void destroy_ring_node(void *_msg)
 {
@@ -159,9 +157,8 @@ bool CLiveWorker::Play()
 
     //打开输入流
     ifc = avformat_alloc_context();
-    uint32_t incatch = Settings::getValue("FFMPEG","incatch", _psbufsize);
-    unsigned char * iobuffer=(unsigned char *)av_malloc(incatch);
-    AVIOContext *avio = avio_alloc_context(iobuffer, incatch, 0, this, fill_iobuffer, NULL, NULL);
+    unsigned char * iobuffer=(unsigned char *)av_malloc(m_pParam->nInCatch);
+    AVIOContext *avio = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
     ifc->pb = avio;
 	ifc->iformat = av_find_input_format("mpeg");
 
@@ -237,9 +234,8 @@ bool CLiveWorker::Play()
         goto end;
     }
 
-    uint32_t outcatch = Settings::getValue("FFMPEG", "outcatch", _flvbufsize);
-    unsigned char* outbuffer=(unsigned char*)av_malloc(outcatch);
-    AVIOContext *avio_out =avio_alloc_context(outbuffer, outcatch,1,this,NULL,write_buffer,NULL);  
+    unsigned char* outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
+    AVIOContext *avio_out =avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);  
     ofc->pb = avio_out; 
     ofc->flags = AVFMT_FLAG_CUSTOM_IO;
 

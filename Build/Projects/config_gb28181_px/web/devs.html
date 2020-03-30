@@ -7,14 +7,13 @@
   <title>设备列表</title>
   <link rel="stylesheet" href="lib/bootstrap.min.css"/>
   <style>
-    tr{
-      cursor: pointer;
-    }
+    tr{ cursor: pointer;}
   </style>
 </head>
 <body ng-app="myApp" ng-controller="myCtrl">
   <div style="width: 80%;margin: 20px auto;">
     <div class="row clearfix" style="margin-bottom: 20px;">
+	    <button type="button" class="btn btn-primary pull-right" ng-click="">订阅</button>
         <button type="button" class="btn btn-primary pull-right" ng-click="isFilter = !isFilter">筛选</button>
     </div>
     
@@ -27,10 +26,11 @@
         <th>Longitude</th>
         <th>Latitude</th>
         <th>Status</th>
-        <th>Video0</th>
+        <th>Video</th>
+		<th>Video</th>
       </tr>
-      <tbody ng-repeat="item in data track by $index" ng-show="!isFilter || item.FlvClient">
-          <tr ng-class="{'success':item.FlvClient && item.FlvClient.length > 0}"  ng-click="item.showSub = !item.showSub">
+      <tbody ng-repeat="item in data track by $index">
+          <tr ng-show="!isFilter || item.Status == 'ON'">
             <td>{{$index+1}}</td>
             <td>{{item.DeviceID}}</td>
             <td>{{item.Name}}</td>
@@ -38,15 +38,8 @@
             <td>{{item.Longitude}}</td>
             <td>{{item.Latitude}}</td>
             <td>{{item.Status}}</td>
-            <td>
-				<a href="{{'./flv.html#0/'+item.DeviceID}}" target="_blank">Flv.js</a>
-			</td>
-          </tr>
-          <tr class="warning" ng-repeat="subItem in item.FlvClient" ng-show="!item.showSub">
-              <td colspan="5"></td>
-              <td>{{subItem.ip}}</td>
-              <td>{{subItem.port}}</td>
-              <td colspan="2"></td>
+            <td><a href="{{'./flv.html?code='+item.DeviceID}}" target="_blank">Play</a></td>
+			<td><a href="{{'./flv.html?code='+item.DeviceID}+'&hw=640*480'}" target="_blank">Play</a></td>
           </tr>
       </tbody>
       
@@ -57,17 +50,14 @@
 <script src="lib/angular.min.js"></script>
 <script src="lib/jquery-1.11.3.min.js"></script>
 <script>
-  var _test = false;
-  var url = _test ? 'data/data.json' : './device/devlist';
   var app = angular.module('myApp', []);
   app.controller('myCtrl', function($scope,$http) {
     $http({
         method: 'GET',
-        url: url,
+        url: './device/devlist',
         dataType: 'json',
     }).then(function successCallback(response) {
-      $scope.data = response.data.root;
-      
+        $scope.data = response.data.root;
     }, function errorCallback(response) {
     });
   });

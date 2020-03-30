@@ -1,11 +1,11 @@
 function GetDevInfo()
-    local ret = {}
+    devtb = {}
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
-        return ret
+        return devtb
     end
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from recorder t")
+    LUDB_EXECUTE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from recorder t")
     local rs = LUDB_GET_RES(stmt)
     while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
@@ -19,14 +19,22 @@ function GetDevInfo()
         end
         row["Latitude"]   = LUDB_GET_STR(rs, 4)
         row["Longitude"]  = LUDB_GET_STR(rs, 5)
-        table.insert(ret, row)
+        --table.insert(devtb, row)
+        devtb[row["DevID"]] = row
     end
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
-    return ret
+    return devtb
 end
 
 function UpdateStatus(code, status)
+    if devtb[code] ~= nil then
+	    if devtb[code]["Status"] == status then
+		    return true;
+		end
+		devtb[code]["Status"] = status
+	end
+	
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
@@ -48,6 +56,14 @@ function UpdateStatus(code, status)
 end
 
 function UpdatePos(code, lat, lon)
+    if devtb[code] ~= nil then
+	    if devtb[code]["Latitude"] == lat and devtb[code]["Longitude"] == lon then
+		    return true;
+		end
+		devtb[code]["Latitude"] = lat
+		devtb[code]["Longitude"] = lon
+	end
+	
     local con = LUDB_POOL_CONN("oracle", "DB")
     if (type(con)=="nil") then
         return false
@@ -69,11 +85,27 @@ function UpdatePos(code, lat, lon)
 end
 
 function InsertDev(dev)
+	local code = "";
+	if dev["DevID"] ~= nil then
+        code = dev["DevID"]
+    end
+	local name = "";
+	if dev["Name"] ~= nil then
+	    name = dev["Name"]
+	end
+	local lat = "";
+	if dev["Latitude"] ~= nil then
+	    lat = dev["Latitude"]
+	end
+	local lon = "";
+	if dev["Longitude"] ~= nil then
+	    lon = dev["Longitude"]
+	end
     local status = "0"
     if(dev["Status"] == "ON") then
         status = "1"
     end
-    local row = {dev["DevID"], dev["Name"], dev["Latitude"], dev["Longitude"], status}
+    local row = {code, name, lat, lon, status}
     LUDB_ADD_ROW(devHelp, row)
     return true
 end
@@ -99,7 +131,7 @@ function Init()
     LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="32.81.129.13/orcl", user="basic", pwd="123", max=5, min=1, inc=2})
     --设备表插入工具
     local sql = "insert into recorder (RECORDER_CODE, NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
-    devHelp = LUDB_BATCH_INIT("DB", sql, 50, 10, {
+    devHelp = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
         {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 64},
         {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 64},
         {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
@@ -117,17 +149,17 @@ function Cleanup()
 end
 
 function TransDevPos(dev)
-    local lat = 0
+    local lat = ""
     if(dev["Latitude"] ~= nil) then
-        lat = tonumber(dev["Latitude"])
+        lat = dev["Latitude"]
     end
-    local lon = 0
+    local lon = ""
     if(dev["Longitude"] ~= nil) then
-        lon = tonumber(dev["Longitude"])
+        lon = dev["Longitude"]
     end
 	local ret = {
-		Latitude = tostring(lat),
-		Longitude = tostring(lon)
+		Latitude = lat,
+		Longitude = lon
 	}
     return ret
 end
