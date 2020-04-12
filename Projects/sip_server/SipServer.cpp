@@ -196,7 +196,7 @@ namespace SipServer {
             on_hour_event(now);
             _pMessage->QueryDirtionary();
             _lastQueryTime = time(NULL);
-            Log::debug(" Query dir %s",g_strCode.c_str());
+            Log::debug(" Query dir %s",g_strLowCode.c_str());
             Sleep(60000); //延时保证查询接受结束再进行订阅
             _bSubscribe = true;
         } 
@@ -212,12 +212,12 @@ namespace SipServer {
         if(_bSubscribe && isFirst) {
             if(_bSubStat) {
                 _pSubscribe->SubscribeDirectory(600);
-                Log::debug(" Subscribe dir %s",g_strCode.c_str());
+                Log::debug(" Subscribe dir %s",g_strLowCode.c_str());
                 Sleep(10000);
             }
             if(_bSubPos) {
                 _pSubscribe->SubscribeMobilepostion(600);
-                Log::debug(" Subscribe mobile pos %s",g_strCode.c_str());
+                Log::debug(" Subscribe mobile pos %s",g_strLowCode.c_str());
             }
             if(_bSubPosDev){
                 //只需要订阅指定目录下的设备的gps
@@ -229,7 +229,7 @@ namespace SipServer {
                         devs.push_back(info.second->strDevID);
                 }
                 _pSubscribe->SubscribeMobilepostion(600, devs);
-                Log::debug(" Subscribe all mobile pos %s", g_strCode.c_str());
+                Log::debug(" Subscribe all mobile pos %s", g_strLowCode.c_str());
             }
         }
     }

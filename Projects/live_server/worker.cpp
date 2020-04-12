@@ -299,7 +299,14 @@ bool CLiveWorker::Play()
     Log::debug("show output format info");
     av_dump_format(ofc, 0, NULL, 1);
 
-    ret = avformat_write_header(ofc, NULL);
+	if(!strcasecmp(m_pParam->strType.c_str(), "mp4")) {
+		AVDictionary *opts = NULL;
+		av_dict_set(&opts, "movflags", "frag_keyframe+empty_moov", 0);
+		ret = avformat_write_header(ofc, &opts);
+		av_dict_free(&opts);
+	} else {
+		ret = avformat_write_header(ofc, NULL);
+	}
     if (ret < 0) {
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
