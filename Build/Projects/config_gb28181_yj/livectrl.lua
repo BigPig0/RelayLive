@@ -1,5 +1,3 @@
---永嘉对接海康8600脚本
---大写字母开头的函数是导出给执行程序调用，小写字母开头的函数是脚本内部使用
 
 --得到redis中key名称中的类型字符
 function getDevType(id)
@@ -70,10 +68,6 @@ function getDevTypeMap()
 		devinfo["lon"] = LUDB_GET_STR(rs, 3)
 		devinfo["lat"] = LUDB_GET_STR(rs, 4)
 		devinfo["dep"] = LUDB_GET_STR(rs, 5)
-		local devname = LUDB_GET_STR(rs, 9)
-		if devname ~= "" then
-		    devinfo["name"] = devname
-		end
 		--print(devinfo["id"], devinfo["type"], devinfo["lon"], devinfo["lat"])
 		devtype[devinfo["id"]] = devinfo
 	end
@@ -82,13 +76,41 @@ function getDevTypeMap()
 	return true
 end
 
-function checkTableKey(tbl, key)
-    for k,v in pairs(tbl) do
-        if k == key then
-            return true
-        end
+function GetDevInfo()
+    devtb = {}
+    local con = LUDB_POOL_CONN("oracle", "DB")
+    if (type(con)=="nil") then
+        return devtb
     end
-    return false
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_EXECUTE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from recorder t")
+    local rs = LUDB_GET_RES(stmt)
+    while (LUDB_FETCH_NEXT(rs)) do
+        local row = {}
+        row["DevID"]  = LUDB_GET_STR(rs, 1)
+        row["Name"]   = LUDB_GET_STR(rs, 2)
+        local status  = LUDB_GET_INT(rs, 3)
+        if(status == 1) then
+            row["Status"] = "ON";
+        else
+            row["Status"] = "OFF";
+        end
+        row["Latitude"]   = LUDB_GET_STR(rs, 4)
+        row["Longitude"]  = LUDB_GET_STR(rs, 5)
+        --table.insert(devtb, row)
+        devtb[row["DevID"]] = row
+    end
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
+    return devtb
+end
+
+function UpdateStatus(code, status)
+    return true
+end
+
+function UpdatePos(code, lat, lon)
+    return true
 end
 
 function InsertDev(dev)
@@ -120,9 +142,6 @@ function InsertDev(dev)
 	--end
 	if devtype[dev["DevID"]] ~= nil then
 	    depname = GBK2UTF8(string.gsub(devtype[dev["DevID"]]["dep"],' ','_'))
-	    if devtype[dev["DevID"]]["name"] ~= nil and devtype[dev["DevID"]]["name"] ~= "" then
-	        devname = GBK2UTF8(devtype[dev["DevID"]]["name"]);
-	    end
 	end
 	local con = LUDB_CONN({dbtype="redis", dbpath="41.215.241.141:6379", user="9", pwd=""})
 	local stmt = LUDB_CREATE_STMT(con)
@@ -138,6 +157,22 @@ function InsertDev(dev)
 	end
 	print(sql)
     LUDB_EXECUTE_STMT(stmt, sql)
+	LUDB_COMMIT(con)
+    LUDB_FREE_STMT(stmt)
+    LUDB_FREE_CONN(con)
+    return true
+end
+
+function HourEvent(hour)
+    if hour ~= 1 then
+        return true
+    end
+    local con = LUDB_POOL_CONN("oracle", "DB")
+    if (type(con)=="nil") then
+        return false
+    end
+    local stmt = LUDB_CREATE_STMT(con)
+    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE gb28181_tmp")
     LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
@@ -162,19 +197,17 @@ function delGpsHis()
 end
 
 function Init()
-    LUDB_INIT({dbtype="oracle", path="C:\\instantclient_11_2"})
+    LUDB_INIT({dbtype="oracle", path="C:/instantclient_11_2_64"})
     LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="41.215.241.143:1521/orcl", user="yj_accident", pwd="123", max=5, min=1, inc=2})
-    --gps历史表删除两天前的数据
+	--gps历史表删除两天前的数据
     delGpsHis()
-	
     --设备信息保存到数据库
-    sql = "insert into GB28181_TMP (DEVICE_ID, DEVICE_NAME) values (:DEVICE_ID, :DEVICE_NAME)"
-    gbdev = LUDB_BATCH_INIT("oracle", "DB", sql, 500, 10, {
+    local sql = "insert into GB28181_TMP (DEVICE_ID, DEVICE_NAME) values (:DEVICE_ID, :DEVICE_NAME)"
+    gbdev = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
         {bindname = "DEVICE_ID",  coltype = LUDB_TYPE_CHR, maxlen = 30},
         {bindname = "DEVICE_NAME",coltype = LUDB_TYPE_CHR, maxlen = 50}
     })
-	
-    --读取设备类型映射关系
+	--读取设备类型映射关系
     getDevTypeMap();
     return true
 end
@@ -182,7 +215,22 @@ end
 function Cleanup()
     rows = nil
     ins = nil
-	LUDB_CLEAN("oracle")
+	LUDB_CLEAN()
     return true
 end
 
+function TransDevPos(dev)
+    local lat = ""
+    if(dev["Latitude"] ~= nil) then
+        lat = dev["Latitude"]
+    end
+    local lon = ""
+    if(dev["Longitude"] ~= nil) then
+        lon = dev["Longitude"]
+    end
+	local ret = {
+		Latitude = lat,
+		Longitude = lon
+	}
+    return ret
+end

@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>flv.js demo</title>
+</head>
+
+<body>
+    <div>
+        <video id="videoElement" muted controls autoplay="autoplay" width="800" height="600">Your browser is too old which doesn't support HTML5 video.</video>
+    </div>
+
+    <script src="flv.min.js"></script>
+    <script>
+        var player = document.getElementById('videoElement');
+        function createPlayer(play_url) {
+            if (flvjs.isSupported()) {
+                var flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    isLive: true,
+                    hasAudio: false,
+                    hasVideo: true,
+					url: play_url
+                });
+                flvPlayer.last_decode_frame = 0;
+                flvPlayer.err_num = 0;
+                flvPlayer.on(flvjs.Events.ERROR, function (e, e2) {
+                    console.log('on ERROR: ' + e + '  ' + e2);
+					flvPlayer.detachMediaElement();
+                    flvPlayer.destroy();
+                    createPlayer(play_url);
+                });
+                flvPlayer.on(flvjs.Events.STATISTICS_INFO, function (e) {
+                    console.log('on STATISTICS_INFO: currentSegmentIndex:%d decodedFrames:%d, droppedFrames:%d', e.currentSegmentIndex, e.decodedFrames, e.droppedFrames);
+                    //return;
+                    if (flvPlayer.last_decode_frame == e.decodedFrames && e.decodedFrames != 0) {
+                        if (flvPlayer.err_num > 10) {
+                            flvPlayer.last_decode_frame = 0;
+                            flvPlayer.err_num = 0;
+                            //flvPlayer.detachMediaElement();
+                            //flvPlayer.destroy();
+                            //createPlayer(play_url);
+                        } else {
+                            flvPlayer.err_num++;
+                        }
+                    } else {
+                        flvPlayer.last_decode_frame = e.decodedFrames;
+                        flvPlayer.err_num = 0;
+                    }
+                });
+                flvPlayer.attachMediaElement(videoElement);
+                flvPlayer.load(); //加载
+                flvPlayer.play();
+            }
+        }
+		
+		var playaddr = "ws://" + window.location.host + "/live" + window.location.search;
+        createPlayer(playaddr);
+
+
+        function controlbtn(c) {
+            var url = "http://" + window.location.host + "/device/control" + window.location.search + "&" + c;
+            var request = new XMLHttpRequest();
+            request.open('Get', url);
+            request.onreadystatechange = function () {
+                if (request.readyState != 4) {
+                    return;
+                }
+            }
+            request.send(null);
+        }
+    </script>
+
+    <div>
+        <button onmousedown="controlbtn('ud=1&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=0&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=1&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右上</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=1&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">左下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=2&lr=2&io=0')" onmouseup="controlbtn('ud=0&lr=0&io=0')">右下</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=1')" onmouseup="controlbtn('ud=0&lr=0&io=0')">放大</button>&nbsp;
+        <button onmousedown="controlbtn('ud=0&lr=0&io=2')" onmouseup="controlbtn('ud=0&lr=0&io=0')">缩小</button>&nbsp;
+    </div>
+</body>
+
+</html>
