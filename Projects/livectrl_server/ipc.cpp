@@ -75,7 +75,9 @@ namespace IPC {
         stringstream ss;
         ss << "{\"root\":[";
         bool first = true;
-        for(auto c:_mapClients){  
+        for(auto c:_mapClients){
+			if(c.second.empty())
+				continue;
             if(!first) {
                 ss << ",";
             } else {
