@@ -76,6 +76,7 @@ namespace IPC {
         ss << "{\"root\":[";
         bool first = true;
         for(auto c:_mapClients){
+			printf(c.second.c_str());
 			if(c.second.empty())
 				continue;
             if(!first) {

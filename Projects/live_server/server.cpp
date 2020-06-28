@@ -171,7 +171,7 @@ RequestParam::RequestParam()
     , nWidth(0)
     , nHeight(0)
     , nProbSize(Settings::getValue("FFMPEG","probsize",25600))
-    , nProbTime(Settings::getValue("FFMPEG","probtime",1))
+    , nProbTime(Settings::getValue("FFMPEG","probtime",1000))
     , nInCatch(Settings::getValue("FFMPEG","incatch",1024*16))
     , nOutCatch(Settings::getValue("FFMPEG","outcatch",1024*16))
 {}

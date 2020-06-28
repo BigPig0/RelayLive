@@ -492,7 +492,8 @@ namespace RtpDecode {
 		}
         for (; it_pos != it_end; ) {
             if(it_pos->second->m_nType == 0) {
-                if(lastpack->second->ts - it_pos->second->ts > 90000) {
+				double outtime = Settings::getValue("RtpClient","outtime",1000) / 1000.0;
+                if(lastpack->second->ts - it_pos->second->ts > 90000 * outtime) {
 					Log::error("old pack drop");
                     delete it_pos->second;
                     it_pos = m_PacketList.erase(it_pos);

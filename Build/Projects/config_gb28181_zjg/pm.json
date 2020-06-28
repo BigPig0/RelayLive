@@ -46,4 +46,20 @@
 	"rsdur":0,
 	"remark":"this is a live server",
 	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18105",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
+},{
+    "path":"E:\\RelayLive\\live_server.exe",
+	"args":"18106",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"this is a live server",
+	"exedir":0
 }]

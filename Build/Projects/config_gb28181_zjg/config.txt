@@ -12,7 +12,7 @@ RegAuthor = 0
 
 [PlatFormInfo]
 ;对接的国标下级平台配置
-Code = 32058200001130000001
+Code = 32058200002000000004
 ;对方下级平台的编码
 IP = 32.81.129.42
 ;对方下级平台的IP
@@ -35,15 +35,17 @@ BeginPort = 50000
 ;rtp起始端口
 PortNum = 1000
 ;rtp端口数量
+outtime = 1000
+;rtp队列超时,ms
 
 [IPC]
 name= ipcsvr
 
 [FFMPEG]
-probsize = 25600
-probsize = 1
-incatch = 16384
-outcatch = 16384
+probsize = 6400
+probtime = 1000
+incatch = 4096
+outcatch = 4096
 
 [Script]
 use = yes

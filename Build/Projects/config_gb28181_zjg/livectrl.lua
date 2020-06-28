@@ -5,7 +5,7 @@ function GetDevInfo()
         return devtb
     end
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_EXECUTE_STMT(stmt, "select t.RECORDER_CODE, t.NAME, t.STATUS, t.LAT, t.LON from recorder t")
+    LUDB_EXECUTE_STMT(stmt, "select t.CODE, t.NAME, t.STATUS, t.LAT, t.LON, t.PARENT from GB28181_DEV t")
     local rs = LUDB_GET_RES(stmt)
     while (LUDB_FETCH_NEXT(rs)) do
         local row = {}
@@ -19,7 +19,7 @@ function GetDevInfo()
         end
         row["Latitude"]   = LUDB_GET_STR(rs, 4)
         row["Longitude"]  = LUDB_GET_STR(rs, 5)
-        --table.insert(devtb, row)
+		row["ParentID"]   = LUDB_GET_STR(rs, 6)
         devtb[row["DevID"]] = row
     end
     LUDB_FREE_STMT(stmt)
@@ -43,7 +43,7 @@ function UpdateStatus(code, status)
     if status then 
         sta = 1 
     end
-    local sql = string.format("update recorder set STATUS = %d where RECORDER_CODE = '%s'", sta, code)
+    local sql = string.format("update GB28181_DEV set STATUS = %d where CODE = '%s'", sta, code)
     local sql2 = string.format("update enforcement_recorder set STATUS = %d where RECORDER_CODE = '%s'", sta, code)
     print(sql)
     local stmt = LUDB_CREATE_STMT(con)
@@ -74,7 +74,7 @@ function UpdatePos(code, lat, lon)
     if string.len(lon)>9 then
         lon = string.sub(lon, 0, 9)
     end
-    local sql = string.format("update recorder set LAT = %s, LON = %s where RECORDER_CODE = '%s'", lat, lon, code)
+    local sql = string.format("update GB28181_DEV set LAT = %s, LON = %s where CODE = '%s'", lat, lon, code)
     print(sql)
     local stmt = LUDB_CREATE_STMT(con)
     LUDB_EXECUTE_STMT(stmt, sql)
@@ -85,19 +85,19 @@ function UpdatePos(code, lat, lon)
 end
 
 function InsertDev(dev)
-	local code = "";
+	local code = ""
 	if dev["DevID"] ~= nil then
         code = dev["DevID"]
     end
-	local name = "";
+	local name = ""
 	if dev["Name"] ~= nil then
 	    name = dev["Name"]
 	end
-	local lat = "";
+	local lat = ""
 	if dev["Latitude"] ~= nil then
 	    lat = dev["Latitude"]
 	end
-	local lon = "";
+	local lon = ""
 	if dev["Longitude"] ~= nil then
 	    lon = dev["Longitude"]
 	end
@@ -105,7 +105,11 @@ function InsertDev(dev)
     if(dev["Status"] == "ON") then
         status = "1"
     end
-    local row = {code, name, lat, lon, status}
+	local parent = ""
+	if dev["ParentID"] ~= nil then
+	    parent = dev["ParentID"]
+	end
+    local row = {code, name, lat, lon, status, parent}
     LUDB_ADD_ROW(devHelp, row)
     return true
 end
@@ -119,7 +123,7 @@ function HourEvent(hour)
         return false
     end
     local stmt = LUDB_CREATE_STMT(con)
-    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE recorder")
+    LUDB_CREATE_STMT(stmt, "TRUNCATE TABLE GB28181_DEV")
     LUDB_COMMIT(con)
     LUDB_FREE_STMT(stmt)
     LUDB_FREE_CONN(con)
@@ -127,16 +131,17 @@ function HourEvent(hour)
 end
 
 function Init()
-    LUDB_INIT({dbtype="oracle", path="C:/instantclient_11_2_64"})
+    LUDB_INIT({dbtype="oracle", path="C:/instantclient_11_2"})
     LUDB_CREAT_POOL({dbtype="oracle", tag="DB", dbpath="32.81.129.13/orcl", user="basic", pwd="123", max=5, min=1, inc=2})
     --设备表插入工具
-    local sql = "insert into recorder (RECORDER_CODE, NAME, LAT, LON, STATUS) values (:CODE, :NAME, :LAT, :LON, :STATUS)"
+    local sql = "insert into GB28181_DEV(CODE, NAME, LAT, LON, STATUS, PARENT) values (:CODE, :NAME, :LAT, :LON, :STATUS, :PARENT)"
     devHelp = LUDB_BATCH_INIT("oracle", "DB", sql, 50, 10, {
-        {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 64},
-        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 64},
-        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 20},
-        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 20},
-        {bindname = "STATUS",     coltype = LUDB_TYPE_INT}
+        {bindname = "CODE",       coltype = LUDB_TYPE_CHR, maxlen = 30},
+        {bindname = "NAME",       coltype = LUDB_TYPE_CHR, maxlen = 100},
+        {bindname = "LAT",        coltype = LUDB_TYPE_CHR, maxlen = 10},
+        {bindname = "LON",        coltype = LUDB_TYPE_CHR, maxlen = 10},
+        {bindname = "STATUS",     coltype = LUDB_TYPE_INT},
+        {bindname = "PARENT",     coltype = LUDB_TYPE_CHR, maxlen = 30}
     })
     return true
 end

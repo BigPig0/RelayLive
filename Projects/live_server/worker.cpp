@@ -170,7 +170,7 @@ bool CLiveWorker::Play()
         goto end;
     }
 	ifc->probesize = m_pParam->nProbSize;
-	ifc->max_analyze_duration = m_pParam->nProbTime*AV_TIME_BASE; //探测允许的延时
+	ifc->max_analyze_duration = m_pParam->nProbTime/1000.0*AV_TIME_BASE; //探测允许的延时
     ret = avformat_find_stream_info(ifc, NULL);
     if (ret < 0) {
         char tmp[1024]={0};
