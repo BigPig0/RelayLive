@@ -1,0 +1,52 @@
+
+[SipSever]
+;开启的国标sip服务配置
+Code = 32058389072008001111
+;本机平台编码
+IP = 10.254.2.11
+;服务IP
+Port = 5060
+;服务端口
+RegAuthor = 0
+;注册是否需要鉴权
+
+[PlatFormInfo]
+;对接的国标下级平台配置
+Code = 32058389072008001254
+;对方下级平台的编码
+IP = 192.168.251.254
+;对方下级平台的IP
+Port = 7100
+;对方下级平台的端口
+SubscribeStatus = 0
+;是否订阅设备状态
+SubscribePos = 0
+;是否订阅设备位置,订阅整个平台
+SubscribePosDev = 0
+;是否订阅设备位置,订阅指定设备
+SubscribePosDepart = 
+;订阅指定设备位置时，这些设备所在的组织。多个组织用','分隔
+
+[RtpClient]
+;国标接收rtp视频流的配置
+IP = 192.200.200.136
+;rtp服务IP
+BeginPort = 50000
+;rtp起始端口
+PortNum = 1000
+;rtp端口数量
+outtime = 1000
+;rtp队列超时,ms
+
+[IPC]
+name= ipcsvr2
+
+[FFMPEG]
+probsize = 6400
+probtime = 1000
+incatch = 4096
+outcatch = 4096
+
+[Script]
+use = yes
+path = livectrl.lua
