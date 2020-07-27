@@ -43,7 +43,7 @@ eXosip_refer_build_request (struct eXosip_t *excontext, osip_message_t ** refer,
   int i;
 
   *refer = NULL;
-  i = _eXosip_generating_request_out_of_dialog (excontext, refer, "REFER", to, "UDP", from, proxy);
+  i = _eXosip_generating_request_out_of_dialog (excontext, refer, "REFER", to, from, proxy);
   if (i != 0) {
     return i;
   }

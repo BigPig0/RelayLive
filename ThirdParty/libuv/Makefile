@@ -52,9 +52,9 @@ libuv_shared:$(OBJS) $(UNIX_OBJS)
 	$(CC) -shared -fPIC $(OBJSD) $(UNIX_OBJSD) -o $(OUT_DIR)libuv.so
 
 $(OBJS):%.o:$(SRC_DIR)%.c
-	$(CC) $(INCLUDE) -fPIC -Wall -c $< -o $(TMP_DIR)libuv/$@
+	$(CC) $(INCLUDE) $(CFLAGS) -c $< -o $(TMP_DIR)libuv/$@
 $(UNIX_OBJS):%.o:$(SRC_UNIX_DIR)%.c
-	$(CC) $(INCLUDE) -fPIC -Wall -c $< -o $(TMP_DIR)libuv/$@
+	$(CC) $(INCLUDE) $(CFLAGS) -c $< -o $(TMP_DIR)libuv/$@
 
 
 clean:

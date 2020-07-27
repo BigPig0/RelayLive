@@ -1,5 +1,5 @@
 #./ThirdParty/Makefile
-SUBDIR = lua # cjson libuv pugixml exosip hiredis   ocilib 
+SUBDIR = exosip # cjson libuv pugixml lua #  hiredis   ocilib 
 
 all:$(SUBDIR)
 	
