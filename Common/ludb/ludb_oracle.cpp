@@ -2,7 +2,7 @@
 #include "ludb_private.h"
 #include "ocilib.h"
 
-#ifdef _Win32
+#ifdef WINDOWS_IMPL
 #pragma comment(lib, "ocilib.lib")
 #endif
 

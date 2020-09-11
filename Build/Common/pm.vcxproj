@@ -88,7 +88,7 @@
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -100,7 +100,7 @@
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -113,7 +113,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,7 +126,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../ThirdParty/libuv/include;$(SolutionDir)../ThirdParty/cjson;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

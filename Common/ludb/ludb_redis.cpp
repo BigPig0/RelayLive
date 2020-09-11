@@ -2,7 +2,7 @@
 #include "ludb_private.h"
 #include "hiredis.h"
 
-#ifdef _Win32
+#ifdef WINDOWS_IMPL
 #pragma comment(lib, "hiredis.lib")
 #endif
 
@@ -19,7 +19,7 @@ struct redis_stmt_t {
 };
 
 bool ludb_redis_init() {
-#ifdef _Win32
+#ifdef WINDOWS_IMPL
     static WSADATA wsadata;
     int err = WSAStartup(MAKEWORD(2,2), &wsadata);
 #endif
