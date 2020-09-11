@@ -2,6 +2,8 @@
 #include "ipc.h"
 #include "uvIpc.h"
 
+using namespace util;
+
 namespace IPC {
     uv_ipc_handle_t* h = NULL;
 

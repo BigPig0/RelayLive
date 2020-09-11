@@ -8,6 +8,8 @@
 #include <list>
 #include <sstream>
 
+using namespace util;
+
 extern "C"
 {
 #define snprintf  _snprintf

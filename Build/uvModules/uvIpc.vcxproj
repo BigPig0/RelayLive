@@ -17,7 +17,7 @@
     <ClInclude Include="..\..\uvmodules\uvipc\uvIpc.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{241FC295-0331-4A57-921B-7407ED1EA3BB}</ProjectGuid>
+    <ProjectGuid>{19EAA0FE-75FF-4BD3-BD0E-D5A8FD6780A9}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

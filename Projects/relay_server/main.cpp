@@ -4,8 +4,10 @@
 #include "ipc.h"
 #include "uv.h"
 #include "util.h"
-#include <windows.h>
 #include "util_minidump.h"
+#include <windows.h>
+
+using namespace util;
 
 int main(int argc, char* argv[])
 {

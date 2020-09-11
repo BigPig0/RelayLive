@@ -5,6 +5,8 @@
 #include "ipc.h"
 #include <sstream>
 
+using namespace util;
+
 uv_loop_t  uvLoopLive;
 uv_tcp_t   uvTcpServer;
 

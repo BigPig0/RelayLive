@@ -4,6 +4,8 @@
 #include <map>
 #include <sstream>
 
+using namespace util;
+
 namespace IPC {
     uv_ipc_handle_t* h = NULL;
     map<string, string>      _mapClients;

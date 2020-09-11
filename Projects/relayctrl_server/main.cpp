@@ -6,6 +6,8 @@
 #include "util.h"
 #include "util_minidump.h"
 
+using namespace util;
+
 int main(int argc, char* argv[])
 {
     if(argc != 2)
