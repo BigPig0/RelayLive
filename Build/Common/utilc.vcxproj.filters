@@ -52,9 +52,6 @@
     <ClCompile Include="..\..\common\utilc\netstream.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\utilc\utilc_api.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\utilc\ring_buff.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -71,6 +68,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\utilc\utilc_memfile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\utilc\utilc_api.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

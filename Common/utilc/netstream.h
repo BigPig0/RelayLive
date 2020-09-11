@@ -8,6 +8,7 @@ extern "C" {
 #include "utilc_export.h"
 #include "utilc_api.h"
 #include "utilc_def.h"
+#include <stdint.h>
 
 typedef struct _net_stream_maker_ net_stream_maker_t;
 typedef struct _net_stream_parser_ net_stream_parser_t;

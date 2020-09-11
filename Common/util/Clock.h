@@ -1,7 +1,5 @@
 /*!
- * \class Clock
- *
- * \brief 
+ * 计算操作经过了多少毫秒
  *
  * Clock c;
  * uint64_t num = 0;
@@ -15,13 +13,8 @@
  * num += c.get();
  * uint64_t millisecs = num/c.prequency();
  *
- * \note 
- *
- * \author wlla
- *
- * \version 1.0
- *
  */
+
 #pragma once
 #include "util_public.h"
 #include <stdint.h>

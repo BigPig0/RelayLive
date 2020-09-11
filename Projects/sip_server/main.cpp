@@ -1,7 +1,7 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
 #include "util.h"
-#include "utilc_api.h"
+#include "utilc.h"
 #include "MiniDump.h"
 #include "ipc.h"
 #include "SipServer.h"

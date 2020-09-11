@@ -9,6 +9,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="lock_free">
+      <UniqueIdentifier>{d0e30aa0-d10d-4b7a-aab3-6d848031ac27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\util\Clock.h">
@@ -21,9 +24,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\util\guid.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\LastError.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\util\MailSlot.h">
@@ -41,28 +41,13 @@
     <ClInclude Include="..\..\common\util\NetStreamMaker.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\util\Profile.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Runnable.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\util\Settings.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\util\Singleton.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\util\StringHandle.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\ThreadPool.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\util\TimeFormat.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Timer.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\util\util.h">
@@ -74,16 +59,22 @@
     <ClInclude Include="..\..\common\util\util_public.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\util\winfile.h">
+    <ClInclude Include="..\..\common\util\lock_free\atomicops.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\lock_free\blockingconcurrentqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\lock_free\concurrentqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\lock_free\readerwriterqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\util\Log.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\util\AbstractFile.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\File.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Log.h">
+    <ClInclude Include="..\..\common\util\util_string.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -109,28 +100,19 @@
     <ClCompile Include="..\..\common\util\Settings.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\util\StringHandle.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\ThreadPool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\Timer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\util\Clock.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\util\winfile.cpp">
+    <ClCompile Include="..\..\common\util\mutex.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\util\AbstractFile.cpp">
+    <ClCompile Include="..\..\common\util\TimeFormat.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\util\File.cpp">
+    <ClCompile Include="..\..\Common\util\Log.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\util\Log.cpp">
+    <ClCompile Include="..\..\common\util\util_string.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

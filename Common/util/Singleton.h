@@ -1,9 +1,7 @@
 // µ¥ÀýÄ£°å
+#pragma once
 
-#ifndef _SINGLETON_H_
-#define _SINGLETON_H_
-
-#include "Mutex.h"
+#include "mutex.h"
 
 template<class T>
 class Singleton
@@ -45,6 +43,4 @@ void Singleton<T>::ReleaseInstance()
     }
     m_cs.unlock();
 }
-
-#endif
 

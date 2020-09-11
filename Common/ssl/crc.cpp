@@ -50,7 +50,7 @@ static uint32_t crc_tab[256] = {
     0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
-uint32_t  CRC::calc_crc32 (unsigned char *data, uint32_t datalen)
+uint32_t  CRC::calc_crc32 (uint8_t *data, uint32_t datalen)
 {
     uint32_t i;
     uint32_t crc = 0xffffffff;
@@ -72,8 +72,616 @@ uint32_t CRC::Zwg_ntohl(uint32_t s)
     a.i = 0x01;
     if(a.buf)
     {
-        // С��
+        // 小端
         s = BSWAP32C(s);
     }
     return s;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+/** 
+ * Name:    InvertUint8 
+ * Note: 	把字节颠倒过来，如0x12变成0x48
+			0x12: 0001 0010
+			0x48: 0100 1000
+ */
+static void InvertUint8(uint8_t *dBuf, uint8_t *srcBuf) {
+	uint8_t tmp[4]={0};
+	for(int i=0;i< 8;i++) {
+		if(srcBuf[0]& (1 << i))
+		tmp[0]|=1<<(7-i);
+	}
+	dBuf[0] = tmp[0];
+}
+
+static void InvertUint16(uint16_t *dBuf, uint16_t *srcBuf) {
+	uint16_t tmp[4]={0};
+	for(int i=0;i< 16;i++) {
+		if(srcBuf[0]& (1 << i))
+		tmp[0]|=1<<(15 - i);
+	}
+	dBuf[0] = tmp[0];
+}
+
+static void InvertUint32(uint32_t *dBuf, uint32_t *srcBuf) {
+	uint32_t tmp[4]={0};
+	for(int i=0;i< 32;i++) {
+		if(srcBuf[0]& (1 << i))
+		tmp[0]|=1<<(31 - i);
+	}
+	dBuf[0] = tmp[0];
+}
+
+/** 
+ * Name:    CRC-16/CCITT        x16+x12+x5+1 
+ * Width:	16
+ * Poly:    0x1021 
+ * Init:    0x0000 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x0000 
+ * Alias:   CRC-CCITT,CRC-16/CCITT-TRUE,CRC-16/KERMIT 
+ */
+uint16_t CRC::CRC16_CCITT(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0x0000;
+    uint16_t wCPoly = 0x1021;
+    //uint8_t wChar = 0;
+    
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-16/CCITT-FALSE   x16+x12+x5+1 
+ * Width:	16 
+ * Poly:    0x1021 
+ * Init:    0xFFFF 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x0000 
+ * Note: 
+ */ 
+uint16_t CRC::CRC16_CCITT_FALSE(uint8_t *data, uint32_t datalen) {
+	uint16_t wCRCin = 0xFFFF;
+	uint16_t wCPoly = 0x1021;
+	
+	while (datalen--) {
+		wCRCin ^= *(data++) << 8;
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x8000)
+				wCRCin = (wCRCin << 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-16/XMODEM       x16+x12+x5+1 
+ * Width:	16 
+ * Poly:    0x1021 
+ * Init:    0x0000 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x0000 
+ * Alias:   CRC-16/ZMODEM,CRC-16/ACORN 
+ */ 
+uint16_t CRC::CRC16_XMODEM(uint8_t *data, uint32_t datalen) {
+	uint16_t wCRCin = 0x0000;
+	uint16_t wCPoly = 0x1021;
+	
+	while (datalen--) {
+		wCRCin ^= (*(data++) << 8);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x8000)
+				wCRCin = (wCRCin << 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-16/X25          x16+x12+x5+1 
+ * Width:	16 
+ * Poly:    0x1021 
+ * Init:    0xFFFF 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0XFFFF 
+ * Note: 
+ */
+uint16_t CRC::CRC16_X25(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0xFFFF;
+    uint16_t wCPoly = 0x1021;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin^0xFFFF);
+}
+
+/** 
+ * Name:    CRC-16/MODBUS       x16+x15+x2+1 
+ * Width:	16 
+ * Poly:    0x8005 
+ * Init:    0xFFFF 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x0000 
+ * Note: 
+ */
+uint16_t CRC::CRC16_MODBUS(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0xFFFF;
+    uint16_t wCPoly = 0x8005;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-16/IBM          x16+x15+x2+1 
+ * Width:	16 
+ * Poly:    0x8005 
+ * Init:    0x0000 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x0000 
+ * Alias:   CRC-16,CRC-16/ARC,CRC-16/LHA 
+ */
+uint16_t CRC::CRC16_IBM(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0x0000;
+    uint16_t wCPoly = 0x8005;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-16/MAXIM        x16+x15+x2+1 
+ * Width:	16 
+ * Poly:    0x8005 
+ * Init:    0x0000 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0xFFFF 
+ * Note: 
+ */
+uint16_t CRC::CRC16_MAXIM(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0x0000;
+    uint16_t wCPoly = 0x8005;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin^0xFFFF);
+}
+
+/** 
+ * Name:    CRC-16/USB          x16+x15+x2+1 
+ * Width:	16 
+ * Poly:    0x8005 
+ * Init:    0xFFFF 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0xFFFF 
+ * Note: 
+ */
+uint16_t CRC::CRC16_USB(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0xFFFF;
+    uint16_t wCPoly = 0x8005;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin^0xFFFF);
+}
+
+/** 
+ * Name:    CRC-16/DNP          x16+x13+x12+x11+x10+x8+x6+x5+x2+1 
+ * Width:	16 
+ * Poly:    0x3D65 
+ * Init:    0x0000 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0xFFFF 
+ * Use:     M-Bus,ect. 
+ */
+uint16_t CRC16_DNP(uint8_t *data, uint32_t datalen) {
+    uint16_t wCRCin = 0x0000;
+    uint16_t wCPoly = 0x3D65;
+
+    InvertUint16(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = (wCRCin >> 1);
+        }
+    }
+    return (wCRCin^0xFFFF);
+}
+
+/** 
+ * Name:    CRC-32  x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1 
+ * Width:	32 
+ * Poly:    0x4C11DB7 
+ * Init:    0xFFFFFFF 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0xFFFFFFF 
+ * Alias:   CRC_32/ADCCP 
+ * Use:     WinRAR,ect. 
+ */
+uint32_t CRC::CRC32_ADCCP(uint8_t *data, uint32_t datalen) {
+
+    uint32_t wCRCin = 0xFFFFFFFF;
+    uint32_t wCPoly = 0x04C11DB7;
+
+    InvertUint32(&wCPoly,&wCPoly);
+    while (datalen--) {
+        wCRCin ^= *(data++);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x01)
+                wCRCin = (wCRCin >> 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin >> 1;
+        }
+    }
+    return (wCRCin ^ 0xFFFFFFFF) ;
+}
+
+/** 
+ * Name:    CRC-32/MPEG-2  x32+x26+x23+x22+x16+x12+x11+x10+x8+x7+x5+x4+x2+x+1 
+ * Width:	32 
+ * Poly:    0x4C11DB7 
+ * Init:    0xFFFFFFF 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x0000000 
+ * Note: 
+ */
+uint32_t CRC::CRC32_MPEG(uint8_t *data, uint32_t datalen) {
+    uint32_t wCRCin = 0xFFFFFFFF;
+    uint32_t wCPoly = 0x04C11DB7;
+    uint32_t wChar = 0;
+    while (datalen--) {
+        wChar = *(data++);
+        wCRCin ^= (wChar << 24);
+        for(int i = 0;i < 8;i++) {
+            if(wCRCin & 0x80000000)
+                wCRCin = (wCRCin << 1) ^ wCPoly;
+            else
+                wCRCin = wCRCin << 1;
+        }
+    }
+    return (wCRCin) ;
+}
+
+
+/** 
+ * Name:    CRC-4/ITU	x4+x+1 
+ * Width:	4
+ * Poly:    0x03 
+ * Init:    0x00 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC4_ITU(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x03;
+	uint8_t wChar = 0;
+	
+	while (datalen--) {
+		wChar = *(data++);
+		InvertUint8(&wChar,&wChar);
+		wCRCin ^= (wChar);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ (wCPoly << 4);
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	InvertUint8(&wCRCin,&wCRCin);
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-5/EPC	x5+x3+1 
+ * Width:	5
+ * Poly:    0x09 
+ * Init:    0x09 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC5_EPC(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x09<<3;
+	uint8_t wCPoly = 0x09<<3;
+	
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ (wCPoly);
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin >> 3);
+}
+
+/** 
+ * Name:    CRC-5/USB	x5+x2+1 
+ * Width:	5
+ * Poly:    0x05 
+ * Init:    0x1F 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x1F 
+ * Note: 
+ */
+uint8_t CRC::CRC5_USB(uint8_t *data, uint32_t datalen)  
+{  
+	uint8_t wCRCin = 0x1F;
+	uint8_t wCPoly = 0x05;
+	
+	InvertUint8(&wCPoly,&wCPoly);
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x01)
+				wCRCin = (wCRCin >> 1) ^ (wCPoly >> 3);
+			else
+				wCRCin = wCRCin >> 1;
+		}
+	}
+	return (wCRCin^0x1F); 
+}
+
+/** 
+ * Name:    CRC-5/ITU	x5+x4+x2+1  
+ * Width:	5
+ * Poly:    0x15 
+ * Init:    0x00 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC5_ITU(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x15;
+	
+	InvertUint8(&wCPoly,&wCPoly);
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x01)
+				wCRCin = (wCRCin >> 1) ^ (wCPoly >> 3);
+			else
+				wCRCin = wCRCin >> 1;
+		}
+	}
+	return (wCRCin); 
+} 
+
+/** 
+ * Name:    CRC-6/ITU	x6+x+1 
+ * Width:	6
+ * Poly:    0x03 
+ * Init:    0x00 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC6_ITU(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x03;
+	uint8_t wChar = 0;
+	
+	while (datalen--) {
+		wChar = *(data++);
+		InvertUint8(&wChar,&wChar);
+		wCRCin ^= (wChar);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ (wCPoly << 2);
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	InvertUint8(&wCRCin,&wCRCin);
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-7/MMC           x7+x3+1  
+ * Width:	7
+ * Poly:    0x09 
+ * Init:    0x00 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x00 
+ * Use:     MultiMediaCard,SD,ect. 
+ */
+uint8_t CRC::CRC7_MMC(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x09;
+	
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ (wCPoly<<1);
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin>>1);
+}
+
+/** 
+ * Name:    CRC-8               x8+x2+x+1 
+ * Width:	8 
+ * Poly:    0x07 
+ * Init:    0x00 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC8(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x07;
+	
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-8/ITU           x8+x2+x+1 
+ * Width:	8 
+ * Poly:    0x07 
+ * Init:    0x00 
+ * Refin:   False 
+ * Refout:  False 
+ * Xorout:  0x55 
+ * Alias:   CRC-8/ATM 
+ */
+uint8_t CRC::CRC8_ITU(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x07;
+	
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x80)
+				wCRCin = (wCRCin << 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin << 1;
+		}
+	}
+	return (wCRCin^0x55);
+}
+
+/** 
+ * Name:    CRC-8/ROHC          x8+x2+x+1 
+ * Width:	8 
+ * Poly:    0x07 
+ * Init:    0xFF 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x00 
+ * Note: 
+ */
+uint8_t CRC::CRC8_ROHC(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0xFF;
+	uint8_t wCPoly = 0x07;
+	
+	InvertUint8(&wCPoly,&wCPoly);
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x01)
+				wCRCin = (wCRCin >> 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin >> 1;
+		}
+	}
+	return (wCRCin);
+}
+
+/** 
+ * Name:    CRC-8/MAXIM         x8+x5+x4+1 
+ * Width:	8 
+ * Poly:    0x31 
+ * Init:    0x00 
+ * Refin:   True 
+ * Refout:  True 
+ * Xorout:  0x00 
+ * Alias:   DOW-CRC,CRC-8/IBUTTON 
+ * Use:     Maxim(Dallas)'s some devices,e.g. DS18B20 
+ */ 
+uint8_t CRC::CRC8_MAXIM(uint8_t *data, uint32_t datalen) {
+	uint8_t wCRCin = 0x00;
+	uint8_t wCPoly = 0x31;
+	
+	InvertUint8(&wCPoly,&wCPoly);
+	while (datalen--) {
+		wCRCin ^= *(data++);
+		for(int i = 0;i < 8;i++) {
+			if(wCRCin & 0x01)
+				wCRCin = (wCRCin >> 1) ^ wCPoly;
+			else
+				wCRCin = wCRCin >> 1;
+		}
+	}
+	return (wCRCin);
 }

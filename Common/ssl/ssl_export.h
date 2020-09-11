@@ -10,6 +10,6 @@
 #endif
 #elif ( defined __unix ) || ( defined __linux__ )
 #ifndef _SSL_API
-#define _SSL_API        extern
+#define _SSL_API
 #endif
 #endif

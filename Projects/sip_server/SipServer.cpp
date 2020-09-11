@@ -475,7 +475,7 @@ namespace SipServer {
             strResJson += "\",";
         }
 #endif
-        strResJson = StringHandle::StringTrimRight(strResJson,',');
+        strResJson = util::String::StringTrimRight(strResJson,',');
         strResJson += "}";
 
         return strResJson;
@@ -586,7 +586,7 @@ namespace SipServer {
         _bSubPosDev     = Settings::getValue("PlatFormInfo","SubscribePosDev",0)>0;
         if(_bSubPosDev) {
             string strMobile = Settings::getValue("PlatFormInfo","SubscribePosDepart");
-            _vecMobile      = StringHandle::StringSplit(strMobile, ',');
+            _vecMobile      = util::String::split(strMobile, ',');
         }
         Log::debug("SipSever Code:%s IP:%s Port:%d RegAuthor:%d Subscribe[status:%d position:%d Dev position:%d]",
             g_strCode.c_str(), g_strSipIP.c_str(), g_nSipPort, g_bRegAuthor, _bSubStat, _bSubPos, _bSubPosDev);

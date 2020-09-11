@@ -398,7 +398,7 @@ uint8_t* SHA1::File(const uint8_t* path, uint8_t* out){
     Init();
     uint32_t len = 0;
     uint8_t buffer[0x0400] = {0};
-    while (len = fread(buffer, 1, 1024, file))
+    while ((len = fread(buffer, 1, 1024, file)))
     {
         Update(buffer, len);
     }

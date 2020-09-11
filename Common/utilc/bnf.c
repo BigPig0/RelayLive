@@ -58,7 +58,7 @@ bool bnf_line(bnf_t *h, char **line) {
 
     *line = h->line;
 
-    parse_line(h->line, &line_len, &next_line);
+    parse_line(h->line, &line_len, (char const**)&next_line);
     h->line = next_line;
 
     return true;

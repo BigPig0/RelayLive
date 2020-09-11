@@ -1,17 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -19,48 +11,41 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\util\AbstractFile.h" />
     <ClInclude Include="..\..\common\util\Clock.h" />
-    <ClInclude Include="..\..\common\util\File.h" />
-    <ClInclude Include="..\..\common\util\Log.h" />
+    <ClInclude Include="..\..\common\util\lock_free\atomicops.h" />
+    <ClInclude Include="..\..\common\util\lock_free\blockingconcurrentqueue.h" />
+    <ClInclude Include="..\..\common\util\lock_free\concurrentqueue.h" />
+    <ClInclude Include="..\..\common\util\lock_free\readerwriterqueue.h" />
+    <ClInclude Include="..\..\Common\util\Log.h" />
     <ClInclude Include="..\..\common\util\util_def.h" />
     <ClInclude Include="..\..\common\util\EncodeConvert.h" />
     <ClInclude Include="..\..\common\util\Endian.h" />
     <ClInclude Include="..\..\common\util\util_public.h" />
     <ClInclude Include="..\..\common\util\guid.h" />
-    <ClInclude Include="..\..\common\util\LastError.h" />
     <ClInclude Include="..\..\common\util\MailSlot.h" />
     <ClInclude Include="..\..\common\util\memfile.h" />
     <ClInclude Include="..\..\common\util\MiniDump.h" />
     <ClInclude Include="..\..\common\util\Mutex.h" />
     <ClInclude Include="..\..\common\util\NetStreamMaker.h" />
-    <ClInclude Include="..\..\common\util\Profile.h" />
-    <ClInclude Include="..\..\common\util\Runnable.h" />
     <ClInclude Include="..\..\common\util\Settings.h" />
     <ClInclude Include="..\..\common\util\Singleton.h" />
-    <ClInclude Include="..\..\common\util\StringHandle.h" />
-    <ClInclude Include="..\..\common\util\ThreadPool.h" />
     <ClInclude Include="..\..\common\util\TimeFormat.h" />
-    <ClInclude Include="..\..\common\util\Timer.h" />
     <ClInclude Include="..\..\common\util\util.h" />
-    <ClInclude Include="..\..\common\util\winfile.h" />
+    <ClInclude Include="..\..\common\util\util_string.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\util\AbstractFile.cpp" />
     <ClCompile Include="..\..\common\util\Clock.cpp" />
     <ClCompile Include="..\..\common\util\EncodeConvert.cpp" />
-    <ClCompile Include="..\..\common\util\File.cpp" />
     <ClCompile Include="..\..\common\util\guid.cpp" />
-    <ClCompile Include="..\..\common\util\Log.cpp" />
+    <ClCompile Include="..\..\Common\util\Log.cpp" />
     <ClCompile Include="..\..\common\util\MailSlot.cpp" />
     <ClCompile Include="..\..\common\util\memfile.cpp" />
     <ClCompile Include="..\..\common\util\MiniDump.cpp" />
+    <ClCompile Include="..\..\common\util\mutex.cpp" />
     <ClCompile Include="..\..\common\util\NetStreamMaker.cpp" />
     <ClCompile Include="..\..\common\util\Settings.cpp" />
-    <ClCompile Include="..\..\common\util\StringHandle.cpp" />
-    <ClCompile Include="..\..\common\util\ThreadPool.cpp" />
-    <ClCompile Include="..\..\common\util\Timer.cpp" />
-    <ClCompile Include="..\..\common\util\winfile.cpp" />
+    <ClCompile Include="..\..\common\util\TimeFormat.cpp" />
+    <ClCompile Include="..\..\common\util\util_string.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{642077F6-2CA8-4E04-9B0D-9CFA1E5EFA49}</ProjectGuid>
@@ -72,18 +57,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -95,26 +69,14 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -126,27 +88,11 @@
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)../uvmodules/uvlogplus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -159,32 +105,13 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)../uvmodules/uvlogplus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
-      <Optimization>Full</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <AssemblerOutput>AssemblyAndMachineCode</AssemblerOutput>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>d:\instantclient_12_1\sdk\lib\msvc;d:\HK\库文件;d:\DH\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

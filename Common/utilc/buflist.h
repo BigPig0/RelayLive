@@ -12,7 +12,7 @@ typedef struct _buflist_ buflist_t;
  * Returns -1 on OOM, 1 if this was the first segment on the list, and 0 if
  * it was a subsequent segment.
  */
-int buflist_append_segment(buflist_t **head, const uint8_t *buf, size_t len);
+int buflist_append_segment(buflist_t **head, const uint8_t *buf, uint32_t len);
 
 /**
  * buflist_next_segment_len(): number of bytes left in current segment
@@ -24,7 +24,7 @@ int buflist_append_segment(buflist_t **head, const uint8_t *buf, size_t len);
  * Returns the number of bytes left in the current segment.  0 indicates
  * that the buflist is empty (there are no segments on the buflist).
  */
-size_t buflist_next_segment_len(buflist_t **head, uint8_t **buf);
+uint32_t buflist_next_segment_len(buflist_t **head, uint8_t **buf);
 
 /**
  * buflist_use_segment(): remove len bytes from the current segment
@@ -41,7 +41,7 @@ size_t buflist_next_segment_len(buflist_t **head, uint8_t **buf);
  * Returns the number of bytes left in the current segment.  0 indicates
  * that the buflist is empty (there are no segments on the buflist).
  */
-int buflist_use_segment(buflist_t **head, size_t len);
+int buflist_use_segment(buflist_t **head, uint32_t len);
 
 /**
  * buflist_destroy_all_segments(): free all segments on the list

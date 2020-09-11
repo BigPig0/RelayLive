@@ -13,7 +13,7 @@ struct lws_dll { /* abstract */
 
 void dll_add_front(struct lws_dll *d, struct lws_dll *phead);
 
-void lws_dll_remove(struct lws_dll *d);
+void dll_remove(struct lws_dll *d);
 
 #define dll_is_null(___dll) (!(___dll)->prev && !(___dll)->next)
 
@@ -43,3 +43,4 @@ void lws_dll_remove(struct lws_dll *d);
 		___it = (___it)->next; \
 	} \
 }
+

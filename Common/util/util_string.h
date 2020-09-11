@@ -3,51 +3,91 @@
 #include "util_public.h"
 #include <vector>
 
-class UTIL_API StringHandle
+namespace util {
+
+class UTIL_API String
 {
 public:
-	StringHandle();
-	~StringHandle();
 
 	/**
-	*@brief:
-	*@param:
-	*@return:
-	*/
-	static std::string          replace(std::string&s);
+	 * @brief:将字符串中的所有字母变成大写
+	 * @param str:原始字符串
+	 * @return 改变后的字符串
+	 */
+	static std::string upper(std::string str);
+
+    /**
+	 * @brief:将字符串中的所有字母变成小写
+	 * @param str:原始字符串
+	 * @return 改变后的字符串
+	 */
+	static std::string lower(std::string str);
 
 	/**
-	*@brief:字符串分割
-	*@param:s:原始字符串
-	*@param:tag:分割符号
-	*@return:std::vector<std::string>:分割后的字符串数组
-	*/
-	static std::vector<std::string>  StringSplit(const std::string &s, const char tag);
+	 * @brief: 字符串替换
+	 * @param: str 原始字符串
+     * @param: src 需要被替换的内容
+     * @param: dst 替换的内容
+	 * @return:替换后的字符串
+	 */
+	static std::string replace(std::string&str, char src, char dst);
 
 	/**
-	*@brief:字符串分割
-	*@param:strSrc:原始字符串
-	*@param:tag:分割符号（字符串）
-	*@param:nLen:分割符号的长度
-	*@return:std::vector<std::string>:分割后的字符串数组
-	*/
-	static std::vector<std::string>  StringSplit(const std::string &s, char* tag, int nLen);
+	 * @brief: 字符串替换
+     * @param: str 原始字符串
+	 * @param: src 需要被替换的内容
+	 * @param: dst 替换的内容
+	 * @return: 替换后的字符串
+	 */
+	static std::string replace(std::string &str, std::string src, std::string dst);
 
 	/**
-    *@brief:字符串分割
-    *@param:strSrc:原始字符串
-    *@param:tag:分割符号（字符串）
-    *@return:std::vector<std::string>:分割后的字符串数组
-	*/
-	static std::vector<std::string> StringSplit(const std::string &s, const std::string &tag);
+	 * @brief:字符串分割
+	 * @param:s:原始字符串
+	 * @param:tag:分割符号
+	 * @return:std::vector<std::string>:分割后的字符串数组
+	 */
+	static std::vector<std::string>  split(const std::string &s, const char tag);
 
 	/**
-	*@brief:删除字符串中的字符串
-	*@param:strSrc:原始字符串
-	*@param:strDest:要删除的字符串
-	*@return:std::string:删除后的字符串
-	*/
-	static std::string               StringWipe(const std::string strSrc, const std::string strDest);
+	 * @brief:字符串分割
+	 * @param:strSrc:原始字符串
+	 * @param:tag:分割符号（字符串）
+	 * @param:nLen:分割符号的长度
+	 * @return:std::vector<std::string>:分割后的字符串数组
+	 */
+	static std::vector<std::string>  split(const std::string &s, char* tag, int nLen);
+
+	/**
+     * @brief:字符串分割
+     * @param:strSrc:原始字符串
+     * @param:tag:分割符号（字符串）
+     * @return:std::vector<std::string>:分割后的字符串数组
+	 */
+	static std::vector<std::string> split(const std::string &s, const std::string &tag);
+
+	/**
+	 * @brief:删除字符串中的字符串
+	 * @param str: 原始字符串
+	 * @param strDest: 要删除的字符串
+	 * @return 删除后的字符串
+	 */
+	static std::string remove(const std::string &strSrc, const std::string str);
+
+	/**
+	 * @brief:删除字符串中的特定字符
+	 * @param strSrc: 原始字符串
+     * @param ch: 要删除的字符
+	 * @return 删除后的字符串
+	 */
+	static std::string remove(const std::string &strSrc, char ch);
+
+	/**
+	 * @brief 去除字符串中非数字
+	 * @param str 原始字符串
+	 * @return 改变后的字符串
+	 */
+	static std::string removeNonnumeric(std::string str); 
 
 	/**
 	*@brief:删除字符串最右侧的字符串
@@ -96,20 +136,6 @@ public:
 	*@return:std::string:重组后的字符串
 	*/
 	static std::string				StringTrimVector(std::string &strSrc, std::string split);
-
-	/**
-	*@brief:将字符串中的所有字母变成大写
-	*@param:str:原始字符串
-	*@return:std::string:改变后的字符串
-	*/
-	static std::string               StringUper(std::string str);
-
-	/**
-	*@brief:去除字符串中非数字
-	*@param:str:原始字符串
-	*@return:std::string:改变后的字符串
-	*/
-	static std::string               RemoveUnDig(std::string str); 
 
 	/**
 	*@brief:判断字符串是否全是数字
@@ -169,29 +195,6 @@ public:
 	*/
     static std::string			GetSizeStr(unsigned long long nInt);
 	////////////////////////////////////////////////////////////
-
-	/**
-	*@brief:字符串替换
-	*输入string类型的字符串和需要替换的字符，默认为空
-	*@return:返回True则字符串中所有需要被替换的字符均替换完成，否则没有替换成功
-	*/
-	static bool RemoveChar(std::string &pstr,char ch);
-
-	/**
-	*@brief:字符串替换
-	*输入string类型的字符串和需要替换的字符或者字符串，默认为空
-	*@return:返回True则字符串中所有需要被替换的字符均替换完成，否则没有替换成功
-	*/
-	static bool RemoveEnterSymb(std::string &pstr,std::string strIn);
-
-	/**
-	*@brief:字符串替换
-	*@param:string:strOld 源字符串
-	*@param:string:strNew 目标字符串
-	*@return:返回True则字符串中所有需要被替换的字符均替换完成，否则没有替换成功
-	*/
-	static bool replaceEnterSymb(std::string &str, std::string strOld, std::string strNew);
-
 	
 	/**
 	*@brief:截断数据,包括中文或英文,lchen
@@ -223,9 +226,12 @@ public:
 	 */
 	static bool isSubStr(std::string str1, std::string str2);
 
+    static std::string StringFormat(const char* format, ...);
+
 private:
 	static char *utf8_find_prev_char(const char *str, const char *p);
 
 };
 
 
+};

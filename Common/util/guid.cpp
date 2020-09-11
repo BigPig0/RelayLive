@@ -2,6 +2,11 @@
 #include <sstream>
 #include <sys/timeb.h>
 #include <time.h>
+#include <cmath>
+
+#ifdef LINUX_IMPL
+#define _abs64 abs
+#endif
 
 namespace UTIL_GUID
 {
@@ -118,6 +123,7 @@ std::string uuid(uint8_t svrid)
     return buf;
 }
 
+#if 0
 static std::string getIdInfo(uint64_t id) {
     uint64_t timestamp = ((0x1FFFFFFFFFF000L & id) >> timestampShift) + baseTimestamp;
     int srv = (0xE00 & id) >> serverIdShift;
@@ -125,7 +131,11 @@ static std::string getIdInfo(uint64_t id) {
 
     struct tm tm;
     time_t timeSecend = timestamp/1000;
+#if defined(WINDOWS_IMPL)
     localtime_s(&tm, &timeSecend);
+#else
+    localtime_r(&timeSecend, &tm);
+#endif
     int timeMilli = timestamp%1000;
 
     char stamp[32];
@@ -138,6 +148,7 @@ static std::string getIdInfo(uint64_t id) {
         << ", sequence=" <<seq;
     return ss.str();
 }
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////

@@ -399,7 +399,7 @@ end:
 }
 
 bool CPM::NeedRestart(Process* pro, time_t now) {
-    vector<string> tms = StringHandle::StringSplit(pro->rstime, ":");
+    vector<string> tms = util::String::split(pro->rstime, ":");
     if(tms.size() != 3)
         return false;
     uint32_t hour = stoi(tms[0]);

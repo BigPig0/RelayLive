@@ -2,6 +2,9 @@
 #include "ipc.h"
 #include "uvIpc.h"
 #include <map>
+#include <string>
+
+using namespace std;
 
 namespace IPC {
     uv_ipc_handle_t* h = NULL;
@@ -34,10 +37,10 @@ namespace IPC {
             char szInfo[250] = {0}; // 成功时sdp信息，失败时错误描述
             sscanf(data, "id=%d&port=%d&ret=%d&error=",&id, &port, &ret);
 
-			string info(data, len);
-			size_t pos = info.find("error=");
+			string infoMsg(data, len);
+			size_t pos = infoMsg.find("error=");
 			if(pos != string::npos){
-				info = info.substr(pos+6, info.size()-pos-6);
+				infoMsg = infoMsg.substr(pos+6, infoMsg.size()-pos-6);
 			}
 
             MutexLock lock(&_csPlayReqs);
@@ -45,7 +48,7 @@ namespace IPC {
             if(it != _PlayRequests.end()) {
                 it->second->port = port;
                 it->second->ret = ret;
-                it->second->info = info;
+                it->second->info = infoMsg;
                 it->second->finish = true;
             }
         } 

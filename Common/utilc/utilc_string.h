@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 /* 十六进制字符串转为数字*/
-_UTIL_API int htoi(const char *s);
+_UTILC_API int htoi(const char *s);
 
 #ifdef __cplusplus
 }

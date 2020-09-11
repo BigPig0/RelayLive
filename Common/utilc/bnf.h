@@ -3,6 +3,7 @@
 
 #include "utilc_api.h"
 #include "utilc_def.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

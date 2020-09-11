@@ -1,5 +1,6 @@
 #include "MailSlot.h"
-
+#ifdef WINDOWS_IMPL
+#include <windows.h>
 
 CMailSlotSever::CMailSlotSever(std::string strName)
     :m_bStop(false)
@@ -21,7 +22,7 @@ CMailSlotSever::~CMailSlotSever()
 
 //This function is the mailslot server worker function to
 //process all incoming mailslot I/O
-DWORD WINAPI CMailSlotSever::ServeMailslot(LPVOID lpParameter)
+DWORD _cdecl CMailSlotSever::ServeMailslot(void* lpParameter)
 {
     CMailSlotSever* pSever = (CMailSlotSever*)lpParameter;
 
@@ -32,7 +33,7 @@ DWORD WINAPI CMailSlotSever::ServeMailslot(LPVOID lpParameter)
     {
         int i = GetLastError();
         printf("Failed to create a MailSlot %d/n",i);
-        return -1;
+        return 1;
     }
 
     /** 读取邮件槽数据 */
@@ -80,9 +81,10 @@ CMailSlotClient::~CMailSlotClient()
 bool CMailSlotClient::SendMail(std::string strInfo)
 {
     DWORD BytesWritten = 0;
-    if(0 == WriteFile(m_hMailslot, strInfo.c_str(), strInfo.length(), &BytesWritten,NULL))
+    if(0 == WriteFile(m_hMailslot, strInfo.c_str(), (DWORD)strInfo.size(), &BytesWritten,NULL))
     {
         return false;
     }
     return true;
 }
+#endif

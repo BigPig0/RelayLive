@@ -337,7 +337,7 @@ bool CLiveSession::ParseHeader() {
     size_t pos1 = dataCatch.find("\r\n");        //第一行的结尾
     size_t pos2 = dataCatch.find("\r\n\r\n");    //头的结尾位置
     string reqline = dataCatch.substr(0, pos1);  //第一行的内容
-    vector<string> reqlines = StringHandle::StringSplit(reqline, ' ');
+    vector<string> reqlines = util::String::split(reqline, ' ');
     if(reqlines.size() != 3)
         return false;
 
@@ -348,7 +348,7 @@ bool CLiveSession::ParseHeader() {
     string rawHeaders = dataCatch.substr(pos1+2, pos2-pos1);
     dataCatch = dataCatch.substr(pos2+4, dataCatch.size()-pos2-4);
 
-    vector<string> headers = StringHandle::StringSplit(rawHeaders, "\r\n");
+    vector<string> headers = util::String::split(rawHeaders, "\r\n");
     for(auto &hh : headers) {
         string name, value;
         bool b = false;
@@ -379,13 +379,13 @@ bool CLiveSession::ParseHeader() {
 }
 
 bool CLiveSession::ParsePath() {
-    vector<string> uri = StringHandle::StringSplit(path, '?');
+    vector<string> uri = util::String::split(path, '?');
     if(uri.size() != 2 && uri[0] != "live")
         return false;
 
-    vector<string> param = StringHandle::StringSplit(uri[1], '&');
+    vector<string> param = util::String::split(uri[1], '&');
     for(auto p:param) {
-        vector<string> kv = StringHandle::StringSplit(p, '=');
+        vector<string> kv = util::String::split(p, '=');
         if(kv.size() != 2)
             continue;
 

@@ -1,8 +1,19 @@
-#pragma once
-#include <windows.h>
-#include <time.h>
+/**
+ * time_t与字符串互相转换，只精确到秒
+ * %y 不带世纪的十进制年份（值从0到99）
+ * %Y 带世纪部分的十制年份
+ * %m 十进制表示的月份
+ * %d 十进制表示的每月的第几天
+ * %H 24小时制的小时
+ * %I 12小时制的小时
+ * %M 十时制表示的分钟数
+ * %S 十进制的秒数
+ */
 
-class CTimeFormat
+#pragma once
+#include "util_public.h"
+
+class UTIL_API CTimeFormat
 {
 public:
 
@@ -13,15 +24,11 @@ public:
 
     /**
      * 打印当前时间
-     * @param fmt 输出的格式(不包含毫秒，最后的子串会加上毫秒数)
+     * @param fmt 输出的格式
      * @param buf 输出内容的内存
      */
     static char *printNow(const char *fmt, char buf[32]);
 
-    /**
-     * 输出当前时间字符串
-     * @param fmt 输出的格式
-     */
     static string printNow(const char *fmt);
 
     /**
@@ -30,84 +37,13 @@ public:
      * @param fmt 输出的格式
      * @param buf 输出内容的内存
      */
-    static char *printTime(time_t *time, const char *fmt, char buf[32]);
+    static char *printTime(time_t time, const char *fmt, char buf[32]);
 
     static string printTime(time_t time, const char *fmt);
 
-private:
+    /**
+     * 将一个时间转为结构
+     */
+    static struct tm getTimeInfo(time_t time);
 
 };
-
-inline
-time_t CTimeFormat::scanTime(const char buf[32])
-{
-    struct tm tm;
-
-    sscanf_s(buf, "%4d%2d%2d%2d%2d%2d",
-        &tm.tm_year,
-        &tm.tm_mon,
-        &tm.tm_mday,
-        &tm.tm_hour,
-        &tm.tm_min,
-        &tm.tm_sec);
-
-    tm.tm_year -= 1900;
-    tm.tm_mon --;
-    tm.tm_isdst = -1;
-
-    return mktime(&tm);
-}
-
-inline
-char *CTimeFormat::printNow(const char *fmt, char buf[32])
-{
-    SYSTEMTIME systime;
-    GetLocalTime(&systime);
-
-    struct tm tm;
-    tm.tm_year      = systime.wYear - 1900;
-    tm.tm_mon       = systime.wMonth - 1;
-    tm.tm_mday      = systime.wDay;
-    tm.tm_hour      = systime.wHour;
-    tm.tm_min       = systime.wMinute;
-    tm.tm_sec       = systime.wSecond;
-    tm.tm_isdst     = -1;
-
-    char stamp[32];
-    strftime(stamp, 32, fmt, &tm);
-    sprintf_s(buf, 32, "%s.%03d", stamp, systime.wMilliseconds);
-    return buf;
-}
-
-inline
-string CTimeFormat::printNow(const char *fmt) {
-    time_t now = time(NULL);
-    struct tm tm;
-    localtime_s(&tm, &now);
-
-    char buf[32];
-    strftime(buf, 32, fmt, &tm);
-    return buf;
-}
-
-inline
-char *CTimeFormat::printTime(time_t *time, const char *fmt, char buf[32])
-{
-    struct tm tm;
-    localtime_s(&tm, time);
-
-    char stamp[32];
-    strftime(stamp, 32, fmt, &tm);
-    sprintf_s(buf, 32, "%s", stamp);
-    return buf;
-}
-
-inline
-string CTimeFormat::printTime(time_t time, const char *fmt) {
-    struct tm tm;
-    localtime_s(&tm, &time);
-
-    char buf[32];
-    strftime(buf, 32, fmt, &tm);
-    return buf;
-}

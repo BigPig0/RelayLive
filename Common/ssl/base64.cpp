@@ -65,23 +65,23 @@ string Base64::Decode(const char* Data, uint32_t DataByte, uint32_t& OutByte)
     //·µ»ØÖµ
     string strDecode;
     int nValue;
-    int i= 0;
+    uint32_t i= 0;
     while (i < DataByte)
     {
         if (*Data != '\r' && *Data!='\n')
         {
-            nValue = DecodeTable[*Data++] << 18;
-            nValue += DecodeTable[*Data++] << 12;
+            nValue = DecodeTable[(int)(*Data++)] << 18;
+            nValue += DecodeTable[(int)(*Data++)] << 12;
             strDecode+=(nValue & 0x00FF0000) >> 16;
             OutByte++;
             if (*Data != '=')
             {
-                nValue += DecodeTable[*Data++] << 6;
+                nValue += DecodeTable[(int)(*Data++)] << 6;
                 strDecode+=(nValue & 0x0000FF00) >> 8;
                 OutByte++;
                 if (*Data != '=')
                 {
-                    nValue += DecodeTable[*Data++];
+                    nValue += DecodeTable[(int)(*Data++)];
                     strDecode+=nValue & 0x000000FF;
                     OutByte++;
                 }

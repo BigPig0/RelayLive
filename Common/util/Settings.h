@@ -27,7 +27,7 @@ namespace Settings
      * @param default[in] 默认值
      * @return 配置值
      */
-    string UTIL_API getValue(const string &section,const string &key,const string &default);
+    string UTIL_API getValue(const string &section,const string &key,const string &default_value);
 
     /**
      * 读取整数配置值
@@ -36,5 +36,5 @@ namespace Settings
      * @param default[in] 默认值
      * @return 配置值
      */
-    int UTIL_API getValue(const string &section,const string &key,const int &default);
+    int UTIL_API getValue(const string &section,const string &key,const int &default_value);
 };

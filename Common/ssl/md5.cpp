@@ -1,6 +1,6 @@
-#include"md5.h"
-
-#include<iostream>
+#include "md5.h"
+#include <string.h>
+#include <iostream>
 using namespace std;
 
 const int S[4][4] = {7, 12, 17, 22,
@@ -125,7 +125,7 @@ string MD5::GetMd5()
 
 void MD5::UcharToUint(uint32 output[], const uchar8 input[], const unsigned int transLength)         
 {
-    for(int i = 0, j = 0; j < transLength; i++, j += 4)
+    for(unsigned int i = 0, j = 0; j < transLength; i++, j += 4)
     {
         output[i] = ((uint32)input[j]) | (((uint32)input[j+1]) << 8) |
             (((uint32)input[j+2]) << 16) | (((uint32)input[j+3]) << 24);

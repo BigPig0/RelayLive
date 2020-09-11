@@ -1,11 +1,15 @@
-#include "StringHandle.h"
+#include "util_string.h"
 #include <sstream>
 #include <set>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cstdarg>
+#include <algorithm> 
 
-#ifdef __QZ_LINUX__
+namespace util {
+
+#ifdef LINUX_IMPL
 char* _strupr(char *str)
 {
 	char *ptr = str;
@@ -19,63 +23,62 @@ char* _strupr(char *str)
 	}
 	return str;	
 }
-
-#else
-
 #endif
 
-
-StringHandle::StringHandle()
+std::string String::upper(std::string str)
 {
+    std::string strRet(str);
+    std::transform(strRet.begin(), strRet.end(), strRet.begin(), toupper);
+    return strRet;
 }
 
-StringHandle::~StringHandle()
+std::string String::lower(std::string str)
 {
+    std::string strRet(str);
+    std::transform(strRet.begin(), strRet.end(), strRet.begin(), tolower);
+    return strRet;
 }
 
-std::string StringHandle::replace(std::string &s)
+std::string String::replace(std::string &s, char src, char dst)
 {
-	size_t i = 0,pos = std::string::npos;
-	std::string olds = "^#",news = "\\D";
-	while((i = s.find_last_of(olds,pos)) != std::string::npos)
-	{
-		s =  s.replace(i,news.length(),news);
-		pos = i - 1;
-	}
-
-	olds = "#",news = "\\d";
-	pos = std::string::npos;
-	while((i = s.find_last_of(olds,pos)) != std::string::npos)
-	{
-		s = s.replace(i,news.length(),news);
-		pos = i - 1;
-	}
-	return s;
+    std::string strRet(s);
+    size_t size = strRet.size();
+    for(size_t i = 0; i<size; i++) {
+        if(strRet[i] == src)
+            strRet[i] = dst;
+    }
+    return strRet;
 }
 
-std::string StringHandle::StringUper(std::string str )
+std::string String::replace(std::string &str, std::string src, std::string dst)
 {
-	char chBuffer[255] = {0};
-	strcpy_s(chBuffer, str.c_str());
-
-    char *ptr = chBuffer;
-    while (*ptr != '\0')
-    {
-        if (isascii(*ptr))
-        {
-            if (islower(*ptr))
-            {
-                *ptr = toupper(*ptr);
+    string strRet;
+    size_t size = str.size();
+    size_t len = src.size();
+    strRet.reserve(size+1);
+    size_t i = 0;
+    for(; i < size-len; i++) {
+        bool find = true;
+        for(int n=0; n<len; n++) {
+            if(str[n+i] != src[n]) {
+                find = false;
+                break;
             }
         }
-        ptr++;
+        if(find) {
+            i+=(len-1);
+            strRet.append(dst);
+        } else {
+            strRet.push_back(str[i]);
+        }
     }
-
-	//return std::string(strupr(chBuffer));
-    return std::string(chBuffer);
+    for(; i < size; i++) {
+        strRet.push_back(str[i]);
+    }
+    return strRet;
 }
 
-std::vector<std::string> StringHandle::StringSplit(const std::string &s, const char tag)
+std::vector<std::string> String::split(const std::string &s, const char tag)
 {
 	std::string res;
 	std::vector<std::string> vecNum;
@@ -101,7 +104,7 @@ std::vector<std::string> StringHandle::StringSplit(const std::string &s, const c
 	return vecNum;
 }
 
-std::vector<std::string> StringHandle::StringSplit(const std::string &s, char* tag, int nLen )
+std::vector<std::string> String::split(const std::string &s, char* tag, int nLen )
 {
     std::vector<std::string> pathVec;
 
@@ -158,7 +161,7 @@ std::vector<std::string> StringHandle::StringSplit(const std::string &s, char* t
 }
 
 #if 0
-std::vector<std::string> StringHandle::StringSplit(const std::string &s, const std::string &tag)
+std::vector<std::string> String::split(const std::string &s, const std::string &tag)
 {
     std::string o_str = s;
     std::vector<std::string> str_list; // ´æ·Å·Ö¸îºóµÄ×Ö·û´®
@@ -179,7 +182,7 @@ std::vector<std::string> StringHandle::StringSplit(const std::string &s, const s
     return str_list;
 }
 #else
-std::vector<std::string> StringHandle::StringSplit(const std::string &s, const std::string &tag)
+std::vector<std::string> String::split(const std::string &s, const std::string &tag)
 {
     std::string res;
     std::vector<std::string> vecNum;
@@ -216,56 +219,59 @@ std::vector<std::string> StringHandle::StringSplit(const std::string &s, const s
 }
 #endif
 
-std::string StringHandle::StringWipe( const std::string strSrc, const std::string strDest )
+std::string String::remove(const std::string &strSrc, const std::string str)
 {
-	size_t nIndexStart = 0, nIndexEnd = 0;
-
-	std::string strTmp = strSrc;
-	while(true)
-	{
-		nIndexStart = strTmp.find(strDest);
-
-		if (std::string::npos == nIndexStart )
-		{
-			break;
-		}
-		nIndexEnd = nIndexStart + strDest.length() - 1;
-
-		std::string strFirst = strTmp.substr(0, nIndexStart);
-		std::string strSecond = strTmp.substr(nIndexEnd+1, strTmp.length()-nIndexEnd-1);
-
-		strTmp = strFirst + strSecond;
-	}
-
-	return strTmp;
+    string strRet;
+    size_t size = strSrc.size();
+    size_t len = str.size();
+    strRet.reserve(size+1);
+    size_t i = 0;
+    for(; i < size-len; i++) {
+        bool find = true;
+        for(int n=0; n<len; n++) {
+            if(strSrc[n+i] != str[n]) {
+                find = false;
+                break;
+            }
+        }
+        if(find) {
+            i+=len;
+        } else {
+            strRet.push_back(strSrc[i]);
+        }
+    }
+    for(; i < size; i++) {
+        strRet.push_back(str[i]);
+    }
+    return strRet;
 }
 
-std::string StringHandle::RemoveUnDig(std::string str)
+std::string String::remove(const std::string &strSrc, char ch)
 {
-	std::string newStr;
+    string strRet;
+    strRet.reserve(strSrc.size()+1);
+    for(auto c : strSrc) {
+        if(c != ch) {
+            strRet.push_back(c);
+        }
+    }
+    return strRet;
+}
 
-	int len = str.length();
-	if (0 == len)
-	{
-		return "";
-	}
-	char *p = (char*)str.c_str();
-
-	newStr.reserve(len+1);
-
-	for(int i=0; i<len; i++)
-	{
-		if (p[i]>=48 && p[i]<=57)
-		{
-			newStr.append(1, p[i]);
+std::string String::removeNonnumeric(std::string str)
+{
+	std::string strRet;
+	strRet.reserve(str.size()+1);
+	for(auto c : str) {
+		if (c>=48 && c<=57) {
+			strRet.push_back(c);
 		}
 	}
-
-	return newStr;
+	return strRet;
 }
 
 // ÅÐ¶Ï×Ö·û´®ÊÇ·ñÈ«ÊÇÊý×Ö
-bool StringHandle::IsNumber(const std::string &strValue)
+bool String::IsNumber(const std::string &strValue)
 {
 	for (size_t i = 0; i < strValue.size(); i++) 
 	{
@@ -276,7 +282,7 @@ bool StringHandle::IsNumber(const std::string &strValue)
 	}
 	return true;
 }
-bool StringHandle::IsNumber(const std::wstring &wstrValue)
+bool String::IsNumber(const std::wstring &wstrValue)
 {
 	for (size_t i = 0; i < wstrValue.size(); i++) 
 	{
@@ -297,7 +303,7 @@ bool StringHandle::IsNumber(const std::wstring &wstrValue)
 	return true;
 }
 
-bool StringHandle::IsEng(std::string strIn,int nLen)
+bool String::IsEng(std::string strIn,int nLen)
 {
 	bool bOk=false;
 	std::string strSelData;	
@@ -321,14 +327,14 @@ bool StringHandle::IsEng(std::string strIn,int nLen)
 		}
 	}
 
-	if(bOk && strIn.length()==nLen)
+	if(bOk && strIn.size()==(size_t)nLen)
 	{
 		return true;
 	}
 	return false;
 }
 
-bool StringHandle::IsEng2(std::string strIn,int nLen)
+bool String::IsEng2(std::string strIn,int nLen)
 {
 	bool bOk=false;
 	std::string strSelData;
@@ -357,14 +363,14 @@ bool StringHandle::IsEng2(std::string strIn,int nLen)
 		}
 	}
 
-	if(bOk && strIn.length()==nLen)
+	if(bOk && strIn.size()==(size_t)nLen)
 	{
 		return true;
 	}
 	return false;
 }
 
-bool StringHandle::IsChes(std::string strIn)
+bool String::IsChes(std::string strIn)
 {
 	if(IsNumber(strIn))
 	{
@@ -380,7 +386,7 @@ bool StringHandle::IsChes(std::string strIn)
 
 
 
-bool StringHandle::HexStr2Ascii(std::string hexStr, std::string &asciiStr)
+bool String::HexStr2Ascii(std::string hexStr, std::string &asciiStr)
 {
 	// ÅÐ¶ÏÊäÈëÊ±Êý×Ö
 	int len = hexStr.length();
@@ -405,7 +411,7 @@ bool StringHandle::HexStr2Ascii(std::string hexStr, std::string &asciiStr)
 }
 
 
-std::string StringHandle::StringTrimRight(const std::string strSrc, const std::string strDest)
+std::string String::StringTrimRight(const std::string strSrc, const std::string strDest)
 {
 	int nLen = strSrc.length();
 	if (nLen <= 0)
@@ -428,7 +434,7 @@ std::string StringHandle::StringTrimRight(const std::string strSrc, const std::s
 	return strSrc;
 }
 
-std::string StringHandle::StringTrimRight(const std::string strSrc, const char cDest)
+std::string String::StringTrimRight(const std::string strSrc, const char cDest)
 {
 	int nLen = strSrc.length();
 	if (nLen <= 0)
@@ -447,7 +453,7 @@ std::string StringHandle::StringTrimRight(const std::string strSrc, const char c
 	return strSrc.substr(0,nLen);
 }
 
-std::wstring StringHandle::StringTrimRight(const std::wstring strSrc, const std::wstring strDest)
+std::wstring String::StringTrimRight(const std::wstring strSrc, const std::wstring strDest)
 {
 	int nLen = strSrc.length();
 	if (nLen <= 0)
@@ -470,7 +476,7 @@ std::wstring StringHandle::StringTrimRight(const std::wstring strSrc, const std:
 	return strSrc;
 }
 
-std::wstring StringHandle::StringTrimRight(const std::wstring strSrc, const wchar_t cDest)
+std::wstring String::StringTrimRight(const std::wstring strSrc, const wchar_t cDest)
 {
 	int nLen = strSrc.length();
 	if (nLen <= 0)
@@ -489,7 +495,7 @@ std::wstring StringHandle::StringTrimRight(const std::wstring strSrc, const wcha
 	return strSrc.substr(0,nLen);
 }
 
-std::string StringHandle::StringTrimVector(std::string &strSrc, char split)
+std::string String::StringTrimVector(std::string &strSrc, char split)
 {
 	std::string res;
 	std::set<std::string> setNum;
@@ -524,7 +530,7 @@ std::string StringHandle::StringTrimVector(std::string &strSrc, char split)
 	return res;
 }
 
-std::string StringHandle::StringTrimVector(std::string &strSrc, std::string split)
+std::string String::StringTrimVector(std::string &strSrc, std::string split)
 {
 	size_t nSrcSize = strSrc.size();
 	size_t nSplSize = split.size();
@@ -579,7 +585,7 @@ std::string StringHandle::StringTrimVector(std::string &strSrc, std::string spli
 }
 
 
-void StringHandle::utf8_cut(std::string &strContent, unsigned unLength)
+void String::utf8_cut(std::string &strContent, unsigned unLength)
 {
 	if (strContent.length() <= unLength)		
 	{
@@ -596,9 +602,9 @@ void StringHandle::utf8_cut(std::string &strContent, unsigned unLength)
 	}	
 }
 
-char *StringHandle::utf8_find_prev_char(const char *str, const char *p)
+char *String::utf8_find_prev_char(const char *str, const char *p)
 {
-	for (p; p >= str; --p)
+	for (; p >= str; --p)
 	{
 		if ((*p & 0xc0) != 0x80)
 			return (char *)p;
@@ -606,14 +612,16 @@ char *StringHandle::utf8_find_prev_char(const char *str, const char *p)
 	return NULL;
 }
 
-std::string StringHandle::strMakerUper( std::string str )
+std::string String::strMakerUper( std::string str )
 {
-	char chBuffer[255] = {0};
-	strcpy_s(chBuffer, str.c_str());
-	return std::string(_strupr(chBuffer));
+	char *chBuffer = (char*)calloc(1, str.size()+1);
+	strcpy(chBuffer, str.c_str());
+	std::string ret(_strupr(chBuffer));
+	free(chBuffer);
+	return ret;
 }
 
-std::wstring StringHandle::IPUL2STR(unsigned long ulIP)
+std::wstring String::IPUL2STR(unsigned long ulIP)
 {
 	unsigned char ip[4] = {0x0};
 	wchar_t tmp[16] = {0x0};
@@ -631,7 +639,7 @@ std::wstring StringHandle::IPUL2STR(unsigned long ulIP)
 	return tmp;
 }
 
-std::string StringHandle::GetSizeStr(unsigned long long nInt)
+std::string String::GetSizeStr(unsigned long long nInt)
 {
 	std::stringstream ss;
 	unsigned long long nsize = nInt;
@@ -659,58 +667,7 @@ std::string StringHandle::GetSizeStr(unsigned long long nInt)
 	return ss.str();
 }
 
-bool StringHandle::RemoveChar(std::string &str,char ch)
-{
-	if(str.empty() || "NULL"==str)
-		return false;
-	std::string::size_type npos(0);
-	while(npos<str.length())
-	{
-		npos=str.find(ch);
-		if(npos<0 || npos>str.length())
-			break;
-		else
-			str.erase(npos,1);
-	}
-	return true;
-}
-
-bool StringHandle::RemoveEnterSymb(std::string &str, std::string strIn)
-{
-	if(str.empty() || "NULL"==str)
-		return false;
-	std::string::size_type npos(0);
-	while(npos < str.length())
-	{
-		npos = str.find(strIn);
-		if(npos < 0 || npos > str.length())
-			break;
-		else
-			str.erase(npos, strIn.length());	//É¾³ýÆ¥Åä×Ö·û
-	}
-	return true;
-}
-
-bool StringHandle::replaceEnterSymb(std::string &str, std::string strOld, std::string strNew)
-{
-	if(str.empty() || "NULL"==str)
-		return false;
-	std::string::size_type npos(0);
-
-	while(npos < str.length())
-	{
-		npos = str.find(strOld);
-		if(npos < 0 || npos > str.length())
-			break;
-		else
-		{
-			str.replace(npos, strOld.length(), strNew);	//Ìæ»»×Ö·û
-		}
-	}
-	return true;
-}
-
-std::string StringHandle::CutData(std::string strIn,int nLen)
+std::string String::CutData(std::string strIn,int nLen)
 {
 	std::string data;
 
@@ -723,7 +680,7 @@ std::string StringHandle::CutData(std::string strIn,int nLen)
 	//	data=strIn;
 	//}
 
-	if(nLen<strIn.length())
+	if((size_t)nLen<strIn.length())
 	{
 		data = strIn;
 		utf8_cut(data,nLen);
@@ -736,40 +693,37 @@ std::string StringHandle::CutData(std::string strIn,int nLen)
 
 }
 
-std::string StringHandle::FilterSpecialChar(std::string &strData)
+std::string String::FilterSpecialChar(std::string &strData)
 {
 	std::string data;
-	RemoveChar(strData,'\t');
-	RemoveChar(strData,'\r');
-	RemoveChar(strData,'\n');
-	RemoveEnterSymb(strData,"\r\n");
-	RemoveEnterSymb(strData,"\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00");
-	RemoveEnterSymb(strData,"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20");
-	RemoveEnterSymb(strData,"\x1A\x00");
-	//CUtilsModule::RemoveEnterSymb(strData,"\x1A");
-	//CUtilsModule::RemoveChar(strData,'\'');
-	//CUtilsModule::RemoveChar(strData,'\"');
+	remove(strData,'\t');
+	remove(strData,'\r');
+	remove(strData,'\n');
+	remove(strData,"\r\n");
+	remove(strData,"\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00\x20\x00");
+	remove(strData,"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20");
+	remove(strData,"\x1A\x00");
 	return strData;
 }
 
-void StringHandle::Trim(std::string &str)
+void String::Trim(std::string &str)
 {
 	str.erase(str.find_last_not_of(' ') + 1, std::string::npos);
 	str.erase(0, str.find_first_not_of(' '));
 }
 
-std::string StringHandle::WinPath2UnixPath(const std::string strSrc)
+std::string String::WinPath2UnixPath(const std::string strSrc)
 {
 	std::string strPath = "";
 	if( strPath.find("\\") )
 	{
 		strPath = strSrc;
-		replaceEnterSymb(strPath,"\\","/");
+		replace(strPath,"\\","/");
 	}
 	return strPath;
 }
 
-std::string StringHandle::dec2hex(int i)
+std::string String::dec2hex(int i)
 {
     std::stringstream ioss; //¶¨Òå×Ö·û´®Á÷
     std::string s_temp;     //´æ·Å×ª»¯ºó×Ö·û
@@ -778,14 +732,45 @@ std::string StringHandle::dec2hex(int i)
     return s_temp;
 }
 
-bool StringHandle::isSubStr(std::string str1, std::string str2)
+bool String::isSubStr(std::string str1, std::string str2)
 {
-	int a = str1.size();
+	size_t a = str1.size();
 	if(a > str2.size()) a = str2.size();
-	for (int i=0; i<a; ++i)
+	for (size_t i=0; i<a; ++i)
 	{
 		if(str1[i] != str2[i])
 			return false;
 	}
 	return true;
+}
+
+std::string StringFormat(const char* format, ...) {
+    size_t size = 4096;
+    std::string buffer(size, '\0');
+    char* buffer_p = const_cast<char*>(buffer.data());
+    int expected = 0;
+    va_list ap;
+
+    while (true) {
+        va_start(ap, format);
+        expected = vsnprintf(buffer_p, size, format, ap);
+        va_end(ap);
+        if (expected>-1 && expected<=static_cast<int>(size)) {
+            break;
+        } else {
+            /* Else try again with more space. */
+            if (expected > -1)    /* glibc 2.1 */
+                size = static_cast<size_t>(expected + 1); /* precisely what is needed */
+            else           /* glibc 2.0 */
+                size *= 2;  /* twice the old size */
+
+            buffer.resize(size);
+            buffer_p = const_cast<char*>(buffer.data());
+        }
+    }
+
+    // expected²»°üº¬×Ö·û´®½áÎ²·ûºÅ£¬ÆäÖµµÈÓÚ£ºstrlen(buffer_p)
+    return std::string(buffer_p, expected>0?expected:0);
+}
+
 }

@@ -1,8 +1,13 @@
 #include "EncodeConvert.h"
-#include <Windows.h>
+#if defined(WINDOWS_IMPL)        /**Windows*/
+#include <windows.h>
+#elif defined(LINUX_IMPL)        /**Linux*/
+#include <stdlib.h>
+#endif
+#include <string.h>
 
-
-std::string __do_w_to_a_utf8(const wchar_t *pwszText, UINT uCodePage)
+#if defined(WINDOWS_IMPL)
+static std::string __ws2s(const wchar_t *pwszText, UINT uCodePage)
 {
 	// 空指针输入
 	if(pwszText == NULL) return "";
@@ -16,11 +21,8 @@ std::string __do_w_to_a_utf8(const wchar_t *pwszText, UINT uCodePage)
 	memset(pRet, 0, nNeedSize + 1);
 
 	std::string strRet("");
-	if ( 0 == WideCharToMultiByte(uCodePage, 0, pwszText, -1, pRet, nNeedSize, NULL, NULL) )
-	{
-	}
-	else
-	{
+	if ( 0 != WideCharToMultiByte(uCodePage, 0, pwszText, -1, pRet, nNeedSize, NULL, NULL) )
+    {
 		strRet = pRet;
 	}
 
@@ -28,7 +30,7 @@ std::string __do_w_to_a_utf8(const wchar_t *pwszText, UINT uCodePage)
 	return strRet;
 }
 
-std::wstring __do_a_utf8_to_w(const char* pszText, UINT uCodePage)
+static std::wstring __s2ws(const char* pszText, UINT uCodePage)
 {
 	// 空指针
 	if( pszText == NULL ) return L"";
@@ -41,55 +43,111 @@ std::wstring __do_a_utf8_to_w(const char* pszText, UINT uCodePage)
 	std::wstring strRet(L"");
 	wchar_t *pRet = new wchar_t[nNeedSize + 1];
 	memset(pRet, 0, (nNeedSize + 1) * sizeof(wchar_t));
-	if( 0 == MultiByteToWideChar(uCodePage, 0, pszText, -1, pRet, nNeedSize) )
-	{
-	}
-	else
+	if( 0 != MultiByteToWideChar(uCodePage, 0, pszText, -1, pRet, nNeedSize) )
 	{
 		strRet = pRet;
 	}
 	delete []pRet;
 	return strRet;
 }
+#elif defined(LINUX_IMPL)
+static std::string __ws2s(const wchar_t *pwszText, const char *szCode)
+{
+    if (NULL == pwszText || wcslen(pwszText) == 0)
+        return "";
+    unsigned len = wcslen(pwszText) * 4 + 1;
+    setlocale(LC_CTYPE, szCode);
+    char *p = new char[len];
+    wcstombs(p, pwszText, len);
+    std::string str(p);
+    delete[] p;
+    return str;
+}
+
+static std::wstring __s2ws(const char* pszText, const char *szCode)
+{
+    if (NULL == pszText || strlen(pszText))
+        return L"";
+    unsigned len = strlen(pszText) + 1;
+    setlocale(LC_CTYPE, szCode);
+    wchar_t *p = new wchar_t[len];
+    mbstowcs(p, pszText, len);
+    std::wstring w_str(p);
+    delete[] p;
+    return w_str;
+}
+#endif
 
 std::string EncodeConvert::WtoA(const std::wstring &strText)
 {
-	return __do_w_to_a_utf8(strText.c_str(), CP_ACP);
+#if defined(WINDOWS_IMPL)
+	return __ws2s(strText.c_str(), CP_ACP);
+#elif defined(LINUX_IMPL)
+    return __ws2s(strText.c_str(), "");
+#endif
 }
 
 std::string EncodeConvert::WtoA(const wchar_t *pwszText)
 {
-	return __do_w_to_a_utf8(pwszText, CP_ACP);
+#if defined(WINDOWS_IMPL)
+	return __ws2s(pwszText, CP_ACP);
+#elif defined(LINUX_IMPL)
+    return __ws2s(pwszText, "");
+#endif
 }
 
 std::wstring EncodeConvert::AtoW(const std::string &strText)
 {
-	return __do_a_utf8_to_w(strText.c_str(), CP_ACP);
+#if defined(WINDOWS_IMPL)
+	return __s2ws(strText.c_str(), CP_ACP);
+#elif defined(LINUX_IMPL)
+    return __s2ws(strText.c_str(), "");
+#endif
 }
 
 std::wstring EncodeConvert::AtoW(const char* pszText)
 {
-	return __do_a_utf8_to_w(pszText, CP_ACP);
+#if defined(WINDOWS_IMPL)
+	return __s2ws(pszText, CP_ACP);
+#elif defined(LINUX_IMPL)
+    return __s2ws(pszText, "");
+#endif
 }
 
 std::string EncodeConvert::WtoUTF8(const std::wstring &strText)
 {
-	return __do_w_to_a_utf8(strText.c_str(), CP_UTF8);
+#if defined(WINDOWS_IMPL)
+	return __ws2s(strText.c_str(), CP_UTF8);
+#elif defined(LINUX_IMPL)
+    return __ws2s(strText.c_str(), "en_US.UTF-8");
+#endif
 }
 
 std::string EncodeConvert::WtoUTF8(const wchar_t *pwszText)
 {
-	return __do_w_to_a_utf8(pwszText, CP_UTF8);
+#if defined(WINDOWS_IMPL)
+	return __ws2s(pwszText, CP_UTF8);
+#elif defined(LINUX_IMPL)
+    return __ws2s(pwszText, "en_US.UTF-8");
+#endif
 }
 
 std::wstring EncodeConvert::UTF8toW(const std::string &strText)
 {
-	return __do_a_utf8_to_w(strText.c_str(), CP_UTF8);
+#if defined(WINDOWS_IMPL)
+	return __s2ws(strText.c_str(), CP_UTF8);
+#elif defined(LINUX_IMPL)
+    return __s2ws(strText.c_str(), "en_US.UTF-8");
+#endif
 }
 
 std::wstring EncodeConvert::UTF8toW(const char* pszText)
 {
-	return __do_a_utf8_to_w(pszText, CP_UTF8);
+#if defined(WINDOWS_IMPL)
+	return __s2ws(pszText, CP_UTF8);
+#elif defined(LINUX_IMPL)
+    return __s2ws(pszText, "en_US.UTF-8");
+#endif
 }
 
 std::string EncodeConvert::UTF8toA(const std::string &src)
@@ -111,6 +169,7 @@ std::string EncodeConvert::AtoUTF8(const char* src)
 {
 	return WtoUTF8(AtoW(src));
 }
+
 /*
 UTF-8 编码最多可以有6个字节
 
@@ -120,7 +179,6 @@ UTF-8 编码最多可以有6个字节
 4字节 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 5字节 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 6字节 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-
 */
 
 // 返回值说明: 

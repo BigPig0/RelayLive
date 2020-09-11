@@ -1,10 +1,11 @@
-#include <stdint.h>
 #include "NetStreamMaker.h"
+#include <stdint.h>
+#include <string.h>
 
 CNetStreamMaker::CNetStreamMaker()
-    : m_nMax(0)
+    : m_pData(nullptr)
     , m_nCurrent(0)
-    , m_pData(nullptr)
+    , m_nMax(0)
 {
 
 }
@@ -91,7 +92,7 @@ void CNetStreamMaker::append_be64(uint64_t val)
 
 void CNetStreamMaker::append_bytes(uint8_t val, uint32_t num)
 {
-    for (int i=0; i<num; i++)
+    for (uint32_t i=0; i<num; i++)
     {
         append_byte(val);
     }
@@ -104,11 +105,11 @@ void CNetStreamMaker::append_double(double val)
 
 void CNetStreamMaker::rewrite_data(uint32_t start, char* data, uint32_t size)
 {
-    unsigned ns = start + size;
+    uint32_t ns = start + size;
 
     if( ns > m_nMax ) {
         void *dp;
-        unsigned dn = 16;
+        uint32_t dn = 16;
        
         while( ns > dn ) {
             dn <<= 1;
@@ -171,6 +172,95 @@ uint64_t CNetStreamMaker::dbl2int( double value )
     UNIONTYPE tmp;
     tmp.f = value;
     return tmp.i;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+CNetStreamParser::CNetStreamParser(char* buff, uint32_t len)
+    : pData(buff)
+    , nCurrent(0)
+    , nLen(len)
+{
+}
+
+CNetStreamParser::~CNetStreamParser()
+{
+}
+
+uint8_t CNetStreamParser::read_byte(uint8_t bitCount)
+{
+    uint8_t dwRet = 0;
+    uint8_t i=0;
+    for (; i<bitCount; i++)
+    {
+        dwRet <<= 1;
+        if (pData[nCurrent / 8] & (0x80 >> (nCurrent % 8)))
+        {
+            dwRet += 1;
+        }
+        nCurrent++;
+    }
+    return dwRet;
+}
+
+uint16_t CNetStreamParser::read_be16(uint8_t bitCount)
+{
+    uint16_t dwRet = 0;
+    uint8_t i=0;
+    for (; i<bitCount; i++)
+    {
+        dwRet <<= 1;
+        if (pData[nCurrent / 8] & (0x80 >> (nCurrent % 8)))
+        {
+            dwRet += 1;
+        }
+        nCurrent++;
+    }
+    return dwRet;
+}
+
+uint32_t CNetStreamParser::read_be32(uint8_t bitCount)
+{
+    uint32_t dwRet = 0;
+    uint8_t i=0;
+    for (; i<bitCount; i++)
+    {
+        dwRet <<= 1;
+        if (pData[nCurrent / 8] & (0x80 >> (nCurrent % 8)))
+        {
+            dwRet += 1;
+        }
+        nCurrent++;
+    }
+    return dwRet;
+}
+
+uint64_t CNetStreamParser::read_be64(uint8_t bitCount)
+{
+    uint64_t dwRet = 0;
+    uint8_t i=0;
+    for (; i<bitCount; i++)
+    {
+        dwRet <<= 1;
+        if (pData[nCurrent / 8] & (0x80 >> (nCurrent % 8)))
+        {
+            dwRet += 1;
+        }
+        nCurrent++;
+    }
+    return dwRet;
+}
+
+char* CNetStreamParser::read_buff(uint32_t len)
+{
+    char* ret = pData + (nCurrent / 8);
+    nCurrent += len*8;
+    return ret;
+}
+
+void CNetStreamParser::skip(uint32_t bitCount)
+{
+    nCurrent += bitCount;
 }
 
 

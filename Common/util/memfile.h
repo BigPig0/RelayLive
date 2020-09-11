@@ -4,11 +4,11 @@
  * by ãÚÈÙÎÄ - Que's C++ Studio
  */
 #pragma once
+#include "util_public.h"
 
 #ifndef SIZE_T_MAX
 #define SIZE_T_MAX 0xffffffff 
 #endif // !SIZE_T_MAX
-#include "util_public.h"
 
 class UTIL_API memfile
 {

@@ -1,16 +1,15 @@
-#include <windows.h>  
 #include "MiniDump.h"
-#include <DbgHelp.h>  
-#include <stdlib.h>
-#pragma comment(lib, "dbghelp.lib")  
-
-#ifndef _M_IX86  
-//#error "The following code only works for x86!"  
-#endif
 
 string  g_szDumpFileName;
 
 void (*callback)() = nullptr;
+
+#ifdef WIN32
+#include <windows.h>  
+#include <DbgHelp.h>  
+#include <stdlib.h>
+#pragma comment(lib, "dbghelp.lib")  
+
 
 inline BOOL IsDataSectionNeeded(const WCHAR* pModuleName)  
 {  
@@ -116,11 +115,15 @@ void InitMinDump()
     DisableSetUnhandledExceptionFilter();  
 }
 
+#endif
+
 CMiniDump::CMiniDump(string szFileName)
 {
     g_szDumpFileName = szFileName;
-    //InitMinDump();
+#ifdef WIN32
+    InitMinDump();
     SetErrorMode(SEM_NOGPFAULTERRORBOX);
+#endif
 }
 
 CMiniDump::~CMiniDump()

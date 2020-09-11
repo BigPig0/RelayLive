@@ -1,7 +1,8 @@
 #pragma once
 #include "util_public.h"
+#ifdef WINDOWS_IMPL
 #include <string>
-#include <windows.h>
+typedef void * HANDLE;
 
 /**
  * 邮件槽服务端
@@ -15,7 +16,7 @@ public:
     void SetCallback(void (*p)(std::string));
 
 private:
-    static DWORD WINAPI ServeMailslot(LPVOID lpParameter);
+    static unsigned long _cdecl ServeMailslot(void* lpParameter);
 
 private:
     bool        m_bStop;    //< 停止服务
@@ -39,3 +40,4 @@ private:
     std::string m_strName;  //< 邮件槽名称
     HANDLE      m_hMailslot;    //< 文件槽句柄
 };
+#endif

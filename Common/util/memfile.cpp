@@ -1,28 +1,29 @@
 #include "memfile.h"
+#include <string.h>
 
 memfile::memfile(size_t memInc, size_t maxSize)
-	: _memInc(memInc)
-    , _maxSize(maxSize)
-    , _selfAlloc(true)
-    , _buffer(NULL)
+	: _buffer(NULL)
     , _bufLen(0)
     , _readPos(0)
     , _writePos(0)
     , _fileSize(0)
+    , _maxSize(maxSize)
+    , _memInc(memInc)
+    , _selfAlloc(true)
 {
 	if( _memInc > _maxSize ) 
         _memInc = _maxSize;
 }
 
 memfile::memfile(const void* buf, size_t len)
-	: _selfAlloc(false)
-    , _buffer((char*)buf)
+	: _buffer((char*)buf)
     , _bufLen(len)
-	, _memInc(0)
-    , _maxSize(len)
     , _readPos(0)
     , _writePos(0)
     , _fileSize(len)
+    , _maxSize(len)
+    , _memInc(0)
+	, _selfAlloc(false)
 {
 }
 

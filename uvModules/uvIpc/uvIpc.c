@@ -16,6 +16,10 @@
 #include "uvIpc.h"
 #include "netstream.h"
 
+#ifndef MAX_PATH
+#define MAX_PATH 260
+#endif
+
 typedef struct _send_data_ send_data_t;
 
 /** 服务端连接的客户 */

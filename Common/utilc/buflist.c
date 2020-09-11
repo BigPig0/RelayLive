@@ -11,13 +11,13 @@
 typedef struct _buflist_ {
     struct _buflist_ *next;
 
-    size_t len;
-    size_t pos;
+    uint32_t len;
+    uint32_t pos;
 
     uint8_t buf[1]; /* true length of this is set by the oversize malloc */
 } buflist_t;
 
-int buflist_append_segment(buflist_t **head, const uint8_t *buf, size_t len)
+int buflist_append_segment(buflist_t **head, const uint8_t *buf, uint32_t len)
 {
     buflist_t *nbuf;
     int first = !*head;
@@ -82,7 +82,7 @@ void buflist_destroy_all_segments(buflist_t **head)
     *head = NULL;
 }
 
-size_t buflist_next_segment_len(buflist_t **head, uint8_t **buf)
+uint32_t buflist_next_segment_len(buflist_t **head, uint8_t **buf)
 {
     if (!*head) {
         if (buf)
@@ -109,7 +109,7 @@ size_t buflist_next_segment_len(buflist_t **head, uint8_t **buf)
     return (*head)->len - (*head)->pos;
 }
 
-int buflist_use_segment(buflist_t **head, size_t len)
+int buflist_use_segment(buflist_t **head, uint32_t len)
 {
     assert(*head);
     assert(len);

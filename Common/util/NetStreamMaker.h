@@ -61,3 +61,22 @@ private:
     uint32_t m_nCurrent;   //当前写入数据的位置
     uint32_t m_nMax;       //内存大小
 };
+
+class UTIL_API CNetStreamParser
+{
+public:
+    CNetStreamParser(char* buff, uint32_t len);
+    ~CNetStreamParser();
+
+    uint8_t read_byte(uint8_t bitCount);
+    uint16_t read_be16(uint8_t bitCount);
+    uint32_t read_be32(uint8_t bitCount);
+    uint64_t read_be64(uint8_t bitCount);
+    char* read_buff(uint32_t len);
+    void skip(uint32_t bitCount);
+
+private:
+    char*    pData;      //内存地址
+    uint32_t nCurrent;   //当前读取数据的位置(位)
+    uint32_t nLen;       //数据长度
+};
