@@ -70,8 +70,8 @@ ludb_batch_t::ludb_batch_t(string Tag, string Sql, int RowNum, int Interval, bin
     , sql(Sql)
     , row_num(RowNum)
     , interval(Interval)
-    , ins_time(time(NULL))
     , running(true)
+    , ins_time(time(NULL))
 {
     for(int i=0; Binds[i].name; i++) {
         int max_len = Binds[i].max_len;

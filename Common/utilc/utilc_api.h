@@ -28,6 +28,7 @@ _UTILC_API int  gettid();
 _UTILC_API void Sleep(uint32_t milliSeconds);
 #ifdef __cplusplus
 }
+#define _atoi64(val) strtoll(val, NULL, 10)   
 #endif
 #endif
 

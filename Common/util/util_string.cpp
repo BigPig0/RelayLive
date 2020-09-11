@@ -28,14 +28,16 @@ char* _strupr(char *str)
 std::string String::upper(std::string str)
 {
     std::string strRet(str);
-    std::transform(strRet.begin(), strRet.end(), strRet.begin(), toupper);
+    //std::transform(strRet.begin(), strRet.end(), strRet.begin(), toupper);
+	std::transform(strRet.begin(), strRet.end(), strRet.begin(),[](unsigned char c) { return toupper(c); });
     return strRet;
 }
 
 std::string String::lower(std::string str)
 {
     std::string strRet(str);
-    std::transform(strRet.begin(), strRet.end(), strRet.begin(), tolower);
+    //std::transform(strRet.begin(), strRet.end(), strRet.begin(), tolower);
+	std::transform(strRet.begin(), strRet.end(), strRet.begin(),[](unsigned char c) { return tolower(c); });
     return strRet;
 }
 
@@ -59,7 +61,7 @@ std::string String::replace(std::string &str, std::string src, std::string dst)
     size_t i = 0;
     for(; i < size-len; i++) {
         bool find = true;
-        for(int n=0; n<len; n++) {
+        for(size_t n=0; n<len; n++) {
             if(str[n+i] != src[n]) {
                 find = false;
                 break;
@@ -228,7 +230,7 @@ std::string String::remove(const std::string &strSrc, const std::string str)
     size_t i = 0;
     for(; i < size-len; i++) {
         bool find = true;
-        for(int n=0; n<len; n++) {
+        for(size_t n=0; n<len; n++) {
             if(strSrc[n+i] != str[n]) {
                 find = false;
                 break;

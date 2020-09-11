@@ -1,5 +1,7 @@
 #include "ludb_mongo.h"
 #include "ludb_private.h"
+
+#ifdef DB_MONGO
 #include "mongoc.h"
 
 //#pragma comment(lib, "libmongoc.lib")
@@ -307,3 +309,5 @@ ludb_mongo_batch::~ludb_mongo_batch() {
 bool ludb_mongo_batch::insert() {
     return true;
 }
+
+#endif

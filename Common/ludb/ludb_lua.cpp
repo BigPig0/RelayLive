@@ -59,7 +59,7 @@ lua::Ptr luaConnect(lua::Table pra) {
     lua::Str password = pra["pwd"];
     ludb_db_type_t t = lu_get_type(pra["dbtype"]);
     if(t == ludb_db_unknow){
-        return false;
+        return NULL;
     }
     return ludb_connect(t, database.c_str(), username.c_str(), password.c_str());
 }
@@ -85,7 +85,7 @@ lua::Bool luaCreatePool(lua::Table pra){
 lua::Ptr luaPoolConnect(lua::Str type, lua::Str tag){
     ludb_db_type_t t = lu_get_type(type);
     if(t == ludb_db_unknow){
-        return false;
+        return NULL;
     }
     return (void*)ludb_pool_connect(t, (char*)tag.c_str());
 }
@@ -164,7 +164,7 @@ lua::Ptr luaBatchInit(lua::Str type, lua::Str tag, lua::Str sql, lua::Int rnum, 
             continue;
         }
 
-        string &bindName    = lua::VarCast<lua::Str>(col["bindname"]);
+        string bindName    = lua::VarCast<lua::Str>(col["bindname"]);
         char *pname         = (char*)malloc(bindName.size()+1);
         memcpy(pname, bindName.c_str(), bindName.size());
         pname[bindName.size()] = 0;
@@ -187,7 +187,7 @@ lua::Ptr luaBatchInit(lua::Str type, lua::Str tag, lua::Str sql, lua::Int rnum, 
         param[i].default_value = NULL;
         if(col.isExist(lua::Str("def"))){
             if(lua::VarType<lua::Str>(col["def"])) {
-                string &strDefault = lua::VarCast<lua::Str>(col["def"]);
+                string strDefault = lua::VarCast<lua::Str>(col["def"]);
                 char *pname = (char*)malloc(strDefault.size()+1);
                 memcpy(pname, strDefault.c_str(), strDefault.size());
                 pname[strDefault.size()] = 0;
@@ -214,12 +214,12 @@ lua::Bool luaAddRow(lua::Ptr rc, lua::Table row){
     int i=0;
     for(; i<size; i++) {
 		if(lua::VarType<lua::Str>(row[i+1])){
-			lua::Str &col = lua::VarCast<lua::Str>(row[i+1]);
+			lua::Str col = lua::VarCast<lua::Str>(row[i+1]);
 			values[i] = (char*)calloc(1, col.size()+1);
 			memcpy(values[i], col.c_str(), col.size());
 		} else if(lua::VarType<lua::Int>(row[i+1])){
 			values[i] = (char*)calloc(1, 20);
-			sprintf(values[i], "%d", lua::VarCast<lua::Int>(row[i+1]));
+			sprintf(values[i], "%lld", lua::VarCast<lua::Int>(row[i+1]));
 		} else {
 			values[i] =  (char*)calloc(1, 1);
 		}

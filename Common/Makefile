@@ -1,5 +1,5 @@
 #./Common/Makefile
-SUBDIR = utilc util ssl pm
+SUBDIR = ludb#utilc util ssl ludb
 
 all:$(SUBDIR)
 	

@@ -3,6 +3,8 @@
 #include "utilc.h"
 #include "ludb_private.h"
 
+#ifdef DB_MONGO
+
 class ludb_mongo_conn : public ludb_conn_t
 {
 public:
@@ -64,3 +66,4 @@ public:
 
     virtual bool insert();
 };
+#endif

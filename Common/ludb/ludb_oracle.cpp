@@ -2,7 +2,9 @@
 #include "ludb_private.h"
 #include "ocilib.h"
 
+#ifdef _Win32
 #pragma comment(lib, "ocilib.lib")
+#endif
 
 static map<string, OCI_ConnPool*> oracle_conn_pools; //map<string, OCI_ConnPool*>
 
@@ -449,7 +451,7 @@ bool ludb_oracle_batch::insert() {
         boolean bExcute = OCI_Execute(st);
         boolean bCommit = OCI_Commit(cn);
         unsigned int count = OCI_GetAffectedRows(st);    //某一行插入失败，不会回滚所有数据，但是出错后count为0，这是ocilib的一个bug
-        char buff[100]={0};
+        //char buff[100]={0};
         if (!bExcute || !bCommit || 0 == count){
             Log::error("Execute %s fail bExcute: %d; bCommit: %d; count: %d" , tag.c_str(), bExcute, bCommit, count);
         } else {
