@@ -19,6 +19,8 @@
 #include "util_public.h"
 #include <stdint.h>
 
+namespace util {
+
 /**
  * 高精度计时器，用于计算一个操作所消耗的时间
  */
@@ -48,3 +50,4 @@ private:
     uint64_t    m_llEnd;
     
 };
+}

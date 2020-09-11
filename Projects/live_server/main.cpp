@@ -5,7 +5,9 @@
 #include "uv.h"
 #include "util.h"
 #include <windows.h>
-#include "MiniDump.h"
+#include "util_minidump.h"
+
+using namespace util;
 
 int main(int argc, char* argv[])
 {

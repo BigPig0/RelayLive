@@ -9,6 +9,8 @@
 #include <list>
 #include <map>
 
+using namespace util;
+
 #pragma comment(lib, "Dnsapi.lib")
 #pragma comment(lib, "Iphlpapi.lib")
 #pragma comment(lib, "Ws2_32.lib")

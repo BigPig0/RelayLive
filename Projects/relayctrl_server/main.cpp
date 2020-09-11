@@ -4,7 +4,7 @@
 #include "ipc.h"
 #include "uv.h"
 #include "util.h"
-#include "MiniDump.h"
+#include "util_minidump.h"
 
 int main(int argc, char* argv[])
 {

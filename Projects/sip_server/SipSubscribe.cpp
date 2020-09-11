@@ -2,6 +2,7 @@
 #include "SipSubscribe.h"
 
 using namespace SipServer;
+using namespace util;
 
 static int eventID = 1;
 

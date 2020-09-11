@@ -2,7 +2,7 @@
 #include "db.h"
 #include "ludb.h"
 #include "luapp.hpp"
-#include "EncodeConvert.h"
+#include "util_encode_conv.h"
 
 lua::Str luaGBK2UTF8(lua::Str s) {
     return EncodeConvert::AtoUTF8(s);

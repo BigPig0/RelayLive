@@ -6,6 +6,7 @@
 #include <map>
 using namespace SipServer;
 using namespace std;
+using namespace util;
 
 //struct msgPublic
 //{

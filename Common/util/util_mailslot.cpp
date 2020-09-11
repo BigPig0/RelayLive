@@ -1,6 +1,8 @@
-#include "MailSlot.h"
+#include "util_mailslot.h"
 #ifdef WINDOWS_IMPL
 #include <windows.h>
+
+namespace util {
 
 CMailSlotSever::CMailSlotSever(std::string strName)
     :m_bStop(false)
@@ -86,5 +88,6 @@ bool CMailSlotClient::SendMail(std::string strInfo)
         return false;
     }
     return true;
+}
 }
 #endif

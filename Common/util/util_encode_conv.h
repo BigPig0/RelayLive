@@ -18,6 +18,8 @@ typedef std::wstring _tstring;
 typedef std::string _tstring;
 #endif
 
+namespace util {
+
 class UTIL_API EncodeConvert
 {
 public:
@@ -45,4 +47,5 @@ static string UTF8toA(const std::string &src);
 // -1 -> 检测到非法的UTF-8编码首字节
 // -2 -> 检测到非法的UTF-8字节编码的后续字节.
 static int IsTextUTF8(const char* pszSrc); 
+};
 };

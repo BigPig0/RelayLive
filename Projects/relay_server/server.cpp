@@ -1,5 +1,5 @@
 #include "server.h"
-#include "NetStreamMaker.h"
+#include "util_netstream.h"
 #include "sha1.h"
 #include "base64.h"
 #include "uv.h"

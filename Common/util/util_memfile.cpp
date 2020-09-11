@@ -1,5 +1,7 @@
-#include "memfile.h"
+#include "util_memfile.h"
 #include <string.h>
+
+namespace util {
 
 memfile::memfile(size_t memInc, size_t maxSize)
 	: _buffer(NULL)
@@ -233,4 +235,6 @@ void* memfile::buffer()
 bool memfile::eof() const
 {
 	return _readPos >= _fileSize;
+}
+
 }

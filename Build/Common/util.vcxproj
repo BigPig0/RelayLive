@@ -11,40 +11,40 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\util\Clock.h" />
+    <ClInclude Include="..\..\common\util\util_clock.h" />
     <ClInclude Include="..\..\common\util\lock_free\atomicops.h" />
     <ClInclude Include="..\..\common\util\lock_free\blockingconcurrentqueue.h" />
     <ClInclude Include="..\..\common\util\lock_free\concurrentqueue.h" />
     <ClInclude Include="..\..\common\util\lock_free\readerwriterqueue.h" />
-    <ClInclude Include="..\..\Common\util\Log.h" />
+    <ClInclude Include="..\..\Common\util\util_log.h" />
     <ClInclude Include="..\..\common\util\util_def.h" />
-    <ClInclude Include="..\..\common\util\EncodeConvert.h" />
-    <ClInclude Include="..\..\common\util\Endian.h" />
+    <ClInclude Include="..\..\common\util\util_encode_conv.h" />
+    <ClInclude Include="..\..\common\util\util_endian.h" />
     <ClInclude Include="..\..\common\util\util_public.h" />
-    <ClInclude Include="..\..\common\util\guid.h" />
-    <ClInclude Include="..\..\common\util\MailSlot.h" />
-    <ClInclude Include="..\..\common\util\memfile.h" />
-    <ClInclude Include="..\..\common\util\MiniDump.h" />
-    <ClInclude Include="..\..\common\util\Mutex.h" />
-    <ClInclude Include="..\..\common\util\NetStreamMaker.h" />
-    <ClInclude Include="..\..\common\util\Settings.h" />
-    <ClInclude Include="..\..\common\util\Singleton.h" />
-    <ClInclude Include="..\..\common\util\TimeFormat.h" />
+    <ClInclude Include="..\..\common\util\util_guid.h" />
+    <ClInclude Include="..\..\common\util\util_mailslot.h" />
+    <ClInclude Include="..\..\common\util\util_memfile.h" />
+    <ClInclude Include="..\..\common\util\util_minidump.h" />
+    <ClInclude Include="..\..\common\util\util_mutex.h" />
+    <ClInclude Include="..\..\common\util\util_netstream.h" />
+    <ClInclude Include="..\..\common\util\util_settings.h" />
+    <ClInclude Include="..\..\common\util\util_singleton.h" />
+    <ClInclude Include="..\..\common\util\util_time_format.h" />
     <ClInclude Include="..\..\common\util\util.h" />
     <ClInclude Include="..\..\common\util\util_string.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\util\Clock.cpp" />
-    <ClCompile Include="..\..\common\util\EncodeConvert.cpp" />
-    <ClCompile Include="..\..\common\util\guid.cpp" />
-    <ClCompile Include="..\..\Common\util\Log.cpp" />
-    <ClCompile Include="..\..\common\util\MailSlot.cpp" />
-    <ClCompile Include="..\..\common\util\memfile.cpp" />
-    <ClCompile Include="..\..\common\util\MiniDump.cpp" />
-    <ClCompile Include="..\..\common\util\mutex.cpp" />
-    <ClCompile Include="..\..\common\util\NetStreamMaker.cpp" />
-    <ClCompile Include="..\..\common\util\Settings.cpp" />
-    <ClCompile Include="..\..\common\util\TimeFormat.cpp" />
+    <ClCompile Include="..\..\common\util\util_clock.cpp" />
+    <ClCompile Include="..\..\common\util\util_encode_conv.cpp" />
+    <ClCompile Include="..\..\common\util\util_guid.cpp" />
+    <ClCompile Include="..\..\Common\util\util_log.cpp" />
+    <ClCompile Include="..\..\common\util\util_mailslot.cpp" />
+    <ClCompile Include="..\..\common\util\util_memfile.cpp" />
+    <ClCompile Include="..\..\common\util\util_minidump.cpp" />
+    <ClCompile Include="..\..\common\util\util_mutex.cpp" />
+    <ClCompile Include="..\..\common\util\util_netstream.cpp" />
+    <ClCompile Include="..\..\common\util\util_settings.cpp" />
+    <ClCompile Include="..\..\common\util\util_time_format.cpp" />
     <ClCompile Include="..\..\common\util\util_string.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

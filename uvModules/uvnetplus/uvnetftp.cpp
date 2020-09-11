@@ -317,7 +317,7 @@ namespace Ftp {
                 if(strstr(szYearOrTime, ":")) { //这是时间
                     sscanf(szYearOrTime, "%d:%d:%d", &hour, &minute, &second);
                     //获取当前时间的月份
-                    struct tm now = CTimeFormat::getTimeInfo(time(NULL));
+                    struct tm now = util::CTimeFormat::getTimeInfo(time(NULL));
                     if(now.tm_mon < month) {
                         year = now.tm_year - 1;
                     } else {
@@ -335,7 +335,7 @@ namespace Ftp {
                 fileTime.tm_sec = second;
                 fileTime.tm_isdst = -1;
                 f.dateTime = _mkgmtime(&fileTime); //FTP上的时间是UTC时间。ftp服务器是可以选择用UTC时间还是本地时间，但UTC更通用。
-                f.date = CTimeFormat::printTime(f.dateTime, "%Y-%m-%d %H:%M:%S");
+                f.date = util::CTimeFormat::printTime(f.dateTime, "%Y-%m-%d %H:%M:%S");
                 f.name = szFileName;
                 fileList.push_back(f);
                 /*int i=0, count = 0;

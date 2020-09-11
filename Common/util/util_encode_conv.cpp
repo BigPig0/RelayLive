@@ -1,10 +1,12 @@
-#include "EncodeConvert.h"
+#include "util_encode_conv.h"
 #if defined(WINDOWS_IMPL)        /**Windows*/
 #include <windows.h>
 #elif defined(LINUX_IMPL)        /**Linux*/
 #include <stdlib.h>
 #endif
 #include <string.h>
+
+namespace util {
 
 #if defined(WINDOWS_IMPL)
 static std::string __ws2s(const wchar_t *pwszText, UINT uCodePage)
@@ -239,4 +241,5 @@ int EncodeConvert::IsTextUTF8(const char* pszSrc)
 
 	if( nBytes == 1) return 0;
 	else return nBytes;
+}
 }

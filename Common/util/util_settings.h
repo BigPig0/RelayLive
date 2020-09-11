@@ -3,6 +3,7 @@
 #include <string>
 using namespace std;
 
+namespace util {
 namespace Settings
 {
     /**
@@ -37,4 +38,5 @@ namespace Settings
      * @return ≈‰÷√÷µ
      */
     int UTIL_API getValue(const string &section,const string &key,const int &default_value);
+};
 };

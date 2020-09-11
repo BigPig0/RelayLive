@@ -6,6 +6,8 @@
 #include <list>
 #include <sstream>
 
+using namespace util;
+
 extern std::string GetDevsJson();
 
 namespace IPC {

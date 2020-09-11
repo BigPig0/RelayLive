@@ -4,6 +4,8 @@
 #include <map>
 #include <sstream>
 
+using namespace util;
+
 namespace IPC {
 	struct DevRequest {
 		uint32_t    id;    //«Î«ÛID

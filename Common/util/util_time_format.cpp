@@ -1,6 +1,7 @@
-#include "TimeFormat.h"
+#include "util_time_format.h"
 #include <time.h>
 
+namespace util {
 
 time_t CTimeFormat::scanTime(const char buf[32])
 {
@@ -82,4 +83,5 @@ struct tm CTimeFormat::getTimeInfo(time_t time) {
     localtime_r(&time, &tm);
 #endif
     return tm;
+}
 }

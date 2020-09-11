@@ -4,6 +4,8 @@
 #include "worker.h"
 #include <map>
 
+using namespace util;
+
 #define PACK_MAX_SIZE        1700                // rtp包最大长度
 
 namespace RtpDecode {

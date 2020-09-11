@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <string>
 
-namespace UTIL_GUID
-{
+namespace util {
+namespace Guid {
 
 /**
  * 可以保证全局唯一, 包含: 时间+服务器号+序列号, 多台服务器唯一需设置不同的服务器号
@@ -32,4 +32,5 @@ std::string uuid(uint8_t svrid = 0);
  */
 std::string guid();
 
+};
 };

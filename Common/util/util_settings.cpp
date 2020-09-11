@@ -1,9 +1,10 @@
-#include "Settings.h"
-#include "mutex.h"
+#include "util_settings.h"
+#include "util_mutex.h"
 #include <unordered_map>
 #include <string.h>
 using namespace std;
 
+namespace util {
 namespace Settings
 {
 #ifdef WINDOWS_IMPL
@@ -151,5 +152,6 @@ int getValue(const string &section,const string &key,const int &default_value)
     MutexLock lock(&g_rwLock);
     g_settings.insert(make_pair(mapkey, to_string(value)));
     return value;
+}
 }
 }

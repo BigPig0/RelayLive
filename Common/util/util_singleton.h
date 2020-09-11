@@ -1,7 +1,9 @@
 // µ¥ÀýÄ£°å
 #pragma once
 
-#include "mutex.h"
+#include "util_mutex.h"
+
+namespace util {
 
 template<class T>
 class Singleton
@@ -44,3 +46,4 @@ void Singleton<T>::ReleaseInstance()
     m_cs.unlock();
 }
 
+};

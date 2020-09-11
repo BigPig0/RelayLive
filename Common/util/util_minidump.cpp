@@ -1,8 +1,8 @@
-#include "MiniDump.h"
+#include "util_minidump.h"
 
-string  g_szDumpFileName;
+static string g_szDumpFileName;
 
-void (*callback)() = nullptr;
+static void (*callback)() = nullptr;
 
 #ifdef WIN32
 #include <windows.h>  
@@ -11,7 +11,7 @@ void (*callback)() = nullptr;
 #pragma comment(lib, "dbghelp.lib")  
 
 
-inline BOOL IsDataSectionNeeded(const WCHAR* pModuleName)  
+static inline BOOL IsDataSectionNeeded(const WCHAR* pModuleName)  
 {  
     if(pModuleName == 0)  
     {  
@@ -27,7 +27,7 @@ inline BOOL IsDataSectionNeeded(const WCHAR* pModuleName)
     return FALSE;  
 }  
 
-inline BOOL CALLBACK MiniDumpCallback(PVOID                            pParam,  
+static inline BOOL CALLBACK MiniDumpCallback(PVOID                            pParam,  
                                       const PMINIDUMP_CALLBACK_INPUT   pInput,  
                                       PMINIDUMP_CALLBACK_OUTPUT        pOutput)  
 {  
@@ -51,7 +51,7 @@ inline BOOL CALLBACK MiniDumpCallback(PVOID                            pParam,
     return FALSE;  
 }  
 
-inline void CreateMiniDump(PEXCEPTION_POINTERS pep, string strFileName)  
+static inline void CreateMiniDump(PEXCEPTION_POINTERS pep, string strFileName)  
 {  
     HANDLE hFile = CreateFileA(strFileName.c_str(), GENERIC_READ | GENERIC_WRITE,  
         FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);  
@@ -77,7 +77,7 @@ inline void CreateMiniDump(PEXCEPTION_POINTERS pep, string strFileName)
     }
 }  
 
-LONG __stdcall MyUnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)  
+static LONG __stdcall MyUnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)  
 {  
     CreateMiniDump(pExceptionInfo, g_szDumpFileName);  
 
@@ -85,7 +85,7 @@ LONG __stdcall MyUnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
 }  
 
 // 此函数一旦成功调用，之后对 SetUnhandledExceptionFilter 的调用将无效  
-void DisableSetUnhandledExceptionFilter()  
+static void DisableSetUnhandledExceptionFilter()  
 {  
     void* addr = (void*)GetProcAddress(LoadLibraryA("kernel32.dll"), "SetUnhandledExceptionFilter");  
     if (addr)  
@@ -106,7 +106,7 @@ void DisableSetUnhandledExceptionFilter()
     }  
 }  
 
-void InitMinDump()  
+static void InitMinDump()  
 {  
     //注册异常处理函数  
     SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);  
@@ -116,6 +116,8 @@ void InitMinDump()
 }
 
 #endif
+
+namespace util {
 
 CMiniDump::CMiniDump(string szFileName)
 {
@@ -134,4 +136,6 @@ CMiniDump::~CMiniDump()
 void CMiniDump::SetCallback(void (*p)())
 {
     callback = p;
+}
+
 }

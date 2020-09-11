@@ -2,7 +2,7 @@
 #include "uv.h"
 #include "uvlogutil.h"
 #include "utilc.h"
-#include "TimeFormat.h"
+#include "util.h"
 
 namespace uvLogPlus {
 
@@ -81,7 +81,7 @@ void FileAppender::Write() {
     pos += 20;
     //时间
     char *szTime = pos;
-    CTimeFormat::printTime(item->msg_time, "%Y%m%d%H%M%S ", szTime);
+    util::CTimeFormat::printTime(item->msg_time, "%Y%m%d%H%M%S ", szTime);
     pos += 32;
     //等级
     char *szLevel = (char*)levelNote[(int)item->level];

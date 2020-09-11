@@ -1,7 +1,7 @@
 #pragma once
 #include "ring_buff.h"
 #include "util.h"
-#include "NetStreamMaker.h"
+#include "util_netstream.h"
 #include <string>
 #include <list>
 

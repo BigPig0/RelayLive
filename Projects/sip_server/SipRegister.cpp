@@ -2,6 +2,7 @@
 #include "SipRegister.h"
 
 using namespace SipServer;
+using namespace util;
 
 namespace SipServer {
     struct SipContextInfo

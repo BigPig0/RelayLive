@@ -4,8 +4,8 @@
 #pragma once
 #include <stdint.h>
 
-namespace Util
-{
+namespace util {
+namespace Endian {
 static inline char* EndianChange(char* src, int bytes);
 static inline uint16_t EndianChange16(uint16_t src);
 static inline uint32_t EndianChange32(uint32_t src);
@@ -52,4 +52,5 @@ static inline bool IsLittleEndian()
      int i=1;  
      return (*(char *)&i == 1); 
 }
+};
 };

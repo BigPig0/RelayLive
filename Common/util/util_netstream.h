@@ -2,6 +2,7 @@
 #include "util_public.h"
 #include <stdint.h>
 
+namespace util {
 /**
  * 本类的作用是生成一个网络数据流，可以向里面添加数据
  * 封装了添加整数和字符串到数据流的接口
@@ -79,4 +80,5 @@ private:
     char*    pData;      //内存地址
     uint32_t nCurrent;   //当前读取数据的位置(位)
     uint32_t nLen;       //数据长度
+};
 };

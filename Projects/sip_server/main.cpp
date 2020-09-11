@@ -2,13 +2,14 @@
 //
 #include "util.h"
 #include "utilc.h"
-#include "MiniDump.h"
 #include "ipc.h"
 #include "SipServer.h"
 #include "script.h"
 #include <stdio.h>
 #include <map>
 #include <sstream>
+
+using namespace util;
 
 std::map<string, SipServer::DevInfo*> g_mapDevs;
 CriticalSection                       g_csDevs;

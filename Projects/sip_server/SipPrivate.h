@@ -53,7 +53,7 @@ extern void on_update_status(string strDevID, string strStatus);
 extern void on_update_postion(string strDevID, string log, string lat);
 
 extern map<string,SipServer::DevInfo*>  g_mapDevs;             //下级平台推送的设备
-extern CriticalSection                  g_csDevs;   
+extern util::CriticalSection            g_csDevs;   
 
 namespace SipServer {
     struct DevInfo;

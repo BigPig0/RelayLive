@@ -1,6 +1,8 @@
 #pragma once
 #include "util_public.h"
 
+namespace util {
+
 class UTIL_API CMiniDump
 {
 public:
@@ -8,4 +10,4 @@ public:
     ~CMiniDump(void);
     void SetCallback(void (*p)());
 };
-
+};

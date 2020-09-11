@@ -1,9 +1,11 @@
-#include "Clock.h"
+#include "util_clock.h"
 #if defined(WINDOWS_IMPL)        /**Windows*/
 #include <windows.h>
 #elif defined(LINUX_IMPL)        /**Linux*/
 #include <sys/time.h>        //gettimeofday()
 #endif
+
+namespace util {
 
 static uint64_t m_dfFreq = -1;
 
@@ -67,4 +69,5 @@ void Clock::end()
 uint64_t Clock::get()
 {
     return (m_llEnd - m_llStart);
+}
 }

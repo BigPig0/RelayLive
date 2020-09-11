@@ -1,4 +1,4 @@
-#include "guid.h"
+#include "util_guid.h"
 #include <sstream>
 #include <sys/timeb.h>
 #include <time.h>
@@ -8,8 +8,9 @@
 #define _abs64 abs
 #endif
 
-namespace UTIL_GUID
-{
+namespace util {
+namespace Guid {
+
 /**
  * –Ú¡–∫≈≥§∂»6bit
  */
@@ -211,4 +212,5 @@ string guid(){
 }
 
 #endif
+}
 }

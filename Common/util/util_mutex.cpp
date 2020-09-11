@@ -1,9 +1,10 @@
-#include "mutex.h"
+#include "util_mutex.h"
 #ifdef WINDOWS_IMPL
 #include <windows.h>
 #include <stdio.h>
 #endif
 
+namespace util {
 ////////////////////////////////////////////////////////////////////////////////
 MutexLock::MutexLock(Lock *lock) : m_lock(lock)
 {
@@ -270,3 +271,5 @@ void *SharedMemory::addr()
     return m_a;
 }
 #endif
+
+}

@@ -1,10 +1,13 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
-#include "uvIpc.h"
 #include "utilc_api.h"
-#include "stdio.h"
+#include "util.h"
+#include "uvIpc.h"
 #include "pm.h"
-#include "Log.h"
+#include <stdio.h>
+#include <windows.h>
+
+using namespace util;
 
 CProcessMgr* pm = NULL;
 

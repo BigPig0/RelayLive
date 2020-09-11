@@ -7,7 +7,7 @@
 #include "util.h"
 #include <windows.h>
 #include "server.h"
-#include "MiniDump.h"
+#include "util_minidump.h"
 
 int main(int argc, char* argv[])
 {

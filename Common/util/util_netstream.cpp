@@ -1,6 +1,8 @@
-#include "NetStreamMaker.h"
+#include "util_netstream.h"
 #include <stdint.h>
 #include <string.h>
+
+namespace util {
 
 CNetStreamMaker::CNetStreamMaker()
     : m_pData(nullptr)
@@ -263,4 +265,4 @@ void CNetStreamParser::skip(uint32_t bitCount)
     nCurrent += bitCount;
 }
 
-
+}

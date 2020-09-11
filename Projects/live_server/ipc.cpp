@@ -5,6 +5,7 @@
 #include <string>
 
 using namespace std;
+using namespace util;
 
 namespace IPC {
     uv_ipc_handle_t* h = NULL;

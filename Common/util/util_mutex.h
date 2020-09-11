@@ -4,6 +4,7 @@
 #include <condition_variable>
 typedef void * HANDLE;
 
+namespace util {
 ////////////////////////////////////////////////////////////////////////////////
 class UTIL_API Lock
 {
@@ -125,3 +126,4 @@ private:
     void *m_a;
 };
 #endif
+};

@@ -1,6 +1,8 @@
 #include "SipPrivate.h"
 #include "SipInvite.h"
 
+using namespace util;
+
 namespace SipServer {
 
     struct SipCall

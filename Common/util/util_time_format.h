@@ -13,6 +13,8 @@
 #pragma once
 #include "util_public.h"
 
+namespace util {
+
 class UTIL_API CTimeFormat
 {
 public:
@@ -46,4 +48,5 @@ public:
      */
     static struct tm getTimeInfo(time_t time);
 
+};
 };

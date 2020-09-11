@@ -1,5 +1,5 @@
 #include "server.h"
-#include "NetStreamMaker.h"
+#include "util_netstream.h"
 #include "sha1.h"
 #include "base64.h"
 #include "uv.h"
@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <sstream>
 
+using namespace util;
 
 uv_loop_t  uvLoopLive;
 uv_tcp_t   uvTcpServer;

@@ -6,6 +6,8 @@
 #pragma once
 #include "util_public.h"
 
+namespace util {
+
 #ifndef SIZE_T_MAX
 #define SIZE_T_MAX 0xffffffff 
 #endif // !SIZE_T_MAX
@@ -160,4 +162,5 @@ private:
      */
 	memfile(const memfile &other);
 	memfile& operator = (const memfile &other);
+};
 };

@@ -14,42 +14,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\util\Clock.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\EncodeConvert.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Endian.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\guid.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\MailSlot.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\memfile.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\MiniDump.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Mutex.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\NetStreamMaker.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Settings.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\Singleton.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\util\TimeFormat.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\util\util.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -71,48 +35,84 @@
     <ClInclude Include="..\..\common\util\lock_free\readerwriterqueue.h">
       <Filter>lock_free</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Common\util\Log.h">
+    <ClInclude Include="..\..\common\util\util_string.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\util\util_string.h">
+    <ClInclude Include="..\..\common\util\util_clock.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_encode_conv.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_endian.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_guid.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\util\util_log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_mailslot.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_memfile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_minidump.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_mutex.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_netstream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_settings.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_singleton.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util\util_time_format.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\util\EncodeConvert.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\guid.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\MailSlot.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\memfile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\MiniDump.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\NetStreamMaker.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\Settings.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\Clock.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\mutex.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\util\TimeFormat.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\util\Log.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\util\util_string.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_clock.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_encode_conv.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_guid.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\util\util_log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_mailslot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_memfile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_minidump.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_mutex.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_netstream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_settings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util\util_time_format.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

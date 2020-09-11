@@ -4,7 +4,7 @@
 #include "worker.h"
 #include "ipc.h"
 #include "util.h"
-#include "Log.h"
+#include "util_log.h"
 #include <list>
 #include <sstream>
 

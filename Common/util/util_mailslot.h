@@ -4,6 +4,7 @@
 #include <string>
 typedef void * HANDLE;
 
+namespace util {
 /**
  * 邮件槽服务端
  */
@@ -39,5 +40,6 @@ public:
 private:
     std::string m_strName;  //< 邮件槽名称
     HANDLE      m_hMailslot;    //< 文件槽句柄
+};
 };
 #endif

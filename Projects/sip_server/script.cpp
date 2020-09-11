@@ -2,9 +2,11 @@
 #include "ludb.h"
 #include "luapp.hpp"
 #include "script.h"
-#include "EncodeConvert.h"
+#include "util_encode_conv.h"
 #include "SipPrivate.h"
 #include "SipServer.h"
+
+using namespace util;
 
 namespace Script {
 
