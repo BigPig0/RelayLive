@@ -4,7 +4,7 @@ SOURCES = $(wildcard src/*.c)
 OBJS = $(patsubst %.c,%.o,$(notdir $(SOURCES)))
 OBJSD = $(addprefix $(TMP_DIR)ocilib/,$(OBJS))
 
-INCLUDE = -I ./include -I ./src
+INCLUDE = -I ./include -I ./src -D OCI_CHARSET_ANSI -D OCI_IMPORT_RUNTIME -D HAVE_DLFCN_H
 
 all:chkdir ocilib$(TAGTYPE)
 

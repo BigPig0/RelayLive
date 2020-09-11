@@ -1,5 +1,5 @@
-#./ThirdParty/Makefile
-SUBDIR = cjson libuv pugixml lua exosip ocilib hiredis_linux
+#./Common/Makefile
+SUBDIR = utilc util ssl pm
 
 all:$(SUBDIR)
 	
