@@ -2,6 +2,7 @@
 
 #if defined(WINDOWS_IMPL)
 #include <windows.h>
+#include <time.h>
 
 int getpid() {
     return GetCurrentProcessId();

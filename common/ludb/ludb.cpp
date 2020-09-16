@@ -1,6 +1,7 @@
 #include "ludb_private.h"
 #include "ludb.h"
 #include "ludb_oracle.h"
+#include "ludb_mysql.h"
 #include "ludb_mongo.h"
 #include "ludb_redis.h"
 #include "ludb_lua.h"
@@ -11,12 +12,22 @@ bool ludb_init_oracle(const char *path /*= NULL*/) {
     return ludb_oracle_init(path);
 }
 
+bool ludb_init_mysql() {
+#ifdef DB_MYSQL
+    return ludb_mysql_init();
+#endif
+    return false;
+}
+
 bool ludb_init_mongo() {
     return true;
 }
 
 bool ludb_init_redis() {
+#ifdef DB_REDIS
     return ludb_redis_init();
+#endif
+    return false;
 }
 
 void ludb_use_lua(void* lua) {
@@ -28,7 +39,11 @@ void ludb_clean(ludb_db_type_t t) {
 #ifdef DB_ORACLE
         ludb_oracle_clean();
 #endif
-    } else if (t == ludb_db_redis) {
+    } else if (t == ludb_db_mysql) {
+#ifdef DB_MYSQL
+        ludb_mysql_clean();
+#endif
+    }else if (t == ludb_db_redis) {
 #ifdef DB_REDIS
         ludb_redis_clean();
 #endif
@@ -114,6 +129,10 @@ bool ludb_bind_int(ludb_stmt_t *stmt, const char *name, int *data) {
 
 bool ludb_bind_str(ludb_stmt_t *stmt, const char *name, const char *data, int len) {
     return stmt->bind_str(name, data, len);
+}
+
+bool ludb_bind(ludb_stmt_t *stmt, uint32_t col_num, column_type_t *col_type, string *col_value) {
+    return stmt->bind(col_num, col_type, col_value);
 }
 
 bool ludb_execute(ludb_stmt_t *stmt) {

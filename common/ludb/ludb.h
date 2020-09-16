@@ -12,6 +12,11 @@
 LUDB_API bool ludb_init_oracle(const char *path /*= NULL*/);
 
 /**
+ * 初始化mysql数据库
+ */
+LUDB_API bool ludb_init_mysql();
+
+/**
  * 初始化mongodb数据库
  */
 LUDB_API bool ludb_init_mongo();
@@ -86,9 +91,11 @@ LUDB_API bool ludb_execute_stmt(ludb_stmt_t *stmt, const char *sql);
  * 预执行语句，等待绑定
  */
 LUDB_API bool ludb_prepare(ludb_stmt_t *stmt, const char *sql);
-/** 绑定 */
+/** 绑定 ORACLE */
 LUDB_API bool ludb_bind_int(ludb_stmt_t *stmt, const char *name, int *data);
 LUDB_API bool ludb_bind_str(ludb_stmt_t *stmt, const char *name, const char *data, int len);
+/** 绑定 MYSQL */
+LUDB_API bool ludb_bind(ludb_stmt_t *stmt, uint32_t col_num, column_type_t *col_type, std::string *col_value);
 /** 执行 */
 LUDB_API bool ludb_execute(ludb_stmt_t *stmt);
 

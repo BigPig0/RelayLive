@@ -13,7 +13,7 @@
  CRC16_USB         | x16+x15+x2+1（0x8005） | 0xFFFF | 低位在前，高位在后 | 与0xFFFF异或
  */
 
-#include "ssl_export.h"
+#include "crypto_export.h"
 #include <stdint.h>
 
 class _SSL_API CRC

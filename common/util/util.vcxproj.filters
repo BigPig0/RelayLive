@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="lock_free">
+      <UniqueIdentifier>{d0e30aa0-d10d-4b7a-aab3-6d848031ac27}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="util.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_def.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_public.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="lock_free\atomicops.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="lock_free\blockingconcurrentqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="lock_free\concurrentqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="lock_free\readerwriterqueue.h">
+      <Filter>lock_free</Filter>
+    </ClInclude>
+    <ClInclude Include="util_string.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_clock.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_encode_conv.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_endian.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_guid.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_mailslot.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_memfile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_minidump.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_mutex.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_netstream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_settings.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_singleton.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="util_time_format.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="util_string.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_clock.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_encode_conv.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_guid.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_mailslot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_memfile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_minidump.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_mutex.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_netstream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_settings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="util_time_format.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

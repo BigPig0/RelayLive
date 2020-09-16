@@ -12,7 +12,7 @@
  * \note
 */
 
-#include "netstream.h"
+#include "utilc_netstream.h"
 
 static uint64_t double2int( double value )
 {

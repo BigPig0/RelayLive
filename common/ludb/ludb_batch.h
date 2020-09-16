@@ -2,7 +2,7 @@
 
 #include "ludb_exp.h"
 #include "ludb_public.h"
-
+#include <vector>
 
 /**
  * 创建一个批量处理句柄
@@ -10,7 +10,7 @@
  * @param tag 连接池标签
  * @param sql 执行的sql
  * @param rowNum 每次最多绑定的数据行数,数据达到这个值会触发执行sql
- * @param interval 最多间隔几秒，存在数据但不足rowNum时会触发sql
+ * @param interval 最多间隔几秒，存在数据但不足rowNum时会触发sql。interval为0时不开启定时器，需要用户手动执行。
  * @param binds 绑定信息的数组，以bindName=NULL结束。bindName需要与sql中的绑定标记对应
  */
 LUDB_API ludb_batch_t* create_ludb_batch(ludb_db_type_t t, const char *tag, const char *sql, int rowNum, int interval, bind_column_t* binds);
@@ -29,7 +29,19 @@ LUDB_API void destory_ludb_batch(ludb_batch_t* h, int clean /*= 0*/);
 LUDB_API uint64_t ludb_batch_add_row(ludb_batch_t* h, const char **row);
 
 /**
+ * interval为0时不会自动执行入库，需要用户调用该方法手动入库。
+ * @return 执行成功
+ */
+LUDB_API bool ludb_batch_run_sync(ludb_batch_t* h);
+
+/**
  * 设置回调，通知缓存的记录数
  */
 typedef void(*catch_num_cb)(ludb_batch_t*, uint64_t);
-LUDB_API void ludn_batch_catch_num(catch_num_cb cb);
+LUDB_API void ludb_batch_catch_num(catch_num_cb cb);
+
+/**
+ * 设置回调，通知失败的记录数据
+ */
+typedef void(*failed_data_cb)(ludb_batch_t*, std::vector<std::vector<std::string>>);
+LUDB_API void ludb_batch_failed_data(failed_data_cb cb);

@@ -1,4 +1,5 @@
 #include "ludb_redis.h"
+#ifdef DB_REDIS
 #include "ludb_private.h"
 #include "hiredis.h"
 
@@ -175,6 +176,10 @@ bool ludb_redis_stmt::bind_str(const char *name, const char *data, int len){
     return false;
 }
 
+bool ludb_redis_stmt::bind(uint32_t col_num, column_type_t *col_type, string *col_value) {
+    return false;
+}
+
 bool ludb_redis_stmt::execute(){
     redisContext *c = (redisContext*)conn->conn;
     redis_stmt_t *st = (redis_stmt_t*)stmt;
@@ -302,3 +307,4 @@ ludb_redis_batch::~ludb_redis_batch() {
 bool ludb_redis_batch::insert() {
     return false;
 }
+#endif

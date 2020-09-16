@@ -56,9 +56,6 @@
     <ProjectReference Include="util.vcxproj">
       <Project>{642077f6-2ca8-4e04-9b0d-9cfa1e5efa49}</Project>
     </ProjectReference>
-    <ProjectReference Include="utilc.vcxproj">
-      <Project>{5d8b3c31-2629-40a1-8c75-8e50224b60a7}</Project>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4EBD39F9-4927-491A-81C3-B0CB42389024}</ProjectGuid>

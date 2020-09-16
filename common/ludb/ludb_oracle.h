@@ -23,6 +23,7 @@ public:
     virtual bool prepare(const char *sql);
     virtual bool bind_int(const char *name, int *data);
     virtual bool bind_str(const char *name, const char *data, int len);
+    virtual bool bind(uint32_t col_num, column_type_t *col_type, string *col_value);
     virtual bool execute();
     virtual uint32_t affected_rows();
     virtual ludb_rest_t* result();

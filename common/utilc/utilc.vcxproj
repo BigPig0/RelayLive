@@ -11,38 +11,33 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\uvmodules\uvlogplus\uvlogconf.h" />
-    <ClInclude Include="..\..\uvmodules\uvlogplus\uvlogplus.h" />
-    <ClInclude Include="..\..\uvmodules\uvlogplus\uvlogprivate.h" />
-    <ClInclude Include="..\..\uvmodules\uvlogplus\uvlogpublic.h" />
-    <ClInclude Include="..\..\uvmodules\uvlogplus\uvlogutil.h" />
+    <ClInclude Include="utilc.h" />
+    <ClInclude Include="utilc_api.h" />
+    <ClInclude Include="utilc_bnf.h" />
+    <ClInclude Include="utilc_buflist.h" />
+    <ClInclude Include="utilc_def.h" />
+    <ClInclude Include="utilc_dlinked_list.h" />
+    <ClInclude Include="utilc_export.h" />
+    <ClInclude Include="utilc_linked_list.h" />
+    <ClInclude Include="utilc_memfile.h" />
+    <ClInclude Include="utilc_netstream.h" />
+    <ClInclude Include="utilc_ring_buff.h" />
+    <ClInclude Include="utilc_string.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogconf.cpp" />
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogconsolappender.cpp" />
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogfileappender.cpp" />
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogplus.cpp" />
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogrollingfileappender.cpp" />
-    <ClCompile Include="..\..\uvmodules\uvlogplus\uvlogutil.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\common\utilc.vcxproj">
-      <Project>{c00f783b-0e57-400d-a1b7-9fe3985a1b1d}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\thirdparty\cjson.vcxproj">
-      <Project>{63cd9ce1-6d07-43d5-8795-b9909fa8d05e}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\thirdparty\libuv.vcxproj">
-      <Project>{6197738f-bb03-47b6-8685-677bc2c346bc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\thirdparty\pugixml.vcxproj">
-      <Project>{bdf57317-f779-4b3b-8cc4-e908e729c9d5}</Project>
-    </ProjectReference>
+    <ClCompile Include="utilc_api.c" />
+    <ClCompile Include="utilc_bnf.c" />
+    <ClCompile Include="utilc_buflist.c" />
+    <ClCompile Include="utilc_dlinked_list.c" />
+    <ClCompile Include="utilc_memfile.c" />
+    <ClCompile Include="utilc_netstream.c" />
+    <ClCompile Include="utilc_ring_buff.c" />
+    <ClCompile Include="utilc_string.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{053C306C-2522-47DF-A4CA-4910086670C8}</ProjectGuid>
+    <ProjectGuid>{5D8B3C31-2629-40A1-8C75-8E50224B60A7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>uvHttp</RootNamespace>
+    <RootNamespace>util</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -66,17 +61,22 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)out\Temp\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)out\Temp\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdParty/libUV/include;../../thirdParty/pugixml;../../thirdParty/cjson;../../common/utilc;../../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../thirdParty/libcstl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -92,9 +92,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdParty/libUV/include;../../thirdParty/pugixml;../../thirdParty/cjson;../../common/utilc;../../common/util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../thirdParty/libcstl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

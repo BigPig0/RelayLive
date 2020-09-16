@@ -13,8 +13,8 @@
 */
 
 #include "uv.h"
-#include "uvIpc.h"
-#include "netstream.h"
+#include "uvipc.h"
+#include "utilc.h"
 
 #ifndef MAX_PATH
 #define MAX_PATH 260

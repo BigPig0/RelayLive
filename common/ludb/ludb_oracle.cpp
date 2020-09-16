@@ -134,6 +134,10 @@ bool ludb_oracle_stmt::bind_str(const char *name, const char *data, int len) {
     return OCI_BindString((OCI_Statement *)stmt, name, (otext*)data, len);
 }
 
+bool ludb_oracle_stmt::bind(uint32_t col_num, column_type_t *col_type, string *col_value) {
+    return false;
+}
+
 bool ludb_oracle_stmt::execute() {
     return OCI_Execute((OCI_Statement *)stmt);
 }
@@ -216,7 +220,7 @@ string ludb_oracle_rest_t::get_blob(uint32_t i) {
     } while (readlen);
 
     OCI_LobFree(lob);
-    return ret;
+    return ret.c_str();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -372,6 +376,7 @@ bool ludb_oracle_batch::insert() {
     OCI_Connection *cn = (OCI_Connection*)conn->conn;
     OCI_Statement *st = OCI_CreateStatement(cn);
 
+    bool ret = true;
     if(binds.empty()){
         for(auto &row : insts){
             for(string &sql : row){
@@ -450,9 +455,10 @@ bool ludb_oracle_batch::insert() {
 
         boolean bExcute = OCI_Execute(st);
         boolean bCommit = OCI_Commit(cn);
-        unsigned int count = OCI_GetAffectedRows(st);    //某一行插入失败，不会回滚所有数据，但是出错后count为0，这是ocilib的一个bug
+        unsigned int count = OCI_GetAffectedRows(st);
         //char buff[100]={0};
         if (!bExcute || !bCommit || 0 == count){
+            ret = false;
             Log::error("Execute %s fail bExcute: %d; bCommit: %d; count: %d" , tag.c_str(), bExcute, bCommit, count);
         } else {
             Log::debug("Execute %s sucess bExcute: %d; bCommit: %d; count: %d" ,tag.c_str(), bExcute, bCommit, count);
@@ -460,5 +466,5 @@ bool ludb_oracle_batch::insert() {
     }
     OCI_FreeStatement(st);
     delete conn;
-    return true;
+    return ret;
 }

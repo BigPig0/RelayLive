@@ -1,8 +1,9 @@
 #pragma once
 
 #define DB_ORACLE
+//#define DB_MYSQL
 //#define DB_MONGO
-#define DB_REDIS
+//#define DB_REDIS
 
 #include "util.h"
 #include "ludb_public.h"
@@ -35,6 +36,7 @@ struct ludb_stmt_t {
     virtual bool prepare(const char *sql) = 0;
     virtual bool bind_int(const char *name, int *data) = 0;
     virtual bool bind_str(const char *name, const char *data, int len) = 0;
+    virtual bool bind(uint32_t col_num, column_type_t *col_type, string *col_value) = 0;
     virtual bool execute() = 0;
     virtual uint32_t affected_rows() = 0;
     virtual ludb_rest_t* result() = 0;

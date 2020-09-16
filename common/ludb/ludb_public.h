@@ -7,6 +7,7 @@
 typedef enum _ludb_db_type {
     ludb_db_unknow = 0,
     ludb_db_oracle,
+    ludb_db_mysql,
     ludb_db_mongo,
     ludb_db_redis
 } ludb_db_type_t;

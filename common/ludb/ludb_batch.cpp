@@ -1,6 +1,7 @@
 #include "ludb_private.h"
 #include "ludb_batch.h"
 #include "ludb_oracle.h"
+#include "ludb_mysql.h"
 #include "ludb_mongo.h"
 #include "ludb_redis.h"
 #include "utilc.h"
@@ -8,6 +9,7 @@
 int pointLen = sizeof(void*); //< 指针的长度，32位平台4字节，64位平台8字节
 
 static catch_num_cb _cbCatchNum = NULL;
+static failed_data_cb _cbFailedData = NULL;
 
 /** 从接收队列中将数据移到插入队列，到插入队列插满为止 */
 static int move_rows(ludb_batch_t* h) {
@@ -29,10 +31,16 @@ static bool insert(ludb_batch_t* h)
     if(h->insts.empty())
         return true;
 
-    h->insert();
+    bool ret = h->insert();
+    if(!ret) {
+        // 执行失败，将失败的数据上抛
+        if(_cbFailedData) {
+            _cbFailedData(h, h->insts);
+        }
+    }
     h->insts.clear();
 
-    return true;
+    return ret;
 }
 
 static void collect(void* arg){
@@ -108,7 +116,9 @@ ludb_batch_t::ludb_batch_t(string Tag, string Sql, int RowNum, int Interval, bin
     }
 
     uv_mutex_init(&mutex);
-    uv_thread_create(&tid, collect, this);
+
+    if(interval > 0)
+        uv_thread_create(&tid, collect, this);
 }
 
 ludb_batch_t::~ludb_batch_t(){
@@ -120,6 +130,10 @@ ludb_batch_t* create_ludb_batch(ludb_db_type_t t, const char *tag, const char *s
     if(t == ludb_db_oracle) {
 #ifdef DB_ORACLE
         ret = new ludb_oracle_batch(tag,sql,rowNum,interval,binds);
+#endif
+    } else if(t == ludb_db_mysql) {
+#ifdef DB_MYSQL
+        ret = new ludb_mysql_batch(tag,sql,rowNum,interval,binds);
 #endif
     } else if(t == ludb_db_mongo) {
 #ifdef DB_MONGO
@@ -136,6 +150,8 @@ ludb_batch_t* create_ludb_batch(ludb_db_type_t t, const char *tag, const char *s
 
 void destory_ludb_batch(ludb_batch_t* h, int clean /*= 0*/) {
     h->running = false;
+    if(h->interval > 0)
+        delete h;
 }
 
 uint64_t ludb_batch_add_row(ludb_batch_t* h, const char **row) {
@@ -152,6 +168,17 @@ uint64_t ludb_batch_add_row(ludb_batch_t* h, const char **row) {
 	return ret;
 }
 
-void ludn_batch_catch_num(catch_num_cb cb){
+bool ludb_batch_run_sync(ludb_batch_t* h) {
+    uv_mutex_lock(&h->mutex);
+    move_rows(h);
+    uv_mutex_unlock(&h->mutex);
+    return insert(h);
+}
+
+void ludb_batch_catch_num(catch_num_cb cb){
 	_cbCatchNum = cb;
+}
+
+void ludb_batch_failed_data(failed_data_cb cb){
+    _cbFailedData = cb;
 }

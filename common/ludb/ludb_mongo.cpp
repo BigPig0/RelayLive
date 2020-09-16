@@ -161,6 +161,10 @@ bool ludb_mongo_stmt::bind_str(const char *name, const char *data, int len) {
     return true;
 }
 
+bool ludb_mongo_stmt::bind(uint32_t col_num, column_type_t *col_type, string *col_value) {
+    return false;
+}
+
 bool ludb_mongo_stmt::execute() {
     mongo_stmt_t *st = (mongo_stmt_t*)stmt;
     mongoc_client_t *client = (mongoc_client_t*)conn->conn;
