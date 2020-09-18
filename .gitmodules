@@ -52,3 +52,9 @@
 [submodule "uvmodules/uvlogplus"]
 	path = uvmodules/uvlogplus
 	url = https://gitee.com/ztwlla/uvlogplus.git
+[submodule "thirdparty/exosip"]
+	path = thirdparty/exosip
+	url = https://gitee.com/ztwlla/exosip.git
+[submodule "common/pm"]
+	path = common/pm
+	url = https://gitee.com/ztwlla/pm.git

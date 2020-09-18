@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{af670b3a-6985-4e57-8dba-a7c10d3fd4d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{dcf96883-a2e4-45aa-b117-eeafeb98ce85}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ipc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="script.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="SipInvite.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="SipMessage.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="SipRegister.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="SipServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="SipSubscribe.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ipc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="script.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipSubscribe.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipServer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipRegister.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipPrivate.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipInvite.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SipMessage.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
