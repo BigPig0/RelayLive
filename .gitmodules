@@ -1,0 +1,54 @@
+[submodule "thirdparty/libffmpeg"]
+	path = thirdparty/libffmpeg
+	url = https://gitee.com/ztwlla/libffmpeg.git
+[submodule "thirdparty/libuv"]
+	path = thirdparty/libuv
+	url = https://gitee.com/ztwlla/libuv.git
+[submodule "thirdparty/cjson"]
+	path = thirdparty/cjson
+	url = https://gitee.com/ztwlla/cjson.git
+[submodule "thirdparty/pugixml"]
+	path = thirdparty/pugixml
+	url = https://gitee.com/ztwlla/pugixml.git
+[submodule "thirdparty/lua"]
+	path = thirdparty/lua
+	url = https://gitee.com/ztwlla/lua.git
+[submodule "thirdparty/ocilib"]
+	path = thirdparty/ocilib
+	url = https://gitee.com/ztwlla/ocilib.git
+[submodule "thirdparty/libcstl"]
+	path = thirdparty/libcstl
+	url = https://gitee.com/ztwlla/libcstl.git
+[submodule "thirdparty/hiredis"]
+	path = thirdparty/hiredis
+	url = https://gitee.com/ztwlla/hiredis.git
+[submodule "thirdparty/libmariadb"]
+	path = thirdparty/libmariadb
+	url = https://gitee.com/ztwlla/libmariadb.git
+[submodule "thirdparty/zlib"]
+	path = thirdparty/zlib
+	url = https://gitee.com/ztwlla/zlib.git
+[submodule "thirdparty/librabbitmq"]
+	path = thirdparty/librabbitmq
+	url = https://gitee.com/ztwlla/librabbitmq.git
+[submodule "common/util"]
+	path = common/util
+	url = https://gitee.com/ztwlla/util.git
+[submodule "common/utilc"]
+	path = common/utilc
+	url = https://gitee.com/ztwlla/utilc.git
+[submodule "common/crypto"]
+	path = common/crypto
+	url = https://gitee.com/ztwlla/crypto.git
+[submodule "common/ludb"]
+	path = common/ludb
+	url = https://gitee.com/ztwlla/ludb.git
+[submodule "uvmodules/uvipc"]
+	path = uvmodules/uvipc
+	url = https://gitee.com/ztwlla/uvipc.git
+[submodule "uvmodules/uvnetplus"]
+	path = uvmodules/uvnetplus
+	url = https://gitee.com/ztwlla/uvnetplus.git
+[submodule "uvmodules/uvlogplus"]
+	path = uvmodules/uvlogplus
+	url = https://gitee.com/ztwlla/uvlogplus.git
