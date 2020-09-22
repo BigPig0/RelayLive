@@ -1,5 +1,5 @@
-#./thirdparty/Makefile
-SUBDIR = cjson exosip hiredis libcstl libmariadb librabbitmq libuv lua ocilib pugixml zlib
+#./projects/Makefile
+SUBDIR = sip_server
 
 all:$(SUBDIR)
 	

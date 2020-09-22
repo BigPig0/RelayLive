@@ -6,7 +6,7 @@
 #pragma once
 
 #include <stdio.h>
-#include <tchar.h>
+//#include <tchar.h>
 
 
 
@@ -21,7 +21,7 @@
 #include <map>
 #include <sstream>
 #include <thread>
-#include <windows.h>
+//#include <windows.h>
 //#include <Winsock2.h> 
 
 #include <osipparser2/osip_message.h>

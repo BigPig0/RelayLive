@@ -1,3 +1,5 @@
+#include "util.h"
+#include "utilc.h"
 #include "SipPrivate.h"
 #include "SipServer.h"
 #include "SipRegister.h"
@@ -5,18 +7,24 @@
 #include "SipSubscribe.h"
 #include "SipInvite.h"
 #include "cJSON.h"
-#include <winsock.h>
 #include <list>
 #include <map>
+#include<algorithm>
 
 using namespace util;
 
-#pragma comment(lib, "Dnsapi.lib")
-#pragma comment(lib, "Iphlpapi.lib")
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "delayimp.lib")
-#pragma comment(lib, "Qwave.lib")
-#pragma comment(lib, "exosip.lib")
+#ifdef WINDOWS_IMPL
+//#include <winsock.h>
+//#pragma comment(lib, "Dnsapi.lib")
+//#pragma comment(lib, "Iphlpapi.lib")
+//#pragma comment(lib, "Ws2_32.lib")
+//#pragma comment(lib, "delayimp.lib")
+//#pragma comment(lib, "Qwave.lib")
+//#pragma comment(lib, "exosip.lib")
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 
 namespace SipServer {
     static CSipSubscribe* _pSubscribe;
@@ -68,12 +76,12 @@ namespace SipServer {
     //exosip事件处理线程
     static void SeverThread()
     {
-        DWORD nThreadID = GetCurrentThreadId();
+        int nThreadID = gettid();
         Log::debug("Sip Sever Thread ID : %d", nThreadID);
 
         eXosip_set_user_agent(g_pExContext, NULL);
 
-        if (OSIP_SUCCESS != eXosip_listen_addr(g_pExContext,IPPROTO_UDP, NULL, g_nSipPort, AF_INET, 0))
+        if (OSIP_SUCCESS != eXosip_listen_addr(g_pExContext, IPPROTO_UDP, NULL, g_nSipPort, AF_INET, 0))
         {
             Log::error("CSipSever::SeverThread eXosip_listen_addr failure.");
             return;

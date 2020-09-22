@@ -97,7 +97,7 @@ int CSipInvite::SendInvite(string strProName, uint32_t nID, int nRTPPort)
     nCallID++;
     if(nCallID > 9999) nCallID = 0;
     char szSSRC[5]={0};
-    sprintf_s(szSSRC,"%04d",nCallID);
+    sprintf(szSSRC,"%04d",nCallID);
 
     stringstream ss;
     ss << "v=0\r\n"
@@ -157,7 +157,7 @@ int CSipInvite::SendRecordInvite(string strProName, uint32_t nID, int nRTPPort, 
 
     static int nCallID = 0;
     char szSSRC[5]={0};
-    sprintf_s(szSSRC,"%04d",nCallID);
+    sprintf(szSSRC,"%04d",nCallID);
 
     stringstream ss;
     ss << "v=0\r\n"

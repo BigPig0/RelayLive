@@ -72,7 +72,7 @@ int main()
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log\\sipServer.txt");
+    sprintf(path, ".\\log\\sipServer.txt");
     Log::open(Log::Print::both, Log::Level::debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 

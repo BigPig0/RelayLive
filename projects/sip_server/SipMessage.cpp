@@ -766,23 +766,23 @@ void CSipMessage::DeviceControl(string strDevCode,
     szCmd[3] = 'F'; 
     szCmd[4] = '0'; //字节3 地址的低8位
     szCmd[5] = '1'; 
-    sprintf_s(szTmp, 10,"%02X", cControlCode); 
+    sprintf(szTmp,"%02X", cControlCode); 
     //Log::debug("cControlCode is %s", szTmp);
     szCmd[6]  = szTmp[0];  //字节4 控制码
     szCmd[7]  = szTmp[1];
-    sprintf_s(szTmp, 10,"%02X", cMoveSpeed); 
+    sprintf(szTmp,"%02X", cMoveSpeed); 
     //Log::debug("cMoveSpeed is %s", szTmp);
     szCmd[8]  = szTmp[0];  //字节5 水平控制速度
     szCmd[9]  = szTmp[1];
     szCmd[10] = szTmp[0];  //字节6 垂直控制速度
     szCmd[11] = szTmp[1];
-    sprintf_s(szTmp, 10,"%X", cInOutSpeed); 
+    sprintf(szTmp,"%X", cInOutSpeed); 
     //Log::debug("cInOutSpeed is %s", szTmp);
     szCmd[12] = szTmp[0];  //字节7高4位 缩放控制速度
     szCmd[13] = '0';       //字节7低4位 地址的高4位
     //计算校验码
     int nCheck = (0XA5 + 0X0F + 0X01 + cControlCode + cMoveSpeed + cMoveSpeed + cInOutSpeed<<4&0XF0)%0X100;
-    sprintf_s(szTmp,10,"%02X", nCheck);
+    sprintf(szTmp,"%02X", nCheck);
     //Log::debug("nCheck is %s", szTmp);
     szCmd[14] = szTmp[0]; //字节8 校验码
     szCmd[15] = szTmp[1];
