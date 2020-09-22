@@ -14,13 +14,13 @@
 using namespace util;
 
 #ifdef WINDOWS_IMPL
-//#include <winsock.h>
-//#pragma comment(lib, "Dnsapi.lib")
-//#pragma comment(lib, "Iphlpapi.lib")
-//#pragma comment(lib, "Ws2_32.lib")
-//#pragma comment(lib, "delayimp.lib")
-//#pragma comment(lib, "Qwave.lib")
-//#pragma comment(lib, "exosip.lib")
+#include <winsock.h>
+#pragma comment(lib, "Dnsapi.lib")
+#pragma comment(lib, "Iphlpapi.lib")
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "delayimp.lib")
+#pragma comment(lib, "Qwave.lib")
+#pragma comment(lib, "exosip.lib")
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
