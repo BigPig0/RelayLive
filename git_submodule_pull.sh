@@ -17,7 +17,7 @@ git checkout master
 git pull
 
 echo update thirdparty/libcstl
-cd ${CurrentPath}thirdparty/libcstl
+cd ${CurrentPath}/thirdparty/libcstl
 git checkout master
 git pull
 
