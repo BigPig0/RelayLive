@@ -20,6 +20,7 @@ using namespace util;
 
 uv_loop_t  uvLoopLive;
 uv_tcp_t   uvTcpServer;
+std::string serverName;
 
 int CreatDir(string strDirPath) {
 
@@ -212,7 +213,7 @@ RequestParam::RequestParam()
     , nImageNumber(0)
     , nVideoDuration(0)
 {
-    strSavePath = Settings::getValue("Save","path","/");
+    strSavePath = Settings::getValue("Capture","save","/");
     char endC = strSavePath.at(strSavePath.size()-1);
     if(endC != '/' && endC != '\\') {
         strSavePath += '/';
@@ -290,7 +291,7 @@ void CLiveSession::OnRecv(char* data, int len) {
                 } else {
                     response += ",";
                 }
-                response += imagePath;
+                response += ("/" + serverName + imagePath);
             }
             response += "\",";
         }
@@ -299,7 +300,7 @@ void CLiveSession::OnRecv(char* data, int len) {
             response += "null";
         } else {
             response += "\"";
-            response += Params.videoPath;
+            response += ("/" + serverName + Params.videoPath);
             response += "\"";
         }
         response += "}\r\n";
@@ -363,7 +364,7 @@ void CLiveSession::OnRecv(char* data, int len) {
         }
 
         //´´½¨worker
-        //pWorker = CreatLiveWorker(Params);
+        pWorker = CreatLiveWorker(Params);
 
     } else {
 		if(dataCatch.find("\r\n\r\n") != std::string::npos) {
@@ -504,6 +505,7 @@ void start_service(uint32_t port) {
 namespace Server {
 
 int Init(int port) {
+    serverName = Settings::getValue("Capture","name","capture");
     InitFFmpeg();
         
     start_service(port);

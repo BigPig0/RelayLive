@@ -39,66 +39,109 @@ void freePic(FramePic p) {
     av_freep(&p.pBuff);
 }
 
-//typedef struct tagBITMAPFILEHEADER
-//{
-//    unsigned short bfType; //2 位图文件的类型，必须为“BM”
-//    unsigned long bfSize; //4 位图文件的大小，以字节为单位
-//    unsigned short bfReserved1; //2 位图文件保留字，必须为0
-//    unsigned short bfReserved2; //2 位图文件保留字，必须为0
-//    unsigned long bfOffBits; //4 位图数据的起始位置，以相对于位图文件头的偏移量表示，以字节为单位
-//} BITMAPFILEHEADER;//该结构占据14个字节。
-//
-//typedef struct tagBITMAPINFOHEADER{
-//    unsigned long biSize; //4 本结构所占用字节数
-//    long biWidth; //4 位图的宽度，以像素为单位
-//    long biHeight; //4 位图的高度，以像素为单位
-//    unsigned short biPlanes; //2 目标设备的平面数不清，必须为1
-//    unsigned short biBitCount;//2 每个像素所需的位数，必须是1(双色), 4(16色)，8(256色)或24(真彩色)之一
-//    unsigned long biCompression; //4 位图压缩类型，必须是 0(不压缩),1(BI_RLE8压缩类型)或2(BI_RLE4压缩类型)之一
-//    unsigned long biSizeImage; //4 位图的大小，以字节为单位
-//    long biXPelsPerMeter; //4 位图水平分辨率，每米像素数
-//    long biYPelsPerMeter; //4 位图垂直分辨率，每米像素数
-//    unsigned long biClrUsed;//4 位图实际使用的颜色表中的颜色数
-//    unsigned long biClrImportant;//4 位图显示过程中重要的颜色数
-//} BITMAPINFOHEADER;//该结构占据40个字节。
+int img_savePicture(AVFrame *pFrame, const char *out_filename) {//编码保存图片
 
-bool CreateBmp(const char *filename, uint8_t *pRGBBuffer, int width, int height, int bpp)
-{
-    BITMAPFILEHEADER bmpheader;
-    BITMAPINFOHEADER bmpinfo;
-    FILE *fp = NULL;
+    int width = pFrame->width;
+    int height = pFrame->height;
+    AVCodecContext *pCodeCtx = NULL;
+    AVFormatContext *pFormatCtx = NULL;
+    AVStream *pAVStream = NULL;
 
-    fp = fopen(filename,"wb");
-    if( fp == NULL )
-    {
-        return false;
+    do{
+        pFormatCtx = avformat_alloc_context();
+        // 设置输出文件格式
+        pFormatCtx->oformat = av_guess_format("mjpeg", NULL, NULL);
+
+        // 创建并初始化输出AVIOContext
+        if (avio_open(&pFormatCtx->pb, out_filename, AVIO_FLAG_READ_WRITE) < 0) {
+            Log::error("Couldn't open output file.");
+            break;
+        }
+
+        // 构建一个新stream
+        pAVStream = avformat_new_stream(pFormatCtx, 0);
+        if (pAVStream == NULL) {
+            break;
+        }
+
+        AVCodecParameters *parameters = pAVStream->codecpar;
+        parameters->codec_id = pFormatCtx->oformat->video_codec;
+        parameters->codec_type = AVMEDIA_TYPE_VIDEO;
+        parameters->format = AV_PIX_FMT_YUVJ420P;
+        parameters->width = pFrame->width;
+        parameters->height = pFrame->height;
+
+        AVCodec *pCodec = NULL;
+        pCodec = avcodec_find_encoder(pAVStream->codecpar->codec_id);
+        if (!pCodec) {
+            Log::error("Could not find encoder");
+            break;
+        }
+
+        pCodeCtx = avcodec_alloc_context3(pCodec);
+        if (!pCodeCtx) {
+            Log::error("Could not allocate video codec context");
+            break;
+        }
+
+        if ((avcodec_parameters_to_context(pCodeCtx, pAVStream->codecpar)) < 0) {
+            Log::error("Failed to copy %s codec parameters to decoder context", av_get_media_type_string(AVMEDIA_TYPE_VIDEO));
+            break;
+        }
+        pCodeCtx->time_base.num = 1;
+        pCodeCtx->time_base.den = 25;
+
+        if (avcodec_open2(pCodeCtx, pCodec, NULL) < 0) {
+            Log::error("Could not open codec.");
+            break;
+        }
+
+        int ret = avformat_write_header(pFormatCtx, NULL);
+        if (ret < 0) {
+            Log::error("write_header fail\n");
+            break;
+        }
+
+        int y_size = width * height;
+
+        //Encode
+        // 给AVPacket分配足够大的空间
+        AVPacket pkt;
+        av_new_packet(&pkt, y_size * 3);
+
+        // 编码数据
+        ret = avcodec_send_frame(pCodeCtx, pFrame);
+        if (ret < 0) {
+            Log::error("Could not avcodec_send_frame.");
+            break;
+        }
+
+        // 得到编码后数据
+        ret = avcodec_receive_packet(pCodeCtx, &pkt);
+        if (ret < 0) {
+            Log::error("Could not avcodec_receive_packet");
+            break;
+        }
+        ret = av_write_frame(pFormatCtx, &pkt);
+        if (ret < 0) {
+            Log::error("Could not av_write_frame");
+            break;
+        }
+        av_packet_unref(&pkt);
+
+        //Write Trailer
+        av_write_trailer(pFormatCtx);
     }
+    while(0);
 
-    bmpheader.bfType = ('M' <<8)|'B';
-    bmpheader.bfReserved1 = 0;
-    bmpheader.bfReserved2 = 0;
-    bmpheader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-    bmpheader.bfSize = bmpheader.bfOffBits + width*height*bpp/8;
+    if(pCodeCtx)
+        avcodec_close(pCodeCtx);
+    if(pFormatCtx && pFormatCtx->pb)
+        avio_close(pFormatCtx->pb);
+    if(pFormatCtx)
+        avformat_free_context(pFormatCtx);
 
-    bmpinfo.biSize = sizeof(BITMAPINFOHEADER);
-    bmpinfo.biWidth = width;
-    bmpinfo.biHeight = 0 - height;
-    bmpinfo.biPlanes = 1;
-    bmpinfo.biBitCount = bpp;
-    bmpinfo.biCompression = BI_RGB;
-    bmpinfo.biSizeImage = 0;
-    bmpinfo.biXPelsPerMeter = 100;
-    bmpinfo.biYPelsPerMeter = 100;
-    bmpinfo.biClrUsed = 0;
-    bmpinfo.biClrImportant = 0;
-
-    fwrite(&bmpheader,sizeof(BITMAPFILEHEADER),1,fp);
-    fwrite(&bmpinfo,sizeof(BITMAPINFOHEADER),1,fp);
-    fwrite(pRGBBuffer,width*height*bpp/8,1,fp);
-    fclose(fp);
-    fp = NULL;
-
-    return true;
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -133,7 +176,7 @@ bool CLiveWorker::Play()
     AVCodecContext  *decode_ctx = NULL;        //输入视频解码
     //AVCodecContext  *encode_ctx = NULL;        //输出视频编码
     AVFrame         *frame = NULL;             //原始码流解码帧
-    struct SwsContext *pSwsCxt = NULL;         //图片格式转换
+    //struct SwsContext *pSwsCxt = NULL;         //图片格式转换
     int             in_video_index = -1;
     int             out_video_index = 0;
 
@@ -186,18 +229,7 @@ bool CLiveWorker::Play()
             Log::error("Could not allocate frame");
             goto end;
         }
-
-        // 视频参数
-        m_nWidth = decode_ctx->width;
-        m_nHeight = decode_ctx->height;
-        m_nPicLen = decode_ctx->width * decode_ctx->height * 3;
-
-        pSwsCxt = sws_getContext(m_nWidth, m_nHeight, decode_ctx->pix_fmt,
-            m_nWidth, m_nHeight, AV_PIX_FMT_BGR24, SWS_BILINEAR, NULL, NULL, NULL);
     }
-    //视频转换参数
-    int rgb_stride[3]   = {3 * m_nWidth, 0, 0};
-    uint8_t *rgb_src[3] = {NULL, NULL, NULL};
 
     //需要保存视频时
     if(m_pParam->videoPath.size() > 0) {
@@ -259,32 +291,8 @@ bool CLiveWorker::Play()
         if (ret < 0)
             break;
 
-        if (pkt.stream_index == in_video_index) {
-            // 视频数据
-            Log::debug("read fram dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
-            if(m_pParam->videoPath.size() > 0) {
-                // 将原始码流写到输出
-                pkt.stream_index = out_video_index;
-			    pkt.dts = av_rescale_q_rnd(pkt.dts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-			    pkt.pts = av_rescale_q_rnd(pkt.pts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
-			    pkt.duration = av_rescale_q(pkt.duration, istream_video->time_base, ostream_video->time_base);
-                Log::debug("write frame dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
-			    pkt.pos = -1;
-                if(beginDts == -1) {
-                    beginDts = pkt.dts;
-                    if(beginDts < 0)
-                        beginDts = 0;
-                }
-                saveVideoDuration = (pkt.dts-beginDts)*ostream_video->time_base.num/ostream_video->time_base.den;
-                ret = av_interleaved_write_frame(ofc, &pkt);
-                if (ret < 0) {
-                    char tmp[1024]={0};
-                    av_strerror(ret, tmp, 1024);
-                    Log::error("video error muxing packet %d:%s", ret, tmp);
-                    //break;
-                }
-            }
-
+        if (pkt.stream_index == in_video_index) { // 视频数据
+            //保存图像文件
             if(m_pParam->lstImgPath.size() > 0) {
                 // 解码原始码流
                 ret = avcodec_send_packet(decode_ctx, &pkt);
@@ -303,25 +311,41 @@ bool CLiveWorker::Play()
                     }
                     if(frame->key_frame == 0) {
                         av_frame_unref(frame);
-                        break;
+                        continue;
                     }
 
-                    // 图片数据
-                    uint8_t *rgb_data   = (uint8_t*)(av_malloc(m_nPicLen));
-                    rgb_src[0] = rgb_data;
-                    ret = sws_scale(pSwsCxt, frame->data, frame->linesize, 0, m_nHeight, rgb_src, rgb_stride);
-                    if(ret != m_nHeight) {
-                        Log::error("scale failed");
-                        av_frame_unref(frame);
-                        break;
-                    }
-
+                    // 保存图片
                     string picFile = m_pParam->strSavePath + m_pParam->lstImgPath.front();
                     m_pParam->lstImgPath.pop_front();
                     Log::debug("save image file: %s", picFile.c_str());
-                    CreateBmp(picFile.c_str(), rgb_data, decode_ctx->width, decode_ctx->height, 24);
+                    img_savePicture(frame, picFile.c_str());
 
                     av_frame_unref(frame);
+                }
+            }
+
+            // 保存视频文件 视频放在后面，因为av_interleaved_write_frame会将pkt中的数据释放
+            //Log::debug("read fram dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+            if(m_pParam->videoPath.size() > 0 && pkt.dts>=0 && pkt.pts>=0) {
+                // 将原始码流写到输出
+                pkt.stream_index = out_video_index;
+			    pkt.dts = av_rescale_q_rnd(pkt.dts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+			    pkt.pts = av_rescale_q_rnd(pkt.pts, istream_video->time_base, ostream_video->time_base, AV_ROUND_NEAR_INF/*|AV_ROUND_PASS_MINMAX*/);
+			    pkt.duration = av_rescale_q(pkt.duration, istream_video->time_base, ostream_video->time_base);
+                //Log::debug("write frame dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+			    pkt.pos = -1;
+                if(beginDts == -1) {
+                    beginDts = pkt.dts;
+                    if(beginDts < 0)
+                        beginDts = 0;
+                }
+                saveVideoDuration = (pkt.dts-beginDts)*ostream_video->time_base.num/ostream_video->time_base.den;
+                ret = av_interleaved_write_frame(ofc, &pkt);
+                if (ret < 0) {
+                    char tmp[1024]={0};
+                    av_strerror(ret, tmp, 1024);
+                    Log::error("video error muxing packet %d:%s", ret, tmp);
+                    //break;
                 }
             }
         } //else if (pkt.stream_index == in_audio_index) {
@@ -358,7 +382,7 @@ bool CLiveWorker::Play()
         av_write_trailer(ofc);
     }
 end:
-    sws_freeContext(pSwsCxt);
+    //sws_freeContext(pSwsCxt);
     av_frame_free(&frame);
 
     /** 关闭解码 */
@@ -366,10 +390,11 @@ end:
 
     /* 关闭输入输出 */
     avformat_close_input(&ifc);
-    if (!(ofc->oformat->flags & AVFMT_NOFILE)) {
+    if (ofc && ofc->oformat && ofc->pb && !(ofc->oformat->flags & AVFMT_NOFILE)) {
         avio_closep(&ofc->pb);
     }
-    avformat_free_context(ofc);
+    if(ofc)
+        avformat_free_context(ofc);
 
     /** 返回码 */
     if (ret < 0 ) {

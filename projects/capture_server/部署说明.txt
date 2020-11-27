@@ -1,0 +1,10 @@
+1. 将capture_server.exe放到安装目录。
+2. 在config中增加配置指定文件保存的位置和服务名称
+[Capture]
+save=D:/Capture
+name=capture1
+
+3. 在pm.json中增加capture_server的启动项，参数一项填写监听端口。可以开多个然后用nginx负载均衡。
+4. nginx中增加静态文件访问的路由，用来访问图片
+5. 浏览器输入地址来测试 eg:http://127.0.0.1:9999/capture?url=rtsp://webuser:jszt@888@192.168.5.88:554/h264/ch1/main/av_stream&imageNumber=10&videoDuration=10
+6. 配置web服务的nginx，根据配置的服务名称将请求转发到这个服务器的nginx静态访问地址
