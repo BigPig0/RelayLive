@@ -336,6 +336,16 @@ bool CLiveWorker::Play()
 
         if (pkt.stream_index == in_video_index) {
             // 视频数据
+            //Log::debug("read fram dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+            if(pkt.pts < 0) {
+                Log::error("error: ts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+                av_packet_unref(&pkt);
+                continue;
+            }
+            if(pkt.dts < 0) {
+                Log::warning("warning: ts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+                pkt.dts = pkt.pts;
+            }
             if(recodec_video) {
                 // 解码原始码流
                 ret = avcodec_send_packet(decode_ctx, &pkt);
