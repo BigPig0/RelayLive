@@ -19,6 +19,9 @@
     <ClCompile Include="server.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="clean.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="server.h">

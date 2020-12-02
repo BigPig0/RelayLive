@@ -7,6 +7,8 @@
 
 using namespace util;
 
+extern void CleanStart();
+
 int main(int argc, char* argv[])
 {
     if(argc != 2)
@@ -47,8 +49,10 @@ int main(int argc, char* argv[])
 
     /** 创建一个http服务器 */
     Server::Init(port);
-
     Log::debug("capture sever @%d start success\r\n", port);
+
+    /** 清理历史图片 */
+    CleanStart();
 
     Sleep(INFINITE);
     return 0;
