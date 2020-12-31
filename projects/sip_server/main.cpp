@@ -68,7 +68,7 @@ void on_update_postion(string strDevID, string log, string lat) {
 int main()
 {
     /** Dump设置 */
-    CMiniDump dump("sipServer.dmp");
+    //CMiniDump dump("sipServer.dmp");
 
     /** 创建日志文件 */
     char path[MAX_PATH];
