@@ -4,6 +4,7 @@
 #include "uv.h"
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "worker.h"
 #include <unordered_map>
 #include <sstream>

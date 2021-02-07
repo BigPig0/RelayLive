@@ -4,6 +4,7 @@
 #include "ipc.h"
 #include "uv.h"
 #include "util.h"
+#include "easylog.h"
 
 using namespace util;
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     /** 创建日志文件 */
     char path[MAX_PATH];
     sprintf_s(path, MAX_PATH, ".\\log\\livectrl_server.txt");
-    Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */

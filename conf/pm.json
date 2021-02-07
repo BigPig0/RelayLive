@@ -1,0 +1,121 @@
+[{
+    "path":"livectrl_server.exe",
+	"args":"18100",
+	"daemon":"yes",
+	"rstime":"05:00:05",
+	"rsdur":0,
+	"remark":"国标设备查看、控制、播放连接查看",
+	"exedir":0
+},{
+    "path":"sip_server.exe",
+	"args":"",
+	"daemon":"yes",
+	"rstime":"05:00:05",
+	"rsdur":0,
+	"remark":"SIP 服务器",
+	"exedir":0
+},{
+    "path":"live_server.exe",
+	"args":"18101",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"国标直播服务",
+	"exedir":0
+},{
+    "path":"live_server.exe",
+	"args":"18102",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"国标直播服务",
+	"exedir":0
+},{
+    "path":"live_server.exe",
+	"args":"18103",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"国标直播服务",
+	"exedir":0
+},{
+    "path":"live_server.exe",
+	"args":"18104",
+	"daemon":"yes",
+	"rstime":"05:00:00",
+	"rsdur":0,
+	"remark":"国标直播服务",
+	"exedir":0
+},{
+    "path":"relayctrl_server.exe",
+	"args":"18200",
+	"daemon":"yes",
+	"rstime":"05:00:10",
+	"rsdur":0,
+	"remark":"播放方式转换 播放连接查看",
+	"exedir":0
+},{
+    "path":"relay_server.exe",
+	"args":"18201",
+	"daemon":"yes",
+	"rstime":"05:00:10",
+	"rsdur":0,
+	"remark":"播放方式转换服务",
+	"exedir":0
+},{
+    "path":"relay_server.exe",
+	"args":"18202",
+	"daemon":"yes",
+	"rstime":"05:00:10",
+	"rsdur":0,
+	"remark":"播放方式转换服务",
+	"exedir":0
+},{
+    "path":"relay_server.exe",
+	"args":"18203",
+	"daemon":"yes",
+	"rstime":"05:00:10",
+	"rsdur":0,
+	"remark":"播放方式转换服务",
+	"exedir":0
+},{
+    "path":"relay_server.exe",
+	"args":"18204",
+	"daemon":"yes",
+	"rstime":"05:00:10",
+	"rsdur":0,
+	"remark":"播放方式转换服务",
+	"exedir":0
+},{
+    "path":"capture_server.exe",
+	"args":"18301",
+	"daemon":"yes",
+	"rstime":"05:00:15",
+	"rsdur":0,
+	"remark":"截图、截视频服务",
+	"exedir":0
+},{
+    "path":"capture_server.exe",
+	"args":"18301",
+	"daemon":"yes",
+	"rstime":"05:00:15",
+	"rsdur":0,
+	"remark":"截图、截视频服务",
+	"exedir":0
+},{
+    "path":"capture_server.exe",
+	"args":"18301",
+	"daemon":"yes",
+	"rstime":"05:00:15",
+	"rsdur":0,
+	"remark":"截图、截视频服务",
+	"exedir":0
+},{
+    "path":"capture_server.exe",
+	"args":"18301",
+	"daemon":"yes",
+	"rstime":"05:00:15",
+	"rsdur":0,
+	"remark":"截图、截视频服务",
+	"exedir":0
+}]

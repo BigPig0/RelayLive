@@ -58,3 +58,6 @@
 [submodule "common/pm"]
 	path = common/pm
 	url = https://gitee.com/ztwlla/pm.git
+[submodule "thirdparty/sqlite3"]
+	path = thirdparty/sqlite3
+	url = https://gitee.com/ztwlla/sqlite3.git

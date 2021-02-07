@@ -2,6 +2,7 @@
 //
 #include "utilc_api.h"
 #include "util.h"
+#include "easylog.h"
 #include "uvIpc.h"
 #include "pm.h"
 #include <stdio.h>
@@ -34,7 +35,7 @@ int main()
     /** 创建日志文件 */
     char path[MAX_PATH];
     sprintf_s(path, MAX_PATH, ".\\log\\ipc_server.txt");
-    Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */

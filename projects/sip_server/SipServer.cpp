@@ -485,7 +485,7 @@ namespace SipServer {
             strResJson += "\",";
         }
 #endif
-        strResJson = util::String::StringTrimRight(strResJson,',');
+        strResJson = util::String::trimRight(strResJson,',');
         strResJson += "}";
 
         return strResJson;

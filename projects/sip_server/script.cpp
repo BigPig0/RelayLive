@@ -1,4 +1,5 @@
 #include "util.h"
+#include "easylog.h"
 #include "ludb.h"
 #include "luapp.hpp"
 #include "script.h"

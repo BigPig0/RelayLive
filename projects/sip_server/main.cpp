@@ -2,6 +2,7 @@
 //
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "ipc.h"
 #include "SipServer.h"
 #include "script.h"
@@ -73,7 +74,7 @@ int main()
     /** 创建日志文件 */
     char path[MAX_PATH];
     sprintf(path, ".\\log\\sipServer.txt");
-    Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */

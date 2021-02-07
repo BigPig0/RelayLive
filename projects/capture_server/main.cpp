@@ -2,6 +2,7 @@
 //
 #include "utilc.h"
 #include "util.h"
+#include "easylog.h"
 #include "server.h"
 #include "uv.h"
 
@@ -23,7 +24,7 @@ int main(int argc, char* argv[])
     /** 创建日志文件 */
     char path[MAX_PATH];
     sprintf(path, ".\\log\\capture_server_%d.txt", port);
-    Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */

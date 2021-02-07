@@ -1,10 +1,10 @@
 #include "server.h"
-#include "util_netstream.h"
 #include "sha1.h"
 #include "base64.h"
 #include "uv.h"
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "worker.h"
 #include <unordered_map>
 #include <sstream>
@@ -381,7 +381,7 @@ bool CLiveSession::ParseHeader() {
 
 bool CLiveSession::ParsePath() {
     vector<string> uri = util::String::split(path, '?');
-    if(uri.size() != 2 && uri[0] != "live")
+    if(uri.size() != 2 && uri[0] != "relay")
         return false;
 
     vector<string> param = util::String::split(uri[1], '&');

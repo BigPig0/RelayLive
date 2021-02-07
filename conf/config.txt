@@ -1,0 +1,68 @@
+
+[SipSever]
+;开启的国标sip服务配置
+Code = 
+;本机平台编码
+IP = 
+;服务IP
+Port = 
+;服务端口
+RegAuthor = 0
+;注册是否需要鉴权
+
+[PlatFormInfo]
+;对接的国标下级平台配置
+Code = 
+;对方下级平台的编码
+IP = 
+;对方下级平台的IP
+Port = 
+;对方下级平台的端口
+SubscribeStatus = 1
+;是否订阅设备状态
+SubscribePos = 0
+;是否订阅设备位置,订阅整个平台
+SubscribePosDev = 0
+;是否订阅设备位置,订阅指定设备
+SubscribePosDepart = 
+;订阅指定设备位置时，这些设备所在的组织。多个组织用','分隔
+
+[RtpClient]
+;国标接收rtp视频流的配置
+IP = 
+;rtp服务IP
+BeginPort = 50000
+;rtp起始端口
+PortNum = 1000
+;rtp端口数量
+outtime = 1000
+;rtp队列超时,ms
+
+[IPC]
+name= ipcsvr
+; ipc通道名称，当一台机器上开启多个ipcserver时，需要配置不通的名字
+
+[FFMPEG]
+probsize = 6400
+; ffmpeg探测输入格式时，允许探测的数据最大值
+probtime = 1000
+; ffmpeg探测输入格式时，允许探测的流的时间
+incatch = 4096
+; ffmpeg输入缓存大小
+outcatch = 4096
+; ffmpeg输出缓存大小
+
+[Script]
+use = yes
+; 是否使用lua脚本
+path = livectrl.lua
+; lua脚本的路径
+
+[Capture]
+; 截图服务配置
+save=D:/Capture
+; 截图保存位置
+name=capture1
+; 图片、视频文件链接地址前缀，给nginx访问文件时匹配地址
+clean=365
+; 超出时间天数的文件自动清理

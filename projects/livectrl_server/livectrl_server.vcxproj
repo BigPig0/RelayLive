@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdparty/libuv/include;../../thirdparty/lua;../../thirdParty/lua/lua;../../common/util;../../common/utilc;../../common/ludb;../../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../thirdparty/libuv/include;../../thirdparty/lua;../../thirdParty/lua/lua;../../common/util;../../common/utilc;../../common/ludb;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -75,7 +75,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SIP_STATIC;COMMON_STATIC;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../thirdparty/libuv/include;$(SolutionDir)../thirdparty/lua;$(SolutionDir)../thirdParty/lua/lua;$(SolutionDir)../common/util;$(SolutionDir)../common/utilc;$(SolutionDir)../common/ludb;$(SolutionDir)../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../thirdparty/libuv/include;../../thirdparty/lua;../../thirdParty/lua/lua;../../common/util;../../common/utilc;../../common/ludb;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

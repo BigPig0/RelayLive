@@ -1,5 +1,6 @@
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "uv.h"
 
 using namespace util;

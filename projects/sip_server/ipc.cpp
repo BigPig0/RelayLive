@@ -1,4 +1,5 @@
 #include "util.h"
+#include "easylog.h"
 #include "ipc.h"
 #include "uvipc.h"
 #include "SipServer.h"

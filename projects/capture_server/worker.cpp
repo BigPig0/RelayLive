@@ -3,6 +3,7 @@
 #include "worker.h"
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include <list>
 #include <sstream>
 

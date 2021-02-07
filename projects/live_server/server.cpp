@@ -1,10 +1,10 @@
 #include "server.h"
-#include "util_netstream.h"
 #include "sha1.h"
 #include "base64.h"
 #include "uv.h"
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "worker.h"
 #include <unordered_map>
 #include <sstream>

@@ -4,7 +4,7 @@
 #include "ipc.h"
 #include "uv.h"
 #include "util.h"
-#include "util_minidump.h"
+#include "easylog.h"
 #include <windows.h>
 
 using namespace util;
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     /** 创建日志文件 */
     char path[MAX_PATH];
     sprintf(path, ".\\log\\relay_server_%d.txt", port);
-    Log::open(Log::Print::both, Log::Level::debug, path);
+    Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */

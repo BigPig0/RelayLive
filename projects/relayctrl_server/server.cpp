@@ -2,6 +2,7 @@
 #include "uv.h"
 #include "util.h"
 #include "utilc.h"
+#include "easylog.h"
 #include "ipc.h"
 #include <sstream>
 
@@ -235,7 +236,7 @@ bool CHttpSession::ParsePath() {
     if(uri.size() != 2 && uri.size() != 1)
         return false;
 
-    if(!strcasecmp(uri[0].c_str(), "/device/clients")) {
+    if(!strcasecmp(uri[0].c_str(), "/connect/clients")) {
         writeBuff = IPC::GetClientsJson();
     } else {
         return false;

@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/libuv/include;../../thirdparty/libwebsockets;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/libuv/include;../../thirdparty/libwebsockets;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -75,7 +75,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/libuv/include;../../thirdparty/libwebsockets;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/libuv/include;../../thirdparty/libwebsockets;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
