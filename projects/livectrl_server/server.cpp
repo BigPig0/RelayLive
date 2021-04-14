@@ -68,7 +68,7 @@ static void on_uv_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) 
     CHttpSession *skt = (CHttpSession*)stream->data;
     if(nread < 0) {
         skt->connected = false;
-        if(nread == UV__ECONNRESET || nread == UV_EOF) {
+        if(nread == UV_ECONNRESET || nread == UV_EOF) {
             //¶Ô¶Ë·¢ËÍÁËFIN
             Log::warning("remote close socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
             uv_close((uv_handle_t*)&skt->socket, on_uv_close);
@@ -133,11 +133,11 @@ static void run_loop_thread(void* arg) {
 //////////////////////////////////////////////////////////////////////////
 
 CHttpSession::CHttpSession()
-    : parseHeader(false)
-    , nRemotePort(0)
-    , writing(false)
+    : nRemotePort(0)
+    , parseHeader(false)
     , connected(true)
     , ContentLen(0)
+    , writing(false)
 {
     socket.data = this;
     uv_tcp_init(&uvLoopLive, &socket);

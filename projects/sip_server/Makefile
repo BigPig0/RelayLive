@@ -21,7 +21,7 @@ chkdir:
 	$(shell mkdir -p $(TMP_DIR)sip_server/)
 
 sip_server_static:$(OBJS)
-	$(GG) $(OBJSD) -o $(OUT_DIR)sip_server -L $(OUT_DIR) -l:ludb.a -l:uvipc.a -l:uvlogplus.a -l:util.a -l:uvlogplus.a -l:utilc.a -l:libuv.a -l:exosip.a -l:hiredis.a -l:lua.a -l:cjson.a -l:pugixml.a -l:libmariadb.a -l:ocilib.a -l:zlib.a -lrt -lresolv -lssl -lcrypto -pthread -ldl
+	$(GG) $(OBJSD) -o $(OUT_DIR)sip_server -L $(OUT_DIR) -l:ludb.a -l:uvipc.a -l:uvlogplus.a -l:util.a -l:uvlogplus.a -l:utilc.a -l:libuv.a -l:exosip.a -l:hiredis.a -l:lua.a -l:cjson.a -l:pugixml.a -l:libmariadb.a -l:ocilib.a -l:sqlite3.a -l:zlib.a -lrt -lresolv -lssl -lcrypto -pthread -ldl
 
 sip_server_shared:$(OBJS)
 	$(GG) $(OBJSD) -o $(OUT_DIR)sip_server -L $(OUT_DIR) -l:libuv.so -l:exosip.so -l:hiredis.so -l:lua.so -l:cjson.so -l:pugixml.so -l:util.so -l:utilc.so -l:ludb.so -l:uvipc.so -l:uvlogplus.so -pthread -ldl

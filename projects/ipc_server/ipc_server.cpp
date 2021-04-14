@@ -1,17 +1,21 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
-#include "utilc_api.h"
+#include "utilc.h"
 #include "util.h"
 #include "easylog.h"
-#include "uvIpc.h"
+#include "uvipc.h"
 #include "pm.h"
 #include <stdio.h>
+
+#ifdef WINDOWS_IMPL
 #include <windows.h>
+#endif
 
 using namespace util;
 
 CProcessMgr* pm = NULL;
 
+#ifdef WINDOWS_IMPL
 BOOL CtrlCHandler(DWORD type)
 {
     if ( CTRL_C_EVENT == type           //用户按下Ctrl+C,关闭程序。
@@ -26,15 +30,18 @@ BOOL CtrlCHandler(DWORD type)
     }
     return FALSE;
 }
+#endif
 
 int main()
 {
     /** 设置控制台消息回调 */
+#ifdef WINDOWS_IMPL
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlCHandler, TRUE);
+#endif
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log\\ipc_server.txt");
+    sprintf(path, ".\\log\\ipc_server.txt");
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
@@ -53,9 +60,11 @@ int main()
     }
 
     //启动进程守护
+#ifdef WINDOWS_IMPL    
     pm = CProcessMgr::Creat();
     pm->AddTasks("pm.json");
     pm->Start();
+#endif
 
     sleep(INFINITE);
     return 0;

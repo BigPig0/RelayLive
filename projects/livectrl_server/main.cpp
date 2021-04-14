@@ -1,9 +1,10 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
+#include "util.h"
+#include "utilc.h"
 #include "server.h"
 #include "ipc.h"
 #include "uv.h"
-#include "util.h"
 #include "easylog.h"
 
 using namespace util;
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, ".\\log\\livectrl_server.txt");
+    sprintf(path, ".\\log\\livectrl_server.txt");
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
