@@ -61,7 +61,7 @@ namespace IPC {
     bool Init() {
         /** 进程间通信 */
         string ipc_name = Settings::getValue("IPC","name","ipcsvr");
-        int ret = uv_ipc_client(&h, (char*)ipc_name.c_str(), NULL, "livectrlsvr", on_ipc_recv, NULL);
+        int ret = uv_ipc_client(&h, ipc_name.c_str(), NULL, "livectrlsvr", on_ipc_recv, NULL);
         if(ret < 0) {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;
@@ -103,7 +103,7 @@ namespace IPC {
 		_mapDevs.insert(make_pair(req->id, req));
 		_csDevs.unlock();
 		std::string str = "id=" + to_string(req->id);
-		uv_ipc_send(h, "sipsvr", "dev_get", (char*)str.c_str(), str.size());
+		uv_ipc_send(h, "sipsvr", "dev_get", str.c_str(), str.size());
 		
 		// 等待返回结果
 		time_t send_time = time(NULL);
@@ -129,11 +129,11 @@ namespace IPC {
 
     void DevsFresh() {
 		std::string str = "fresh";
-		uv_ipc_send(h, "sipsvr", "dev_fresh", (char*)str.c_str(), str.size());
+		uv_ipc_send(h, "sipsvr", "dev_fresh", str.c_str(), str.size());
     }
 
     void DevControl(std::string strDev, int nInOut, int nUpDown, int nLeftRight) {
 		std::string msg = "dev=" + strDev + "&io=" + to_string(nInOut) + "&ud=" + to_string(nUpDown) + "&lr=" + to_string(nLeftRight);
-		uv_ipc_send(h, "sipsvr", "dev_ctrl", (char*)msg.c_str(), msg.size());
+		uv_ipc_send(h, "sipsvr", "dev_ctrl", msg.c_str(), msg.size());
     }
 }

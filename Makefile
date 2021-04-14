@@ -49,7 +49,7 @@ export CC GG AR CFLAGS GFLAGS LFLAGS OUT_DIR TMP_DIR TAGTYPE
 #创建输出目录
 $(shell mkdir -p $(OUT_DIR))
 
-SUBDIR = projects #thirdparty common uvmodules
+SUBDIR = common uvmodules projects #thirdparty
 
 all:$(SUBDIR)
 	#
