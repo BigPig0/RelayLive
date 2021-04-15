@@ -1,11 +1,11 @@
 #include "uv.h"
+#include "util.h"
+#include "utilc.h"
+#include "easylog.h"
 #include "server.h"
 #include "rtp.h"
-#include "utilc_api.h"
 #include "worker.h"
 #include "ipc.h"
-#include "util.h"
-#include "easylog.h"
 #include <list>
 #include <sstream>
 
@@ -13,7 +13,9 @@ using namespace util;
 
 extern "C"
 {
+#ifdef WINDOWS_IMPL
 #define snprintf  _snprintf
+#endif
 #define __STDC_FORMAT_MACROS
 #include "libavdevice/avdevice.h"
 #include "libavcodec/avcodec.h"  
@@ -26,6 +28,8 @@ extern "C"
 #include "libavutil/timestamp.h"
 #include "libavutil/opt.h"
 }
+
+#ifdef WINDOWS_IMPL
 #pragma comment(lib,"avcodec.lib")
 #pragma comment(lib,"avdevice.lib")
 #pragma comment(lib,"avfilter.lib")
@@ -34,6 +38,7 @@ extern "C"
 #pragma comment(lib,"postproc.lib")
 #pragma comment(lib,"swresample.lib")
 #pragma comment(lib,"swscale.lib")
+#endif
 
 typedef struct _AV_BUFF_ {
     char       *pData;    //< 数据内容
@@ -156,10 +161,12 @@ bool CLiveWorker::Play()
     bool            scale_video = false;       //视频图像是否需要缩放
     int             in_video_index = -1;
     int             out_video_index = 0;
+    unsigned char   *iobuffer = NULL;
+    unsigned char   *outbuffer = NULL;
 
     //打开输入流
     ifc = avformat_alloc_context();
-    unsigned char * iobuffer=(unsigned char *)av_malloc(m_pParam->nInCatch);
+    iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
     AVIOContext *avio = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
     ifc->pb = avio;
 	ifc->iformat = av_find_input_format("mpeg");
@@ -169,7 +176,7 @@ bool CLiveWorker::Play()
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Could not open input file: %d(%s)", ret, tmp);
-        goto end;
+        goto end_task;
     }
 	ifc->probesize = m_pParam->nProbSize;
 	ifc->max_analyze_duration = m_pParam->nProbTime/1000.0*AV_TIME_BASE; //探测允许的延时
@@ -178,7 +185,7 @@ bool CLiveWorker::Play()
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Failed to retrieve input stream information %d(%s)", ret, tmp);
-        goto end;
+        goto end_task;
     }
     Log::debug("show input format info");
     av_dump_format(ifc, 0, "nothing", 0);
@@ -187,7 +194,7 @@ bool CLiveWorker::Play()
     in_video_index = av_find_best_stream(ifc, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
     if (in_video_index < 0) {
         Log::error( "Cannot find a video stream in the input file");
-        goto end;
+        goto end_task;
     }
     istream_video = ifc->streams[in_video_index];
 
@@ -216,13 +223,13 @@ bool CLiveWorker::Play()
         frame = av_frame_alloc();
         if (!frame) {
             Log::error("Could not allocate frame");
-            goto end;
+            goto end_task;
         }
         if(scale_video) {
             filt_frame = av_frame_alloc();
             if (!filt_frame) {
                 Log::error("Could not allocate filter_frame");
-                goto end;
+                goto end_task;
             }
         }
     }
@@ -233,23 +240,20 @@ bool CLiveWorker::Play()
     if (!ofc) {
         Log::error("Could not create output context");
         ret = AVERROR_UNKNOWN;
-        goto end;
+        goto end_task;
     }
 
-    unsigned char* outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
-    AVIOContext *avio_out =avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);  
-    ofc->pb = avio_out; 
+    outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
+    ofc->pb = avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);
     ofc->flags = AVFMT_FLAG_CUSTOM_IO;
-
-    AVOutputFormat *ofmt = ofc->oformat;
-    ofmt->flags |= AVFMT_NOFILE;
+    ofc->oformat->flags |= AVFMT_NOFILE;
 
     //输出流中的视频流
     ostream_video = avformat_new_stream(ofc, NULL);
     if (!ostream_video) {
         Log::error("Failed allocating output stream");
         ret = AVERROR_UNKNOWN;
-        goto end;
+        goto end_task;
     }
     ostream_video->id = ofc->nb_streams-1;
 
@@ -279,13 +283,13 @@ bool CLiveWorker::Play()
         ret = avcodec_open2(encode_ctx, codec, NULL);
         if (ret < 0) {
             Log::error("can not open encoder");
-            goto end;
+            goto end_task;
         }
 
         ret = avcodec_parameters_from_context(ostream_video->codecpar, encode_ctx);
         if (ret < 0) {
             Log::error("Failed to get codec parameters from context");
-            goto end;
+            goto end_task;
         }
 
         ostream_video->time_base = encode_ctx->time_base;
@@ -293,7 +297,7 @@ bool CLiveWorker::Play()
         ret = avcodec_parameters_copy(ostream_video->codecpar, istream_video->codecpar);
         if (ret < 0) {
             Log::error("Failed to copy codec parameters");
-            goto end;
+            goto end_task;
         }
         ostream_video->time_base = istream_video->time_base;
     }
@@ -313,7 +317,7 @@ bool CLiveWorker::Play()
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Error avformat_write_header %d:%s", ret, tmp);
-        goto end;
+        goto end_task;
     }
 
     if(scale_video) {
@@ -330,7 +334,7 @@ bool CLiveWorker::Play()
         ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
         if (ret < 0) {
             Log::error("Cannot create buffer source");
-            goto end;
+            goto end_task;
         }
 
         //sink filter
@@ -342,7 +346,7 @@ bool CLiveWorker::Play()
         av_free(buffersink_params);
         if (ret < 0) {
             Log::error("Cannot create buffer sink");
-            goto end;
+            goto end_task;
         }
 
         //Endpoints for the filter graph
@@ -363,13 +367,13 @@ bool CLiveWorker::Play()
         ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL);
         if (ret < 0){
             Log::error("Cannot filter graph parse ptr");
-            goto end;
+            goto end_task;
         }
 
         ret = avfilter_graph_config(filter_graph, NULL);
         if (ret < 0){
             Log::error("Cannot filter graph config");
-            goto end;
+            goto end_task;
         }
     }
 
@@ -388,7 +392,7 @@ bool CLiveWorker::Play()
                 ret = avcodec_send_packet(decode_ctx, &pkt);
                 if (ret < 0) {
                     Log::error("decoding video stream failed");
-                    goto end;
+                    goto end_task;
                 }
 
                 while (true) {
@@ -407,7 +411,7 @@ bool CLiveWorker::Play()
                         ret = av_buffersrc_add_frame_flags(buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF);
                         if (ret < 0) {
                             Log::error("Error while feeding the filtergraph");
-                            goto end;
+                            goto end_task;
                         }
                         while (true) {
                             ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
@@ -518,7 +522,7 @@ bool CLiveWorker::Play()
     }
 
     av_write_trailer(ofc);
-end:
+end_task:
 	/* 关闭sip播放 */
     IPC::Stop(port);
     //关闭rtp
@@ -535,7 +539,7 @@ end:
 
     /* 关闭输入输出 */
     avformat_close_input(&ifc);
-    if (ofc && !(ofmt->flags & AVFMT_NOFILE))
+    if (ofc && !(ofc->oformat->flags & AVFMT_NOFILE))
         avio_closep(&ofc->pb);
     avformat_free_context(ofc);
 
@@ -694,7 +698,7 @@ CLiveWorker* CreatLiveWorker(RequestParam param, bool isWs, ILiveSession *pSessi
 static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     char text[256];              //日志内容
     memset(text,0,256);
-    vsprintf_s(text, 256, fmt, vl);
+    vsprintf(text, fmt, vl);
 
     if(level <= AV_LOG_ERROR){
         Log::error(text);

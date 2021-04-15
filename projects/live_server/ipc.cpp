@@ -37,7 +37,7 @@ namespace IPC {
             uint32_t id = 0;
             uint32_t port = 0;
             int  ret = 0;
-            char szInfo[250] = {0}; // 成功时sdp信息，失败时错误描述
+            //char szInfo[250] = {0}; // 成功时sdp信息，失败时错误描述
             sscanf(data, "id=%d&port=%d&ret=%d&error=",&id, &port, &ret);
 
 			string infoMsg(data, len);
@@ -76,7 +76,7 @@ namespace IPC {
     }
 
     void SendClients(string info) {
-        uv_ipc_send(h, "livectrlsvr", "clients", (char*)info.c_str(), info.size());
+        uv_ipc_send(h, "livectrlsvr", "clients", info.c_str(), info.size());
     }
 
     PlayRequest* CreateReal(std::string code) {
@@ -91,7 +91,7 @@ namespace IPC {
 		_csPlayReqs.unlock();
 
         std::string msg = "devcode=" + code + "&id=" + to_string(req->id);
-        uv_ipc_send(h, "sipsvr", "live_init", (char*)msg.c_str(), msg.size());
+        uv_ipc_send(h, "sipsvr", "live_init", msg.c_str(), msg.size());
 
         // 等待返回结果
         time_t send_time = time(NULL);
@@ -115,7 +115,7 @@ namespace IPC {
         time_t send_time = time(NULL);
 
         std::string msg = "port=" + to_string(req->port) + "&id=" + to_string(req->id);
-        uv_ipc_send(h, "sipsvr", "live_play", (char*)msg.c_str(), msg.size());
+        uv_ipc_send(h, "sipsvr", "live_play", msg.c_str(), msg.size());
 
         // 等待返回结果
         while (!req->finish) {
@@ -139,6 +139,6 @@ namespace IPC {
 
 	void Stop(uint32_t port) {
 		std::string msg = to_string(port);
-		uv_ipc_send(h, "sipsvr", "stop_play", (char*)msg.c_str(), msg.size());
+		uv_ipc_send(h, "sipsvr", "stop_play", msg.c_str(), msg.size());
 	}
 }

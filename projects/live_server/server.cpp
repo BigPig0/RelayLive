@@ -18,7 +18,7 @@ class CLiveSession : public ILiveSession
 {
 public:
     CLiveSession();
-    ~CLiveSession();
+    virtual ~CLiveSession();
 
     virtual void AsyncSend();       //外部线程通知可以发送数据了
 
@@ -93,7 +93,7 @@ static void on_uv_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) 
     CLiveSession *skt = (CLiveSession*)stream->data;
     if(nread < 0) {
 		skt->connected = false;
-        if(nread == UV__ECONNRESET || nread == UV_EOF) {
+        if(nread == UV_ECONNRESET || nread == UV_EOF) {
             //对端发送了FIN
             Log::warning("remote close socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
             uv_close((uv_handle_t*)&skt->socket, on_uv_close);
@@ -157,7 +157,7 @@ static void on_uv_async_write(uv_async_t* handle) {
 }
 
 static void on_uv_async_close(uv_async_t* handle) {
-    CLiveSession *skt = (CLiveSession*)handle->data;
+    //CLiveSession *skt = (CLiveSession*)handle->data;
 }
 
 static void run_loop_thread(void* arg) {
@@ -178,13 +178,13 @@ RequestParam::RequestParam()
 {}
 
 CLiveSession::CLiveSession()
-    : parseHeader(false)
+    : nRemotePort(0)
+	, parseHeader(false)
+    , connected(true)
+	, handlecount(2)
     , isWs(false)
     , pWorker(NULL)
-    , nRemotePort(0)
     , writing(false)
-	, connected(true)
-	, handlecount(2)
 {
     socket.data = this;
     uv_tcp_init(&uvLoopLive, &socket);

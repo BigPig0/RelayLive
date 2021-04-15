@@ -234,8 +234,8 @@ namespace RtpDecode {
 
     /** 超时定时器到时回调 */
     static void timer_cb(uv_timer_t* handle) {
-        CRtpStream *dec = (CRtpStream*)handle->data;
-        CLiveWorker* pLive = (CLiveWorker*)dec->m_pUser;
+        //CRtpStream *dec = (CRtpStream*)handle->data;
+        //CLiveWorker* pLive = (CLiveWorker*)dec->m_pUser;
         //pLive->RtpOverTime();
     }
 
@@ -289,13 +289,13 @@ namespace RtpDecode {
 
 
     CRtpStream::CRtpStream(void* usr, uint32_t port)
-        : m_pUser(usr)
-        , m_nPort(port)
+        : m_nPort(port)
+        , m_pUser(usr)
         , m_bRun(true)
         , m_nHandleNum(0)
+        , m_bBegin(false)
         , m_nDoneSeq(0)
         , m_bDoneFirst(false)
-        , m_bBegin(false)
     {
         m_pUdpCatch = create_ring_buff(sizeof(UDP_BUFF), 1000, NULL);
 
@@ -308,10 +308,16 @@ namespace RtpDecode {
         uv_ip4_addr("0.0.0.0", m_nPort, &addr);
         uv_udp_bind(&m_uvSkt, (struct sockaddr*)&addr, 0);
         int nRecvBuf = 10 * 1024 * 1024;       // 缓存区设置成10M，默认值太小会丢包
-        setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
         int nOverTime = 30*1000;  // 超时时间设置成30s
+#ifdef WINDOWS_IMPL
+        setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
         setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
         setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+#else
+        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
+        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
+#endif
         uv_udp_recv_start(&m_uvSkt, echo_alloc, after_read);
         m_nHandleNum++;
 

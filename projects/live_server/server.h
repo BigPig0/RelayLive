@@ -5,6 +5,7 @@
 class ILiveSession {
 public:
     virtual void AsyncSend() = 0;
+    ~ILiveSession(){}
 };
 
 /**
