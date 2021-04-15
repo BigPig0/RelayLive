@@ -13,7 +13,9 @@ using namespace util;
 
 extern "C"
 {
+#ifdef WINDOWS_IMPL
 #define snprintf  _snprintf
+#endif
 #define __STDC_FORMAT_MACROS
 #include "libavdevice/avdevice.h"
 #include "libavcodec/avcodec.h"  

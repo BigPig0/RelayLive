@@ -54,10 +54,10 @@ namespace HikSdk {
         //登录参数，包括设备地址、登录用户、密码等
         NET_DVR_USER_LOGIN_INFO struLoginInfo = {0};
         struLoginInfo.bUseAsynLogin = 0; //同步登录方式
-        strcpy_s(struLoginInfo.sDeviceAddress, NET_DVR_DEV_ADDRESS_MAX_LEN, pWorker->m_pParam->strHost.c_str()); //设备IP地址
+        strcpy(struLoginInfo.sDeviceAddress, pWorker->m_pParam->strHost.c_str()); //设备IP地址
         struLoginInfo.wPort = pWorker->m_pParam->nPort; //设备服务端口
-        strcpy_s(struLoginInfo.sUserName, NET_DVR_LOGIN_USERNAME_MAX_LEN, pWorker->m_pParam->strUsr.c_str()); //设备登录用户名
-        strcpy_s(struLoginInfo.sPassword, NET_DVR_LOGIN_PASSWD_MAX_LEN, pWorker->m_pParam->strPwd.c_str()); //设备登录密码
+        strcpy(struLoginInfo.sUserName, pWorker->m_pParam->strUsr.c_str()); //设备登录用户名
+        strcpy(struLoginInfo.sPassword, pWorker->m_pParam->strPwd.c_str()); //设备登录密码
         //struLoginInfo.cbLoginResult = LoginResult;
         //struLoginInfo.pUser = pWorker;
 

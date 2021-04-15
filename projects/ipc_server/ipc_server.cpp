@@ -41,12 +41,12 @@ int main()
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf(path, ".\\log\\ipc_server.txt");
+    sprintf(path, "./log/ipc_server.txt");
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
-    if (!Settings::loadFromProfile(".\\config.txt"))
+    if (!Settings::loadFromProfile("./config.txt"))
         Log::error("Settings::loadFromProfile failed");
     else
         Log::debug("Settings::loadFromProfile ok");
