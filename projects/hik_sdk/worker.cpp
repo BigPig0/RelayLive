@@ -45,8 +45,6 @@ typedef struct _AV_BUFF_ {
 
 static list<CLiveWorker*>  _listWorkers;
 static CriticalSection     _csWorkers;
-static uint32_t            _flvbufsize = 1024*32;
-static uint32_t            _psbufsize = 1024*32;
 
 static void destroy_ring_node(void *_msg)
 {
@@ -146,10 +144,13 @@ bool CLiveWorker::Play()
     bool            scale_video = false;       //视频图像是否需要缩放
     int             in_video_index = -1;
     int             out_video_index = 0;
-	
+    unsigned char   *iobuffer = NULL;
+    unsigned char   *outbuffer = NULL;
+
+    //打开输入流
     ifc = avformat_alloc_context();
-    unsigned char * iobuffer=(unsigned char *)av_malloc(_psbufsize);
-    AVIOContext *avio = avio_alloc_context(iobuffer, _psbufsize, 0, this, fill_iobuffer, NULL, NULL);
+    iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
+    AVIOContext *avio = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
     ifc->pb = avio;
 	ifc->iformat = av_find_input_format("mpeg");
 
@@ -161,7 +162,7 @@ bool CLiveWorker::Play()
         goto end;
     }
 	ifc->probesize = m_pParam->nProbSize;
-	ifc->max_analyze_duration = m_pParam->nProbTime*AV_TIME_BASE; //探测允许的延时
+	ifc->max_analyze_duration = m_pParam->nProbTime/1000.0*AV_TIME_BASE; //探测允许的延时
     ret = avformat_find_stream_info(ifc, NULL);
     if (ret < 0) {
         char tmp[1024]={0};
@@ -225,9 +226,8 @@ bool CLiveWorker::Play()
         goto end;
     }
 
-    unsigned char* outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
-    AVIOContext *avio_out =avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);  
-    ofc->pb = avio_out; 
+    outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
+    ofc->pb = avio_alloc_context(outbuffer, m_pParam->nOutCatch,1,this,NULL,write_buffer,NULL);
     ofc->flags = AVFMT_FLAG_CUSTOM_IO;
     ofc->oformat->flags |= AVFMT_NOFILE;
 
@@ -658,7 +658,7 @@ CLiveWorker* CreatLiveWorker(RequestParam param, bool isWs, ILiveSession *pSessi
 static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     char text[256];              //日志内容
     memset(text,0,256);
-    vsprintf_s(text, 256, fmt, vl);
+    vsprintf(text, fmt, vl);
 
     if(level <= AV_LOG_ERROR){
         Log::error(text);

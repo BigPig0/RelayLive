@@ -305,14 +305,15 @@ bool CLiveWorker::Play()
     Log::debug("show output format info");
     av_dump_format(ofc, 0, NULL, 1);
 
-	if(!strcasecmp(m_pParam->strType.c_str(), "mp4")) {
-		AVDictionary *opts = NULL;
-		av_dict_set(&opts, "movflags", "frag_keyframe+empty_moov", 0);
-		ret = avformat_write_header(ofc, &opts);
-		av_dict_free(&opts);
-	} else {
-		ret = avformat_write_header(ofc, NULL);
-	}
+    if(strcasecmp(m_pParam->strType.c_str(),"mp4")==0 || strcasecmp(m_pParam->strType.c_str(),"fmp4")==0) {
+        AVDictionary *opts = NULL;
+        av_dict_set(&opts, "movflags", "frag_keyframe+empty_moov+omit_tfhd_offset+faststart+dash+frag_custom", 0);
+        av_dict_set(&opts, "frag_duration", "0", 0);
+        av_dict_set(&opts, "min_frag_duration", "0", 0);
+        ret = avformat_write_header(ofc, &opts);
+    } else {
+        ret = avformat_write_header(ofc, NULL);
+    }
     if (ret < 0) {
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
@@ -387,12 +388,23 @@ bool CLiveWorker::Play()
 
         if (pkt.stream_index == in_video_index) {
             // 视频数据
+            //Log::debug("read fram dts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+            if(pkt.pts < 0) {
+                Log::error("error: ts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+                av_packet_unref(&pkt);
+                continue;
+            }
+            if(pkt.dts < 0) {
+                Log::warning("warning: ts:%lld, pts:%lld, duration:%lld",pkt.dts, pkt.pts, pkt.duration);
+                pkt.dts = pkt.pts;
+            }
             if(recodec_video) {
                 // 解码原始码流
                 ret = avcodec_send_packet(decode_ctx, &pkt);
                 if (ret < 0) {
                     Log::error("decoding video stream failed");
-                    goto end_task;
+                    continue;
+                    //goto end;
                 }
 
                 while (true) {

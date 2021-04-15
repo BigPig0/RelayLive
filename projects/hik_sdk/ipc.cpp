@@ -1,8 +1,12 @@
 #include "util.h"
+#include "utilc.h"
 #include "easylog.h"
 #include "ipc.h"
-#include "uvIpc.h"
+#include "uvipc.h"
+#include <map>
+#include <string>
 
+using namespace std;
 using namespace util;
 
 namespace IPC {
