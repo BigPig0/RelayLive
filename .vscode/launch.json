@@ -1,0 +1,142 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "hik_sdk",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/hik_sdk",
+            "args": ["8001"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "ipc_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/ipc_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "relayctrl_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/relayctrl_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "relay_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/relay_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "livectrl_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/livectrl_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "live_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/live_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "sip_server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/sip_server",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        }
+    ]
+}

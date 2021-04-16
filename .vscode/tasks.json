@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "make all",
+			"type": "shell",
+			"command": "make",
+			"problemMatcher": []
+		}
+	]
+}

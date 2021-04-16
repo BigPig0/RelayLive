@@ -24,8 +24,8 @@ public:
 
 	void close();
 public:
-    uint32_t              m_nLoginID;       //< 海康设备登陆结果
-    uint32_t              m_nPlayID;        //< 播放结果
+    int32_t               m_nLoginID;       //< 海康设备登陆结果
+    int32_t               m_nPlayID;        //< 播放结果
     ILiveSession         *m_pSession;       // 连接会话
     RequestParam         *m_pParam;         // 用户请求的参数
     bool                  m_bWebSocket;     // false:http请求，true:websocket
