@@ -31,7 +31,6 @@ public:
     bool                  m_bWebSocket;     // false:http请求，true:websocket
     std::string           m_strClientIP;    // 播放端的ip
 
-private:
     ring_buff_t          *m_pPSRing;        //< PS数据队列
     ring_buff_t          *m_pFlvRing;       //< 目标码流数据队列
 	bool                  m_bConnect;       //< 客户端连接状态

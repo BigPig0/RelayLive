@@ -94,7 +94,7 @@ static void real_play(void* arg){
 static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
     CLiveWorker *lw = (CLiveWorker*)opaque;
     int len = 0;
-    while (len == 0) {
+    while (len == 0 && lw->m_bConnect) {
         len = lw->get_ps_data((char*)buf, bufsize);
     }
     return len;
