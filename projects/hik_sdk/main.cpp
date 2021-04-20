@@ -16,6 +16,9 @@ int main(int argc, char* argv[])
         return -1;
     int port = atoi(argv[1]);
 
+    /** 将工作路径设置到程序所在位置 */
+    setworkpath2ex();
+
     /** Dump设置 */
     char dmpname[20]={0};
     sprintf(dmpname, "hik_sdk_%d.dmp", port);
@@ -33,23 +36,10 @@ int main(int argc, char* argv[])
     else
         Log::debug("Settings::loadFromProfile ok");
 
-    //根据cpu数量设置libuv线程池的线程数量
-    uv_cpu_info_t* cpu_infos;
-    int count;
-    int err = uv_cpu_info(&cpu_infos, &count);
-    if (err) {
-        Log::warning("fail get cpu info: %s",uv_strerror(err));
-    } else {
-        char szThreadNum[10] = {0};
-        sprintf(szThreadNum, "%d", count*2+1);
-        Log::debug("thread pool size is %s", szThreadNum);
-        //设置环境变量的值
-        uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
-    }
-    uv_free_cpu_info(cpu_infos, count);
-
+    /** 海康sdk初始化 */
     HikSdk::Init();
 
+    /** 进程通信初始化 */
     IPC::Init(port);
 
     /** 创建一个http服务器 */

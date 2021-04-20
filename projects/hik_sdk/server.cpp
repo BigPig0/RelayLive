@@ -414,6 +414,10 @@ bool CLiveSession::ParsePath() {
             Params.nInCatch = stoi(kv[1]);
         else if(kv[0] == "outcatch")
             Params.nOutCatch = stoi(kv[1]);
+        else if(kv[0] == "begintime")
+            Params.strBeginTime = kv[1];
+        else if(kv[0] == "endtime")
+            Params.strEndTime = kv[1];
     }
     return true;
 }

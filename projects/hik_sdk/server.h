@@ -16,6 +16,8 @@ struct RequestParam {
     std::string           strUsr;         //< 海康设备用户名
     std::string           strPwd;         //< 海康设备密码
     uint32_t              nChannel;       //< 播放通道号
+    std::string           strBeginTime;   //< 历史视频起始时间
+    std::string           strEndTime;     //< 历史视频结束时间
 
     std::string           strType;              // 媒体类型，默认为flv
     uint32_t              nWidth;               // 视频宽度，默认为0，不缩放视频
