@@ -160,6 +160,10 @@ bool CLiveWorker::Play()
         // 外部打开视频流，并将ps流发送到worker缓存
         if(!_play(this))
             return false;
+        while (ps_empty() && m_bConnect)
+            Sleep(10);
+        if(!m_bConnect)
+            return false;
 
         ifc = avformat_alloc_context();
         iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
@@ -567,37 +571,42 @@ end:
     return ret>=0;
 }
 
-    void CLiveWorker::push_ps_data(char* pBuff, int nLen)
-    {
-        //内存数据保存至ring-buff
-		int n = (int)ring_get_count_free_elements(m_pPSRing);
-		if (!n) {
-			Log::error("to many ps data can't catch");
-			return;
-		}
+void CLiveWorker::push_ps_data(char* pBuff, int nLen)
+{
+    //内存数据保存至ring-buff
+	int n = (int)ring_get_count_free_elements(m_pPSRing);
+	if (!n) {
+		Log::error("to many ps data can't catch");
+		return;
+	}
 
-		// 将数据保存在ring buff
-		char* pSaveBuff = (char*)malloc(nLen);
-		memcpy(pSaveBuff, pBuff, nLen);
-		AV_BUFF newTag = {pSaveBuff, nLen};
-		if (!ring_insert(m_pPSRing, &newTag, 1)) {
-			destroy_ring_node(&newTag);
-			Log::error("dropping!");
-			return;
-		}
-    }
+	// 将数据保存在ring buff
+	char* pSaveBuff = (char*)malloc(nLen);
+	memcpy(pSaveBuff, pBuff, nLen);
+	AV_BUFF newTag = {pSaveBuff, nLen};
+	if (!ring_insert(m_pPSRing, &newTag, 1)) {
+		destroy_ring_node(&newTag);
+		Log::error("dropping!");
+		return;
+	}
+}
 
-    int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
-    {
-        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-		if(tag) {
-			int len = tag->nLen;
-			memcpy(pBuff, tag->pData, tag->nLen);
-			simple_ring_cosume(m_pPSRing);
-			return len;
-		}
-        return 0;
-    }
+int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
+{
+    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+	if(tag) {
+		int len = tag->nLen;
+		memcpy(pBuff, tag->pData, tag->nLen);
+		simple_ring_cosume(m_pPSRing);
+		return len;
+	}
+    return 0;
+}
+
+bool CLiveWorker::ps_empty() {
+    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+    return tag == NULL;
+}
 
 void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
 {

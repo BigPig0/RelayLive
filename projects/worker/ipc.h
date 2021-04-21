@@ -16,4 +16,5 @@ namespace IPC {
      * 向ctrl server发送当前连接的请求信息
      */
     void SendClients(std::string info);
+
 };

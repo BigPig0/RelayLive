@@ -13,10 +13,10 @@
     <ClCompile Include="hiksdk.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="ipc.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="ipc.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="server.cpp">
@@ -31,13 +31,13 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="ipc.h">
-      <Filter>include</Filter>
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="server.h">
-      <Filter>include</Filter>
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="worker.h">
-      <Filter>include</Filter>
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

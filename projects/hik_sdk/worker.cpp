@@ -4,7 +4,6 @@
 #include "easylog.h"
 #include "server.h"
 #include "worker.h"
-#include "hiksdk.h"
 #include "ipc.h"
 #include <list>
 #include <sstream>
@@ -47,6 +46,9 @@ typedef struct _AV_BUFF_ {
 
 static list<CLiveWorker*>  _listWorkers;
 static CriticalSection     _csWorkers;
+static funOutPlay          _play = NULL;
+static funOutPlay          _stop = NULL;
+static bool                _findFirstKey = false;
 
 static void destroy_ring_node(void *_msg)
 {
@@ -65,10 +67,17 @@ static string GetClientsInfo() {
         } else {
             first = false;
 		}
-        ss << "{\"URL\":\"" << c->m_pParam->strHost
-            << ":" << c->m_pParam->nPort
-            << "/" << c->m_pParam->nChannel
-            << "\",\"Connect\":\"";
+
+        if(!c->m_pParam->strCode.empty()) {
+            ss << "{\"DeviceID\":\"" << c->m_pParam->strCode;
+        } else if(!c->m_pParam->strUrl.empty()) {
+            ss << "{\"URL\":\"" << c->m_pParam->strUrl;
+        } else {
+            ss << "{\"URL\":\"" << c->m_pParam->strHost
+                << ":" << c->m_pParam->nPort
+                << "/" << c->m_pParam->nChannel;
+        }
+        ss << "\",\"Connect\":\"";
         if(c->m_bWebSocket)
             ss << "websocket";
         else
@@ -126,11 +135,6 @@ CLiveWorker::~CLiveWorker()
 
 bool CLiveWorker::Play()
 {
-    int playhandle = HikSdk::Play(this);
-    if(playhandle < 0) {
-        return false;
-    }
-
     AVFormatContext *ifc = NULL;               //输入封装
     AVFormatContext *ofc = NULL;               //输出封装
     AVStream        *istream_video = NULL;     //输入视频码流
@@ -148,15 +152,29 @@ bool CLiveWorker::Play()
     int             out_video_index = 0;
     unsigned char   *iobuffer = NULL;
     unsigned char   *outbuffer = NULL;
+    int             ret = 0;
+
 
     //打开输入流
-    ifc = avformat_alloc_context();
-    iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
-    AVIOContext *avio = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
-    ifc->pb = avio;
-	ifc->iformat = av_find_input_format("mpeg");
+    if(_play) {
+        // 外部打开视频流，并将ps流发送到worker缓存
+        if(!_play(this))
+            return false;
+        while (ps_empty() && m_bConnect)
+            Sleep(10);
+        if(!m_bConnect)
+            return false;
 
-    int ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+        ifc = avformat_alloc_context();
+        iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
+        ifc->pb = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
+	    ifc->iformat = av_find_input_format("mpeg");
+
+        ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+    } else {
+        // worker直接打开视频源
+        ret = avformat_open_input(&ifc, m_pParam->strUrl.c_str(), NULL, NULL);
+    }
     if (ret != 0) {
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
@@ -553,37 +571,42 @@ end:
     return ret>=0;
 }
 
-    void CLiveWorker::push_ps_data(char* pBuff, int nLen)
-    {
-        //内存数据保存至ring-buff
-		int n = (int)ring_get_count_free_elements(m_pPSRing);
-		if (!n) {
-			Log::error("to many ps data can't catch");
-			return;
-		}
+void CLiveWorker::push_ps_data(char* pBuff, int nLen)
+{
+    //内存数据保存至ring-buff
+	int n = (int)ring_get_count_free_elements(m_pPSRing);
+	if (!n) {
+		Log::error("to many ps data can't catch");
+		return;
+	}
 
-		// 将数据保存在ring buff
-		char* pSaveBuff = (char*)malloc(nLen);
-		memcpy(pSaveBuff, pBuff, nLen);
-		AV_BUFF newTag = {pSaveBuff, nLen};
-		if (!ring_insert(m_pPSRing, &newTag, 1)) {
-			destroy_ring_node(&newTag);
-			Log::error("dropping!");
-			return;
-		}
-    }
+	// 将数据保存在ring buff
+	char* pSaveBuff = (char*)malloc(nLen);
+	memcpy(pSaveBuff, pBuff, nLen);
+	AV_BUFF newTag = {pSaveBuff, nLen};
+	if (!ring_insert(m_pPSRing, &newTag, 1)) {
+		destroy_ring_node(&newTag);
+		Log::error("dropping!");
+		return;
+	}
+}
 
-    int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
-    {
-        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-		if(tag) {
-			int len = tag->nLen;
-			memcpy(pBuff, tag->pData, tag->nLen);
-			simple_ring_cosume(m_pPSRing);
-			return len;
-		}
-        return 0;
-    }
+int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
+{
+    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+	if(tag) {
+		int len = tag->nLen;
+		memcpy(pBuff, tag->pData, tag->nLen);
+		simple_ring_cosume(m_pPSRing);
+		return len;
+	}
+    return 0;
+}
+
+bool CLiveWorker::ps_empty() {
+    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+    return tag == NULL;
+}
 
 void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
 {
@@ -630,13 +653,24 @@ void CLiveWorker::next_flv_frame() {
 
 void CLiveWorker::close()
 {
-    HikSdk::Stop(this);
+    if(_stop)
+        _stop(this);
     _csWorkers.lock();
     _listWorkers.remove(this);
     IPC::SendClients(GetClientsInfo());
     _csWorkers.unlock();
 	m_bConnect = false;
 	m_pSession = NULL;
+}
+
+bool CLiveWorker::is_key(char* pBuff, int nLen) {
+	if(nLen <= 4) return false;
+	uint8_t *data = (uint8_t*)pBuff;
+	for(int i=0; i <nLen-4; ++i) {
+		if(data[i] == 0 && data[i+1] == 0 && data[i+2] == 1 && data[i+3] == 0xBB)
+			return true;
+	}
+	return false;
 }
     
 CLiveWorker* CreatLiveWorker(RequestParam param, bool isWs, ILiveSession *pSession, string clientIP) {
@@ -653,10 +687,11 @@ CLiveWorker* CreatLiveWorker(RequestParam param, bool isWs, ILiveSession *pSessi
 
     uv_thread_t tid;
     uv_thread_create(&tid, real_play, (void*)worker);
-    Log::debug("RealPlay ok: %s",param.strHost.c_str());
+    Log::debug("RealPlay ok: %s%s%s %s %s",param.strCode.c_str(), param.strUrl.c_str(), param.strHost.c_str(), param.strBeginTime.c_str(), param.strEndTime.c_str());
     return worker;
 }
 
+namespace Worker {
 static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     char text[256];              //日志内容
     memset(text,0,256);
@@ -671,6 +706,10 @@ static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     }
 }
 
-void InitFFmpeg(){
+void Init(funOutPlay play, funOutPlay stop, bool findFirstKey){
+    _play = play;
+    _stop = stop;
+    _findFirstKey = findFirstKey;
     //av_log_set_callback(ffmpeg_log_cb);
+}
 }

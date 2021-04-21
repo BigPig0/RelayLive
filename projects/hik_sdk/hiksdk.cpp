@@ -16,7 +16,7 @@ namespace HikSdk {
         Log::error("Exception 0X%X", dwType);
     }
 
-    static void CALLBACK RealData(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, DWORD pUser) {
+    static void CALLBACK RealData(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser) {
         CLiveWorker* lw = (CLiveWorker*)pUser;
         switch (dwDataType) {
         case NET_DVR_SYSHEAD: //系统头
@@ -95,18 +95,48 @@ namespace HikSdk {
         uint32_t IpChanNum = (uint32_t)struDeviceInfoV40.struDeviceV30.byHighDChanNum << 8;
         IpChanNum += (uint32_t)struDeviceInfoV40.struDeviceV30.byIPChanNum;
         if(IpChanNum > 0) {
-            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartDChan; //IP通道号
+            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartDChan - 1; //IP通道号
         } else {
-            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartChan; //模拟通道号
+            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartChan - 1; //模拟通道号
         }
 
         if(pWorker->m_pParam->strBeginTime.size() >= 14 && pWorker->m_pParam->strEndTime.size() >= 14)  {
+            NET_DVR_RECORD_TIME_SPAN_INQUIRY timeSpanInquiry = {sizeof(NET_DVR_RECORD_TIME_SPAN_INQUIRY), 0};
+            NET_DVR_RECORD_TIME_SPAN timeSpan = {sizeof(NET_DVR_RECORD_TIME_SPAN), 0};
+            if(NET_DVR_InquiryRecordTimeSpan(lUserID, lChannel, &timeSpanInquiry, &timeSpan)) {
+                Log::debug("beginTime:%04d%02d%02d %02d%02d%02d endTime:%04d%02d%02d %02d%02d%02d", 
+                    timeSpan.strBeginTime.dwYear, timeSpan.strBeginTime.dwMonth, timeSpan.strBeginTime.dwDay,
+                    timeSpan.strBeginTime.dwHour, timeSpan.strBeginTime.dwMinute, timeSpan.strBeginTime.dwSecond,
+                    timeSpan.strEndTime.dwYear, timeSpan.strEndTime.dwMonth, timeSpan.strEndTime.dwDay,
+                    timeSpan.strEndTime.dwHour, timeSpan.strEndTime.dwMinute, timeSpan.strEndTime.dwSecond);
+            } else {
+                DWORD errorCode = NET_DVR_GetLastError();
+                Log::error("InquiryRecordTimeSpan host(%s) Login(%s,%s) failed:%d"
+                    , pWorker->m_pParam->strHost.c_str()
+                    , pWorker->m_pParam->strUsr.c_str()
+                    , pWorker->m_pParam->strPwd.c_str()
+                    , errorCode);
+            }
+
             //根据时间播放历史视频
             NET_DVR_TIME beginTime = makeTime(pWorker->m_pParam->strBeginTime);
             NET_DVR_TIME endTime   = makeTime(pWorker->m_pParam->strEndTime);
-            pWorker->m_nPlayID = NET_DVR_PlayBackByTime(lUserID, lChannel, &beginTime, &endTime, NULL);
+            NET_DVR_VOD_PARA vodPara = {0};
+            vodPara.dwSize = sizeof(NET_DVR_VOD_PARA);
+            vodPara.struIDInfo.dwSize = sizeof(NET_DVR_STREAM_INFO);
+            vodPara.struIDInfo.dwChannel = lChannel;
+            vodPara.struBeginTime = beginTime;
+            vodPara.struEndTime = endTime;
+            pWorker->m_nPlayID = NET_DVR_PlayBackByTime_V40(lUserID, &vodPara);
             if (pWorker->m_nPlayID >= 0) {
-                NET_DVR_SetPlayDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
+                if(!NET_DVR_SetPlayDataCallBack_V40(pWorker->m_nPlayID, RealData, pWorker)) {
+                    DWORD errorCode = NET_DVR_GetLastError();
+                    Log::error("SetPlayDataCallBack host(%s) Login(%s,%s) failed:%d"
+                        , pWorker->m_pParam->strHost.c_str()
+                        , pWorker->m_pParam->strUsr.c_str()
+                        , pWorker->m_pParam->strPwd.c_str()
+                        , errorCode);
+                }
                 if(!NET_DVR_PlayBackControl(pWorker->m_nPlayID,NET_DVR_PLAYSTART,0,NULL)) {
                     DWORD errorCode = NET_DVR_GetLastError();
                     Log::error("PlayBack host(%s) Login(%s,%s) failed:%d"
@@ -126,10 +156,10 @@ namespace HikSdk {
             PreviewInfo.bBlocked = 0;                   // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
             PreviewInfo.bPassbackRecord = 0;            // 0-不启用录像回传,1启用录像回传
             PreviewInfo.byPreviewMode = 0;              // 预览模式，0-正常预览，1-延迟预览
-            pWorker->m_nPlayID = NET_DVR_RealPlay_V40(lUserID, &PreviewInfo, NULL, pWorker);
-            if(pWorker->m_nPlayID >= 0) {
-                NET_DVR_SetRealDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
-            }
+            pWorker->m_nPlayID = NET_DVR_RealPlay_V40(lUserID, &PreviewInfo, RealData, pWorker);
+            //if(pWorker->m_nPlayID >= 0) {
+            //    NET_DVR_SetRealDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
+            //}
        }
 
         if (pWorker->m_nPlayID < 0) {

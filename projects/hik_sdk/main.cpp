@@ -4,11 +4,20 @@
 #include "util.h"
 #include "utilc.h"
 #include "easylog.h"
-#include "server.h"
 #include "hiksdk.h"
+#include "server.h"
 #include "ipc.h"
 
 using namespace util;
+
+static bool play(CLiveWorker *worker) {
+    return HikSdk::Play(worker) >= 0;
+}
+
+static bool stop(CLiveWorker *worker) {
+    HikSdk::Stop(worker);
+    return true;
+}
 
 int main(int argc, char* argv[])
 {
@@ -40,7 +49,10 @@ int main(int argc, char* argv[])
     HikSdk::Init();
 
     /** 进程通信初始化 */
-    IPC::Init(port);
+    IPC::Init("hiksdk", port);
+
+    /** 视频处理初始化 */
+    Worker::Init(play, stop, false);
 
     /** 创建一个http服务器 */
     Server::Init(port);

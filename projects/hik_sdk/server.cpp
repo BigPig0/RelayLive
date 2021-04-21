@@ -381,7 +381,7 @@ bool CLiveSession::ParseHeader() {
 
 bool CLiveSession::ParsePath() {
     vector<string> uri = util::String::split(path, '?');
-    if(uri.size() != 2 && uri[0] != "hiksdk")
+    if(uri.size() != 2)
         return false;
 
     vector<string> param = util::String::split(uri[1], '&');
@@ -390,7 +390,11 @@ bool CLiveSession::ParsePath() {
         if(kv.size() != 2)
             continue;
 
-        if(kv[0] == "host") 
+        if(kv[0] == "code") 
+            Params.strCode = kv[1];
+        else if(kv[0] == "url") 
+            Params.strUrl = kv[1];
+        else if(kv[0] == "host") 
             Params.strHost = kv[1];
         else if(kv[0] == "port")
             Params.nPort = stoi(kv[1]);
@@ -462,7 +466,6 @@ void start_service(uint32_t port) {
 namespace Server {
 
 int Init(int port) {
-    InitFFmpeg();
         
     start_service(port);
 

@@ -17,6 +17,7 @@ public:
 
     void push_ps_data(char* pBuff, int nLen);
     int get_ps_data(char* pBuff, int &nLen);
+    bool ps_empty();
 
     void push_flv_frame(char* pBuff, int nLen);
     int get_flv_frame(char **buff);   /** 请求端获取视频数据 */
