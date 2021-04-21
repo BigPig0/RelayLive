@@ -24,6 +24,9 @@ namespace HikSdk {
         case NET_DVR_STREAMDATA:   //ÂëÁ÷Êý¾Ý
             if (dwBufSize > 0) {
                 lw->push_ps_data((char*)pBuffer, dwBufSize);
+                //static FILE *f = fopen("1.ps", "wb+");
+                //fwrite(pBuffer, 1, dwBufSize, f);
+                //fflush(f);
             }
             break;
         }

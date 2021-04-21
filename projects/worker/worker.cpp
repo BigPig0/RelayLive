@@ -119,6 +119,8 @@ static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
 CLiveWorker::CLiveWorker()
     : m_bWebSocket(false)
 	, m_bConnect(true)
+	, m_bParseKey(false)
+	, m_nStreamReaded(0)
 {
     m_pParam = new RequestParam();
     m_pFlvRing  = create_ring_buff(sizeof(AV_BUFF), 1000, destroy_ring_node);
@@ -160,10 +162,10 @@ bool CLiveWorker::Play()
         // 外部打开视频流，并将ps流发送到worker缓存
         if(!_play(this))
             return false;
-        while (ps_empty() && m_bConnect)
-            Sleep(10);
-        if(!m_bConnect)
-            return false;
+        //while (ps_empty() && m_bConnect)
+        //    Sleep(10);
+        //if(!m_bConnect)
+        //    return false;
 
         ifc = avformat_alloc_context();
         iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
@@ -573,6 +575,10 @@ end:
 
 void CLiveWorker::push_ps_data(char* pBuff, int nLen)
 {
+    if(pBuff == NULL || nLen==0) {
+        Log::error("put data %P %d", pBuff, nLen);
+        return;
+    }
     //内存数据保存至ring-buff
 	int n = (int)ring_get_count_free_elements(m_pPSRing);
 	if (!n) {
@@ -593,14 +599,46 @@ void CLiveWorker::push_ps_data(char* pBuff, int nLen)
 
 int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
 {
-    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-	if(tag) {
-		int len = tag->nLen;
-		memcpy(pBuff, tag->pData, tag->nLen);
-		simple_ring_cosume(m_pPSRing);
-		return len;
-	}
-    return 0;
+    if(m_nStreamReaded >= m_PsStream.size()) {
+        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+        if(!tag) 
+            return 0;
+
+        //Log::debug("get ps %x, %d, %d", tag->pData, tag->nLen, ring_get_count_free_elements(m_pPSRing));
+
+        //需要将第一个I帧之前的B帧或P帧数据抛弃。某些平台转发时，直接将其当前已经在接收的流直接转发，我收到的数据就可能不是I帧开头的
+        if(_findFirstKey && !m_bParseKey) {
+            if(is_key(tag->pData, tag->nLen)){
+                m_bParseKey = true;
+            } else {
+                Log::warning("no key frame before this");
+                simple_ring_cosume(m_pPSRing);
+                return 0;
+            }
+        }
+
+        // ringbuff中缓存的数据不大于ffmpeg缓存空间，直接赋值
+        if(tag->nLen <= nLen) {
+            int len = tag->nLen;
+            memcpy(pBuff, tag->pData, tag->nLen);
+            simple_ring_cosume(m_pPSRing);
+            return len;
+        }
+
+        // ringbuff中缓存的数据大于ffmpeg缓存空间
+        m_PsStream.clear();
+        m_PsStream.append_data(tag->pData, tag->nLen);
+        m_nStreamReaded = 0;
+        simple_ring_cosume(m_pPSRing);
+    }
+
+    int len = m_PsStream.size() - m_nStreamReaded;
+    if(len > nLen)
+        len = nLen;
+    memcpy(pBuff, m_PsStream.get()+m_nStreamReaded, len);
+    m_nStreamReaded += len;
+
+    return len;
 }
 
 bool CLiveWorker::ps_empty() {
