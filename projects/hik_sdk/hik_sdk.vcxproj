@@ -85,13 +85,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_FFMPEG;WIN32;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/hiksdk/include;../../thirdParty/libuv/include;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../thirdParty/libffmpeg/include;../../thirdParty/hiksdk/include;../../thirdParty/libuv/include;../../common/util;../../common/utilc;../../common/crypto;../../uvModules/uvIpc;../../uvmodules/uvlogplus;../../;../worker;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;cjson.lib;pugixml.lib;libuv.lib;util.lib;utilc.lib;crypto.lib;uvIpc.lib;uvlogplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dnsapi.lib;Iphlpapi.lib;Ws2_32.lib;userenv.lib;psapi.lib;cjson.lib;pugixml.lib;libuv.lib;util.lib;utilc.lib;crypto.lib;uvIpc.lib;uvlogplus.lib;worker.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);../../ThirdParty/libffmpeg/lib_$(Platform);../../ThirdParty/hiksdk/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -166,16 +166,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="hiksdk.cpp" />
-    <ClCompile Include="ipc.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="server.cpp" />
-    <ClCompile Include="worker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hiksdk.h" />
-    <ClInclude Include="ipc.h" />
-    <ClInclude Include="server.h" />
-    <ClInclude Include="worker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
