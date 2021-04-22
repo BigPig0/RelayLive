@@ -1,5 +1,5 @@
 #./projects/Makefile
-SUBDIR = sip_server ipc_server livectrl_server live_server hik_sdk
+SUBDIR = worker sip_server ipc_server control_server live_server hik_sdk relay_server
 
 all:$(SUBDIR)
 	

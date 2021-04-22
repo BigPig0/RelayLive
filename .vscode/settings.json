@@ -45,7 +45,8 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "utility": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "dlfcn.h": "c"
     },
     "git.detectSubmodulesLimit": 100
 }
