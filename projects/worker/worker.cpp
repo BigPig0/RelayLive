@@ -117,7 +117,8 @@ static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
 }
 
 CLiveWorker::CLiveWorker()
-    : m_bWebSocket(false)
+    : m_pPlay(NULL)
+    , m_bWebSocket(false)
 	, m_bConnect(true)
 	, m_bParseKey(false)
 	, m_nStreamReaded(0)

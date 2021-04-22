@@ -171,6 +171,11 @@
   <ItemGroup>
     <ClInclude Include="hiksdk.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\worker\worker.vcxproj">
+      <Project>{d2897357-49b2-4060-935e-4880c1c856f6}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

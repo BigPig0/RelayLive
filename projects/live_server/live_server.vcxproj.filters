@@ -13,30 +13,18 @@
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="server.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="worker.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="ipc.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="rtp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ipcex.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="server.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="worker.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="ipc.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="rtp.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="ipcex.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
