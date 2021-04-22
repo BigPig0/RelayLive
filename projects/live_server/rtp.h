@@ -3,6 +3,10 @@
 #include <string>
 
 namespace RtpDecode {
+    struct RtpData {
+        uint32_t port;
+        void    *playHandle;
+    };
     /**
      * 创建CRtpStream实例，并开始监听udp
      * @param user CLiveWorker实例

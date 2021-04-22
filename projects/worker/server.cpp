@@ -18,7 +18,7 @@ class CLiveSession : public ILiveSession
 {
 public:
     CLiveSession();
-    ~CLiveSession();
+    virtual ~CLiveSession();
 
     virtual void AsyncSend();       //外部线程通知可以发送数据了
 
@@ -93,7 +93,7 @@ static void on_uv_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) 
     CLiveSession *skt = (CLiveSession*)stream->data;
     if(nread < 0) {
 		skt->connected = false;
-        if(nread == UV__ECONNRESET || nread == UV_EOF) {
+        if(nread == UV_ECONNRESET || nread == UV_EOF) {
             //对端发送了FIN
             Log::warning("remote close socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
             uv_close((uv_handle_t*)&skt->socket, on_uv_close);
@@ -157,7 +157,7 @@ static void on_uv_async_write(uv_async_t* handle) {
 }
 
 static void on_uv_async_close(uv_async_t* handle) {
-    CLiveSession *skt = (CLiveSession*)handle->data;
+    //CLiveSession *skt = (CLiveSession*)handle->data;
 }
 
 static void run_loop_thread(void* arg) {
@@ -172,19 +172,19 @@ RequestParam::RequestParam()
     , nWidth(0)
     , nHeight(0)
     , nProbSize(Settings::getValue("FFMPEG","probsize",25600))
-    , nProbTime(Settings::getValue("FFMPEG","probtime",1))
+    , nProbTime(Settings::getValue("FFMPEG","probtime",1000))
     , nInCatch(Settings::getValue("FFMPEG","incatch",1024*16))
     , nOutCatch(Settings::getValue("FFMPEG","outcatch",1024*16))
 {}
 
 CLiveSession::CLiveSession()
-    : parseHeader(false)
+    : nRemotePort(0)
+	, parseHeader(false)
+    , connected(true)
+	, handlecount(2)
     , isWs(false)
     , pWorker(NULL)
-    , nRemotePort(0)
     , writing(false)
-	, connected(true)
-	, handlecount(2)
 {
     socket.data = this;
     uv_tcp_init(&uvLoopLive, &socket);
@@ -381,7 +381,7 @@ bool CLiveSession::ParseHeader() {
 
 bool CLiveSession::ParsePath() {
     vector<string> uri = util::String::split(path, '?');
-    if(uri.size() != 2 && uri[0] != "relay")
+    if(uri.size() != 2)
         return false;
 
     vector<string> param = util::String::split(uri[1], '&');
@@ -390,8 +390,20 @@ bool CLiveSession::ParsePath() {
         if(kv.size() != 2)
             continue;
 
-        if(kv[0] == "url") 
+        if(kv[0] == "code") 
+            Params.strCode = kv[1];
+        else if(kv[0] == "url") 
             Params.strUrl = kv[1];
+        else if(kv[0] == "host") 
+            Params.strHost = kv[1];
+        else if(kv[0] == "port")
+            Params.nPort = stoi(kv[1]);
+        else if(kv[0] == "user")
+            Params.strUsr = kv[1];
+        else if(kv[0] == "pwd")
+            Params.strPwd = kv[1];
+        else if(kv[0] == "channel")
+            Params.nChannel = stoi(kv[1]);
         else if(kv[0] == "type")
             Params.strType = kv[1];
         else if(kv[0] == "hw"){
@@ -406,6 +418,10 @@ bool CLiveSession::ParsePath() {
             Params.nInCatch = stoi(kv[1]);
         else if(kv[0] == "outcatch")
             Params.nOutCatch = stoi(kv[1]);
+        else if(kv[0] == "begintime")
+            Params.strBeginTime = kv[1];
+        else if(kv[0] == "endtime")
+            Params.strEndTime = kv[1];
     }
     return true;
 }
@@ -450,7 +466,6 @@ void start_service(uint32_t port) {
 namespace Server {
 
 int Init(int port) {
-    InitFFmpeg();
         
     start_service(port);
 

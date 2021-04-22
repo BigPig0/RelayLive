@@ -61,7 +61,8 @@ namespace IPC {
     bool Init() {
         /** 进程间通信 */
         string ipc_name = Settings::getValue("IPC","name","ipcsvr");
-        int ret = uv_ipc_client(&h, ipc_name.c_str(), NULL, "livectrlsvr", on_ipc_recv, NULL);
+        string ctrl_name = Settings::getValue("IPC","ctrl","ctrlsvr");
+        int ret = uv_ipc_client(&h, ipc_name.c_str(), NULL, ctrl_name.c_str(), on_ipc_recv, NULL);
         if(ret < 0) {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));
             return false;

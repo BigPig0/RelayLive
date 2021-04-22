@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace IPC {
+namespace IPCEX {
     struct PlayRequest {
         uint32_t    id;    //请求ID
         std::string code;  //需要播放的设备编码

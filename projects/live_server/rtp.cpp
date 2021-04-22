@@ -123,7 +123,7 @@ namespace RtpDecode {
     {}
 
     CRtpPacket::~CRtpPacket() {
-        if(!m_nType && m_pData) //rtp的内存释放掉, ps的内存worker里面直接使用
+        if(m_pData)
             free(m_pData);
     }
 

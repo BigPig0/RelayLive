@@ -1,15 +1,16 @@
 #include "util.h"
 #include "utilc.h"
 #include "easylog.h"
-#include "ipc.h"
+#include "ipcex.h"
 #include "uvipc.h"
+#include "ipc.h"
 #include <map>
 #include <string>
 
 using namespace std;
 using namespace util;
 
-namespace IPC {
+namespace IPCEX {
     uv_ipc_handle_t* h = NULL;
 
     
@@ -58,25 +59,16 @@ namespace IPC {
     }
 
     bool Init(int port) {
-        /** 进程间通信 */
-        char name[20]={0};
-        sprintf(name, "livesvr%d", port);
-        string ipc_name = Settings::getValue("IPC","name","ipcsvr");
-        int ret = uv_ipc_client(&h, (char*)ipc_name.c_str(), NULL, name, on_ipc_recv, NULL);
-        if(ret < 0) {
-            Log::error("ipc server err: %s", uv_ipc_strerr(ret));
-            return false;
-        }
-
-        return true;
+        h = IPC::Init("livesvr", port, on_ipc_recv);
+        return h!=NULL;
     }
 
     void Cleanup() {
-        uv_ipc_close(h);
+        IPC::Cleanup();
     }
 
     void SendClients(string info) {
-        uv_ipc_send(h, "livectrlsvr", "clients", info.c_str(), info.size());
+        IPC::SendClients(info);
     }
 
     PlayRequest* CreateReal(std::string code) {

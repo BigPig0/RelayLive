@@ -1,9 +1,10 @@
 // sever.cpp : 定义控制台应用程序的入口点。
 //
+#include "util.h"
+#include "utilc.h"
 #include "server.h"
 #include "ipc.h"
 #include "uv.h"
-#include "util.h"
 #include "easylog.h"
 
 using namespace util;
@@ -15,11 +16,11 @@ int main(int argc, char* argv[])
     int port = atoi(argv[1]);
 
     /** Dump设置 */
-    CMiniDump dump("relayctrl_server.dmp");
+    CMiniDump dump("control_server.dmp");
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf_s(path, MAX_PATH, "./log/relayctrl_server.txt");
+    sprintf(path, "./log/control_server.txt");
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
@@ -44,13 +45,12 @@ int main(int argc, char* argv[])
     }
     uv_free_cpu_info(cpu_infos, count);
 
-    /** 进程间通信 */
     IPC::Init();
 
     /** 创建一个http服务器 */
     Server::Init(port);
 
-    Log::debug("relayctrl sever @%d start success\r\n", port);
+    Log::debug("control sever @%d start success\r\n", port);
 
     Sleep(INFINITE);
     return 0;
