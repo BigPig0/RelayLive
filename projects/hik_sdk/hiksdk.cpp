@@ -12,11 +12,16 @@
 
 namespace HikSdk {
 
+    struct HikData {
+        int32_t nLoginID;       //< 海康设备登陆结果
+        int32_t nPlayID;        //< 播放结果
+    };
+
     static void CALLBACK g_ExceptionCallBack(DWORD dwType, LONG lUserID, LONG lHandle, void *pUser) {
         Log::error("Exception 0X%X", dwType);
     }
 
-    static void CALLBACK RealData(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, DWORD pUser) {
+    static void CALLBACK RealData(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser) {
         CLiveWorker* lw = (CLiveWorker*)pUser;
         switch (dwDataType) {
         case NET_DVR_SYSHEAD: //系统头
@@ -24,6 +29,9 @@ namespace HikSdk {
         case NET_DVR_STREAMDATA:   //码流数据
             if (dwBufSize > 0) {
                 lw->push_ps_data((char*)pBuffer, dwBufSize);
+                //static FILE *f = fopen("1.ps", "wb+");
+                //fwrite(pBuffer, 1, dwBufSize, f);
+                //fflush(f);
             }
             break;
         }
@@ -62,6 +70,9 @@ namespace HikSdk {
 	}
 
 	int Play(CLiveWorker *pWorker) {
+        HikData *hik = new HikData();
+        pWorker->m_pPlay = hik;
+
         //登录参数，包括设备地址、登录用户、密码等
         NET_DVR_USER_LOGIN_INFO struLoginInfo = {0};
         struLoginInfo.bUseAsynLogin = 0; //同步登录方式
@@ -84,7 +95,7 @@ namespace HikSdk {
                 , errorCode);
             return -1;
         }
-        pWorker->m_nLoginID = lUserID;
+        hik->nLoginID = lUserID;
         Log::debug("Login host(%s) success (%s,%s)"
             , pWorker->m_pParam->strHost.c_str()
             , pWorker->m_pParam->strUsr.c_str()
@@ -95,19 +106,49 @@ namespace HikSdk {
         uint32_t IpChanNum = (uint32_t)struDeviceInfoV40.struDeviceV30.byHighDChanNum << 8;
         IpChanNum += (uint32_t)struDeviceInfoV40.struDeviceV30.byIPChanNum;
         if(IpChanNum > 0) {
-            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartDChan; //IP通道号
+            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartDChan - 1; //IP通道号
         } else {
-            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartChan; //模拟通道号
+            lChannel = pWorker->m_pParam->nChannel + struDeviceInfoV40.struDeviceV30.byStartChan - 1; //模拟通道号
         }
 
         if(pWorker->m_pParam->strBeginTime.size() >= 14 && pWorker->m_pParam->strEndTime.size() >= 14)  {
+            NET_DVR_RECORD_TIME_SPAN_INQUIRY timeSpanInquiry = {sizeof(NET_DVR_RECORD_TIME_SPAN_INQUIRY), 0};
+            NET_DVR_RECORD_TIME_SPAN timeSpan = {sizeof(NET_DVR_RECORD_TIME_SPAN), 0};
+            if(NET_DVR_InquiryRecordTimeSpan(lUserID, lChannel, &timeSpanInquiry, &timeSpan)) {
+                Log::debug("beginTime:%04d%02d%02d %02d%02d%02d endTime:%04d%02d%02d %02d%02d%02d", 
+                    timeSpan.strBeginTime.dwYear, timeSpan.strBeginTime.dwMonth, timeSpan.strBeginTime.dwDay,
+                    timeSpan.strBeginTime.dwHour, timeSpan.strBeginTime.dwMinute, timeSpan.strBeginTime.dwSecond,
+                    timeSpan.strEndTime.dwYear, timeSpan.strEndTime.dwMonth, timeSpan.strEndTime.dwDay,
+                    timeSpan.strEndTime.dwHour, timeSpan.strEndTime.dwMinute, timeSpan.strEndTime.dwSecond);
+            } else {
+                DWORD errorCode = NET_DVR_GetLastError();
+                Log::error("InquiryRecordTimeSpan host(%s) Login(%s,%s) failed:%d"
+                    , pWorker->m_pParam->strHost.c_str()
+                    , pWorker->m_pParam->strUsr.c_str()
+                    , pWorker->m_pParam->strPwd.c_str()
+                    , errorCode);
+            }
+
             //根据时间播放历史视频
             NET_DVR_TIME beginTime = makeTime(pWorker->m_pParam->strBeginTime);
             NET_DVR_TIME endTime   = makeTime(pWorker->m_pParam->strEndTime);
-            pWorker->m_nPlayID = NET_DVR_PlayBackByTime(lUserID, lChannel, &beginTime, &endTime, NULL);
-            if (pWorker->m_nPlayID >= 0) {
-                NET_DVR_SetPlayDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
-                if(!NET_DVR_PlayBackControl(pWorker->m_nPlayID,NET_DVR_PLAYSTART,0,NULL)) {
+            NET_DVR_VOD_PARA vodPara = {0};
+            vodPara.dwSize = sizeof(NET_DVR_VOD_PARA);
+            vodPara.struIDInfo.dwSize = sizeof(NET_DVR_STREAM_INFO);
+            vodPara.struIDInfo.dwChannel = lChannel;
+            vodPara.struBeginTime = beginTime;
+            vodPara.struEndTime = endTime;
+            hik->nPlayID = NET_DVR_PlayBackByTime_V40(lUserID, &vodPara);
+            if (hik->nPlayID >= 0) {
+                if(!NET_DVR_SetPlayDataCallBack_V40(hik->nPlayID, RealData, pWorker)) {
+                    DWORD errorCode = NET_DVR_GetLastError();
+                    Log::error("SetPlayDataCallBack host(%s) Login(%s,%s) failed:%d"
+                        , pWorker->m_pParam->strHost.c_str()
+                        , pWorker->m_pParam->strUsr.c_str()
+                        , pWorker->m_pParam->strPwd.c_str()
+                        , errorCode);
+                }
+                if(!NET_DVR_PlayBackControl(hik->nPlayID,NET_DVR_PLAYSTART,0,NULL)) {
                     DWORD errorCode = NET_DVR_GetLastError();
                     Log::error("PlayBack host(%s) Login(%s,%s) failed:%d"
                         , pWorker->m_pParam->strHost.c_str()
@@ -126,13 +167,13 @@ namespace HikSdk {
             PreviewInfo.bBlocked = 0;                   // 0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
             PreviewInfo.bPassbackRecord = 0;            // 0-不启用录像回传,1启用录像回传
             PreviewInfo.byPreviewMode = 0;              // 预览模式，0-正常预览，1-延迟预览
-            pWorker->m_nPlayID = NET_DVR_RealPlay_V40(lUserID, &PreviewInfo, NULL, pWorker);
-            if(pWorker->m_nPlayID >= 0) {
-                NET_DVR_SetRealDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
-            }
+            hik->nPlayID = NET_DVR_RealPlay_V40(lUserID, &PreviewInfo, RealData, pWorker);
+            //if(pWorker->m_nPlayID >= 0) {
+            //    NET_DVR_SetRealDataCallBack(pWorker->m_nPlayID, RealData, (DWORD)pWorker);
+            //}
        }
 
-        if (pWorker->m_nPlayID < 0) {
+        if (hik->nPlayID < 0) {
             DWORD errorCode = NET_DVR_GetLastError();
             Log::error("Play host(%s) Login(%s,%s) failed:%d"
                 , pWorker->m_pParam->strHost.c_str()
@@ -152,12 +193,14 @@ namespace HikSdk {
 	}
 
     void Stop(CLiveWorker *pWorker) {
+        HikData *hik = (HikData*)pWorker->m_pPlay;
         if(pWorker->m_pParam->strBeginTime.size() >= 14 && pWorker->m_pParam->strEndTime.size() >= 14)  {
-            NET_DVR_StopPlayBack(pWorker->m_nPlayID);
+            NET_DVR_StopPlayBack(hik->nPlayID);
         } else {
-            NET_DVR_StopRealPlay(pWorker->m_nPlayID);
+            NET_DVR_StopRealPlay(hik->nPlayID);
         }
-        NET_DVR_Logout(pWorker->m_nLoginID);
+        NET_DVR_Logout(hik->nLoginID);
+        delete hik;
         Sleep(2000);
     }
 }

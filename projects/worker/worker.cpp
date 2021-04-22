@@ -1,9 +1,8 @@
 #include "uv.h"
-#include "util.h"
 #include "utilc.h"
+#include "util.h"
 #include "easylog.h"
 #include "server.h"
-#include "rtp.h"
 #include "worker.h"
 #include "ipc.h"
 #include <list>
@@ -47,6 +46,9 @@ typedef struct _AV_BUFF_ {
 
 static list<CLiveWorker*>  _listWorkers;
 static CriticalSection     _csWorkers;
+static funOutPlay          _play = NULL;
+static funOutPlay          _stop = NULL;
+static bool                _findFirstKey = false;
 
 static void destroy_ring_node(void *_msg)
 {
@@ -65,8 +67,17 @@ static string GetClientsInfo() {
         } else {
             first = false;
 		}
-        ss << "{\"DeviceID\":\"" << c->m_pParam->strCode
-            << "\",\"Connect\":\"";
+
+        if(!c->m_pParam->strCode.empty()) {
+            ss << "{\"DeviceID\":\"" << c->m_pParam->strCode;
+        } else if(!c->m_pParam->strUrl.empty()) {
+            ss << "{\"URL\":\"" << c->m_pParam->strUrl;
+        } else {
+            ss << "{\"URL\":\"" << c->m_pParam->strHost
+                << ":" << c->m_pParam->nPort
+                << "/" << c->m_pParam->nChannel;
+        }
+        ss << "\",\"Connect\":\"";
         if(c->m_bWebSocket)
             ss << "websocket";
         else
@@ -87,6 +98,7 @@ static void real_play(void* arg){
     pLive->Play();
 }
 
+
 //读取输入数据的方法
 static int fill_iobuffer(void *opaque,uint8_t *buf, int bufsize){
     CLiveWorker *lw = (CLiveWorker*)opaque;
@@ -105,7 +117,8 @@ static int write_buffer(void *opaque, uint8_t *buf, int buf_size){
 }
 
 CLiveWorker::CLiveWorker()
-    : m_bWebSocket(false)
+    : m_pPlay(NULL)
+    , m_bWebSocket(false)
 	, m_bConnect(true)
 	, m_bParseKey(false)
 	, m_nStreamReaded(0)
@@ -125,27 +138,6 @@ CLiveWorker::~CLiveWorker()
 
 bool CLiveWorker::Play()
 {
-    // 通知sip server创建播放请求实例，并获取本地udp端口
-    IPC::PlayRequest *req = IPC::CreateReal(m_pParam->strCode);
-	uint32_t port = req->port;
-
-    // 创建RTP解码实例，并开始监听本地udp端口
-    void *playHandle = RtpDecode::Creat(this, req->port);
-
-    //通知sip server发送请求，并获取应答信息
-    IPC::RealPlay(req);
-    if(req->ret != 0) {
-        Log::error("play %s failed: %s", m_pParam->strCode.c_str(), req->info.c_str());
-        IPC:DestoryRequest(req);
-        return false;
-    }
-
-    //根据应答信息开始解析rtp
-    RtpDecode::Play(playHandle, req->info);
-
-    IPC::DestoryRequest(req);
-
-    //通过ffmpeg将ps流转为flv
     AVFormatContext *ifc = NULL;               //输入封装
     AVFormatContext *ofc = NULL;               //输出封装
     AVStream        *istream_video = NULL;     //输入视频码流
@@ -163,20 +155,34 @@ bool CLiveWorker::Play()
     int             out_video_index = 0;
     unsigned char   *iobuffer = NULL;
     unsigned char   *outbuffer = NULL;
+    int             ret = 0;
+
 
     //打开输入流
-    ifc = avformat_alloc_context();
-    iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
-    AVIOContext *avio = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
-    ifc->pb = avio;
-	ifc->iformat = av_find_input_format("mpeg");
+    if(_play) {
+        // 外部打开视频流，并将ps流发送到worker缓存
+        if(!_play(this))
+            return false;
+        //while (ps_empty() && m_bConnect)
+        //    Sleep(10);
+        //if(!m_bConnect)
+        //    return false;
 
-    int ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+        ifc = avformat_alloc_context();
+        iobuffer = (unsigned char *)av_malloc(m_pParam->nInCatch);
+        ifc->pb = avio_alloc_context(iobuffer, m_pParam->nInCatch, 0, this, fill_iobuffer, NULL, NULL);
+	    ifc->iformat = av_find_input_format("mpeg");
+
+        ret = avformat_open_input(&ifc, "nothing", NULL, NULL);
+    } else {
+        // worker直接打开视频源
+        ret = avformat_open_input(&ifc, m_pParam->strUrl.c_str(), NULL, NULL);
+    }
     if (ret != 0) {
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Could not open input file: %d(%s)", ret, tmp);
-        goto end_task;
+        goto end;
     }
 	ifc->probesize = m_pParam->nProbSize;
 	ifc->max_analyze_duration = m_pParam->nProbTime/1000.0*AV_TIME_BASE; //探测允许的延时
@@ -185,7 +191,7 @@ bool CLiveWorker::Play()
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Failed to retrieve input stream information %d(%s)", ret, tmp);
-        goto end_task;
+        goto end;
     }
     Log::debug("show input format info");
     av_dump_format(ifc, 0, "nothing", 0);
@@ -194,7 +200,7 @@ bool CLiveWorker::Play()
     in_video_index = av_find_best_stream(ifc, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
     if (in_video_index < 0) {
         Log::error( "Cannot find a video stream in the input file");
-        goto end_task;
+        goto end;
     }
     istream_video = ifc->streams[in_video_index];
 
@@ -223,13 +229,13 @@ bool CLiveWorker::Play()
         frame = av_frame_alloc();
         if (!frame) {
             Log::error("Could not allocate frame");
-            goto end_task;
+            goto end;
         }
         if(scale_video) {
             filt_frame = av_frame_alloc();
             if (!filt_frame) {
                 Log::error("Could not allocate filter_frame");
-                goto end_task;
+                goto end;
             }
         }
     }
@@ -240,7 +246,7 @@ bool CLiveWorker::Play()
     if (!ofc) {
         Log::error("Could not create output context");
         ret = AVERROR_UNKNOWN;
-        goto end_task;
+        goto end;
     }
 
     outbuffer=(unsigned char*)av_malloc(m_pParam->nOutCatch);
@@ -253,7 +259,7 @@ bool CLiveWorker::Play()
     if (!ostream_video) {
         Log::error("Failed allocating output stream");
         ret = AVERROR_UNKNOWN;
-        goto end_task;
+        goto end;
     }
     ostream_video->id = ofc->nb_streams-1;
 
@@ -283,13 +289,13 @@ bool CLiveWorker::Play()
         ret = avcodec_open2(encode_ctx, codec, NULL);
         if (ret < 0) {
             Log::error("can not open encoder");
-            goto end_task;
+            goto end;
         }
 
         ret = avcodec_parameters_from_context(ostream_video->codecpar, encode_ctx);
         if (ret < 0) {
             Log::error("Failed to get codec parameters from context");
-            goto end_task;
+            goto end;
         }
 
         ostream_video->time_base = encode_ctx->time_base;
@@ -297,7 +303,7 @@ bool CLiveWorker::Play()
         ret = avcodec_parameters_copy(ostream_video->codecpar, istream_video->codecpar);
         if (ret < 0) {
             Log::error("Failed to copy codec parameters");
-            goto end_task;
+            goto end;
         }
         ostream_video->time_base = istream_video->time_base;
     }
@@ -318,7 +324,7 @@ bool CLiveWorker::Play()
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
         Log::error("Error avformat_write_header %d:%s", ret, tmp);
-        goto end_task;
+        goto end;
     }
 
     if(scale_video) {
@@ -335,7 +341,7 @@ bool CLiveWorker::Play()
         ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
         if (ret < 0) {
             Log::error("Cannot create buffer source");
-            goto end_task;
+            goto end;
         }
 
         //sink filter
@@ -347,7 +353,7 @@ bool CLiveWorker::Play()
         av_free(buffersink_params);
         if (ret < 0) {
             Log::error("Cannot create buffer sink");
-            goto end_task;
+            goto end;
         }
 
         //Endpoints for the filter graph
@@ -368,13 +374,13 @@ bool CLiveWorker::Play()
         ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL);
         if (ret < 0){
             Log::error("Cannot filter graph parse ptr");
-            goto end_task;
+            goto end;
         }
 
         ret = avfilter_graph_config(filter_graph, NULL);
         if (ret < 0){
             Log::error("Cannot filter graph config");
-            goto end_task;
+            goto end;
         }
     }
 
@@ -423,7 +429,7 @@ bool CLiveWorker::Play()
                         ret = av_buffersrc_add_frame_flags(buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF);
                         if (ret < 0) {
                             Log::error("Error while feeding the filtergraph");
-                            goto end_task;
+                            goto end;
                         }
                         while (true) {
                             ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
@@ -534,12 +540,7 @@ bool CLiveWorker::Play()
     }
 
     av_write_trailer(ofc);
-end_task:
-	/* 关闭sip播放 */
-    IPC::Stop(port);
-    //关闭rtp
-    RtpDecode::Stop(playHandle);
-
+end:
     /** 清理filter */
     av_frame_free(&frame);
     av_frame_free(&filt_frame);
@@ -575,6 +576,10 @@ end_task:
 
 void CLiveWorker::push_ps_data(char* pBuff, int nLen)
 {
+    if(pBuff == NULL || nLen==0) {
+        Log::error("put data %P %d", pBuff, nLen);
+        return;
+    }
     //内存数据保存至ring-buff
 	int n = (int)ring_get_count_free_elements(m_pPSRing);
 	if (!n) {
@@ -583,47 +588,63 @@ void CLiveWorker::push_ps_data(char* pBuff, int nLen)
 	}
 
 	// 将数据保存在ring buff
-	AV_BUFF newTag = {pBuff, nLen};
+	char* pSaveBuff = (char*)malloc(nLen);
+	memcpy(pSaveBuff, pBuff, nLen);
+	AV_BUFF newTag = {pSaveBuff, nLen};
 	if (!ring_insert(m_pPSRing, &newTag, 1)) {
 		destroy_ring_node(&newTag);
 		Log::error("dropping!");
 		return;
 	}
-	//Log::debug("push ps %x, %d, %d", newTag.pData, newTag.nLen, ring_get_count_free_elements(m_pPSRing));
 }
 
 int CLiveWorker::get_ps_data(char* pBuff, int &nLen)
 {
-	if(m_nStreamReaded >= m_PsStream.size()) {
-		AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
-		if(!tag) 
-			return 0;
+    if(m_nStreamReaded >= m_PsStream.size()) {
+        AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+        if(!tag) 
+            return 0;
 
-		m_PsStream.clear();
-		m_PsStream.append_data(tag->pData, tag->nLen);
-		m_nStreamReaded = 0;
-		simple_ring_cosume(m_pPSRing);
+        //Log::debug("get ps %x, %d, %d", tag->pData, tag->nLen, ring_get_count_free_elements(m_pPSRing));
 
-		//Log::debug("get ps %x, %d, %d", tag->pData, tag->nLen, ring_get_count_free_elements(m_pPSRing));
-
-        if(!m_bParseKey) {
-            if(is_key(m_PsStream.get(), m_PsStream.size())){
+        //需要将第一个I帧之前的B帧或P帧数据抛弃。某些平台转发时，直接将其当前已经在接收的流直接转发，我收到的数据就可能不是I帧开头的
+        if(_findFirstKey && !m_bParseKey) {
+            if(is_key(tag->pData, tag->nLen)){
                 m_bParseKey = true;
             } else {
                 Log::warning("no key frame before this");
-                m_PsStream.clear();
+                simple_ring_cosume(m_pPSRing);
                 return 0;
             }
         }
-	}
 
-	int len = m_PsStream.size() - m_nStreamReaded;
-	if(len > nLen)
-		len = nLen;
-	memcpy(pBuff, m_PsStream.get()+m_nStreamReaded, len);
-	m_nStreamReaded += len;
+        // ringbuff中缓存的数据不大于ffmpeg缓存空间，直接赋值
+        if(tag->nLen <= nLen) {
+            int len = tag->nLen;
+            memcpy(pBuff, tag->pData, tag->nLen);
+            simple_ring_cosume(m_pPSRing);
+            return len;
+        }
+
+        // ringbuff中缓存的数据大于ffmpeg缓存空间
+        m_PsStream.clear();
+        m_PsStream.append_data(tag->pData, tag->nLen);
+        m_nStreamReaded = 0;
+        simple_ring_cosume(m_pPSRing);
+    }
+
+    int len = m_PsStream.size() - m_nStreamReaded;
+    if(len > nLen)
+        len = nLen;
+    memcpy(pBuff, m_PsStream.get()+m_nStreamReaded, len);
+    m_nStreamReaded += len;
 
     return len;
+}
+
+bool CLiveWorker::ps_empty() {
+    AV_BUFF* tag = (AV_BUFF*)ring_get_element(m_pPSRing, NULL);
+    return tag == NULL;
 }
 
 void CLiveWorker::push_flv_frame(char* pBuff, int nLen)
@@ -671,6 +692,8 @@ void CLiveWorker::next_flv_frame() {
 
 void CLiveWorker::close()
 {
+    if(_stop)
+        _stop(this);
     _csWorkers.lock();
     _listWorkers.remove(this);
     IPC::SendClients(GetClientsInfo());
@@ -703,10 +726,11 @@ CLiveWorker* CreatLiveWorker(RequestParam param, bool isWs, ILiveSession *pSessi
 
     uv_thread_t tid;
     uv_thread_create(&tid, real_play, (void*)worker);
-    Log::debug("RealPlay ok: %s",param.strCode.c_str());
+    Log::debug("RealPlay ok: %s%s%s %s %s",param.strCode.c_str(), param.strUrl.c_str(), param.strHost.c_str(), param.strBeginTime.c_str(), param.strEndTime.c_str());
     return worker;
 }
 
+namespace Worker {
 static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     char text[256];              //日志内容
     memset(text,0,256);
@@ -721,6 +745,10 @@ static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     }
 }
 
-void InitFFmpeg(){
+void Init(funOutPlay play, funOutPlay stop, bool findFirstKey){
+    _play = play;
+    _stop = stop;
+    _findFirstKey = findFirstKey;
     //av_log_set_callback(ffmpeg_log_cb);
+}
 }

@@ -4,16 +4,58 @@
 #include "util.h"
 #include "utilc.h"
 #include "easylog.h"
+#include "rtp.h"
+#include "worker.h"
 #include "server.h"
-#include "ipc.h"
+#include "ipcex.h"
 
 using namespace util;
+
+static bool play(CLiveWorker *worker) {
+    RtpDecode::RtpData *rtp = new RtpDecode::RtpData;
+    worker->m_pPlay = rtp;
+
+    // 通知sip server创建播放请求实例，并获取本地udp端口
+    IPCEX::PlayRequest *req = IPCEX::CreateReal(worker->m_pParam->strCode);
+    rtp->port = req->port;
+
+    // 创建RTP解码实例，并开始监听本地udp端口
+    rtp->playHandle = RtpDecode::Creat(worker, req->port);
+
+    //通知sip server发送请求，并获取应答信息
+    IPCEX::RealPlay(req);
+    if(req->ret != 0) {
+        Log::error("play %s failed: %s", worker->m_pParam->strCode.c_str(), req->info.c_str());
+        IPCEX:DestoryRequest(req);
+        return false;
+    }
+
+    //根据应答信息开始解析rtp
+    RtpDecode::Play(rtp->playHandle, req->info);
+
+    IPCEX::DestoryRequest(req);
+}
+
+static bool stop(CLiveWorker *worker) {
+    RtpDecode::RtpData *rtp = (RtpDecode::RtpData*)worker->m_pPlay;
+
+    /* 关闭sip播放 */
+    IPCEX::Stop(rtp->port);
+    //关闭rtp
+    RtpDecode::Stop(rtp->playHandle);
+
+    delete rtp;
+    return true;
+}
 
 int main(int argc, char* argv[])
 {
     if(argc != 2)
         return -1;
     int port = atoi(argv[1]);
+
+    /** 将工作路径设置到程序所在位置 */
+    setworkpath2ex();
 
     /** Dump设置 */
     char dmpname[20]={0};
@@ -32,22 +74,11 @@ int main(int argc, char* argv[])
     else
         Log::debug("Settings::loadFromProfile ok");
 
-    //根据cpu数量设置libuv线程池的线程数量
-    uv_cpu_info_t* cpu_infos;
-    int count;
-    int err = uv_cpu_info(&cpu_infos, &count);
-    if (err) {
-        Log::warning("fail get cpu info: %s",uv_strerror(err));
-    } else {
-        char szThreadNum[10] = {0};
-        sprintf(szThreadNum, "%d", count*2+1);
-        Log::debug("thread pool size is %s", szThreadNum);
-        //设置环境变量的值
-        uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
-    }
-    uv_free_cpu_info(cpu_infos, count);
+    /** 进程通信初始化 */
+    IPCEX::Init(port);
 
-    IPC::Init(port);
+    /** 视频处理初始化 */
+    Worker::Init(play, stop, false);
 
     /** 创建一个http服务器 */
     Server::Init(port);
