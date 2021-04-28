@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     int port = atoi(argv[1]);
 
     /** Dump设置 */
-    CMiniDump dump("control_server.dmp");
+    //CMiniDump dump("control_server.dmp");
 
     /** 创建日志文件 */
     char path[MAX_PATH];

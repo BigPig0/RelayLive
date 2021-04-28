@@ -34,6 +34,7 @@ static bool play(CLiveWorker *worker) {
     RtpDecode::Play(rtp->playHandle, req->info);
 
     IPCEX::DestoryRequest(req);
+    return true;
 }
 
 static bool stop(CLiveWorker *worker) {
@@ -58,9 +59,9 @@ int main(int argc, char* argv[])
     setworkpath2ex();
 
     /** Dump设置 */
-    char dmpname[20]={0};
-    sprintf(dmpname, "live_server_%d.dmp", port);
-    CMiniDump dump(dmpname);
+    //char dmpname[20]={0};
+    //sprintf(dmpname, "live_server_%d.dmp", port);
+    //CMiniDump dump(dmpname);
 
     /** 创建日志文件 */
     char path[MAX_PATH];
