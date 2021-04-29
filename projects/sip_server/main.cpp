@@ -73,11 +73,20 @@ int main()
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf(path, "./log/sipServer.txt");
+#ifdef WINDOWS_IMPL
+    sprintf(path, "./log/sipServer/log.txt");
+#else
+    sprintf(path, "/var/log/relaylive/sipServer/log.txt", port);
+#endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
+#ifdef WINDOWS_IMPL
+    const char* conf = "./config.txt";
+#else
+    const char* conf = "/etc/relaylive/config.txt";
+#endif
     if (!Settings::loadFromProfile("./config.txt"))
         Log::error("Settings::loadFromProfile failed");
     else

@@ -44,12 +44,21 @@ int main()
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf(path, "./log/ipc_server.txt");
+#ifdef WINDOWS_IMPL
+    sprintf(path, "./log/ipc_server/log.txt");
+#else
+    sprintf(path, "/var/log/relaylive/ipc_server/log.txt", port);
+#endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
-    if (!Settings::loadFromProfile("./config.txt"))
+#ifdef WINDOWS_IMPL
+    const char* conf = "./config.txt";
+#else
+    const char* conf = "/etc/relaylive/config.txt";
+#endif
+    if (!Settings::loadFromProfile(conf))
         Log::error("Settings::loadFromProfile failed");
     else
         Log::debug("Settings::loadFromProfile ok");
