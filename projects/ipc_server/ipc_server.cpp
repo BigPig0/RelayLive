@@ -39,12 +39,15 @@ int main()
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlCHandler, TRUE);
 #endif
 
+    /** 将工作路径设置到程序所在位置 */
+    setworkpath2ex();
+
     /** 创建日志文件 */
     char path[MAX_PATH];
 #ifdef WINDOWS_IMPL
     sprintf(path, "./log/ipc_server/log.txt");
 #else
-    sprintf(path, "/var/log/relaylive/ipc_server/log.txt", port);
+    sprintf(path, "/var/log/relaylive/ipc_server/log.txt");
 #endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
