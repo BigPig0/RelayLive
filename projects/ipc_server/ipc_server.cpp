@@ -47,7 +47,7 @@ int main()
 #ifdef WINDOWS_IMPL
     sprintf(path, "./log/ipc_server/log.txt");
 #else
-    sprintf(path, "/var/log/relaylive/ipc_server/log.txt", port);
+    sprintf(path, "/var/log/relaylive/ipc_server/log.txt");
 #endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
