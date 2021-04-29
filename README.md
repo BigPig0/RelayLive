@@ -50,6 +50,9 @@
 * 信息查询和设备控制等http请求通过nginx转发到XXXctrl_server
 * 视频播放请求通过nginx进行负载均衡，转发到对应的视频服务
 
+##docker
+* docker run --privileged -it --name RelayLive -p 18000:18000/tcp -p 5000:6000/udp -v /etc/relaylive:/etc/relaylive -v /var/log/relaylive:/var/log/relaylive centos:7 /sbin/init
+
 ## 第三方:
 * exosip: http://savannah.nongnu.org/projects/exosip
 * exosip-vs: https://github.com/BigPig0/exOsip-vs.git
