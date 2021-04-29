@@ -16,37 +16,34 @@ int main(int argc, char* argv[])
         return -1;
     int port = atoi(argv[1]);
 
+    /** 将工作路径设置到程序所在位置 */
+    setworkpath2ex();
+
     /** Dump设置 */
-    char dmpname[20]={0};
-    sprintf(dmpname, "capture_server_%d.dmp", port);
-    CMiniDump dump(dmpname);
+    //char dmpname[20]={0};
+    //sprintf(dmpname, "capture_server_%d.dmp", port);
+    //CMiniDump dump(dmpname);
 
     /** 创建日志文件 */
     char path[MAX_PATH];
-    sprintf(path, ".\\log\\capture_server_%d.txt", port);
+#ifdef WINDOWS_IMPL
+    sprintf(path, "./log/capture_server_%d/log.txt", port);
+#else
+    sprintf(path, "/var/log/relaylive/capture_server_%d/log.txt", port);
+#endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
-    if (!Settings::loadFromProfile(".\\config.txt"))
+#ifdef WINDOWS_IMPL
+    const char* conf = "./config.txt";
+#else
+    const char* conf = "/etc/relaylive/config.txt";
+#endif
+    if (!Settings::loadFromProfile(conf))
         Log::error("Settings::loadFromProfile failed");
     else
         Log::debug("Settings::loadFromProfile ok");
-
-    //根据cpu数量设置libuv线程池的线程数量
-    uv_cpu_info_t* cpu_infos;
-    int count;
-    int err = uv_cpu_info(&cpu_infos, &count);
-    if (err) {
-        Log::warning("fail get cpu info: %s",uv_strerror(err));
-    } else {
-        char szThreadNum[10] = {0};
-        sprintf(szThreadNum, "%d", count*2+1);
-        Log::debug("thread pool size is %s", szThreadNum);
-        //设置环境变量的值
-        uv_os_setenv("UV_THREADPOOL_SIZE", szThreadNum);
-    }
-    uv_free_cpu_info(cpu_infos, count);
 
     /** 创建一个http服务器 */
     Server::Init(port);
