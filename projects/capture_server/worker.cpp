@@ -24,6 +24,7 @@ extern "C"
 #include "libavutil/timestamp.h"
 #include "libavutil/opt.h"
 }
+#ifdef WINDOWS_IMPL
 #pragma comment(lib,"avcodec.lib")
 #pragma comment(lib,"avdevice.lib")
 #pragma comment(lib,"avfilter.lib")
@@ -32,6 +33,7 @@ extern "C"
 #pragma comment(lib,"postproc.lib")
 #pragma comment(lib,"swresample.lib")
 #pragma comment(lib,"swscale.lib")
+#endif
 
 extern list<FramePic> g_framePics;
 extern uv_mutex_t     g_framePicLock;

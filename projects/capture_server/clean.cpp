@@ -37,7 +37,7 @@ static bool scanDayDir(string dir, int year, int month, int day) {
     while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
         Log::debug("find dir:%s", dent.name);
         // 跳过 . 文件
-        if( _stricmp(dent.name, ".") == 0 || 0 == _stricmp(dent.name, "..") )
+        if( strcmp(dent.name, ".") == 0 || 0 == strcmp(dent.name, "..") )
             continue;
         ret = false;
 
@@ -82,7 +82,7 @@ static bool scanMonthDir(string dir, int year, int month) {
     while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
         Log::debug("find dir:%s", dent.name);
         // 跳过 . 文件
-        if( _stricmp(dent.name, ".") == 0 || 0 == _stricmp(dent.name, "..") )
+        if( strcmp(dent.name, ".") == 0 || 0 == strcmp(dent.name, "..") )
             continue;
         ret = false;
 
@@ -130,7 +130,7 @@ static bool scanYearDir(string dir, int year) {
     while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
         Log::debug("find dir:%s", dent.name);
         // 跳过 . 文件
-        if( _stricmp(dent.name, ".") == 0 || 0 == _stricmp(dent.name, "..") )
+        if( strcmp(dent.name, ".") == 0 || 0 == strcmp(dent.name, "..") )
             continue;
         ret = false;
 
@@ -163,7 +163,7 @@ static bool scanDir(string dir) {
     while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
         Log::debug("find dir:%s", dent.name);
         // 跳过 . 文件
-        if( _stricmp(dent.name, ".") == 0 || 0 == _stricmp(dent.name, "..") )
+        if( strcmp(dent.name, ".") == 0 || 0 == strcmp(dent.name, "..") )
             continue;
             ret = false;
 

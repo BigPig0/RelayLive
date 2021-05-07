@@ -5,25 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "hik_sdk",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/out/linux64/hik_sdk",
-            "args": ["8001"],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/out/linux64",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "为 gdb 启用整齐打印",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
-        },{
             "name": "ipc_server",
             "type": "cppdbg",
             "request": "launch",
@@ -43,11 +24,49 @@
             ],
             "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
         },{
-            "name": "relayctrl_server",
+            "name": "control_server",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/linux64/relayctrl_server",
+            "program": "${workspaceFolder}/out/linux64/control_server",
             "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "hik_sdk",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/hik_sdk",
+            "args": ["8001"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/linux64",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
+        },{
+            "name": "hik_sdk",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/linux64/hik_sdk",
+            "args": ["8001"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out/linux64",
             "environment": [],
@@ -67,25 +86,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/linux64/relay_server",
             "args": ["8001"],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/out/linux64",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "为 gdb 启用整齐打印",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
-        },{
-            "name": "livectrl_server",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/out/linux64/livectrl_server",
-            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out/linux64",
             "environment": [],

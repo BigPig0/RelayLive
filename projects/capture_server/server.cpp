@@ -12,7 +12,7 @@
 #ifdef WINDOWS_IMPL
 #include <direct.h>
 #include <io.h>
-#elif LINUX_IMPL
+#else
 #include <stdarg.h>
 #include <sys/stat.h>
 #endif
@@ -36,13 +36,16 @@ int CreatDir(string strDirPath) {
     char *pszDir = (char*)strDirPath.c_str();
     // 创建目录
     for (size_t i = 0;i < iLen; i++) {
-        if (pszDir[i] == '\\' || pszDir[i] == '/') { 
+        if ((pszDir[i] == '\\' || pszDir[i] == '/') && i!=0) { 
             pszDir[i] = '\0';
 
             //如果不存在,创建
-            iRet = _access(pszDir,0);
+            uv_fs_t req;
+            iRet = uv_fs_access(NULL, &req, pszDir, 0, NULL);
+            uv_fs_req_cleanup(&req);
             if (iRet != 0) {
-                iRet = _mkdir(pszDir);
+                iRet = uv_fs_mkdir(NULL, &req, pszDir, 777, NULL);
+                uv_fs_req_cleanup(&req);
                 if (iRet != 0) {
                     return -1;
                 } 
@@ -99,13 +102,13 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 
-static void on_close(uv_handle_t* handle) {
-	CLiveSession *skt = (CLiveSession*)handle->data;
-	skt->handlecount--;
-	if(skt->handlecount == 0 && !skt->connected) {
-		delete skt;
-	}
-}
+// static void on_close(uv_handle_t* handle) {
+// 	CLiveSession *skt = (CLiveSession*)handle->data;
+// 	skt->handlecount--;
+// 	if(skt->handlecount == 0 && !skt->connected) {
+// 		delete skt;
+// 	}
+// }
 
 static void on_uv_close(uv_handle_t* handle) {
     CLiveSession *skt = (CLiveSession*)handle->data;
@@ -132,7 +135,7 @@ static void on_uv_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) 
     CLiveSession *skt = (CLiveSession*)stream->data;
     if(nread < 0) {
 		skt->connected = false;
-        if(nread == UV__ECONNRESET || nread == UV_EOF) {
+        if(nread == UV_ECONNRESET || nread == UV_EOF) {
             //对端发送了FIN
             Log::warning("remote close socket [%s:%u]", skt->strRemoteIP.c_str(), skt->nRemotePort);
             uv_close((uv_handle_t*)&skt->socket, on_uv_close);
@@ -191,9 +194,9 @@ static void on_connection(uv_stream_t* server, int status) {
     uv_read_start((uv_stream_t*)&sess->socket, on_uv_alloc, on_uv_read);
 }
 
-static void on_uv_async_close(uv_async_t* handle) {
-    CLiveSession *skt = (CLiveSession*)handle->data;
-}
+// static void on_uv_async_close(uv_async_t* handle) {
+//     //CLiveSession *skt = (CLiveSession*)handle->data;
+// }
 
 static void run_loop_thread(void* arg) {
     uv_run(&uvLoopLive, UV_RUN_DEFAULT);
@@ -222,13 +225,13 @@ RequestParam::RequestParam()
 }
 
 CLiveSession::CLiveSession()
-    : parseHeader(false)
+    : nRemotePort(0)
+	, parseHeader(false)
+    , connected(true)
+	, handlecount(2)
     , isWs(false)
     , pWorker(NULL)
-    , nRemotePort(0)
     , writing(false)
-	, connected(true)
-	, handlecount(2)
 {
     socket.data = this;
     uv_tcp_init(&uvLoopLive, &socket);
