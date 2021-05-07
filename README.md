@@ -83,8 +83,8 @@
 * * Port 对方下级平台的端口
 * * SubscribeStatus 是否订阅设备状态
 * * SubscribePos 是否订阅设备位置，订阅整个平台
-* * SubscribePosDev 是否订阅指定组织的设备位置[特殊定制]
-* * SubscribePosDepart 订阅设备所在的组织，多个组织用','分隔[特殊定制]
+* * SubscribePosDev 是否订阅指定部门的设备位置[特殊定制]
+* * SubscribePosDepart 订阅设备所在的部门，多个部门用','分隔[特殊定制]
 * [RtpClient]
 * * IP live_server服务所在的ip
 * * BeginPort rtp接收起始端口
