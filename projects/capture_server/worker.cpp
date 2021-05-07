@@ -11,7 +11,9 @@ using namespace util;
 
 extern "C"
 {
+#ifdef WINDOWS_IMPL
 #define snprintf  _snprintf
+#endif
 #define __STDC_FORMAT_MACROS
 #include "libavdevice/avdevice.h"
 #include "libavcodec/avcodec.h"  
@@ -177,14 +179,15 @@ bool CLiveWorker::Play()
     AVStream        *istream_video = NULL;     //输入视频码流
     AVStream        *ostream_video = NULL;     //输出视频码流
     AVCodecContext  *decode_ctx = NULL;        //输入视频解码
-    //AVCodecContext  *encode_ctx = NULL;        //输出视频编码
     AVFrame         *frame = NULL;             //原始码流解码帧
-    //struct SwsContext *pSwsCxt = NULL;         //图片格式转换
     int             in_video_index = -1;
     int             out_video_index = 0;
+    int             ret = 0;
+    int64_t         beginDts = -1;
+    uint32_t        saveVideoDuration = 0;
 
     //打开输入流
-    int ret = avformat_open_input(&ifc, m_pParam->strUrl.c_str(), NULL, NULL);
+    ret = avformat_open_input(&ifc, m_pParam->strUrl.c_str(), NULL, NULL);
     if (ret != 0) {
         char tmp[1024]={0};
         av_strerror(ret, tmp, 1024);
@@ -284,8 +287,6 @@ bool CLiveWorker::Play()
     }
 
     //开始处理
-    int64_t  beginDts = -1;
-    uint32_t saveVideoDuration = 0;
     while (m_bRun) {
         AVPacket pkt;
         av_init_packet(&pkt);
@@ -429,7 +430,7 @@ CLiveWorker* CreatLiveWorker(RequestParam param) {
 static void ffmpeg_log_cb(void* ptr, int level, const char* fmt, va_list vl){
     char text[256];              //日志内容
     memset(text,0,256);
-    vsprintf_s(text, 256, fmt, vl);
+    vsprintf(text, fmt, vl);
 
     if(level <= AV_LOG_ERROR){
         Log::error(text);

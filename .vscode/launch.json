@@ -62,10 +62,10 @@
             ],
             "miDebuggerPath": "/usr/bin/gdb" //gdb完整路径
         },{
-            "name": "hik_sdk",
+            "name": "capture_server",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/linux64/hik_sdk",
+            "program": "${workspaceFolder}/out/linux64/capture_server",
             "args": ["8001"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out/linux64",
