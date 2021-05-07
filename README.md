@@ -3,7 +3,7 @@
 *  https://github.com/BigPig0/RelayLive.git
 *  https://gitee.com/ztwlla/RelayLive.git
 
-##说明:
+## 说明:
 * 本程序的主要功能是将各种网络视频方式转为网页播放方式。
 * 视频来源可以分为：流媒体（rtsp，rtmp，hls等）、GB28281平台、海康SDK连接相机
 * 提供给网页播放的方式为http-flv、ws-flv(通过flv.js、NodePlayer.js)，http-fmp4(video标签直接可用)，ws-mp4(自己写msi扩展)。
@@ -16,7 +16,7 @@
 * live_server: [gb28181]将下级推送的基于PS的rtp流转为网页播放
 * capture_server: 将流媒体截取一些图片及指定时长的视频文件保存
 
-## 前端请求格式
+## 前端请求格式:
   * 视频请求有http和websocket两种格式，其他请求都是http
   * 流媒体转为网页播放: http(ws)://IP:port/relay?url=[rtsp地址]
     + url 原始视频地址
@@ -47,7 +47,7 @@
   * [gb28181]查看设备列表 http://ip:port/device/devlist
   * [gb28181]查看客户端信息 http://ip:port/device/clients
 
-## 编译方法
+## 编译方法:
 * Windows vs2012
   * 用vs打开RelayLive.sln,按顺序编译ThirdParty、Common、Modules、Projects下的项目。
   * 输出目录为./out/x64_debug(release)。
@@ -67,6 +67,8 @@
   * 只保留了视频，音频丢弃了。需要音频可以在worker中添加代码。
   * 编译配置都是64位，需要32位的需要修改vs项目文件或makefile。
   * 根目录的config.h可以配置需要哪些数据库功能，数据库只有sip_server的lua脚本中需要使用。
+  * 首次克隆仓库后，需要下载子模块，执行git submodule update --init --recursive、git submodule foreach git checkout master
+  * 更新子模块 git submodule foreach git pull
 
 ## 配置文件
 * [IPC]
