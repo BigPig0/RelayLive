@@ -20,18 +20,27 @@ int main(int argc, char* argv[])
     setworkpath2ex();
 
     /** Dump设置 */
-    char dmpname[20]={0};
-    sprintf(dmpname, "relay_server_%d.dmp", port);
-    CMiniDump dump(dmpname);
+    // char dmpname[20]={0};
+    // sprintf(dmpname, "relay_server_%d.dmp", port);
+    // CMiniDump dump(dmpname);
 
     /** 创建日志文件 */
     char path[MAX_PATH]={0};
-    sprintf(path, "./log/relay_server_%d.txt", port);
+#ifdef WINDOWS_IMPL
+    sprintf(path, "./log/relay_server_%d/log.txt", port);
+#else
+    sprintf(path, "/var/log/relaylive/relay_server_%d/log.txt", port);
+#endif
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
     /** 加载配置文件 */
-    if (!Settings::loadFromProfile("./config.txt"))
+#ifdef WINDOWS_IMPL
+    const char* conf = "./config.txt";
+#else
+    const char* conf = "/etc/relaylive/config.txt";
+#endif
+    if (!Settings::loadFromProfile(conf))
         Log::error("Settings::loadFromProfile failed");
     else
         Log::debug("Settings::loadFromProfile ok");
