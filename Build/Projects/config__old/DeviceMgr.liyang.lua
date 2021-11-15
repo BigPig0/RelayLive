@@ -218,8 +218,8 @@ function Gps84_To_Gcj(lat, lon)
     local magic = math.sin(radLat)
     magic = 1.0 - (ee * magic * magic)
     local sqrtMagic = math.sqrt(magic)
-    dLat = dLat * 180.0 / a * (1.0 - ee) / magic * sqrtMagic * math.pi
-    dLon = dLon * 180.0 / a / sqrtMagic * math.cos(radLat) * math.pi
+    dLat = dLat * 180.0 / ((a * (1.0 - ee)) / magic * sqrtMagic * math.pi)
+    dLon = dLon * 180.0 / (a / sqrtMagic * math.cos(radLat) * math.pi)
     local mgLat = lat + dLat
     local mgLon = lon + dLon
 
