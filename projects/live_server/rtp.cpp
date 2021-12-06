@@ -215,10 +215,12 @@ namespace RtpDecode {
     static void after_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags) {
         CRtpStream *dec = (CRtpStream*)handle->data;
         if(nread <= 0){
-            Log::error("read error: %s",uv_strerror((int)nread));
+            if(nread<0)
+                Log::error("read error: %s",uv_strerror((int)nread));
             free(buf->base);
 			return;
         }
+        Log::debug("udp length: %d", nread);
 
         //udp来源不匹配，将数据抛弃
         struct sockaddr_in* addr_in =(struct sockaddr_in*)addr;
@@ -368,8 +370,8 @@ namespace RtpDecode {
         if(tmp == NULL)
             return;
 
-        if(m_nRemotePort != tmp->port || m_strRemoteIP != tmp->ip) {
-            Log::error("this is not my rtp data");
+        if(m_nRemotePort != tmp->port /*|| m_strRemoteIP != tmp->ip*/) {
+            Log::error("this is not my rtp data [real %s:%d] [sdp %s:%d]", tmp->ip.c_str(), tmp->port, m_strRemoteIP.c_str(), m_nRemotePort);
 			free(tmp->pData);
 			simple_ring_cosume(m_pUdpCatch);
 			return;

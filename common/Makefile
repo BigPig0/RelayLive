@@ -1,5 +1,5 @@
 #./common/Makefile
-SUBDIR = utilc util crypto ludb
+SUBDIR = util#utilc util crypto ludb
 
 all:$(SUBDIR)
 	
