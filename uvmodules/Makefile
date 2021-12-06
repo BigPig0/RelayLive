@@ -1,5 +1,5 @@
 #./uvmodules/Makefile
-SUBDIR = uvipc uvlogplus uvnetplus
+SUBDIR = uvipc# uvlogplus uvnetplus
 
 all:$(SUBDIR)
 	

@@ -28,7 +28,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/out/linux64/control_server",
-            "args": [],
+            "args": ["18100"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out/linux64",
             "environment": [],
