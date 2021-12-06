@@ -308,16 +308,7 @@ namespace RtpDecode {
         uv_ip4_addr("0.0.0.0", m_nPort, &addr);
         uv_udp_bind(&m_uvSkt, (struct sockaddr*)&addr, 0);
         int nRecvBuf = 10 * 1024 * 1024;       // 缓存区设置成10M，默认值太小会丢包
-        int nOverTime = 30*1000;  // 超时时间设置成30s
-#ifdef WINDOWS_IMPL
-        setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
-        setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-        setsockopt(m_uvSkt.socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-#else
-        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(nRecvBuf));
-        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-        setsockopt(m_uvSkt.io_watcher.fd, SOL_SOCKET, SO_SNDTIMEO, (char*)&nOverTime, sizeof(nOverTime));
-#endif
+        uv_recv_buffer_size((uv_handle_t*)&m_uvSkt, &nRecvBuf);
         uv_udp_recv_start(&m_uvSkt, echo_alloc, after_read);
         m_nHandleNum++;
 
