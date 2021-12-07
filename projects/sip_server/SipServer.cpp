@@ -277,10 +277,11 @@ namespace SipServer {
         if (!dev->strName.empty())
         {
             strResJson += "\"Name\":\"";
-            if(ansi2utf8)
+            if(ansi2utf8) {
                 strResJson += EncodeConvert::AtoUTF8(dev->strName);
-            else
+            } else {
                 strResJson += dev->strName;
+            }
             strResJson += "\",";
         }
         if (!dev->strManuf.empty())
@@ -485,9 +486,13 @@ namespace SipServer {
             strResJson += "\",";
         }
 #endif
-        strResJson = util::String::trimRight(strResJson,',');
-        strResJson += "}";
-
+        //strResJson = util::String::trimRight(strResJson,',');
+        if(strResJson.at(strResJson.size()-1) == ',') {
+            strResJson[strResJson.size()-1] = '}';
+        } else {
+            strResJson += "}";
+        }
+        //Log::debug(strResJson.c_str());
         return strResJson;
     }
 
