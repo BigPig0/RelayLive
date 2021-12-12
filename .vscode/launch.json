@@ -104,7 +104,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/out/linux64/live_server",
-            "args": [],
+            "args": ["18101"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/out/linux64",
             "environment": [],

@@ -4,6 +4,17 @@
 #include "easylog.h"
 #include "worker.h"
 #include <map>
+#define JRTPLIB
+#ifdef JRTPLIB
+#include <jrtplib3/rtpsession.h>
+#include <jrtplib3/rtpudpv4transmitter.h>
+#include <jrtplib3/rtpipv4address.h>
+#include <jrtplib3/rtpsessionparams.h>
+#include <jrtplib3/rtperrors.h>
+#include <jrtplib3/rtplibraryversion.h>
+#include <jrtplib3/rtppacket.h>
+using namespace jrtplib;
+#endif
 
 using namespace util;
 
@@ -85,8 +96,14 @@ namespace RtpDecode {
     public:
         uv_loop_t   m_uvLoop;
         uv_async_t  m_uvAsStop;          // 结束任务通知
+#ifdef JRTPLIB
+        RTPSession sess;
+        RTPUDPv4TransmissionParams transparams;
+	    RTPSessionParams sessparams;
+#else
         uv_async_t  m_uvAsParse;         // 解析RTP通知
         uv_udp_t    m_uvSkt;             // rtp接收
+#endif
         uv_timer_t  m_uvTimer;           // 接收超时定时器
         string      m_strRemoteIP;       // 发送方IP
         int         m_nRemotePort;       // 发送方端口
@@ -106,8 +123,12 @@ namespace RtpDecode {
         ~CRtpStream();
 
         void Begin(string remoteIP, uint32_t remotePort);   //开始rtp组装
+#ifdef JRTPLIB
+        void JRtpWork();
+#else
         void CtachPacket(char* data, uint32_t len, string ip, int port); //UDP接收到的包存放到缓存
         void PickUpPacket();                                //从缓存中取udp包来处理
+#endif
         void AddPacket(char* data, uint32_t len);           //处理rtp包
     };
 
@@ -206,6 +227,7 @@ namespace RtpDecode {
     }
 
     //////////////////////////////////////////////////////////////////////////
+#ifndef JRTPLIB
     /** udp接收申请缓存空间 */
     static void echo_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
         *buf = uv_buf_init((char*)malloc(PACK_MAX_SIZE), PACK_MAX_SIZE);
@@ -233,6 +255,7 @@ namespace RtpDecode {
         //重置超时计时器
         uv_timer_again(&dec->m_uvTimer);
     }
+#endif
 
     /** 超时定时器到时回调 */
     static void timer_cb(uv_timer_t* handle) {
@@ -255,11 +278,14 @@ namespace RtpDecode {
     /** 外部线程通知回调，在loop回调中关闭用到的uv句柄 */
     static void async_stop_cb(uv_async_t* handle){
         CRtpStream *dec = (CRtpStream*)handle->data;
-        int ret = uv_udp_recv_stop(&dec->m_uvSkt);
+        int ret;
+#ifndef JRTPLIB
+        ret = uv_udp_recv_stop(&dec->m_uvSkt);
         if(ret < 0) {
             Log::error("stop rtp recv port:%d err: %s", dec->m_nPort, uv_strerror(ret));
         }
         uv_close((uv_handle_t*)&dec->m_uvSkt, udp_uv_close_cb);
+#endif
 
         ret = uv_timer_stop(&dec->m_uvTimer);
         if(ret < 0) {
@@ -268,15 +294,18 @@ namespace RtpDecode {
         uv_close((uv_handle_t*)&dec->m_uvTimer, udp_uv_close_cb);
 
         uv_close((uv_handle_t*)&dec->m_uvAsStop, udp_uv_close_cb);
-
+#ifndef JRTPLIB
         uv_close((uv_handle_t*)&dec->m_uvAsParse, udp_uv_close_cb);
+#endif
     }
 
+#ifndef JRTPLIB
     /** 通知解析rtp报文 */
     static void async_parse_cb(uv_async_t* handle){
         CRtpStream *dec = (CRtpStream*)handle->data;
         dec->PickUpPacket();
     }
+#endif
 
     /** event loop thread */
     static void run_loop_thread(void* arg) {
@@ -288,6 +317,14 @@ namespace RtpDecode {
         uv_loop_close(&dec->m_uvLoop);
         delete dec;
     }
+
+#ifdef JRTPLIB
+    /** jrtp thread */
+    static void jrtp_thread(void* arg) {
+        CRtpStream *dec = (CRtpStream*)arg;
+        dec->JRtpWork();
+    }
+#endif
 
 
     CRtpStream::CRtpStream(void* usr, uint32_t port)
@@ -302,7 +339,9 @@ namespace RtpDecode {
         m_pUdpCatch = create_ring_buff(sizeof(UDP_BUFF), 1000, NULL);
 
         uv_loop_init(&m_uvLoop);
+#ifdef JRTPLIB
 
+#else
         //udp接收
         m_uvSkt.data = (void*)this;
         uv_udp_init(&m_uvLoop, &m_uvSkt);
@@ -314,6 +353,10 @@ namespace RtpDecode {
         uv_udp_recv_start(&m_uvSkt, echo_alloc, after_read);
         m_nHandleNum++;
 
+        m_uvAsParse.data = (void*)this;
+        uv_async_init(&m_uvLoop, &m_uvAsParse, async_parse_cb);
+        m_nHandleNum++;
+#endif
         //开启udp接收超时判断
         m_uvTimer.data = (void*)this;
         uv_timer_init(&m_uvLoop, &m_uvTimer);
@@ -324,12 +367,7 @@ namespace RtpDecode {
         m_uvAsStop.data = (void*)this;
         uv_async_init(&m_uvLoop, &m_uvAsStop, async_stop_cb);
         m_nHandleNum++;
-
-        m_uvAsParse.data = (void*)this;
-        uv_async_init(&m_uvLoop, &m_uvAsParse, async_parse_cb);
-        m_nHandleNum++;
         
-
         //udp 接收loop线程
         uv_thread_t tid;
         uv_thread_create(&tid, run_loop_thread, this);
@@ -344,8 +382,11 @@ namespace RtpDecode {
         m_strRemoteIP = remoteIP;
         m_nRemotePort = remotePort;
         m_bBegin = true;
+        uv_thread_t jtid;
+        uv_thread_create(&jtid, jrtp_thread, this);
     }
 
+#ifndef JRTPLIB
     void CRtpStream::CtachPacket(char* data, uint32_t len, string ip, int port) {
         int n = (int)ring_get_count_free_elements(m_pUdpCatch);
         if(!n) {
@@ -382,6 +423,7 @@ namespace RtpDecode {
 
         uv_async_send(&m_uvAsParse);
     }
+#endif
 
     void CRtpStream::AddPacket(char* data, uint32_t len) {
         CRtpPacket *pack = new CRtpPacket();
@@ -510,6 +552,70 @@ namespace RtpDecode {
                 it_pos = m_PacketList.erase(it_pos);
             }
         }
+    }
+
+    void CRtpStream::JRtpWork() {
+        sessparams.SetAcceptOwnPackets(false);
+        sessparams.SetOwnTimestampUnit(1.0/8000.0);
+        sessparams.SetUsePollThread(true);
+        transparams.SetPortbase(m_nPort);
+        transparams.SetRTPReceiveBuffer(10*1024*1024);
+        int status = sess.Create(sessparams, &transparams);
+        if(status < 0) {
+            Log::error("rtp session create error: %s", RTPGetErrorString(status).c_str());
+        }
+        //设置只接受来源的报文
+        // sess.SetReceiveMode(RTPTransmitter::ReceiveMode::AcceptSome);
+        // uint32_t acceptip = inet_addr(m_strRemoteIP.c_str());
+        // acceptip = ntohl(acceptip);
+        // RTPIPv4Address addr(acceptip, m_nRemotePort);
+        // sess.AddToAcceptList(addr);
+        
+        RTPTime delay(0.001);
+        
+        RTPPacket *pack;
+        while (m_bRun) {
+            // status = sess.Poll();
+            // if(status < 0) {
+            //     Log::error("rtp session poll error: %s", RTPGetErrorString(status).c_str());
+            // }
+            sess.BeginDataAccess();
+            if (sess.GotoFirstSourceWithData()) {
+                do {
+                    while ((pack = sess.GetNextPacket()) != NULL) {
+                        char *data = (char*)malloc(pack->GetPacketLength());
+                        memcpy(data, pack->GetPacketData(), pack->GetPacketLength());
+                        AddPacket(data, pack->GetPacketLength());
+                        sess.DeletePacket(pack);
+                    }
+
+                    RTPSourceData *srcdat;
+                    if( (srcdat = sess.GetCurrentSourceInfo()) != 0) {
+                        if(srcdat->RR_HasInfo()) {  
+                            RTPTime *RRTime= srcdat->RR_GetReceiveTime();
+                            printf( "GetJitter= %u, GetLastSRTimestamp= %u, GetDelaySinceLastSR= %u,ReceiveTime_Second= %u,ReceiveTime_MicroSeconds = %u/n , FractionLost=%f, GetPacketsLost=%d, GetExtendedHighestSequenceNumber=%u /n",
+                                srcdat->RR_GetJitter(),
+                                srcdat->RR_GetLastSRTimestamp(),
+                                srcdat->RR_GetDelaySinceLastSR(), 
+                                //srcdat->RR_GetReceiveTime(),
+                                RRTime->GetSeconds(), 
+                                RRTime->GetMicroSeconds(),                         
+                                srcdat->RR_GetFractionLost() ,
+                                srcdat->RR_GetPacketsLost(),
+                                srcdat->RR_GetExtendedHighestSequenceNumber()
+                            );
+                        }
+                        srcdat-> FlushPackets();
+                    }
+                } while (sess.GotoNextSourceWithData());
+            }
+            sess.EndDataAccess();
+                    
+            RTPTime::Wait(delay);
+        }
+        
+        delay = RTPTime(10.0);
+        sess.BYEDestroy(delay,0,0);
     }
 
     //////////////////////////////////////////////////////////////////////////
