@@ -308,6 +308,7 @@ static void ParseNotifyCatalog(pugi::xml_node& root)
                 if(!pDevCtrl->strLongitude.empty() && !pDevCtrl->strLatitude.empty()) {
                     on_update_postion(pDevCtrl->strDevID, pDevCtrl->strLongitude, pDevCtrl->strLatitude);
                 }
+                delete pDevCtrl;
             } // for DeviceList Node
 
             LogDebug("</DeviceList>");
@@ -346,6 +347,7 @@ static void ParseMobilePosition(pugi::xml_node& root)
         }
     }
     on_update_postion(pDevCtrl->strDevID, pDevCtrl->strLongitude, pDevCtrl->strLatitude);
+    delete pDevCtrl;
 }
 
 /**
@@ -781,7 +783,7 @@ void CSipMessage::DeviceControl(string strDevCode,
     szCmd[12] = szTmp[0];  //字节7高4位 缩放控制速度
     szCmd[13] = '0';       //字节7低4位 地址的高4位
     //计算校验码
-    int nCheck = (0XA5 + 0X0F + 0X01 + cControlCode + cMoveSpeed + cMoveSpeed + cInOutSpeed<<4&0XF0)%0X100;
+    int nCheck = (0XA5 + 0X0F + 0X01 + cControlCode + cMoveSpeed + cMoveSpeed + ((cInOutSpeed<<4)&0XF0))%0X100;
     sprintf(szTmp,"%02X", nCheck);
     //Log::debug("nCheck is %s", szTmp);
     szCmd[14] = szTmp[0]; //字节8 校验码
@@ -791,12 +793,13 @@ void CSipMessage::DeviceControl(string strDevCode,
     // 组成报文体
     static int sn = 1;
     stringstream ss;
-    ss << "<?xml version=\"1.0\" encoding=\"GB2312\" ?>\r\n\r\n"
+    ss << "<?xml version=\"1.0\" ?>\r\n"
         << "<Control>\r\n"
         << "<CmdType>DeviceControl</CmdType>\r\n"
         << "<SN>" << sn++ << "</SN>\r\n"
         << "<DeviceID>" << strDevCode << "</DeviceID>\r\n"
         << "<PTZCmd>" << szCmd << "</PTZCmd>\r\n"
+        << "<Info>\r\n<ControlPriority>10</ControlPriority>\r\n</Info>\r\n"
         << "</Control>\r\n";
     string strBody = ss.str();
 

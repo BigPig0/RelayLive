@@ -35,7 +35,7 @@ static bool scanDayDir(string dir, int year, int month, int day) {
         return ret;
     }
     while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
-        Log::debug("find dir:%s", dent.name);
+        Log::debug("find file:%s", dent.name);
         // Ìø¹ý . ÎÄ¼þ
         if( strcmp(dent.name, ".") == 0 || 0 == strcmp(dent.name, "..") )
             continue;

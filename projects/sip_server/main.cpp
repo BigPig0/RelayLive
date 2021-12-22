@@ -15,6 +15,7 @@ using namespace util;
 std::map<string, SipServer::DevInfo*> g_mapDevs;
 CriticalSection                       g_csDevs;
 bool                                  _useScript = false;   //是否启用lua脚本
+bool                                  _transPos = false; //是否需要脚本进行坐标转换
 
 // 每个小时进入一次的触发事件
 void on_hour_event(time_t t) {
@@ -25,6 +26,8 @@ void on_hour_event(time_t t) {
 
 // 查询目录得到设备信息应答
 void on_device(SipServer::DevInfo* dev) {
+    if(_useScript && _transPos)
+        Script::TransPos(dev);
 	MutexLock lock(&g_csDevs);
 	if(g_mapDevs.count(dev->strDevID) == 0) {
 	    g_mapDevs.insert(make_pair(dev->strDevID, dev));
@@ -55,14 +58,17 @@ void on_update_status(string strDevID, string strStatus) {
 
 // 更新设备gps
 void on_update_postion(string strDevID, string log, string lat) {
-    if(_useScript)
-	    Script::UpdatePos(strDevID, lat, log);
-
 	MutexLock lock(&g_csDevs);
 	auto fit = g_mapDevs.find(strDevID);
 	if(fit != g_mapDevs.end()) {
 		fit->second->strLongitude = log;
 		fit->second->strLatitude = lat;
+
+        if(_useScript) {
+            if(_transPos)
+                Script::TransPos(fit->second);
+            Script::UpdatePos(strDevID, fit->second->strLatitude, fit->second->strLongitude);
+        }
 	}
 }
 
@@ -99,6 +105,9 @@ int main()
     string use = Settings::getValue("Script", "use", "false");
     if(use == "yes" || use == "1")
         _useScript = true;
+    string trans = Settings::getValue("Script", "trans", "false");
+    if(trans == "yes" || trans == "1")
+        _transPos = true;
     if(_useScript)
 	    Script::Init();
 
