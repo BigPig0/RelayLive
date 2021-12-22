@@ -93,7 +93,7 @@ int main()
 #else
     const char* conf = "/etc/relaylive/config.txt";
 #endif
-    if (!Settings::loadFromProfile("./config.txt"))
+    if (!Settings::loadFromProfile(conf))
         Log::error("Settings::loadFromProfile failed");
     else
         Log::debug("Settings::loadFromProfile ok");
@@ -125,6 +125,17 @@ int main()
 
 std::string GetDevsJson() {
 	MutexLock lock(&g_csDevs);
+	// for(int i=0; i<10000; i++) {
+	// 	SipServer::DevInfo *dev = new SipServer::DevInfo();
+	// 	dev->strDevID = "12345678912345678" + to_string(i);
+	// 	dev->strName = "TEST    " + to_string(i);
+	// 	dev->strManuf = "strManuf";
+	// 	dev->strModel = "ModelModelModelModelModel";
+	// 	dev->strStatus = "ON";
+	// 	dev->strLongitude = "120.123456";
+	// 	dev->strLatitude = "90.225366";
+	// 	g_mapDevs.insert(make_pair(dev->strDevID, dev));
+	// }
 	stringstream ss;
 	ss << "{\"root\":[";
 	bool first = true;

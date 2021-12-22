@@ -98,6 +98,7 @@ namespace IPC {
     bool Init() {
         /** 进程间通信 */
         string ipc_name = Settings::getValue("IPC","name","ipcsvr");
+        Log::debug("connect pipe %s", ipc_name.c_str());
         int ret = uv_ipc_client(&h, (char*)ipc_name.c_str(), NULL, "sipsvr", on_ipc_recv, NULL);
         if(ret < 0) {
             Log::error("ipc server err: %s", uv_ipc_strerr(ret));

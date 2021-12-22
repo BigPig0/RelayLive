@@ -95,6 +95,10 @@ int main(int argc, char* argv[])
 
     Log::debug("live sever @%d start success\r\n", port);
 
+    //test
+    //void *h = RtpDecode::Creat(NULL, 6000);
+    //RtpDecode::TestRtp(h, "192.168.1.235", 5000);
+
     Sleep(INFINITE);
     return 0;
 }

@@ -52,6 +52,12 @@ int main()
     Log::open(Log::Print::both, uvLogPlus::Level::Debug, path);
     Log::debug("version: %s %s", __DATE__, __TIME__);
 
+    // char *test = "创建日志文件";
+    // string ss = "{";
+    // ss += util::EncodeConvert::AtoUTF8(test);
+    // ss += "}";
+    // Log::debug(ss.c_str());
+
     /** 加载配置文件 */
 #ifdef WINDOWS_IMPL
     const char* conf = "./config.txt";

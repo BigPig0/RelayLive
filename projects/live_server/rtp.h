@@ -26,4 +26,6 @@ namespace RtpDecode {
      * @param h CRtpStreamÊµÀý
      */
     void Stop(void* h);
+
+    void TestRtp(void* h, string remoteIP, uint32_t remotePort);
 };
