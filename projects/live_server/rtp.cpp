@@ -555,8 +555,8 @@ namespace RtpDecode {
     }
 
     void CRtpStream::JRtpWork() {
-        sessparams.SetAcceptOwnPackets(false);
-        sessparams.SetOwnTimestampUnit(1.0/8000.0);
+        sessparams.SetOwnTimestampUnit(1.0/10.0);
+        sessparams.SetAcceptOwnPackets(true);
         sessparams.SetUsePollThread(true);
         transparams.SetPortbase(m_nPort);
         transparams.SetRTPReceiveBuffer(10*1024*1024);
@@ -564,48 +564,30 @@ namespace RtpDecode {
         if(status < 0) {
             Log::error("rtp session create error: %s", RTPGetErrorString(status).c_str());
         }
+        //设置发送目标,用来发送rtcp
+        uint32_t destip = inet_addr(m_strRemoteIP.c_str());
+        destip = ntohl(destip);
+        RTPIPv4Address addr(destip, m_nRemotePort);
+        status = sess.AddDestination(addr);
+        if(status < 0) {
+            Log::error("rtp Add destination error: %s", RTPGetErrorString(status).c_str());
+        }
         //设置只接受来源的报文
-        // sess.SetReceiveMode(RTPTransmitter::ReceiveMode::AcceptSome);
-        // uint32_t acceptip = inet_addr(m_strRemoteIP.c_str());
-        // acceptip = ntohl(acceptip);
-        // RTPIPv4Address addr(acceptip, m_nRemotePort);
-        // sess.AddToAcceptList(addr);
+        sess.SetReceiveMode(RTPTransmitter::ReceiveMode::AcceptSome);
+        sess.AddToAcceptList(addr);
         
         RTPTime delay(0.001);
-        
         RTPPacket *pack;
         while (m_bRun) {
-            // status = sess.Poll();
-            // if(status < 0) {
-            //     Log::error("rtp session poll error: %s", RTPGetErrorString(status).c_str());
-            // }
             sess.BeginDataAccess();
             if (sess.GotoFirstSourceWithData()) {
                 do {
                     while ((pack = sess.GetNextPacket()) != NULL) {
+                        //printf("Got packet!\n");
                         char *data = (char*)malloc(pack->GetPacketLength());
                         memcpy(data, pack->GetPacketData(), pack->GetPacketLength());
                         AddPacket(data, pack->GetPacketLength());
                         sess.DeletePacket(pack);
-                    }
-
-                    RTPSourceData *srcdat;
-                    if( (srcdat = sess.GetCurrentSourceInfo()) != 0) {
-                        if(srcdat->RR_HasInfo()) {  
-                            RTPTime *RRTime= srcdat->RR_GetReceiveTime();
-                            printf( "GetJitter= %u, GetLastSRTimestamp= %u, GetDelaySinceLastSR= %u,ReceiveTime_Second= %u,ReceiveTime_MicroSeconds = %u/n , FractionLost=%f, GetPacketsLost=%d, GetExtendedHighestSequenceNumber=%u /n",
-                                srcdat->RR_GetJitter(),
-                                srcdat->RR_GetLastSRTimestamp(),
-                                srcdat->RR_GetDelaySinceLastSR(), 
-                                //srcdat->RR_GetReceiveTime(),
-                                RRTime->GetSeconds(), 
-                                RRTime->GetMicroSeconds(),                         
-                                srcdat->RR_GetFractionLost() ,
-                                srcdat->RR_GetPacketsLost(),
-                                srcdat->RR_GetExtendedHighestSequenceNumber()
-                            );
-                        }
-                        srcdat-> FlushPackets();
                     }
                 } while (sess.GotoNextSourceWithData());
             }
@@ -669,5 +651,10 @@ namespace RtpDecode {
     void Stop(void* h) {
         CRtpStream *dec = (CRtpStream*)h;
         uv_async_send(&dec->m_uvAsStop);
+    }
+
+    void TestRtp(void* h, string remoteIP, uint32_t remotePort) {
+        CRtpStream *dec = (CRtpStream*)h;
+        dec->Begin(remoteIP, remotePort);
     }
 };
