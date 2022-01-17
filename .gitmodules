@@ -61,3 +61,6 @@
 [submodule "thirdparty/sqlite3"]
 	path = thirdparty/sqlite3
 	url = https://gitee.com/ztwlla/sqlite3.git
+[submodule "thirdparty/mbedtls"]
+	path = thirdparty/mbedtls
+	url = https://gitee.com/ztwlla/mbedtls.git
