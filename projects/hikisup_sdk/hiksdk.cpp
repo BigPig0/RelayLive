@@ -37,12 +37,8 @@ namespace HikSdk {
         long iSession;
     };
 
-    struct PlayHandle {
-        CLiveWorker* worker;
-    };
-
-    static CNet *cnet;
-    static CHttpClient *httpClient;
+    //static CNet *cnet;
+    //static CHttpClient *httpClient;
     static LONG iListenHandle;
 //     static string svrip;
 //     static int svrport;
@@ -151,22 +147,9 @@ void CALLBACK fnPREVIEW_DATA_CB(LONG lPreviewHandle, NET_EHOME_PREVIEW_CB_MSG *p
     if (NULL == pPreviewCBMsg) {
         return;
     }
-    Log::debug("data type:%d length:%d", pPreviewCBMsg->byDataType, pPreviewCBMsg->dwDataLen);
-    PlayHandle* h = (PlayHandle*)pUserData;
-    CLiveWorker* lw = h->worker;
-    if(lw == NULL) {
-        cs.lock();
-        if(workerMap.count(lPreviewHandle) > 0) {
-            lw = workerMap[lPreviewHandle];
-        }
-        cs.unlock();
-        if(lw == NULL) {
-            Log::error("preview handle not found: %d", lPreviewHandle);
-            return;
-        } else {
-            h->worker = lw;
-        }
-    }
+    //Log::debug("data type:%d length:%d", pPreviewCBMsg->byDataType, pPreviewCBMsg->dwDataLen);
+    printf(".");
+    CLiveWorker* lw = (CLiveWorker*)pUserData;
     if(pPreviewCBMsg->byDataType == 2 && pPreviewCBMsg->dwDataLen > 0) {
         lw->push_ps_data((char*)pPreviewCBMsg->pRecvdata, pPreviewCBMsg->dwDataLen);
     }
@@ -175,22 +158,23 @@ void CALLBACK fnPREVIEW_DATA_CB(LONG lPreviewHandle, NET_EHOME_PREVIEW_CB_MSG *p
 //注册预览请求的响应回调函数
 BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG *pNewLinkCBMsg, void *pUserData)
 {
-    Log::debug("Callback of preview listening, Device ID: %s, Channel: %d", pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
-//     CLiveWorker* lw = NULL;
-//     cs.lock();
-//     if(workerMap.count(lPreviewHandle) > 0) {
-//         lw = workerMap[lPreviewHandle];
-//     }
-//     cs.unlock();
-//     if(lw == NULL) {
-//         Log::error("preview handle not found: %d", lPreviewHandle);
-//         return FALSE;
-//     }
-    PlayHandle* h = new PlayHandle;
-    h->worker = NULL;
+    Log::debug("Callback of preview listening handle:%d, session:%d, DeviceID:%s, Channel:%d", lPreviewHandle, pNewLinkCBMsg->iSessionID,pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
+     CLiveWorker* lw = NULL;
+     cs.lock();
+     if(workerMap.count(pNewLinkCBMsg->iSessionID) > 0) {
+         lw = workerMap[pNewLinkCBMsg->iSessionID];
+         if(handleMap.count(lw) > 0) {
+             handleMap[lw].iHandle = lPreviewHandle;
+         }
+     }
+     cs.unlock();
+     if(lw == NULL) {
+         Log::error("preview session not found: %d", pNewLinkCBMsg->iSessionID);
+         return FALSE;
+     }
     //预览数据的回调参数
     NET_EHOME_PREVIEW_DATA_CB_PARAM struDataCB = {0};
-    struDataCB.pUserData = h;
+    struDataCB.pUserData = lw;
     struDataCB.fnPreviewDataCB = fnPREVIEW_DATA_CB;
     struDataCB.byStreamFormat = 0;//封装格式：0-PS 格式
     if (!NET_ESTREAM_SetPreviewDataCB(lPreviewHandle, &struDataCB))
@@ -213,15 +197,15 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
 //         svrport = util::Settings::getValue("HttpServer", "port", 80);
 		LONG lHandle = -1;
 
-        cnet = CNet::Create(loop);
-        httpClient = new CHttpClient(cnet);
+        //cnet = CNet::Create(loop);
+        //httpClient = new CHttpClient(cnet);
         ////////////////////////////////////////////////////////////////////////
         //SMS 在监听服务开启后获取码流
         //初始化 SMS 库
         NET_ESTREAM_Init();
         //预览的监听参数
         NET_EHOME_LISTEN_PREVIEW_CFG esListen = {0};
-        memcpy(esListen.struIPAdress.szIP, strSmsIp.c_str(), strSmsIp.size());
+        memcpy(esListen.struIPAdress.szIP, "0.0.0.0", sizeof("0.0.0.0"));
         esListen.struIPAdress.wPort = nSmsport; //SMS 的监听端口号
         esListen.fnNewLinkCB = fnPREVIEW_NEWLINK_CB; //预览请求回调函数
         esListen.pUser = NULL;
@@ -241,7 +225,7 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
         NET_EALARM_Init();
         //报警监听参数
         NET_EHOME_ALARM_LISTEN_PARAM struListen = {0};
-        memcpy(struListen.struAddress.szIP, strAmsIp.c_str(), strAmsIp.size());
+        memcpy(struListen.struAddress.szIP, "0.0.0.0", sizeof("0.0.0.0"));
         struListen.struAddress.wPort = nAmsPort; //报警服务的监听端口
         struListen.fnMsgCb = AlarmMSGCallBack; //报警回调函数
         struListen.pUserData = NULL;
@@ -322,44 +306,46 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
 
 	int Play(CLiveWorker *pWorker) {
         //httpClient->Request(svrip, svrport, pWorker, httpReqCB);
-        Log::debug("Play devid(%s) channel(%d)", pWorker->m_pParam->strCode.c_str(), pWorker->m_pParam->nChannel);
+        Log::debug("%s %d devid(%s) channel(%d)", strSmsIp.c_str(), nSmsport, pWorker->m_pParam->strCode.c_str(), pWorker->m_pParam->nChannel);
+       
         LONG userId = -1;
         g_csUsers.lock();
         if(g_mapUsers.count(pWorker->m_pParam->strCode) > 0)
             userId = g_mapUsers[pWorker->m_pParam->strCode];
         g_csUsers.unlock();
         if(userId == -1) {
-            return false;
+            return -1;
         }
 
         NET_EHOME_PREVIEWINFO_IN_V11 struParamIn = { 0 };
         struParamIn.dwLinkMode = 0;  // 0：TCP方式,1：UDP方式,2: HRUDP方式  
         struParamIn.struStreamSever.wPort = nSmsport;
         memcpy(struParamIn.struStreamSever.szIP, strSmsIp.c_str(), strSmsIp.size());
-        struParamIn.dwStreamType = 0; // 码流类型，0-主码流，1-子码流, 2-第三码流,3- 语音监听
+        struParamIn.dwStreamType = 1; // 码流类型，0-主码流，1-子码流, 2-第三码流,3- 语音监听
         struParamIn.iChannel = pWorker->m_pParam->nChannel;
         struParamIn.byEncrypt = 0;
         NET_EHOME_PREVIEWINFO_OUT struParamOut = { 0 };
         if(!NET_ECMS_StartGetRealStreamV11(userId, &struParamIn, &struParamOut)) {
             Log::error("Get real stream failed %d", NET_ECMS_GetLastError());
-            return false;
+            return -1;
         }
-        Log::debug("Get real stream ok: %d %d %s", struParamOut.lSessionID, struParamOut.lHandle, struParamOut.byRes);
+        Log::debug("Get real stream ok: user:%d session:%d handle:%d", userId, struParamOut.lSessionID, struParamOut.lHandle);
 
         PlayInfo pi;
         pi.iUserId = userId;
         pi.iSession = struParamOut.lSessionID;
         pi.iHandle = struParamOut.lHandle;
         cs.lock();
-        if(workerMap.count(pi.iHandle)) {
-            Log::error("this hanle %d is already exist", pi.iHandle);
+        if(workerMap.count(pi.iSession)) {
+            Log::error("this hanle %d is already exist", pi.iSession);
         } else if(handleMap.count(pWorker)) {
             Log::error("this worker %s is already exist", pWorker->m_pParam->strCode.c_str());
         } else {
-            workerMap.insert(make_pair(pi.iHandle, pWorker));
+            workerMap.insert(make_pair(pi.iSession, pWorker));
             handleMap.insert(make_pair(pWorker, pi));
         }
         cs.unlock();
+        
 		return 0;
 	}
 
@@ -369,8 +355,8 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
         if(handleMap.count(pWorker) > 0) {
             pi = handleMap[pWorker];
             handleMap.erase(handleMap.find(pWorker));
-            if(workerMap.count(pi.iHandle) > 0) {
-                workerMap.erase(workerMap.find(pi.iHandle));
+            if(workerMap.count(pi.iSession) > 0) {
+                workerMap.erase(workerMap.find(pi.iSession));
             }
         }
         cs.unlock();
@@ -379,7 +365,7 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
             return;
         } else {
             Log::debug("stop play user:%d handle:%d session:%d", pi.iUserId, pi.iHandle, pi.iSession);
-            NET_ESTREAM_StopListenPreview(pi.iHandle);
+            NET_ESTREAM_StopPreview(pi.iHandle);
             NET_ECMS_StopGetRealStream(pi.iUserId, pi.iSession);
         }
 
@@ -408,6 +394,6 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
 //             };
 //             req->End();
 //         });
-//         Sleep(2000);
+         Sleep(2000);
     }
 }

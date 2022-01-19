@@ -61,11 +61,11 @@ namespace Task {
         gpsCs.unlock();
     }
 
-    static void OnRequestCB(CHttpServer *server, CHttpMsg *request, CHttpResponse *response) {
-        Log::debug("rev: %s dont need", request->path.c_str());
-        response->statusCode = 404;
-        response->End();
-    }
+    //static void OnRequestCB(CHttpServer *server, CHttpMsg *request, CHttpResponse *response) {
+    //    Log::debug("rev: %s dont need", request->path.c_str());
+    //    response->statusCode = 404;
+    //    response->End();
+    //}
 
 //     static void OnPlayReqCB(CHttpServer *server, CHttpMsg *request, CHttpResponse *response) {
 //         Log::debug("rev: %s we need", request->path.c_str());
