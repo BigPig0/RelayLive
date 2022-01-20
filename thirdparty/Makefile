@@ -1,5 +1,5 @@
 #./thirdparty/Makefile
-SUBDIR = cjson exosip hiredis libcstl libmariadb librabbitmq sqlite3 libuv lua ocilib pugixml zlib
+SUBDIR = mbedtls#cjson exosip hiredis libcstl libmariadb librabbitmq sqlite3 libuv lua ocilib pugixml zlib
 
 all:$(SUBDIR)
 	
