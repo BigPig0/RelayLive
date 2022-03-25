@@ -63,6 +63,27 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 
+static string url_decode(string str)
+{
+    int len = str.size();
+    string dest;
+
+    for (int i=0; i<len; i++) {
+        char c = str[i];
+        if (c == '+') {
+            dest.push_back(' ');
+        } else if (c == '%' && i<len-2 && isxdigit((int)str[i+1]) && isxdigit((int)str[i+2])) {
+            char h1 = str[++i];
+            char h2 = str[++i];
+            char v = (h1>='a'?h1-'a'+10:(h1>='A'?h1-'A'+10:h1-'0'))*16 + (h2>='a'?h2-'a'+10:(h2>='A'?h2-'A'+10:h2-'0'));
+            dest.push_back(v);
+        } else {
+            dest.push_back(str[i]);
+        }
+    }
+    return dest;
+}
+
 static void on_close(uv_handle_t* handle) {
 	CLiveSession *skt = (CLiveSession*)handle->data;
 	skt->handlecount--;
@@ -147,6 +168,7 @@ static void on_connection(uv_stream_t* server, int status) {
         sess->strRemoteIP = addr;
         sess->nRemotePort = sin6->sin6_port;
     }
+    Log::warning("new remote socket [%s:%u]", sess->strRemoteIP.c_str(), sess->nRemotePort);
 
     uv_read_start((uv_stream_t*)&sess->socket, on_uv_alloc, on_uv_read);
 }
@@ -323,7 +345,8 @@ void CLiveSession::OnSend() {
 }
 
 void CLiveSession::OnClose() {
-    pWorker->close();
+    if(pWorker != NULL)
+        pWorker->close();
 	uv_close((uv_handle_t*)&asWrite, on_close);
 	uv_close((uv_handle_t*)&asClose, on_close);
 	if(connected) {
@@ -393,7 +416,7 @@ bool CLiveSession::ParsePath() {
         if(kv[0] == "code") 
             Params.strCode = kv[1];
         else if(kv[0] == "url") 
-            Params.strUrl = kv[1];
+            Params.strUrl = url_decode(kv[1]);
         else if(kv[0] == "host") 
             Params.strHost = kv[1];
         else if(kv[0] == "port")
